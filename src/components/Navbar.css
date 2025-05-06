@@ -1,0 +1,91 @@
+/* Use Poppins */
+body {
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f0f0f0; /* Light Gray */
+    padding: 12px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .navbar-left {
+    display: flex;
+    align-items: center;
+
+  }
+  
+  .logo {
+    width: 32px;
+    height: 32px;
+    transition: transform 0.3s ease;
+  }
+  
+  .logo:hover {
+    transform: rotate(10deg) scale(1.1);
+  }
+  
+  .title {
+    margin-left: 10px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #222;
+    text-decoration: none; /* Remove underline from the link */
+
+  }
+  
+  .navbar-right a {
+    margin-left: 24px;
+    text-decoration: none;
+    color: #333; /* Dark Gray for normal text */
+    font-weight: 500;
+    position: relative;
+    transition: color 0.3s;
+  }
+  
+  /* Active link: Black for 'About Us' */
+  .navbar-right a.active {
+    color: black;
+  }
+  
+  /* Underline effect on hover (using purple) */
+  .navbar-right a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -4px;
+    left: 0;
+    background-color: #9b4dca; /* Purple hover underline */
+    transition: width 0.3s;
+  }
+  
+  .navbar-right a:hover {
+    color: #9b4dca; /* Purple color for hover */
+  }
+  
+  .navbar-right a:hover::after {
+    width: 100%;
+  }
+  
+  .book-demo {
+    background-color: #34d399; /* Soft green */
+    color: white !important;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background 0.3s, transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  
+  .book-demo:hover {
+    background-color: #10b981; /* Darker Green */
+    transform: scale(1.05);
+  }
+  

@@ -1,0 +1,64 @@
+.teachers-page {
+  padding: 60px 20px;
+  background: #f4f6f8;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+}
+
+.teachers-page h1 {
+  font-size: 40px;
+  margin-bottom: 40px;
+  color: #2c3e50;
+}
+
+.teacher-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  justify-content: center;
+}
+
+.teacher-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  padding: 30px 20px;
+  width: 280px;
+  text-align: left;
+  transition: transform 0.3s ease;
+}
+
+.teacher-card:hover {
+  transform: translateY(-8px);
+}
+
+.teacher-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 15px;
+}
+
+.teacher-card h3 {
+  margin: 10px 0;
+  color: #1a1a1a;
+  font-size: 22px;
+}
+
+.teacher-card p {
+  color: #555;
+  font-size: 15px;
+  margin: 6px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .teacher-grid {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .teacher-card {
+    width: 90%;
+  }
+}

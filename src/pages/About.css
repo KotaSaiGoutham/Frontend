@@ -1,0 +1,115 @@
+.about-us {
+  padding: 60px 20px;
+  background: linear-gradient(to right, #f9f9f9, #eef1f6);
+  font-family: 'Poppins', sans-serif;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.about-us h1 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #34495e;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.about-us .intro {
+  font-size: 18px;
+  color: #555;
+  max-width: 800px;
+  margin: 0 auto 60px auto;
+  line-height: 1.8;
+}
+
+.mission-vision {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin-bottom: 70px;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 40px 30px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease;
+  text-align: left;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+}
+
+.card h2 {
+  font-size: 28px;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.card p {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.7;
+}
+
+.values {
+  background-color: #ffffff;
+  padding: 50px 30px;
+  margin: 0 auto;
+  max-width: 960px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+.values h2 {
+  font-size: 32px;
+  margin-bottom: 25px;
+  color: #2d3748;
+}
+
+.values ul {
+  list-style: none;
+  padding: 0;
+  font-size: 18px;
+  color: #444;
+  line-height: 2;
+  text-align: left;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.values li {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.values li::before {
+  content: "✔️";
+  margin-right: 10px;
+  color: #3498db;
+  font-size: 18px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mission-vision {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .card {
+    width: 100%;
+  }
+
+  .values ul {
+    padding: 0 10px;
+  }
+}
