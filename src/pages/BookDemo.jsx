@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './BookDemo.css';
 import emailjs from '@emailjs/browser';
 import Modal from './Modal'; // adjust path if needed
-
+import Loader from './Loader';
 const BookDemo = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -11,6 +11,8 @@ const BookDemo = () => {
     subject: '',
     message: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
+
   const [isModalOpen, setModalOpen] = useState(false);
 
 
@@ -41,6 +43,8 @@ const BookDemo = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) return;
+    setIsLoading(true);
+
     emailjs.send('service_96hpvsw', 'template_fj32b8k', {
       name: formData.name,
       email: formData.email,
@@ -49,17 +53,23 @@ const BookDemo = () => {
       message: formData.message
     }, 'CodaKdlgBTQoYetms')
       .then(() => {
+        setIsLoading(false);
+
         setModalOpen(true);
         setSubmitted(true);
+
         setFormData({ name: '', email: '', mobile: '', subject: '', message: '' });
       })
       .catch(() => {
+        setIsLoading(false);
+
         alert('Something went wrong. Please try again.');
       });
   };
 
   return (
     <div className="book-demo-container">
+      {isLoading && <Loader />}
       <h2>Book a Free Demo Class</h2>
       <p>Fill in your details and we’ll schedule your one-on-one demo class with our expert tutors.</p>
       <form onSubmit={handleSubmit} className="demo-form">
