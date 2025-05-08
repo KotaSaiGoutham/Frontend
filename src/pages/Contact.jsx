@@ -24,39 +24,20 @@ const ContactUs = () => {
         </div>
       </section>
 
-      <section className="contact-form">
-        <h2>Get in Touch</h2>
-        <form>
-          <div className="form-group">
-            <label htmlFor="name">Your Name</label>
-            <input type="text" id="name" name="name" required />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <input type="email" id="email" name="email" required />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="message">Your Message</label>
-            <textarea id="message" name="message" rows="5" required></textarea>
-          </div>
-
-          <button type="submit">Submit</button>
-        </form>
-      </section>
-
       <section className="map">
-        <h2>Our Location</h2>
-        <iframe
-          title="Google Map"
-          src="https://www.google.com/maps/embed/v1/place?q=Tech%20Park%2C%20Hyderabad%2C%20Telangana%2C%20India&key=YOUR_GOOGLE_MAPS_API_KEY"
-          width="600"
-          height="450"
-          allowFullScreen=""
-          loading="lazy"
-        ></iframe>
-      </section>
+  <h2>Our Location</h2>
+  <iframe
+    title="Google Map"
+    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.170119867272!2d78.38501947518106!3d17.447110501098667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb93c5e5f48c4f%3A0x375e2f16ae0ee74e!2sMindspace%20IT%20Park%2C%20Hyderabad%2C%20Telangana!5e0!3m2!1sen!2sin!4v1715190000000!5m2!1sen!2sin"
+    width="100%"
+    height="450"
+    style={{ border: 0 }}
+    allowFullScreen=""
+    loading="lazy"
+    referrerPolicy="no-referrer-when-downgrade"
+  ></iframe>
+</section>
+
     </div>
   );
 }

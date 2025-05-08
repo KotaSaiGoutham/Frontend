@@ -17,7 +17,7 @@ const teachersData = [
     avatar: "https://ui-avatars.com/api/?name=Popuri+Kaveri&background=a0a0a0"
   },
   {
-    name: "Kota Goutham",
+    name: "Karunakar",
     subject: "Chemistry",
     experience: "8+ years in academic coaching",
     specialties: "NEET, JEE, Concept Clarity",

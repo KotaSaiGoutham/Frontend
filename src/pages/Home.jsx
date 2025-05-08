@@ -1,4 +1,4 @@
-import React from "react";
+import React,{ useEffect, useState } from "react";
 import "./Home.css";
 import { Link } from "react-router-dom";
 
@@ -69,22 +69,22 @@ const Home = () => {
         </div>
       </section>
       <section className="stats">
-        <h2>Trusted by Hundreds of Families</h2>
-        <div className="stat-grid">
-          <div className="stat">
-            <h3>500+</h3>
-            <p>Happy Students</p>
-          </div>
-          <div className="stat">
-            <h3>100%</h3>
-            <p>Parent Satisfaction</p>
-          </div>
-          <div className="stat">
-            <h3>10+</h3>
-            <p>Expert Tutors</p>
-          </div>
-        </div>
-      </section>
+  <h2>Trusted by Hundreds of Families</h2>
+  <div className="stat-grid">
+    <div className="stat">
+      <CountUpNumber end={500} />
+      <p>Happy Students</p>
+    </div>
+    <div className="stat">
+      <CountUpNumber end={100} />
+      <p>Parent Satisfaction</p>
+    </div>
+    <div className="stat">
+      <CountUpNumber end={10} />
+      <p>Expert Tutors</p>
+    </div>
+  </div>
+</section>
 
       {/* Success Stories */}
       <section className="testimonials">
@@ -139,3 +139,26 @@ const Home = () => {
 };
 
 export default Home;
+// CountUpNumber.jsx
+
+const CountUpNumber = ({ end, duration = 2000 }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const increment = end / (duration / 25); // ~60fps
+    const update = () => {
+      start += increment;
+      if (start < end) {
+        setCount(Math.floor(start));
+        requestAnimationFrame(update);
+      } else {
+        setCount(end);
+      }
+    };
+    update();
+  }, [end, duration]);
+
+  return <h3>{count}+</h3>;
+};
+
