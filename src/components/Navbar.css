@@ -1,13 +1,15 @@
 body {
   font-family: 'Poppins', sans-serif;
+  margin: 0;
+  background-color: #ffffff;
 }
 
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f0f0f0;
-  padding: 12px 24px;
+  background-color: #292551; /* Deep Navy */
+  padding: 0px 24px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -20,20 +22,20 @@ body {
 }
 
 .logo {
-  width: 32px;
-  height: 32px;
-  transition: transform 0.3s ease;
+  width: 250px;
+  height: 100px;
+  transition: transform 0.4s ease;
 }
 
 .logo:hover {
-  transform: rotate(10deg) scale(1.1);
+  transform: translateY(-5px) scale(1.05);
 }
 
 .title {
   margin-left: 10px;
   font-size: 22px;
   font-weight: 600;
-  color: #222;
+  color: #F6A11F; /* Amber for title */
   text-decoration: none;
 }
 
@@ -45,14 +47,14 @@ body {
 .navbar-right a {
   margin-left: 24px;
   text-decoration: none;
-  color: #333;
+  color: #f0f0f0; /* White-ish for better contrast */
   font-weight: 500;
   position: relative;
   transition: color 0.3s;
 }
 
 .navbar-right a.active {
-  color: black;
+  color: #FCCD11; /* Bright Yellow for active links */
 }
 
 .navbar-right a::after {
@@ -62,32 +64,37 @@ body {
   height: 2px;
   bottom: -4px;
   left: 0;
-  background-color: #9b4dca;
+  background-color: #DB1A66; /* Bright Pink underline */
   transition: width 0.3s;
 }
 
 .navbar-right a:hover {
-  color: #9b4dca;
+  color: #F6A11F; /* Amber hover */
 }
 
 .navbar-right a:hover::after {
   width: 100%;
 }
 
-.book-demo {
-  background-color: #34d399;
-  color: white !important;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-weight: 500;
-  transition: background 0.3s, transform 0.2s;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+.book-btn {
+  display: inline-block;
+  background-color: #facc15; /* Yellow CTA */
+  color: #1e1e1e  !important;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
 }
 
-.book-demo:hover {
-  background-color: #10b981;
-  transform: scale(1.05);
+.book-btn:hover {
+  background-color: #292551;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(41, 37, 81, 0.4);
 }
+
+
 
 /* MOBILE RESPONSIVE STYLES */
 .menu-toggle {
@@ -95,6 +102,7 @@ body {
   font-size: 26px;
   cursor: pointer;
   user-select: none;
+  color: white;
 }
 
 /* Small screen styles */
@@ -106,7 +114,7 @@ body {
   .navbar-right {
     display: none;
     flex-direction: column;
-    background-color: #f0f0f0;
+    background-color: #292551;
     position: absolute;
     top: 60px;
     right: 0;

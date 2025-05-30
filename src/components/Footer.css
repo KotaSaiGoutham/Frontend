@@ -1,0 +1,139 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #fff; /* page background */
+}
+.footer-container {
+  background-color: #292551; /* Deep navy */
+  color: #ffffff;
+  padding: 40px 20px;
+  width: 100vw; /* Full viewport width */
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+  margin-top: auto; /* pushes footer to bottom if inside flex container */
+  position: relative; /* ensure layering */
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw; /* tricks to extend full width beyond container */
+}
+
+/* Rest unchanged */
+.footer-content {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 30px;
+}
+.footer-about,
+.footer-social,
+.footer-address {
+  flex: 1;
+  min-width: 280px;
+  text-align: center;
+}
+
+.footer-about {
+  text-align: left;
+  padding-right: 20px;
+}
+
+.footer-about h3,
+.footer-social h3,
+.footer-address h3 {
+  color: #F6A11F; /* Amber heading color */
+  margin-bottom: 20px;
+  font-size: 1.5em;
+}
+
+.footer-about p {
+  line-height: 1.7;
+  font-size: 0.95em;
+  color: #ddd;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.social-icons a {
+  color: #ccc;
+  font-size: 2.5em;
+  transition: transform 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+/* Hover animations for social icons */
+.social-icons a:hover .icon {
+  transform: translateY(-5px);
+}
+
+.social-icons a:hover .instagram {
+  color: #E4405F;
+}
+
+.social-icons a:hover .twitter {
+  color: #1DA1F2;
+}
+
+.social-icons a:hover .facebook {
+  color: #3B5998;
+}
+
+.social-icons a:hover .linkedin {
+  color: #0077B5;
+}
+
+.social-icons a:hover .youtube {
+  color: #FF0000;
+}
+
+.footer-address p {
+  margin: 5px 0;
+  line-height: 1.6;
+  color: #ccc;
+}
+
+.footer-bottom {
+  text-align: center;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #444;
+  font-size: 0.9em;
+  color: #aaa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer-about,
+  .footer-social,
+  .footer-address {
+    margin-bottom: 30px;
+    text-align: center;
+    padding-right: 0;
+  }
+
+  .footer-social h3,
+  .footer-address h3 {
+    margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-container {
+    padding: 30px 15px;
+  }
+
+  .social-icons a {
+    font-size: 2em;
+  }
+}

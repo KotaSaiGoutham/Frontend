@@ -28,7 +28,7 @@ const teachersData = [
 const Teachers = () => {
   return (
     <div className="teachers-page">
-      <h1>Meet Our Expert Teachers</h1>
+      <h1>Meet Our Expert Faculty</h1>
       <div className="teacher-grid">
         {teachersData.map((teacher, index) => (
           <div className="teacher-card" key={index}>
