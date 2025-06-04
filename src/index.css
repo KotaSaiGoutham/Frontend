@@ -1,0 +1,13 @@
+/* Basic Reset for cross-browser consistency */
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Temporarily hide horizontal overflow to find the culprit */
+    width: 100%; /* Ensure they take full width */
+}
+
+/* Universal box-sizing for predictable layouts */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+

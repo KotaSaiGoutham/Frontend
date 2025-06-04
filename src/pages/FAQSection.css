@@ -1,0 +1,274 @@
+/* --- Global Color Palette Definitions (Keep these as they are) --- */
+:root {
+  --dark-indigo: #292551;
+  --slate-gray: #454E5B;
+  --deep-magenta: #B21F62;
+  --hot-pink: #DB1A66;
+  --light-gray: #DCD9DA;
+  --orange: #F26E26;
+  --golden-yellow: #F6A11F;
+  --bright-yellow: #FCCD11;
+  --white: #ffffff;
+
+  --brand-primary: var(--dark-indigo);
+  --brand-secondary: var(--deep-magenta);
+  --brand-accent-1: var(--bright-yellow);
+  --brand-accent-2: var(--orange);
+  --text-color-dark: var(--slate-gray);
+  --text-color-medium: #4a5568;
+  --text-color-light: #666;
+  --background-light-orange: #fff7f0;
+  --card-bg: var(--white);
+  --shadow-strong: rgba(0, 0, 0, 0.18);
+  --shadow-light: rgba(0, 0, 0, 0.05);
+
+  --faq-border-color: #e0e0e0;
+  --faq-card-hover-bg: #f9f9f9;
+  --faq-open-bg: var(--brand-accent-2);
+  --faq-open-color: var(--white);
+  --faq-answer-bg: var(--white);
+  --faq-answer-color: var(--text-color-dark);
+  --faq-toggle-icon-color: var(--text-color-dark);
+  --faq-toggle-icon-open-color: var(--white);
+}
+
+/* --- FAQ Section Container --- */
+.faq-section {
+  background-color: var(--background-light-orange);
+  padding: 80px 20px;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-color-dark);
+  overflow: hidden; /* Crucial for elements sliding in from outside */
+}
+
+/* --- Section Title --- */
+.faq-section h2 {
+  text-align: center;
+  font-size: 2.8rem;
+  color: var(--brand-primary);
+  font-weight: 700;
+  margin-bottom: 50px;
+  position: relative;
+  letter-spacing: 0.5px;
+  /* Initial state for JS-triggered animation */
+  opacity: 0;
+  transform: translateY(40px);
+  will-change: opacity, transform;
+}
+
+/* Animation for the title */
+.faq-section h2.fade-in-slide-up-title {
+  animation: fadeInSlideUp 0.9s ease-out forwards; /* No delay here, starts with section visibility */
+}
+
+.faq-section h2 span {
+  color: var(--brand-accent-2);
+}
+
+.faq-section h2::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: var(--brand-secondary);
+  border-radius: 2px;
+  /* Initial state for JS-triggered animation */
+  opacity: 0;
+  will-change: opacity;
+}
+
+/* Animation for the title underline */
+.faq-section h2.fade-in-slide-up-title::after {
+  animation: fadeIn 0.8s ease-out forwards 0.4s; /* Delay relative to title animation */
+}
+
+/* --- FAQ Wrapper --- */
+.faq-wrapper {
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+/* --- FAQ Card --- */
+.faq-card {
+  border: 1px solid var(--faq-border-color);
+  border-radius: 14px;
+  background-color: var(--card-bg);
+  box-shadow: 0 4px 15px var(--shadow-light);
+  margin: 15px 0;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease; /* For hover and open state */
+  will-change: transform, opacity; /* Optimize for animation */
+}
+
+.faq-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.faq-card.open {
+  background-color: var(--faq-open-bg);
+  color: var(--faq-open-color);
+  border-color: var(--faq-open-bg);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  /* Ensure it doesn't move back from animation end state */
+  transform: translateY(0) translateX(0) !important; /* Force to final state */
+  opacity: 1 !important;
+}
+
+/* New Animations for FAQ Cards */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+}
+
+/* Apply staggered animations via class names */
+.faq-card.slide-in-left {
+  animation: slideInLeft 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.faq-card.slide-in-right {
+  animation: slideInRight 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* --- FAQ Question --- */
+.faq-question {
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 20px 25px;
+  display: flex;
+  /* Key changes here: */
+  justify-content: space-between; /* Pushes content to opposite ends */
+  align-items: center;
+  transition: color 0.3s ease;
+  color: inherit; /* Inherits color from .faq-card, so it changes when .open */
+}
+
+/* Toggle Icon */
+.faq-question span {
+  /* No margin-left needed, justify-content handles spacing */
+  font-size: 1.5rem;
+  transition: transform 0.3s ease, color 0.3s ease;
+  color: var(--faq-toggle-icon-color);
+  flex-shrink: 0; /* Prevents icon from shrinking if question text is long */
+}
+
+.faq-card.open .faq-question span {
+  transform: rotate(180deg);
+  color: var(--faq-toggle-icon-open-color);
+}
+
+/* --- FAQ Answer (for smooth collapse/expand) --- */
+.faq-answer-wrapper {
+  transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
+  overflow: hidden;
+}
+
+.faq-answer {
+  padding: 0 25px 25px; /* Padding for the actual text */
+  font-size: 1.05rem;
+  background-color: var(--faq-answer-bg);
+  color: var(--faq-answer-color);
+  line-height: 1.7;
+}
+
+/* --- Animations (Keep these, as they are used by title and new card animations) --- */
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* --- Media Queries (Adjust as needed) --- */
+@media (max-width: 768px) {
+  .faq-section {
+    padding: 60px 15px;
+  }
+
+  .faq-section h2 {
+    font-size: 2.2rem;
+    margin-bottom: 40px;
+  }
+
+  .faq-question {
+    font-size: 1.1rem;
+    padding: 18px 20px;
+  }
+
+  .faq-answer {
+    font-size: 0.95rem;
+    padding: 0 20px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .faq-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+  }
+
+  .faq-question {
+    font-size: 1rem;
+    padding: 15px;
+  }
+  .faq-question span {
+    font-size: 1.2rem;
+  }
+
+  .faq-answer {
+    font-size: 0.9rem;
+    padding: 0 15px 15px;
+  }
+}
+.faculty-track {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.faculty-card {
+  width: 250px;
+  background: linear-gradient(180deg, #ffffff, #f0f8ff);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 1.5rem;
+  text-align: center;
+  animation: fadeInUp 0.8s ease-out forwards;
+  opacity: 0;
+}

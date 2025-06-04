@@ -1,0 +1,307 @@
+/* Base styles for larger screens (desktop first approach) */
+
+/* Keyframe Animations for different directions */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100px); /* Starts from the left */
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px); /* Starts from the right */
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInBottom {
+  from {
+    opacity: 0;
+    transform: translateY(50px); /* Starts from the bottom */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInTopLeft {
+  from {
+    opacity: 0;
+    transform: translate(-50px, -50px); /* Starts from top-left corner */
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes slideInBottomRight {
+  from {
+    opacity: 0;
+    transform: translate(50px, 50px); /* Starts from bottom-right corner */
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+
+.faculty-showcase {
+  padding: 4rem 1rem;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+  text-align: center;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: hidden; /* Ensure nothing overflows the section initially */
+}
+
+.faculty-title-wrapper {
+  margin-bottom: 3rem;
+}
+
+.faculty-title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #1a202c;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0;
+}
+
+.faculty-slider-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  /* Removed padding here if you want cards to potentially go to edge,
+     or keep it if you want space for future arrows */
+  padding: 0 0px; /* Adjust as needed */
+  box-sizing: border-box;
+}
+
+.faculty-track {
+  display: flex;
+  gap: 20px;
+  /* Keep overflow-x: hidden for desktop if you're not implementing a full slider */
+  /* For mobile, you might want overflow-x: scroll for more cards */
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  padding: 20px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex-grow: 1;
+  justify-content: center; /* Center cards horizontally on desktop */
+  flex-wrap: wrap; /* Allow cards to wrap to the next line on smaller screens */
+}
+
+.faculty-track::-webkit-scrollbar {
+  display: none;
+}
+
+.faculty-card {
+  flex: 0 0 250px;
+  background: linear-gradient(180deg, #ffffff 0%, #f0f8ff 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid #e0e6ed;
+
+  /* Initial state: Hidden and off-screen */
+  opacity: 0;
+  transform: translateY(50px); /* Default hidden state if no specific animation applies yet */
+  will-change: opacity, transform; /* Optimize for animation */
+}
+
+/* Specific animation application */
+.faculty-card.slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+.faculty-card.slide-in-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+.faculty-card.slide-in-bottom {
+  animation: slideInBottom 0.8s ease-out forwards;
+}
+
+.faculty-card.slide-in-top-left {
+  animation: slideInTopLeft 0.8s ease-out forwards;
+}
+
+.faculty-card.slide-in-bottom-right {
+  animation: slideInBottomRight 0.8s ease-out forwards;
+}
+
+
+.faculty-card:hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+}
+
+.faculty-card img {
+  width: 130px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin: 0 auto 1rem;
+  border: 3px solid #63b3ed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.faculty-card h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.faculty-subject {
+  font-size: 1rem;
+  color: #4a5568;
+  font-weight: 500;
+  margin: 0 0 0.4rem;
+}
+
+.faculty-exp {
+  font-size: 0.9rem;
+  color: #718096;
+  font-style: normal;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Media Queries for Responsiveness --- */
+
+@media (max-width: 1200px) {
+  .faculty-slider-wrapper {
+    max-width: 95vw;
+  }
+}
+
+@media (max-width: 991px) {
+  .faculty-title {
+    font-size: 2.2rem;
+  }
+
+  .faculty-slider-wrapper {
+    padding: 0 0px; /* Adjust as needed */
+  }
+
+  .faculty-card {
+    flex: 0 0 220px;
+    padding: 1.2rem;
+  }
+
+  .faculty-card img {
+    width: 110px;
+    height: 140px;
+  }
+}
+
+@media (max-width: 767px) {
+  .faculty-showcase {
+    padding: 2.5rem 0.5rem;
+  }
+
+  .faculty-title {
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+  }
+
+  .faculty-slider-wrapper {
+    padding: 0 0px; /* Adjust as needed */
+  }
+
+  .faculty-track {
+    gap: 15px;
+    padding: 15px 0;
+    justify-content: center; /* Center multiple cards if they wrap */
+  }
+
+  .faculty-card {
+    flex: 0 0 calc(50% - 7.5px); /* Two cards per row */
+    max-width: calc(50% - 7.5px);
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .faculty-card img {
+    width: 100px;
+    height: 120px;
+  }
+
+  .faculty-card h4 {
+    font-size: 1rem;
+  }
+
+  .faculty-subject,
+  .faculty-exp {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .faculty-showcase {
+    padding: 2rem 0.25rem;
+  }
+
+  .faculty-title {
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+  }
+
+  .faculty-slider-wrapper {
+    padding: 0 0px; /* Adjust as needed */
+  }
+
+  .faculty-track {
+    gap: 10px;
+    padding: 10px 0;
+    justify-content: center; /* Center a single card or multiple if they flow */
+  }
+
+  .faculty-card {
+    flex: 0 0 90%; /* One card per row */
+    max-width: 300px; /* Cap max width */
+    margin: 0 auto; /* Ensure it's centered */
+    padding: 0.8rem;
+    border-radius: 12px;
+  }
+
+  .faculty-card img {
+    width: 90px;
+    height: 110px;
+  }
+
+  .faculty-card h4 {
+    font-size: 0.95rem;
+  }
+
+  .faculty-subject,
+  .faculty-exp {
+    font-size: 0.8rem;
+  }
+}

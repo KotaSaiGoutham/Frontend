@@ -1,0 +1,145 @@
+/* --- Base styles for the Faculty List Section (rest remains same) --- */
+/* ... (your existing .faculty-list-section, .faculty-heading styles) ... */
+
+.faculty-item {
+  display: flex;
+  gap: 60px; /* Increased gap for better visual separation */
+  margin-bottom: 90px; /* More space between faculty members */
+  align-items: center;
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: 0 15px 40px var(--subtle-shadow-color); /* Softer, wider shadow */
+  padding: 45px; /* More generous padding */
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease-in-out;
+  border: 1px solid rgba(var(--light-background-color), 0.7); /* Lighter border */
+  /* Initial state for entrance animation */
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* Entrance Animation class */
+.faculty-item.fade-in-up {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.faculty-item:hover {
+  transform: translateY(-10px); /* More pronounced lift effect on hover */
+  box-shadow: 0 25px 60px var(--hover-shadow-color); /* More pronounced shadow on hover */
+}
+
+/* Layout variations */
+.faculty-layout-normal {
+  flex-direction: row;
+}
+
+.faculty-layout-reverse {
+  flex-direction: row-reverse;
+}
+
+/* Content styling */
+.faculty-content {
+  flex: 1; /* Allow content to grow/shrink flexibly */
+  /* Removed fixed flex-basis to let it adjust better with video wrapper */
+  padding-right: 30px; /* More padding to the right for text */
+  color: var(--body-text-color);
+  max-width: 55%; /* Keep a max-width to prevent it from getting too wide compared to video */
+}
+
+.faculty-content h3 {
+  font-size: 2.8rem; /* Larger, more impactful faculty name */
+  margin-bottom: 12px;
+  color: var(--dark-text-color);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.subject-exp {
+  font-weight: 600;
+  font-size: 1.25rem; /* Slightly larger subject/experience */
+  margin-bottom: 25px; /* More space below subject */
+  color: var(--primary-brand-color);
+  letter-spacing: 0.7px;
+  text-transform: uppercase; /* Professional touch */
+}
+
+.faculty-content p {
+  margin: 18px 0; /* More spacing between paragraphs */
+  line-height: 1.75; /* Even better readability */
+  font-size: 1.05rem;
+}
+
+.faculty-content p strong {
+    color: var(--dark-text-color);
+    font-weight: 700; /* Ensure strong is bold */
+}
+
+/* Video styling */
+.faculty-video-wrapper {
+  flex: 1; /* Allow video wrapper to grow/shrink flexibly, taking available space */
+  /* Removed fixed flex-basis, let it expand to fill */
+  border-radius: 20px; /* Matches card border-radius */
+  overflow: hidden;
+  box-shadow: 0 12px 30px var(--dark-indigo); /* Shadow using Dark Indigo */
+  background: var(--dark-indigo); /* Dark background for video container */
+  transition: box-shadow 0.4s ease-in-out;
+  position: relative;
+  padding-top: 56.25%; /* 16:9 Aspect Ratio (9/16 = 0.5625) */
+  height: 0; /* Essential for padding-top aspect ratio trick */
+  border: 3px solid var(--primary-brand-color); /* Added a distinct border using brand color */
+  /* Ensure it doesn't get too small if content is very long */
+  min-width: 40%; /* Adjust this percentage as needed for visual balance */
+}
+
+.faculty-video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%; /* IMPORTANT: Take full width of parent .faculty-video-wrapper */
+  height: 100%; /* IMPORTANT: Take full height of parent .faculty-video-wrapper (which is set by padding-top) */
+  border: none;
+}
+
+.faculty-video-wrapper:hover {
+  box-shadow: 0 15px 40px var(--hover-shadow-color); /* More pronounced shadow on hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  /* ... (your existing 992px media query styles) ... */
+  .faculty-content {
+    max-width: 60%; /* Adjust max-width for content as screen size decreases */
+  }
+  .faculty-video-wrapper {
+    min-width: 35%; /* Adjust min-width for video as screen size decreases */
+  }
+}
+
+@media (max-width: 768px) {
+  /* ... (your existing 768px media query styles) ... */
+  .faculty-item,
+  .faculty-layout-normal,
+  .faculty-layout-reverse {
+    flex-direction: column !important; /* Force stacking on smaller screens */
+    gap: 30px;
+    margin-bottom: 50px;
+    padding: 30px;
+    text-align: center; /* Center text when stacked */
+  }
+  .faculty-content {
+    padding-right: 0; /* Remove right padding when stacked */
+    max-width: 100%; /* Allow content to take full width when stacked */
+  }
+  /* Center strong tags when text is centered */
+  .faculty-content p strong {
+    display: inline-block; /* To allow text-align to affect it */
+  }
+  .faculty-video-wrapper {
+    width: 100%; /* IMPORTANT: Take full width of the parent .faculty-item */
+    max-width: 560px; /* Optional: Constrain max width for very large screens when stacked */
+    margin: 0 auto; /* Center video when stacked */
+    min-width: unset; /* Remove min-width when stacked */
+  }
+}
+
+/* ... (your existing 576px media query styles) ... */

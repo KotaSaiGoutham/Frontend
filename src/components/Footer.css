@@ -62,33 +62,32 @@ html, body {
 }
 
 .social-icons a {
-  color: #ccc;
   font-size: 2.5em;
-  transition: transform 0.3s ease-in-out, color 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out;
 }
 
-/* Hover animations for social icons */
-.social-icons a:hover .icon {
-  transform: translateY(-5px);
+/* Hover: grow and apply brand colors */
+.social-icons a:hover {
+  transform: scale(1.2);
 }
 
-.social-icons a:hover .instagram {
+.social-icons a[aria-label="Instagram"] {
   color: #E4405F;
 }
 
-.social-icons a:hover .twitter {
+.social-icons a[aria-label="Twitter"] {
   color: #1DA1F2;
 }
 
-.social-icons a:hover .facebook {
+.social-icons a[aria-label="Facebook"] {
   color: #3B5998;
 }
 
-.social-icons a:hover .linkedin {
+.social-icons a[aria-label="LinkedIn"] {
   color: #0077B5;
 }
 
-.social-icons a:hover .youtube {
+.social-icons a[aria-label="YouTube"] {
   color: #FF0000;
 }
 

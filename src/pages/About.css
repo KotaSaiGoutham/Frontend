@@ -1,115 +1,372 @@
-.about-us {
-  padding: 60px 20px;
-  background: linear-gradient(to right, #f9f9f9, #eef1f6);
-  font-family: 'Poppins', sans-serif;
-  color: #1a1a1a;
-  text-align: center;
+/* --- Global Color Palette Definitions (from BookDemo.css for consistency) --- */
+:root {
+   --dark-indigo: #292551;
+   --slate-gray: #454E5B;
+   --deep-magenta: #B21F62;
+   --hot-pink: #DB1A66;
+   --light-gray: #DCD9DA;
+   --orange: #F26E26;
+   --golden-yellow: #F6A11F;
+   --bright-yellow: #FCCD11;
+   --white: #ffffff;
+
+   /* Semantic mapping for easy use */
+   --brand-primary: var(--dark-indigo);
+   --brand-secondary: var(--deep-magenta);
+   --brand-accent-1: var(--bright-yellow);
+   --brand-accent-2: var(--orange);
+   --text-color-dark: var(--slate-gray);
+   --text-color-medium: #4a5568; /* From original about.css */
+   --text-color-light: #666;
+   --background-page: #f8f8f8; /* Consistent page background */
+   --card-bg: var(--white);
+   --shadow-strong: rgba(0, 0, 0, 0.18);
+   --shadow-light: rgba(0, 0, 0, 0.05);
+   --error-color: var(--hot-pink);
+
+   /* Specific to About Page - mapped to new palette where possible */
+   --about-header-title: var(--brand-primary); /* Dark Indigo */
+   --about-header-subtitle: var(--text-color-medium);
+   --about-title-underline: var(--brand-secondary); /* Deep Magenta */
+   --mission-vision-card-bg: var(--card-bg);
+   --mission-vision-card-border-left: linear-gradient(to bottom, var(--brand-secondary), var(--hot-pink)); /* Deep Magenta to Hot Pink */
+   --mission-vision-icon-bg: #ebf8ff; /* Light blue, can be mapped if needed, keeping for now */
+   --mission-vision-icon-fill: #3182ce; /* Blue, can be mapped if needed, keeping for now */
+   --values-section-bg: var(--card-bg);
+   --values-title-underline: var(--brand-secondary);
+   --value-item-hover-bg: #f7fafc; /* Very light gray, keeping for subtle hover */
 }
 
-.about-us h1 {
-  font-size: 48px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #34495e;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+
+/* --- General Container and Font --- */
+.about-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 20px;
+    font-family: 'Inter', sans-serif; /* Use Inter for consistency */
+    color: var(--text-color-dark); /* Default text color for the page */
+    background-color: var(--background-page); /* Ensures consistent background */
+    overflow: hidden; /* Helps with animations */
 }
 
-.about-us .intro {
-  font-size: 18px;
-  color: #555;
-  max-width: 800px;
-  margin: 0 auto 60px auto;
-  line-height: 1.8;
+/* --- Header Section --- */
+.about-header {
+    text-align: center;
+    margin-bottom: 80px;
+    padding: 0 20px;
+    opacity: 0; /* Initial state for animation */
+    transform: translateY(40px);
+    animation: fadeInSlideUp 0.9s ease-out forwards 0.2s; /* Header animates in */
 }
 
-.mission-vision {
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-  gap: 40px;
-  flex-wrap: wrap;
-  margin-bottom: 70px;
+.about-title {
+    font-size: 2.8rem; /* Slightly larger heading for impact */
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--about-header-title); /* Dark Indigo */
+    position: relative;
+    display: inline-block;
+    letter-spacing: 0.5px;
+    opacity: 0; /* Initial state for animation */
+    animation: fadeInSlideUp 0.8s ease-out forwards 0.4s; /* Title animates after header */
 }
 
-.card {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 40px 30px;
-  width: 100%;
-  max-width: 200px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease;
-  text-align: left;
+.about-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: var(--about-title-underline); /* Deep Magenta */
+    border-radius: 2px;
+    opacity: 0; /* Initial state for animation */
+    animation: fadeIn 0.8s ease-out forwards 0.8s; /* Underline fades in after title */
 }
 
-.card:hover {
-  transform: translateY(-10px);
+.about-subtitle {
+    font-size: 1.15rem; /* Slightly larger for readability */
+    line-height: 1.75;
+    color: var(--about-header-subtitle); /* Slate Gray */
+    max-width: 800px;
+    margin: 0 auto;
+    opacity: 0; /* Initial state for animation */
+    animation: fadeInSlideUp 0.8s ease-out forwards 0.6s; /* Subtitle animates after title */
 }
 
-.card h2 {
-  font-size: 28px;
-  margin-bottom: 15px;
-  color: #2c3e50;
+/* --- Mission & Vision Container --- */
+.mission-vision-container {
+    display: flex;
+    justify-content: center; /* Center cards if less than two */
+    flex-wrap: wrap;
+    gap: 40px;
+    margin-bottom: 80px;
 }
 
-.card p {
-  font-size: 16px;
-  color: #666;
-  line-height: 1.7;
+.mission-vision-card {
+    flex: 1;
+    min-width: 320px; /* Adjusted min-width for better responsiveness */
+    max-width: 48%; /* Max width for two columns */
+    background: var(--mission-vision-card-bg);
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 10px 15px -3px var(--shadow-light), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Softer shadow */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-align: left; /* Align text within card */
+
+    opacity: 0; /* Initial state for animation */
+    transform: translateY(40px);
+    /* Staggered animation */
+    animation: fadeInSlideUp 0.8s ease-out forwards;
 }
 
-.values {
-  background-color: #ffffff;
-  padding: 50px 30px;
-  margin: 0 auto;
-  max-width: 960px;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+/* Specific delays for mission and vision cards */
+.mission-vision-container .mission-vision-card:nth-child(1) {
+    animation-delay: 1.0s;
+}
+.mission-vision-container .mission-vision-card:nth-child(2) {
+    animation-delay: 1.2s;
 }
 
-.values h2 {
-  font-size: 32px;
-  margin-bottom: 25px;
-  color: #2d3748;
+.mission-vision-card:hover {
+    transform: translateY(-8px); /* More pronounced lift */
+    box-shadow: 0 20px 35px -5px var(--shadow-strong), 0 10px 15px -5px rgba(0, 0, 0, 0.08); /* Stronger hover shadow */
 }
 
-.values ul {
-  list-style: none;
-  padding: 0;
-  font-size: 18px;
-  color: #444;
-  line-height: 2;
-  text-align: left;
-  max-width: 600px;
-  margin: 0 auto;
+.mission-vision-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px; /* Thicker border */
+    height: 100%;
+    background: var(--mission-vision-card-border-left); /* Gradient border */
+    border-radius: 12px 0 0 12px; /* Apply border radius to the left side only */
 }
 
-.values li {
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
+.icon-container {
+    width: 60px;
+    height: 60px;
+    background: var(--mission-vision-icon-bg); /* Keep original light blue */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
 }
 
-.values li::before {
-  content: "✔️";
-  margin-right: 10px;
-  color: #3498db;
-  font-size: 18px;
+.icon {
+    width: 32px; /* Slightly larger icon */
+    height: 32px;
+    fill: var(--mission-vision-icon-fill); /* Keep original blue */
 }
 
-/* Responsive Design */
+.mission-vision-card h2 {
+    font-size: 1.6rem; /* Slightly larger heading */
+    margin-bottom: 1rem;
+    color: var(--brand-primary); /* Dark Indigo */
+    font-weight: 600;
+}
+
+.mission-vision-card p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-color-medium); /* Slate Gray */
+}
+
+/* --- Core Values Section --- */
+.values-section {
+    background: var(--values-section-bg);
+    border-radius: 12px;
+    padding: 60px 40px;
+    box-shadow: 0 10px 15px -3px var(--shadow-light), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    opacity: 0; /* Initial state for animation */
+    transform: translateY(40px);
+    animation: fadeInSlideUp 0.9s ease-out forwards 1.4s; /* Section animates in */
+}
+
+.values-title {
+    text-align: center;
+    font-size: 2.5rem; /* Larger heading */
+    font-weight: 700;
+    margin-bottom: 60px;
+    color: var(--brand-primary); /* Dark Indigo */
+    position: relative;
+    letter-spacing: 0.5px;
+    opacity: 0; /* Initial state for animation */
+    animation: fadeInSlideUp 0.8s ease-out forwards 1.6s; /* Title animates after section */
+}
+
+.values-title::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: var(--values-title-underline); /* Deep Magenta */
+    border-radius: 2px;
+    opacity: 0; /* Initial state for animation */
+    animation: fadeIn 0.8s ease-out forwards 2.0s; /* Underline fades in after title */
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); /* Slightly wider min width */
+    gap: 30px;
+}
+
+.value-item {
+    text-align: center;
+    padding: 30px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background-color: var(--card-bg); /* Explicit background for items */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Subtle individual item shadow */
+
+    opacity: 0; /* Initial state for animation */
+    transform: translateY(40px);
+    /* Staggered animation handled by nth-child below */
+    animation: fadeInSlideUp 0.7s ease-out forwards;
+}
+
+/* Staggered animation for value items */
+.values-grid .value-item:nth-child(1) { animation-delay: 2.0s; }
+.values-grid .value-item:nth-child(2) { animation-delay: 2.1s; }
+.values-grid .value-item:nth-child(3) { animation-delay: 2.2s; }
+.values-grid .value-item:nth-child(4) { animation-delay: 2.3s; }
+.values-grid .value-item:nth-child(5) { animation-delay: 2.4s; }
+
+
+.value-item:hover {
+    background: var(--value-item-hover-bg);
+    transform: translateY(-8px); /* More pronounced lift */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* Stronger hover shadow */
+}
+
+.value-icon {
+    font-size: 3rem; /* Larger emoji icon */
+    margin-bottom: 20px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); /* Subtle shadow for icon */
+}
+
+.value-item h3 {
+    font-size: 1.35rem; /* Slightly larger heading */
+    margin-bottom: 1rem;
+    color: var(--brand-primary); /* Dark Indigo */
+    font-weight: 600;
+}
+
+.value-item p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-color-medium); /* Slate Gray */
+}
+
+/* --- Keyframe Animations --- */
+@keyframes fadeInSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 992px) {
+    .mission-vision-card {
+        max-width: 100%; /* Stack cards vertically */
+    }
+    .values-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjust grid for smaller screens */
+    }
+}
+
 @media (max-width: 768px) {
-  .mission-vision {
-    flex-direction: column;
-    gap: 20px;
-  }
+    .about-container {
+        padding: 60px 15px;
+    }
+    .about-title {
+        font-size: 2.2rem;
+    }
+    .about-subtitle {
+        font-size: 1rem;
+    }
+    .mission-vision-container {
+        flex-direction: column;
+        gap: 30px;
+    }
+    .mission-vision-card {
+        min-width: 100%;
+        padding: 30px;
+    }
+    .mission-vision-card h2 {
+        font-size: 1.4rem;
+    }
+    .mission-vision-card p {
+        font-size: 0.95rem;
+    }
+    .values-section {
+        padding: 40px 25px;
+    }
+    .values-title {
+        font-size: 2rem;
+        margin-bottom: 40px;
+    }
+    .values-grid {
+        grid-template-columns: 1fr; /* Single column on very small screens */
+        gap: 20px;
+    }
+    .value-item {
+        padding: 25px 15px;
+    }
+    .value-item h3 {
+        font-size: 1.15rem;
+    }
+    .value-item p {
+        font-size: 0.9rem;
+    }
+}
 
-  .card {
-    width: 100%;
-  }
-
-  .values ul {
-    padding: 0 10px;
-  }
+@media (max-width: 480px) {
+    .about-header {
+        margin-bottom: 60px;
+    }
+    .about-title {
+        font-size: 1.8rem;
+    }
+    .about-subtitle {
+        font-size: 0.9rem;
+    }
+    .mission-vision-card {
+        padding: 25px;
+    }
+    .mission-vision-card h2 {
+        font-size: 1.25rem;
+    }
+    .values-section {
+        padding: 30px 15px;
+    }
+    .values-title {
+        font-size: 1.6rem;
+    }
+    .value-icon {
+        font-size: 2.2rem;
+    }
 }

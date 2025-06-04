@@ -1,0 +1,22 @@
+.flash-banner {
+  width: 100%;
+  overflow: hidden;
+}
+
+.slide-wrapper {
+  width: 100%;
+}
+
+.banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  max-height: 544px; /* desktop banner max height */
+}
+
+@media (max-width: 767px) {
+  .banner-img {
+    max-height: 300px; /* smaller height for mobile */
+  }
+}

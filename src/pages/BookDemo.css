@@ -1,58 +1,270 @@
-.book-demo-container {
-    max-width: 500px;
-    margin: 40px auto;
-    padding: 20px;
-    background: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+/* --- Color Palette Definitions (consistent with other components) --- */
+:root {
+   --dark-indigo: #292551;
+   --slate-gray: #454E5B;
+   --deep-magenta: #B21F62;
+   --hot-pink: #DB1A66;
+   --light-gray: #DCD9DA;
+   --orange: #F26E26;
+   --golden-yellow: #F6A11F;
+   --bright-yellow: #FCCD11;
+   --white: #ffffff;
+
+   /* Semantic mapping for easy use */
+   --brand-primary: var(--dark-indigo);
+   --brand-secondary: var(--deep-magenta);
+   --brand-accent-1: var(--bright-yellow);
+   --brand-accent-2: var(--orange);
+   --text-color-dark: var(--slate-gray);
+   --text-color-light: var(--light-gray);
+   --background-page: #f8f8f8;
+   --card-bg: var(--white);
+   --shadow-strong: rgba(0, 0, 0, 0.18);
+   --shadow-light: rgba(0, 0, 0, 0.05);
+   --input-border-color: var(--light-gray);
+   --input-focus-border: var(--brand-secondary);
+   --button-gradient-start: var(--deep-magenta);
+   --button-gradient-end: var(--hot-pink);
+   --error-color: var(--hot-pink); /* Using Hot Pink for errors */
+}
+
+/* --- Base Page Container --- */
+.book-demo-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 60px 20px;
+    background: var(--background-page);
+    font-family: 'Inter', sans-serif;
+    color: var(--text-color-dark);
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+/* --- Loader Styling (if Loader component is a simple overlay) --- */
+.loader-overlay { /* Example class if your Loader is an overlay */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(var(--dark-indigo), 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* --- Main Form Card --- */
+.book-demo-card {
+    max-width: 600px;
+    width: 100%;
+    padding: 20px 40px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px var(--shadow-light);
     text-align: center;
-  }
-  
-  .book-demo-container h2 {
-    font-size: 24px;
-    margin-bottom: 8px;
-    color: #4f46e5;
-  }
-  
-  .book-demo-container p {
-    font-size: 16px;
-    color: #555;
-    margin-bottom: 20px;
-  }
-  
-  .demo-form {
+    opacity: 0;
+    transform: translateY(40px);
+    animation: fadeInSlideUp 0.9s ease-out forwards 0.3s; /* Card itself animates in */
+}
+
+.book-demo-card .card-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--brand-primary);
+    letter-spacing: 1px;
+    opacity: 0; /* Initial state for animation */
+    animation: fadeInSlideUp 0.7s ease-out forwards 0.6s; /* Animates after card */
+}
+
+.book-demo-card .card-description {
+    font-size: 1rem;
+    color: var(--text-color-dark);
+    margin-bottom: 40px;
+    line-height: 1.6;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    opacity: 0; /* Initial state for animation */
+    animation: fadeInSlideUp 0.7s ease-out forwards 0.8s; /* Animates after title */
+}
+
+/* --- Form Styling --- */
+.demo-form {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-  }
-  
-  .demo-form input,
-  .demo-form select,
-  .demo-form textarea {
-    padding: 10px 14px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    font-family: 'Poppins', sans-serif;
-  }
-  
-  .demo-form button {
-    padding: 12px;
-    background-color: #34d399;
-    color: white;
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 0;
+    position: relative;
+    opacity: 0; /* Hidden for animation */
+    /* Individual stagger animation will be applied here */
+}
+
+/* ANIMATION FOR EACH FORM GROUP */
+.demo-form .form-group:nth-child(1) { animation: fadeInSlideUp 0.7s ease-out forwards 1.0s; }
+.demo-form .form-group:nth-child(2) { animation: fadeInSlideUp 0.7s ease-out forwards 1.1s; }
+.demo-form .form-group:nth-child(3) { animation: fadeInSlideUp 0.7s ease-out forwards 1.2s; }
+.demo-form .form-group:nth-child(4) { animation: fadeInSlideUp 0.7s ease-out forwards 1.3s; }
+.demo-form .form-group:nth-child(5) { animation: fadeInSlideUp 0.7s ease-out forwards 1.4s; }
+
+
+.demo-form input,
+.demo-form select,
+.demo-form textarea {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--input-border-color);
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-color-dark);
+    background-color: var(--white);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-sizing: border-box;
+}
+
+.demo-form input::placeholder,
+.demo-form textarea::placeholder {
+    color: var(--slate-gray);
+    opacity: 0.7;
+}
+
+.demo-form input:focus,
+.demo-form select:focus,
+.demo-form textarea:focus {
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 3px rgba(var(--brand-secondary), 0.2);
+    outline: none;
+}
+
+.demo-form select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23454E5B'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    padding-right: 40px;
+}
+
+.demo-form input.input-error,
+.demo-form select.input-error,
+.demo-form textarea.input-error {
+    border-color: var(--error-color);
+    box-shadow: 0 0 0 3px rgba(var(--error-color), 0.2);
+}
+
+.error-message {
+    color: var(--error-color);
+    font-size: 0.85rem;
+    text-align: left;
+    margin-top: 5px;
+    padding-left: 5px;
+}
+
+.submit-button {
+    padding: 15px 25px;
+    background: linear-gradient(90deg, var(--button-gradient-start), var(--button-gradient-end));
+    color: var(--white);
     border: none;
-    border-radius: 6px;
-    font-size: 16px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.3s;
-  }
-  
-  .demo-form button:hover {
-    background-color: #10b981;
-  }
-  .error {
-    color: red;
-    font-size: 14px;
-    margin-top: -10px;
-    margin-bottom: 10px;
-  }
+    transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 20px;
+    opacity: 0; /* Hidden for animation */
+    animation: fadeInSlideUp 0.7s ease-out forwards 1.5s; /* Animates after last input */
+}
+
+.submit-button:hover {
+    background: linear-gradient(90deg, var(--button-gradient-end), var(--button-gradient-start));
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+}
+
+/* --- Keyframe Animations --- */
+@keyframes fadeInSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px); /* Reduced slide distance for subtle animation */
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .book-demo-page {
+        padding: 40px 15px;
+        align-items: flex-start;
+    }
+    .book-demo-card {
+        padding: 40px 25px;
+        border-radius: 15px;
+    }
+    .book-demo-card .card-title {
+        font-size: 1.8rem; /* Adjusted for mobile */
+    }
+    .book-demo-card .card-description {
+        font-size: 0.95rem;
+        margin-bottom: 30px;
+    }
+    .demo-form {
+        gap: 15px;
+    }
+    .demo-form input,
+    .demo-form select,
+    .demo-form textarea {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
+    .submit-button {
+        padding: 12px 20px;
+        font-size: 0.95rem;
+        margin-top: 15px;
+    }
+    .error-message {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .book-demo-page {
+        padding: 30px 10px;
+    }
+    .book-demo-card {
+        padding: 30px 20px;
+        border-radius: 12px;
+    }
+    .book-demo-card .card-title {
+        font-size: 1.5rem; /* Adjusted for smaller mobile */
+    }
+    .book-demo-card .card-description {
+        font-size: 0.85rem;
+        margin-bottom: 25px;
+    }
+    .demo-form {
+        gap: 12px;
+    }
+    .demo-form input,
+    .demo-form select,
+    .demo-form textarea {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+    .submit-button {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        margin-top: 10px;
+    }
+}

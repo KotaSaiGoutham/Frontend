@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import './Navbar.css';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import "./Navbar.css";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -11,7 +11,7 @@ const Navbar = () => {
 
   return (
     <header className="navbar">
-      <Link to="/" onClick={handleLinkClick} style={{ textDecoration: 'none' }}>
+      <Link to="/" onClick={handleLinkClick} style={{ textDecoration: "none" }}>
         <div className="navbar-left">
           <img src="/spaceship.png" alt="Logo" className="logo" />
         </div>
@@ -21,12 +21,29 @@ const Navbar = () => {
         ☰
       </div>
 
-      <nav className={`navbar-right ${menuOpen ? 'active' : ''}`}>
-        <Link to="/" onClick={handleLinkClick}>Home</Link>
-        <Link to="/about" onClick={handleLinkClick}>About Us</Link>
-        <Link to="/teachers" onClick={handleLinkClick}>Faculty</Link>
-        <Link to="/contact" onClick={handleLinkClick}>Contact Us</Link>
-        <Link to="/book-demo" className="book-btn" onClick={handleLinkClick}>Book Demo</Link>
+      <nav className={`navbar-right ${menuOpen ? "active" : ""}`}>
+        <Link to="/" onClick={handleLinkClick}>
+          Home
+        </Link>
+        <Link to="/about" onClick={handleLinkClick}>
+          About Us
+        </Link>
+        <Link to="/teachers" onClick={handleLinkClick}>
+          Faculty
+        </Link>
+        <Link to="/careers" onClick={handleLinkClick}>
+          Careers{" "}
+        </Link>
+        <Link to="/blog" onClick={handleLinkClick}>
+          Blog{" "}
+        </Link>
+
+        <Link to="/contact" onClick={handleLinkClick}>
+          Contact Us
+        </Link>
+        <Link to="/book-demo" className="book-btn" onClick={handleLinkClick}>
+          Book Demo
+        </Link>
       </nav>
     </header>
   );

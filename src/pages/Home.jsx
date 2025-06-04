@@ -1,32 +1,39 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from "react";
 import "./Home.css";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CalendarCheck, UserCheck, LineChart } from "lucide-react";
 import Footer from "../components/Footer";
-import { FaSmile, FaUsers, FaChalkboardTeacher } from 'react-icons/fa';
-import PhoneDialer from './PhoneDailer';
+import { FaSmile, FaUsers, FaChalkboardTeacher } from "react-icons/fa";
+import PhoneDialer from "./PhoneDailer";
 import { ChevronDown, ChevronUp } from "lucide-react";
-
+import FacultyVideo from "./FacultyVideo";
+import FlashBanner from "./FlashPlayer";
+import FacultyShowcase from "./FacultyList";
+import Testimonials from "./Testimonial";
+import FacultyList from "./FacultyVideo";
+import FAQSection from "./FAQSection";
 const faculties = [
   {
     id: 1,
-    name: "Dulam Vamshi Krishna",
+    name: "Vamshi Krishna Dulam",
     subject: "Physics",
-    experience: 15,
-    videoUrl: "https://www.youtube.com/embed/i_OE2PcGzBE?controls=1&modestbranding=1&rel=0",
+    experience: 16,
+    videoUrl:
+      "https://www.youtube.com/embed/i_OE2PcGzBE?controls=1&modestbranding=1&rel=0",
     description:
-      "Expert in Physics with 15 years of NEET & JEE teaching experience. Known for simplifying complex topics and boosting student confidence.",
+      "Expert in Physics with 16 years of NEET,JEE and BITSAT teaching experience. Known for simplifying complex topics and boosting student confidence.",
     syllabus: "Covers Mechanics, Thermodynamics, Optics, Modern Physics.",
     teachingStyle:
       "Interactive sessions with concept clarity, problem-solving, and regular doubt clearing.",
   },
   {
     id: 2,
-    name: "Karunakar",
+    name: "Karunakar Reddy Bollam",
     subject: "Chemistry",
-    experience: 12,
-    videoUrl: "https://www.youtube.com/embed/W8-lgVDTxCM?controls=1&modestbranding=1&rel=0",
+    experience: 15,
+    videoUrl:
+      "https://www.youtube.com/embed/W8-lgVDTxCM?controls=1&modestbranding=1&rel=0",
     description:
       "Specialist in Organic Chemistry with focus on application-based learning. Excels in helping students ace exams.",
     syllabus:
@@ -89,14 +96,55 @@ const faqs = [
       "We provide monthly progress reports and conduct regular mock tests to ensure you're on the right track.",
   },
 ];
-
+console.log("faqs",faqs)
+const facultyList = [
+  {
+    name: "Karunakar Reddy Bollam",
+    photo: "/faculty1.jpeg",
+    subject: "Physics",
+    experience: "10+ yrs",
+  },
+  {
+    name: "Vamshi Krishna Dulam",
+    photo: "/faculty2.jpeg",
+    subject: "Chemistry",
+    experience: "8+ yrs",
+  },
+  {
+    name: "K.V.S.R.Raju",
+    photo: "/faculty3.jpeg",
+    subject: "Maths",
+    experience: "9+ yrs",
+  },
+  {
+    name: "Mr. Sameer Khan",
+    photo: "/faculty4.jpg",
+    subject: "Physics",
+    experience: "7 yrs",
+  },
+  {
+    name: "Mrs. Anjali Das",
+    photo: "/faculty5.jpg",
+    subject: "Chemistry",
+    experience: "6 yrs",
+  },
+  {
+    name: "Mr. Arjun Rao",
+    photo: "/faculty6.jpg",
+    subject: "Maths",
+    experience: "5 yrs",
+  },
+];
 const Home = () => {
   const statsRef = useRef(null);
   const [startCount, setStartCount] = useState(false);
   const [selectedId, setSelectedId] = useState(faculties[0].id);
-  const selectedFaculty = faculties.find((f) => f.id === selectedId);
   const [openIndex, setOpenIndex] = useState(null);
 
+  // useEffect(() => {
+  //   const timer = setTimeout(() => setShowAll(true), 3000);
+  //   return () => clearTimeout(timer);
+  // }, []);
   const toggle = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
@@ -118,54 +166,152 @@ const Home = () => {
 
     return () => observer.disconnect();
   }, []);
+  
+ // useRef to store all the DOM node references for steps
+  const stepRefs = useRef([]);
+  stepRefs.current = []; // Clear refs on each render to ensure we only have current DOM nodes
+
+  // State to store which steps are visible
+  const [visibleSteps, setVisibleSteps] = useState({});
+
+  // Effect to set up and tear down the Intersection Observer for steps
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setVisibleSteps((prevVisibleSteps) => {
+          let updated = false;
+          const newVisibleSteps = { ...prevVisibleSteps };
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !newVisibleSteps[entry.target.id]) {
+              newVisibleSteps[entry.target.id] = true;
+              updated = true;
+            }
+          });
+          return updated ? newVisibleSteps : prevVisibleSteps;
+        });
+      },
+      {
+        threshold: 0.3, // Trigger when 30% of the element is visible
+        rootMargin: "0px",
+      }
+    );
+
+    // Observe all current step refs
+    stepRefs.current.forEach((stepRef) => {
+      if (stepRef) {
+        observer.observe(stepRef);
+      }
+    });
+
+    // Cleanup function: disconnect observer when component unmounts
+    return () => {
+      observer.disconnect();
+    };
+  }, []); // Empty dependency array: Observer is created once on mount
+
+  // Helper to add ref to the array
+  const addStepRef = (el) => {
+    if (el && !stepRefs.current.includes(el)) {
+      stepRefs.current.push(el);
+    }
+  };
+
+  // Helper to determine the animation type based on index
+  const getStepAnimationType = (index) => {
+    // We'll use different animations for each step for variety
+    if (index === 0) return 'fade-in-up';     // First step fades up
+    if (index === 1) return 'zoom-in';       // Second step zooms in
+    if (index === 2) return 'slide-in-right'; // Third step slides from right
+    return 'fade-in-up'; // Default, though we only have 3 steps here
+  };
+
+
   return (
     <div className="home">
       <PhoneDialer />
       {/* Hero Section */}
- <section className="flash-banner">
-  <img
-    src="/intro-banner.jpeg"
-    alt="Electron Academy Highlights"
-    className="flash-image slide-in-banner"
-  />
+      <FlashBanner />
+ <section className="subjects">
+  <h2>Subjects We Teach</h2>
+  <div className="subject-list">
+    <div className="subject-card delay-1">
+      <img
+        src="https://www.svgrepo.com/show/3679/physics.svg"
+        alt="Physics Icon"
+      />
+      <h3>Physics</h3>
+      <blockquote>Explore the fundamental laws of the universe</blockquote>
+    </div>
+
+    <div className="subject-card delay-2">
+      <img
+        src="https://www.svgrepo.com/show/62122/chemistry.svg"
+        alt="Chemistry Icon"
+      />
+      <h3>Chemistry</h3>
+      <blockquote>Understand matter and its transformations</blockquote>
+    </div>
+
+    <div className="subject-card delay-3">
+     <img
+  src="/maths-icon.png"  // adjust path if needed
+  alt="Math Icon"
+/>
+
+      <h3>Maths</h3>
+      <blockquote>Master the language of numbers and logic</blockquote>
+    </div>
+  </div>
 </section>
 
-      <section className="subjects">
-        <h2>Subjects We Teach</h2>
-        <div className="subject-list">
-          <div className="subject-card">📘 Math</div>
-          <div className="subject-card">🔬 Science</div>
-          <div className="subject-card">🧪 Chemistry</div>
-        </div>
-      </section>
+
+
+
+      <FacultyShowcase />
 
       <section className="how-it-works">
-        <h2>How It Works</h2>
-        <div className="steps">
-          <div className="step">
-            <div className="step-header">
-              <span className="icon">📅</span>
-              <h3>Book a Free Demo</h3>
-            </div>
-            <p>Schedule a trial class to see how one-on-one learning fits your child.</p>
-          </div>
-          <div className="step">
-            <div className="step-header">
-              <span className="icon">👩‍🏫</span>
-              <h3>Meet Your Tutor</h3>
-            </div>
-            <p>We assign a subject expert based on your needs and learning goals.</p>
-          </div>
-          <div className="step">
-            <div className="step-header">
-              <span className="icon">📈</span>
-              <h3>Learn & Track Progress</h3>
-            </div>
-            <p>Attend sessions via Zoom. Parents get progress updates weekly.</p>
-          </div>
-        </div>
-      </section>
+      <h2>How It Works</h2>
+      <div className="steps">
+        {/* Map over the steps to dynamically add refs and classes */}
+        {[1, 2, 3].map((stepNum, index) => { // Using a simple array for mapping as the content is hardcoded
+          const stepId = `how-it-works-step-${index}`;
+          const animationType = getStepAnimationType(index);
+          const isStepVisible = visibleSteps[stepId];
 
+          return (
+            <div
+              key={stepId}
+              id={stepId}
+              className={`step ${isStepVisible ? animationType : ''}`}
+              ref={addStepRef}
+              style={{
+                // Stagger the animation of steps as they become visible
+                animationDelay: isStepVisible ? `${index * 0.2}s` : '0s',
+              }}
+            >
+              <div className="step-header">
+                {/* Icons can be passed as props or determined by index */}
+                <span className="icon">
+                  {index === 0 && '📅'}
+                  {index === 1 && '👩‍🏫'}
+                  {index === 2 && '📈'}
+                </span>
+                <h3>
+                  {index === 0 && 'Book a Free Demo'}
+                  {index === 1 && 'Meet Your Tutor'}
+                  {index === 2 && 'Learn & Track Progress'}
+                </h3>
+              </div>
+              <p>
+                {index === 0 && 'Schedule a trial class to see how one-on-one learning fits your child.'}
+                {index === 1 && 'We assign a subject expert based on your needs and learning goals.'}
+                {index === 2 && 'Attend sessions via Zoom. Parents get progress updates weekly.'}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </section>
 
       <section className="benefits">
         <h2>Why Choose Electron Academy?</h2>
@@ -173,216 +319,288 @@ const Home = () => {
           <div className="card">
             <div className="icon-avatar">
               {/* Teacher Icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M5.5 21a6.5 6.5 0 0113 0" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  cx="12"
+                  cy="7"
+                  r="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M5.5 21a6.5 6.5 0 0113 0"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <h3>One-on-One Learning</h3>
-            <p>Personalized attention to address each student's learning style, pace, and needs.</p>
+            <p>
+              Personalized attention to address each student's learning style,
+              pace, and needs.
+            </p>
           </div>
           <div className="card">
             <div className="icon-avatar">
               {/* Globe Icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
-                <line x1="2" y1="12" x2="22" y2="12" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M12 2a15.3 15.3 0 010 20" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M12 2a15.3 15.3 0 000 20" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <line
+                  x1="2"
+                  y1="12"
+                  x2="22"
+                  y2="12"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 2a15.3 15.3 0 010 20"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 2a15.3 15.3 0 000 20"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <h3>Convenience from Anywhere</h3>
-            <p>Attend classes from home, saving travel time and ensuring a safe learning environment.</p>
+            <p>
+              Attend classes from home, saving travel time and ensuring a safe
+              learning environment.
+            </p>
           </div>
           <div className="card">
             <div className="icon-avatar">
               {/* Clock Icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <polyline
+                  points="12 6 12 12 16 14"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <h3>Save Time</h3>
-            <p>No commuting, no waiting—just focused learning at scheduled slots that suit you.</p>
+            <p>
+              No commuting, no waiting—just focused learning at scheduled slots
+              that suit you.
+            </p>
           </div>
           <div className="card">
             <div className="icon-avatar">
               {/* Money Icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <rect x="2" y="7" width="20" height="10" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M12 11v2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M10 9h4" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M10 15h4" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <rect
+                  x="2"
+                  y="7"
+                  width="20"
+                  height="10"
+                  rx="2"
+                  ry="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 11v2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M10 9h4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M10 15h4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <h3>Save Money</h3>
-            <p>Affordable tuition plans without the need for expensive coaching centers or transport.</p>
+            <p>
+              Affordable tuition plans without the need for expensive coaching
+              centers or transport.
+            </p>
           </div>
           <div className="card">
             <div className="icon-avatar">
               {/* Family Icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <circle cx="9" cy="7" r="3" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="18" cy="7" r="3" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M2 21v-2a4 4 0 014-4h12a4 4 0 014 4v2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  cx="9"
+                  cy="7"
+                  r="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle
+                  cx="18"
+                  cy="7"
+                  r="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M2 21v-2a4 4 0 014-4h12a4 4 0 014 4v2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <h3>Parents Can Join</h3>
-            <p>Parents can attend classes with their children and monitor progress in real-time from anywhere.</p>
+            <p>
+              Parents can attend classes with their children and monitor
+              progress in real-time from anywhere.
+            </p>
+          </div>
+
+          {/* New Customized Micro Schedule & Tests card */}
+          <div className="card">
+            <div className="icon-avatar">
+              {/* Calendar + Test Icon (combined) */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <rect
+                  x="3"
+                  y="4"
+                  width="18"
+                  height="18"
+                  rx="2"
+                  ry="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <line
+                  x1="16"
+                  y1="2"
+                  x2="16"
+                  y2="6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <line
+                  x1="8"
+                  y1="2"
+                  x2="8"
+                  y2="6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <line
+                  x1="3"
+                  y1="10"
+                  x2="21"
+                  y2="10"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M8 14h8M8 18h8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h3>Customized Micro Schedule & Tests</h3>
+            <p>
+              Personalized small-step schedules and regular tests to ensure
+              steady progress.
+            </p>
           </div>
         </div>
       </section>
 
-      <section className="faculty-list-section">
-        <h2 className="faculty-heading">Our Faculty</h2>
-
-        {faculties.map((faculty, index) => {
-          const isKarunakar = faculty.name === "Karunakar";
-
-          return (
-            <div
-              key={faculty.id}
-              className={`faculty-item ${isKarunakar ? "video-left" : "video-right"}`}
-            >
-              <div className="faculty-content">
-                <h3>{faculty.name}</h3>
-                <p className="subject-exp">
-                  <strong>{faculty.subject}</strong> | {faculty.experience} years experience
-                </p>
-                <p>{faculty.description}</p>
-                <p>
-                  <strong>Syllabus Covered:</strong> {faculty.syllabus}
-                </p>
-                <p>
-                  <strong>Teaching Style:</strong> {faculty.teachingStyle}
-                </p>
-              </div>
-
-              <div className="faculty-video">
-                <iframe
-                  width="100%"
-                  height="320"
-                  src={faculty.videoUrl}
-                  title={`${faculty.name} ${faculty.subject} Lecture`}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
+   <FacultyVideo faculties={faculties}/>
 
       <section className="stats" ref={statsRef}>
         <h2>Trusted by Hundreds of Families</h2>
         <div className="stat-grid">
           <div className="stat">
             <FaSmile className="stat-icon" />
-            <h3><CountUpNumber end={500} start={startCount} /></h3>
+            <h3>
+              <CountUpNumber end={500} start={startCount} />
+            </h3>
             <p>Happy Students</p>
           </div>
           <div className="stat">
             <FaUsers className="stat-icon" />
-            <h3><CountUpNumber end={100} start={startCount} /></h3>
+            <h3>
+              <CountUpNumber end={500} start={startCount} />
+            </h3>
             <p>Parent Satisfaction</p>
           </div>
           <div className="stat">
             <FaChalkboardTeacher className="stat-icon" />
-            <h3><CountUpNumber end={10} start={startCount} /></h3>
+            <h3>
+              <CountUpNumber end={30} start={startCount} />
+            </h3>
             <p>Expert Tutors</p>
           </div>
         </div>
       </section>
 
-
-      <section className="testimonials">
-        <h2>Parent Success Stories</h2>
-        <div className="testimonial-list">
-          <div className="testimonial-card">
-            <img src="https://ui-avatars.com/api/?name=Sai+Rao&background=a0a0a0&color=fff" alt="Mrs. Rao" className="testimonial-avatar" />
-            <div>
-              <p>"My daughter was struggling with math, but with one-on-one help, her confidence has soared."</p>
-              <strong>– Mrs. Rao, Hyderabad</strong>
-            </div>
-          </div>
-
-          <div className="testimonial-card">
-            <img src="https://ui-avatars.com/api/?name=Harshitha+Sharma&background=a0a0a0&color=fff" alt="Mr. Sharma" className="testimonial-avatar" />
-            <div>
-              <p>"As a working parent, I love that I can join the session from my office and track my son's learning."</p>
-              <strong>– Mr. Sharma, Bangalore</strong>
-            </div>
-          </div>
-
-          <div className="testimonial-card">
-            <img src="https://ui-avatars.com/api/?name=Vamshi+Gupta&background=a0a0a0&color=fff" alt="Mrs. Gupta" className="testimonial-avatar" />
-            <div>
-              <p>"Great teachers and flexible timing. My child now looks forward to study time!"</p>
-              <strong>– Mrs. Gupta, Delhi</strong>
-            </div>
-          </div>
-
-          {/* New Testimonials */}
-
-          <div className="testimonial-card">
-            <img src="https://ui-avatars.com/api/?name=Anjali+Patel&background=a0a0a0&color=fff" alt="Mrs. Patel" className="testimonial-avatar" />
-            <div>
-              <p>"The personalized attention has made a huge difference in my son's progress. Highly recommend!"</p>
-              <strong>– Mrs. Patel, Mumbai</strong>
-            </div>
-          </div>
-
-          <div className="testimonial-card">
-            <img src="https://ui-avatars.com/api/?name=Rohan+Singh&background=a0a0a0&color=fff" alt="Mr. Singh" className="testimonial-avatar" />
-            <div>
-              <p>"Flexible schedules and patient tutors make Electron Academy the best choice for our family."</p>
-              <strong>– Mr. Singh, Chennai</strong>
-            </div>
-          </div>
-
-          <div className="testimonial-card">
-            <img src="https://ui-avatars.com/api/?name=Neha+Kumar&background=a0a0a0&color=fff" alt="Mrs. Kumar" className="testimonial-avatar" />
-            <div>
-              <p>"My daughter’s grades improved significantly after joining, and she enjoys every class."</p>
-              <strong>– Mrs. Kumar, Pune</strong>
-            </div>
-          </div>
-        </div>
-      </section>
-   <section className="faq-section">
-      <h2>
-        Frequently Asked <span>Questions</span>
-      </h2>
-      <div className="faq-wrapper">
-        {faqs.map((faq, index) => (
-          <div
-            key={index}
-            className={`faq-card ${openIndex === index ? "open" : ""} ${
-              index % 2 === 0 ? "slide-left" : "slide-right"
-            }`}
-          >
-            <div className="faq-question" onClick={() => toggle(index)}>
-              {faq.question}
-              <span>{openIndex === index ? "▲" : "▼"}</span>
-            </div>
-            {openIndex === index && (
-              <div className="faq-answer">{faq.answer}</div>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
-
+  <Testimonials/>
+<FAQSection/>
 
       {/* Call to Action */}
       <section className="cta">
         <h3>Ready to start?</h3>
-        <Link to="/book-demo" className="book-btn">Book Your Free Demo Now</Link>
+        <Link to="/book-demo" className="book-btn">
+          Book Your Free Demo Now
+        </Link>
       </section>
       <Footer />
-
     </div>
   );
 };
@@ -413,5 +631,3 @@ function CountUpNumber({ end, start }) {
 
   return <>{count}</>;
 }
-
-
