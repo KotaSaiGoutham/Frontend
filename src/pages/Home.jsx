@@ -231,7 +231,7 @@ const Home = () => {
       <PhoneDialer />
       {/* Hero Section */}
       <FlashBanner />
- <section className="subjects">
+<section className="subjects">
   <h2>Subjects We Teach</h2>
   <div className="subject-list">
     <div className="subject-card delay-1">
@@ -253,16 +253,25 @@ const Home = () => {
     </div>
 
     <div className="subject-card delay-3">
-     <img
-  src="/maths-icon.png"  // adjust path if needed
-  alt="Math Icon"
-/>
-
+      <img
+        src="/maths-icon.png" // adjust path if needed
+        alt="Math Icon"
+      />
       <h3>Maths</h3>
       <blockquote>Master the language of numbers and logic</blockquote>
     </div>
+
+    <div className="subject-card delay-4">
+      <img
+        src="/biology-icon.png" // update to your image path
+        alt="Biology Icon"
+      />
+      <h3>Biology</h3>
+      <blockquote>Discover the science of life and living organisms</blockquote>
+    </div>
   </div>
 </section>
+
 
 
 

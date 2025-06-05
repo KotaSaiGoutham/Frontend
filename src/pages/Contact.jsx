@@ -26,7 +26,7 @@ const ContactUs = () => {
           <div className="contact-item">
             <span className="contact-icon">✉️</span>
             <h3 className="item-title">Email</h3>
-            <p className="item-description">electronacademy2019@gmail.com</p>
+            <p className="item-description">electronacademy.2019@gmail.com</p>
           </div>
         </div>
       </section>
