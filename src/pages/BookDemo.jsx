@@ -164,6 +164,8 @@ const BookDemo = () => {
               <option value="IGCSE (Cambridge)">IGCSE (Cambridge)</option>
               <option value="IB">IB</option>
               <option value="Foundation">Foundation</option>
+                            <option value="Others">Others</option>
+
             </select>
             {errors.stream && <p className="error-message">{errors.stream}</p>}
           </div>
@@ -180,7 +182,7 @@ const BookDemo = () => {
               <option value="Chemistry">Chemistry</option>
               <option value="Physics">Physics</option>
               <option value="Biology">Biology</option>{" "}
-              {/* Added Biology for completeness */}
+              <option value="Others">Others</option>
             </select>
             {errors.subject && (
               <p className="error-message">{errors.subject}</p>

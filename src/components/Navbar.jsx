@@ -1,49 +1,58 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom"; // Make sure NavLink is imported
 import "./Navbar.css";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLinkClick = () => {
-    setMenuOpen(false); // Close menu on link click
+    setMenuOpen(false);
   };
 
   return (
     <header className="navbar">
-      <Link to="/" onClick={handleLinkClick} style={{ textDecoration: "none" }}>
+      {/* Use NavLink for the logo if it also navigates to home */}
+      <NavLink to="/" onClick={handleLinkClick} style={{ textDecoration: "none" }}>
         <div className="navbar-left">
           <img src="/spaceship.png" alt="Logo" className="logo" />
         </div>
-      </Link>
+      </NavLink>
 
       <div className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
-        ☰
+        {menuOpen ? (
+          <span className="close-btn">&times;</span>
+        ) : (
+          <span>&#9776;</span>
+        )}
       </div>
 
       <nav className={`navbar-right ${menuOpen ? "active" : ""}`}>
-        <Link to="/" onClick={handleLinkClick}>
+        <NavLink to="/" onClick={handleLinkClick} exact activeClassName="active-link">
           Home
-        </Link>
-        <Link to="/about" onClick={handleLinkClick}>
+        </NavLink>
+        {/* MODIFIED AI LINK HERE */}
+        <NavLink to="/ai-summarizer" onClick={handleLinkClick} activeClassName="active-link">
+          AI <span className="try-it-highlight">Try it!</span>
+        </NavLink>
+        {/* END MODIFIED AI LINK */}
+        <NavLink to="/about" onClick={handleLinkClick} activeClassName="active-link">
           About Us
-        </Link>
-        <Link to="/teachers" onClick={handleLinkClick}>
+        </NavLink>
+        <NavLink to="/teachers" onClick={handleLinkClick} activeClassName="active-link">
           Faculty
-        </Link>
-        <Link to="/careers" onClick={handleLinkClick}>
+        </NavLink>
+        <NavLink to="/careers" onClick={handleLinkClick} activeClassName="active-link">
           Careers{" "}
-        </Link>
-        <Link to="/blog" onClick={handleLinkClick}>
+        </NavLink>
+        <NavLink to="/blog" onClick={handleLinkClick} activeClassName="active-link">
           Blog{" "}
-        </Link>
-
-        <Link to="/contact" onClick={handleLinkClick}>
+        </NavLink>
+        <NavLink to="/contact" onClick={handleLinkClick} activeClassName="active-link">
           Contact Us
-        </Link>
-        <Link to="/book-demo" className="book-btn" onClick={handleLinkClick}>
+        </NavLink>
+        <NavLink to="/book-demo" className="book-btn" onClick={handleLinkClick} activeClassName="active-btn">
           Book Demo
-        </Link>
+        </NavLink>
       </nav>
     </header>
   );

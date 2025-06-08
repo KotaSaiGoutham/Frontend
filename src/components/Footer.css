@@ -10,7 +10,6 @@ html, body {
   padding: 40px 20px;
   width: 100vw; /* Full viewport width */
   box-sizing: border-box;
-  font-family: 'Poppins', sans-serif;
   margin-top: auto; /* pushes footer to bottom if inside flex container */
   position: relative; /* ensure layering */
   left: 50%;

@@ -1,0 +1,72 @@
+/* src/pages/SubjectDetailPage.css */
+
+.subject-detail-page {
+  padding: 40px;
+  max-width: 900px;
+  margin: 20px auto;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  line-height: 1.8;
+  color: #333;
+}
+
+.subject-detail-page h1 {
+  color: #292551;
+  font-size: 3em;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.subject-detail-page h2 {
+  color: #F6A11F;
+  font-size: 2em;
+  margin-top: 30px;
+  margin-bottom: 15px;
+}
+
+.subject-detail-page p {
+  font-size: 1.1em;
+  margin-bottom: 15px;
+}
+
+.subject-detail-page ul {
+  list-style-type: disc;
+  margin-left: 25px;
+  margin-bottom: 20px;
+}
+
+.subject-detail-page li {
+  font-size: 1.05em;
+  margin-bottom: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .subject-detail-page {
+    padding: 25px;
+    margin: 15px;
+  }
+  .subject-detail-page h1 {
+    font-size: 2.2em;
+  }
+  .subject-detail-page h2 {
+    font-size: 1.8em;
+  }
+  .subject-detail-page p, .subject-detail-page li {
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 480px) {
+  .subject-detail-page {
+    padding: 15px;
+    margin: 10px;
+  }
+  .subject-detail-page h1 {
+    font-size: 1.8em;
+  }
+  .subject-detail-page h2 {
+    font-size: 1.5em;
+  }
+}

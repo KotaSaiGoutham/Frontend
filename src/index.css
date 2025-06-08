@@ -4,6 +4,8 @@ html, body {
     padding: 0;
     overflow-x: hidden; /* Temporarily hide horizontal overflow to find the culprit */
     width: 100%; /* Ensure they take full width */
+      font-family: 'Poppins', sans-serif;
+
 }
 
 /* Universal box-sizing for predictable layouts */

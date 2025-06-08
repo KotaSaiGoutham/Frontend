@@ -1,0 +1,104 @@
+/* src/components/SubjectCard.css */
+
+.subject-card {
+  background-color: #ffffff; /* Or a light background */
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer; /* Indicate it's clickable */
+  display: flex; /* For better alignment of content */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 280px; /* Adjust max-width as needed */
+  margin: 15px; /* Spacing between cards */
+}
+
+.subject-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.subject-card img {
+  width: 80px; /* Adjust icon size */
+  height: 80px;
+  margin-bottom: 20px;
+}
+
+.subject-card h3 {
+  color: #292551; /* Deep Navy */
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.subject-card blockquote {
+  color: #555; /* A slightly darker gray */
+  font-size: 16px;
+  line-height: 1.6;
+  font-style: italic;
+  margin: 0;
+  padding: 0 10px; /* Add some horizontal padding */
+}
+
+/* Delay animations (if you have them, e.g., for fade-in effect) */
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+/* Add more delay classes as needed */
+
+/* Responsive adjustments for subject cards */
+@media (max-width: 1024px) {
+  .subject-card {
+    padding: 25px;
+    max-width: 250px;
+  }
+  .subject-card img {
+    width: 70px;
+    height: 70px;
+  }
+  .subject-card h3 {
+    font-size: 22px;
+  }
+  .subject-card blockquote {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .subject-card {
+    max-width: 220px;
+    padding: 20px;
+    margin: 10px;
+  }
+  .subject-card img {
+    width: 60px;
+    height: 60px;
+  }
+  .subject-card h3 {
+    font-size: 20px;
+  }
+  .subject-card blockquote {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .subject-card {
+    width: 90%; /* Take up more width on very small screens */
+    max-width: none; /* Remove max-width to allow full width */
+    margin: 10px auto; /* Center individual cards */
+  }
+  .subject-card img {
+    width: 50px;
+    height: 50px;
+  }
+  .subject-card h3 {
+    font-size: 18px;
+  }
+  .subject-card blockquote {
+    font-size: 13px;
+  }
+}

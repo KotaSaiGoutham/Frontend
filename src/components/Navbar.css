@@ -1,8 +1,4 @@
-body {
-  font-family: 'Poppins', sans-serif;
-  margin: 0;
-  background-color: #ffffff;
-}
+
 
 .navbar {
   display: flex;
@@ -44,19 +40,23 @@ body {
   align-items: center;
 }
 
-.navbar-right a {
+.navbar-right a { /* Base styles for all navigation links */
   margin-left: 24px;
   text-decoration: none;
   color: #f0f0f0; /* White-ish for better contrast */
   font-weight: 500;
   position: relative;
   transition: color 0.3s;
+  white-space: nowrap; /* Prevents text from wrapping */
 }
 
-.navbar-right a.active {
+/* Styles for active links (applied by NavLink's activeClassName="active-link") */
+.navbar-right a.active-link {
   color: #FCCD11; /* Bright Yellow for active links */
+  font-weight: 600;
 }
 
+/* Underline for normal and active links on hover */
 .navbar-right a::after {
   content: '';
   position: absolute;
@@ -76,10 +76,56 @@ body {
   width: 100%;
 }
 
+/* --- REVISED STYLES FOR "Try it!" HIGHLIGHT --- */
+.navbar-right .try-it-highlight {
+  font-size: 0.7em; /* Slightly smaller than "AI" text for a "tag" feel */
+  font-weight: 700; /* Bolder */
+  color: #1e1e1e; /* Dark text for contrast against bright background */
+  background-color: #FCCD11; /* Bright Yellow background for highlight */
+  margin-left: 8px; /* More space between "AI" and "Try it!" */
+  padding: 3px 8px; /* Padding inside the highlighted box */
+  border-radius: 12px; /* More rounded corners for a pill shape */
+  animation: bounceAndFade 2.5s infinite ease-in-out; /* A more dynamic animation */
+  transform-origin: bottom; /* For the bounce effect */
+  display: inline-block; /* Essential for padding/margin to work correctly */
+  box-shadow: 0 2px 8px rgba(252, 205, 17, 0.4); /* Subtle shadow for depth */
+}
+
+/* Adjust highlight when its parent link is hovered or active */
+.navbar-right a:hover .try-it-highlight,
+.navbar-right a.active-link .try-it-highlight {
+  background-color: #DB1A66; /* Change background to Pink on hover/active */
+  color: #ffffff; /* Change text to white on hover/active */
+  box-shadow: 0 2px 10px rgba(219, 26, 102, 0.6); /* Stronger shadow on hover/active */
+  animation: none; /* Stop animation on hover/active for clarity */
+}
+
+/* Keyframes for the new animation */
+@keyframes bounceAndFade {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  20% {
+    transform: translateY(-5px); /* Bounce up slightly */
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(0);
+    opacity: 0.7; /* Fade out slightly */
+  }
+  80% {
+    transform: translateY(-2px); /* Another smaller bounce */
+    opacity: 0.9;
+  }
+}
+/* --- END REVISED STYLES --- */
+
+
 .book-btn {
   display: inline-block;
   background-color: #facc15; /* Yellow CTA */
-  color: #1e1e1e  !important;
+  color: #1e1e1e !important;
   padding: 12px 24px;
   font-weight: 600;
   font-size: 16px;
@@ -94,50 +140,121 @@ body {
   box-shadow: 0 4px 12px rgba(41, 37, 81, 0.4);
 }
 
+/* Optional: If you want a specific active style for book-btn */
+.book-btn.active-btn {
+  background-color: #DB1A66; /* Pink when active */
+  color: #fff !important;
+}
 
+.book-btn.active-btn:hover {
+  background-color: #292551;
+}
+
+/* --- */
 
 /* MOBILE RESPONSIVE STYLES */
 .menu-toggle {
-  display: none;
-  font-size: 26px;
+  display: none; /* Hidden by default on larger screens */
+  font-size: 26px; /* Size of the hamburger/cross icon */
   cursor: pointer;
   user-select: none;
-  color: white;
+  color: white; /* Color of the icon */
 }
 
 /* Small screen styles */
 @media (max-width: 768px) {
   .menu-toggle {
-    display: block;
+    display: block; /* Show on smaller screens */
+    position: relative;
+    z-index: 1002; /* Ensure toggle is above the sliding menu */
+    padding: 5px; /* Add some padding for easier tap target */
   }
 
   .navbar-right {
-    display: none;
+    display: none; /* Hidden by default, will be shown by .active class */
     flex-direction: column;
     background-color: #292551;
     position: absolute;
-    top: 60px;
+    top: 100%; /* Position right below the navbar */
     right: 0;
-    width: 100%;
+    width: 100%; /* Full width */
+    height: auto; /* Allow content to dictate height */
+    max-height: calc(100vh - 60px); /* Limit height to viewport minus navbar height */
+    overflow-y: auto; /* Enable scrolling if content exceeds max-height */
     padding: 10px 0;
-    border-top: 1px solid #ccc;
+    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Lighter border */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease-out; /* Smooth slide-in/out effect */
+    transform: translateX(100%); /* Start off-screen to the right */
   }
 
   .navbar-right.active {
-    display: flex;
+    display: flex; /* Make it visible */
+    transform: translateX(0); /* Slide into view */
   }
 
-  .navbar-right a {
+  .navbar-right a { /* Mobile base link styles */
     margin: 10px 0;
     text-align: center;
+    padding: 12px 0; /* Increase padding for better tap target */
+    width: 100%; /* Make links take full width of the menu */
+    color: #f0f0f0; /* Ensure link color is consistent */
+  }
+
+  .navbar-right a:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Light hover background */
+    border-radius: 0; /* Remove border-radius for full-width links */
+  }
+
+  .navbar-right a::after {
+    /* Hide underline for mobile menu items or style differently */
+    display: none;
+  }
+
+  /* Active link styles for mobile */
+  .navbar-right a.active-link {
+    background-color: rgba(252, 205, 17, 0.2); /* Light yellow background for active on mobile */
+    color: #FCCD11;
+  }
+
+  /* "Try it!" highlight on mobile */
+  .navbar-right .try-it-highlight {
+    font-size: 0.8em; /* Slightly larger on mobile if needed */
+    margin-left: 8px;
+    padding: 4px 10px; /* Adjust padding for mobile */
+    background-color: #FCCD11; /* Maintain yellow background on mobile */
+    color: #1e1e1e; /* Maintain dark text on mobile */
+    animation: none; /* Disable animation on mobile for better usability */
+  }
+
+  /* Adjust highlight when its parent link is hovered or active on mobile */
+  .navbar-right a:hover .try-it-highlight,
+  .navbar-right a.active-link .try-it-highlight {
+    background-color: #DB1A66; /* Pink background on hover/active for mobile */
+    color: #ffffff; /* White text on hover/active for mobile */
+  }
+
+
+  /* Adjustments for the Book Demo button in mobile view */
+  .navbar-right .book-btn {
+    margin-top: 20px; /* Add some space above the button */
+    margin-bottom: 10px;
+    padding: 14px 24px;
+    width: auto; /* Allow button to size naturally */
+    display: block; /* Ensure it takes its own line */
+    margin-left: auto;
+    margin-right: auto; /* Center the button */
+    border-radius: 8px; /* Maintain button's rounded corners */
+  }
+
+  /* Optional: If you want a specific active style for book-btn on mobile */
+  .book-btn.active-btn {
+    background-color: #DB1A66; /* Pink when active */
+    color: #fff !important;
   }
 }
-.logo {
-  width: 250px;
-  height: 100px;
-  transition: transform 0.4s ease;
-}
 
+/* Logo specific responsive styles */
 @media (max-width: 768px) {
   .logo {
     width: 150px;

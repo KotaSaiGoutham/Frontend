@@ -1,111 +1,286 @@
-/* --- Define your Color Palette (using CSS Variables) --- */
-:root {
-   --dark-indigo: #292551;
-   --slate-gray: #454E5B;
-   --deep-magenta: #B21F62;
-   --hot-pink: #DB1A66;
-   --light-gray: #DCD9DA;
-   --orange: #F26E26;
-   --golden-yellow: #F6A11F;
-   --bright-yellow: #FCCD11;
-   --white: #ffffff; /* Explicitly define white for consistency */
 
-   /* Re-mapping common variables for readability */
-   --primary-accent: var(--deep-magenta);
-   --secondary-accent: var(--hot-pink);
-   --text-heading-color: var(--dark-indigo);
-   --text-body-color: var(--slate-gray);
-   --background-light: var(--light-gray);
-   --interactive-color: var(--orange);
-
-   /* --- IMPORTANT: Set your Navbar Height here or directly in the calc() functions --- */
-   /* This can be a CSS variable if your Navbar component also uses one */
-   --current-navbar-height: 80px; /* <--- REPLACE WITH YOUR ACTUAL NAVBAR HEIGHT IN PIXELS */
-   --current-navbar-mobile-height: 60px; /* <--- Adjust for mobile if Navbar height changes */
+.careers-section {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 20px;
+  text-align: center;
 }
 
-
-/* --- Careers Component's Main Container (fills space below Navbar) --- */
-.careers-page-container {
-    position: absolute; /* Position it relative to the viewport/body */
-    top: var(--current-navbar-height); /* Starts exactly below the Navbar */
-    left: 0;
-    width: 100vw; /* Take full viewport width */
-    height: calc(100vh - var(--current-navbar-height)); /* Take remaining height */
-
-    /* Flexbox to center the content within this remaining area */
-    display: flex;
-    justify-content: center; /* Horizontally center */
-    align-items: center;     /* Vertically center */
-
-    background-color: var(--dark-indigo); /* Background for the content area */
-    color: var(--light-gray); /* Default text color for the page */
-    overflow: hidden; /* Important to contain the animation and any overflows */
+.section-title {
+  font-size: 2.8em;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-weight: 800;
 }
 
-/* --- Coming Soon Text Styling --- */
-.careers-coming-soon-text {
-    font-size: 2.5rem; /* Smaller font as requested */
-    font-weight: 700; /* Bolder for impact */
-    color: var(--bright-yellow); /* Bright Yellow for prominence */
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4); /* Stronger shadow for pop */
-    padding: 25px 50px; /* Generous padding around the text */
-    background-color: var(--deep-magenta); /* Deep Magenta background for the text box */
-    border-radius: 15px; /* More rounded corners */
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* Stronger, deeper shadow */
-    text-align: center; /* Center the text itself within its box */
-    letter-spacing: 2px; /* Add some letter spacing for style */
-    text-transform: uppercase; /* Make it uppercase for a clean look */
-    
-    /* --- ANIMATION --- */
-    opacity: 0; /* Start invisible */
-    transform: scale(0.8) translateY(50px); /* Start smaller and lower */
-    animation: fadeInPopUp 1.5s ease-out forwards; /* Apply the animation */
+.section-description {
+  font-size: 1.1em;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* --- Keyframe Animation Definition --- */
-@keyframes fadeInPopUp {
-    0% {
-        opacity: 0;
-        transform: scale(0.8) translateY(50px);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+.job-listings-container {
+  display: grid;
+  gap: 30px;
+  padding-top: 20px; /* Space for initial animation */
 }
 
-/* --- Optional: Subtle background pulse animation for the content area --- */
-.careers-page-container {
-    animation: backgroundPulse 10s infinite alternate ease-in-out;
+/* Responsive Grid */
+@media (min-width: 768px) {
+  .job-listings-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-@keyframes backgroundPulse {
-    0% { background-color: var(--dark-indigo); }
-    100% { background-color: var(--slate-gray); } /* Transition to Slate Gray */
+@media (min-width: 1024px) {
+  .job-listings-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-
-/* --- Responsive Adjustments --- */
-@media (max-width: 768px) {
-    .careers-coming-soon-text {
-        font-size: 2rem; /* Smaller for tablets/larger phones */
-        padding: 20px 40px;
-    }
-    .careers-page-container {
-        top: var(--current-navbar-mobile-height);
-        height: calc(100vh - var(--current-navbar-mobile-height));
-    }
+/* Existing job-card-wrapper initial state (important!) */
+.job-card-wrapper {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98); /* Start slightly down and smaller */
+    transition: all 0.8s ease-out; /* This transition will handle the animation when classes are added */
 }
 
-@media (max-width: 480px) {
-    .careers-coming-soon-text {
-        font-size: 1.5rem; /* Even smaller for small phones */
-        padding: 15px 30px;
-        letter-spacing: 1px;
-    }
-    .careers-page-container {
-        top: var(--current-navbar-mobile-height); /* Using mobile height as a base, adjust if needed */
-        height: calc(100vh - var(--current-navbar-mobile-height));
-    }
+/* Remove slide-in-left/right keyframes and related classes, and add these: */
+
+/* Apply this class to all cards once they are observed */
+.job-card-wrapper.fade-in-up {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.job-card {
+  position: relative;
+  background-color: #fff;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%; /* Ensure cards are same height in a row */
+}
+
+.job-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Job Card Styling */
+/* ... (rest of the job-card styling remains the same) ... */
+/* Card Background Colors (Solid) */
+/* Job Card Styling */
+/* ... (rest of the job-card styling remains the same) ... */
+
+/* Card Background Colors (Solid) */
+.card-background-gradient { /* Renamed class for consistency, but now holds a solid color */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.9; /* Slightly higher opacity for solid colors */
+  z-index: 0;
+}
+
+/* Color 1: Dark Indigo */
+.gradient-1 {
+  background-color: #292551;
+}
+
+/* Color 2: Deep Magenta */
+.gradient-2 {
+  background-color: #B21F62;
+}
+
+/* Color 3: Orange */
+.gradient-3 {
+  background-color: #F26E26;
+}
+
+/* Color 4: Slate Gray */
+.gradient-4 {
+  background-color: #454E5B;
+}
+
+/* Color 5: Golden Yellow */
+.gradient-5 {
+  background-color: #F6A11F;
+}
+
+/* Color 6: Hot Pink */
+.gradient-6 {
+  background-color: #DB1A66;
+}
+
+/* You also have: Light Gray (#DCD9DA), Bright Yellow (#FCCD11) */
+/* You can add more .gradient-X classes if you want to use all colors,
+   but ensure they provide good contrast for white text. */
+/* ... (rest of the CSS remains the same) ... */
+
+.job-card > *:not(.card-background-gradient) { /* Ensure content is above gradient */
+  position: relative;
+  z-index: 1;
+  color: #fff; /* White text for contrast */
+}
+
+/* Typography */
+.job-title {
+  font-size: 1.8em;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.job-subtitle {
+  font-size: 1em;
+  margin-bottom: 5px;
+  opacity: 0.9;
+}
+
+.job-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.info-item {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 5px 10px;
+  border-radius: 20px;
+}
+
+/* Actions (Buttons) */
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 30px;
+  padding-top: 10px; /* Ensures space from content above */
+}
+
+.apply-button {
+  background-color: #FFD700; /* Gold */
+  color: #333;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 30px;
+  font-size: 1.1em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+}
+
+.apply-button:hover {
+  background-color: #E6C200; /* Darker Gold */
+  transform: translateY(-2px);
+}
+
+/* Share Button and Social Options */
+.share-container {
+  position: relative;
+  display: inline-block;
+}
+
+.share-button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5em;
+  cursor: pointer;
+  padding: 5px;
+  transition: transform 0.2s ease;
+}
+
+.share-button:hover {
+  transform: scale(1.1);
+}
+
+.social-share-options {
+  position: absolute;
+  bottom: 100%; /* Position above the button */
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+  z-index: 10;
+}
+
+.share-container.active .social-share-options { /* 'active' class toggled by JS */
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.social-icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.2em;
+  text-decoration: none;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.social-icon.facebook { background-color: #3b5998; }
+.social-icon.whatsapp { background-color: #25D366; }
+.social-icon.linkedin { background-color: #0077b5; }
+.social-icon.twitter { background-color: #1DA1F2; }
+
+.social-icon:hover {
+  transform: translateY(-3px);
+  opacity: 0.9;
+}
+
+/* Entrance Animations (applied to .job-card-wrapper) */
+.job-card-wrapper.slide-in-left {
+  animation: slideInLeft 1s forwards;
+}
+
+.job-card-wrapper.slide-in-right {
+  animation: slideInRight 1s forwards;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%) translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%) translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
 }

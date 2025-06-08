@@ -1,6 +1,5 @@
 .home {
     font-family: 'Poppins', sans-serif;
-    padding: 20px;
     text-align: center;
   }
   
@@ -267,7 +266,7 @@
 }
 
 .subjects {
-  padding: 4rem 2rem;
+  padding: 1rem 2rem;
   background: linear-gradient(to bottom right, #eef3f8, #ffffff);
   text-align: center;
   font-family: 'Inter', sans-serif;
@@ -539,7 +538,7 @@
 
 /* --- Your existing .how-it-works styles below (no changes needed here unless you want to refine) --- */
 .how-it-works {
-  padding: 60px 20px;
+  padding: 30px 20px;
   background: linear-gradient(135deg, #f9faff 0%, #e3e9ff 100%);
   border-radius: 16px;
   margin-top: 60px;
@@ -636,7 +635,7 @@
 
 @media (max-width: 575px) {
   .how-it-works {
-    padding: 40px 15px;
+    padding: 20px 15px;
   }
   .how-it-works h2 {
     font-size: 24px;

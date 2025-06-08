@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./PhoneDailer.css"
 
 const PhoneDialer = () => {
-  const phoneNumber = "9876543210"; // Replace later
+  const phoneNumber = "8341482438"; // Replace later
   const [bounce, setBounce] = useState(false);
 
   useEffect(() => {

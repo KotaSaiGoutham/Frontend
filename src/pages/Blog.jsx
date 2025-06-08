@@ -1,5 +1,5 @@
 import React from 'react';
-import './Careers.css'; // <--- Import the CSS file
+import './ComingSoon.css'; // <--- Import the CSS file
 
 const Blog = () => {
   return (

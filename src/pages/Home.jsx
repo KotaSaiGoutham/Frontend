@@ -13,6 +13,7 @@ import FacultyShowcase from "./FacultyList";
 import Testimonials from "./Testimonial";
 import FacultyList from "./FacultyVideo";
 import FAQSection from "./FAQSection";
+import SubjectCard from "./SubjectCard";
 const faculties = [
   {
     id: 1,
@@ -231,46 +232,51 @@ const Home = () => {
       <PhoneDialer />
       {/* Hero Section */}
       <FlashBanner />
-<section className="subjects">
-  <h2>Subjects We Teach</h2>
-  <div className="subject-list">
-    <div className="subject-card delay-1">
-      <img
-        src="https://www.svgrepo.com/show/3679/physics.svg"
-        alt="Physics Icon"
-      />
-      <h3>Physics</h3>
-      <blockquote>Explore the fundamental laws of the universe</blockquote>
-    </div>
+ <section className="subjects">
+        <h2>Subjects We Teach</h2>
+        <div className="subject-list">
+          {/* Physics Card */}
+          <SubjectCard
+            title="Physics"
+            description="Explore the fundamental laws of the universe"
+            imageSrc="https://www.svgrepo.com/show/3679/physics.svg"
+            altText="Physics Icon"
+            redirectPath="/subjects/physics" // Define your redirection path
+            delayClass="delay-1"
+          />
 
-    <div className="subject-card delay-2">
-      <img
-        src="https://www.svgrepo.com/show/62122/chemistry.svg"
-        alt="Chemistry Icon"
-      />
-      <h3>Chemistry</h3>
-      <blockquote>Understand matter and its transformations</blockquote>
-    </div>
+          {/* Chemistry Card */}
+          <SubjectCard
+            title="Chemistry"
+            description="Understand matter and its transformations"
+            imageSrc="https://www.svgrepo.com/show/62122/chemistry.svg"
+            altText="Chemistry Icon"
+            redirectPath="/subjects/chemistry" // Define your redirection path
+            delayClass="delay-2"
+          />
 
-    <div className="subject-card delay-3">
-      <img
-        src="/maths-icon.png" // adjust path if needed
-        alt="Math Icon"
-      />
-      <h3>Maths</h3>
-      <blockquote>Master the language of numbers and logic</blockquote>
-    </div>
+          {/* Maths Card */}
+          <SubjectCard
+            title="Maths"
+            description="Master the language of numbers and logic"
+            imageSrc="/maths-icon.png"
+            altText="Math Icon"
+            redirectPath="/subjects/maths" // Define your redirection path
+            delayClass="delay-3"
+          />
 
-    <div className="subject-card delay-4">
-      <img
-        src="/biology-icon.png" // update to your image path
-        alt="Biology Icon"
-      />
-      <h3>Biology</h3>
-      <blockquote>Discover the science of life and living organisms</blockquote>
-    </div>
-  </div>
-</section>
+          {/* Biology Card */}
+          <SubjectCard
+            title="Biology"
+            description="Discover the science of life and living organisms"
+            imageSrc="/biology-icon.png"
+            altText="Biology Icon"
+            redirectPath="/subjects/biology" // Define your redirection path
+            delayClass="delay-4"
+          />
+        </div>
+      </section>
+
 
 
 

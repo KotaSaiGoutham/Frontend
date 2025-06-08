@@ -33,7 +33,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
     padding: 60px 20px;
     background: var(--background-page);
     font-family: 'Inter', sans-serif;

@@ -1,0 +1,111 @@
+/* --- Define your Color Palette (using CSS Variables) --- */
+:root {
+   --dark-indigo: #292551;
+   --slate-gray: #454E5B;
+   --deep-magenta: #B21F62;
+   --hot-pink: #DB1A66;
+   --light-gray: #DCD9DA;
+   --orange: #F26E26;
+   --golden-yellow: #F6A11F;
+   --bright-yellow: #FCCD11;
+   --white: #ffffff; /* Explicitly define white for consistency */
+
+   /* Re-mapping common variables for readability */
+   --primary-accent: var(--deep-magenta);
+   --secondary-accent: var(--hot-pink);
+   --text-heading-color: var(--dark-indigo);
+   --text-body-color: var(--slate-gray);
+   --background-light: var(--light-gray);
+   --interactive-color: var(--orange);
+
+   /* --- IMPORTANT: Set your Navbar Height here or directly in the calc() functions --- */
+   /* This can be a CSS variable if your Navbar component also uses one */
+   --current-navbar-height: 80px; /* <--- REPLACE WITH YOUR ACTUAL NAVBAR HEIGHT IN PIXELS */
+   --current-navbar-mobile-height: 60px; /* <--- Adjust for mobile if Navbar height changes */
+}
+
+
+/* --- Careers Component's Main Container (fills space below Navbar) --- */
+.careers-page-container {
+    position: absolute; /* Position it relative to the viewport/body */
+    top: var(--current-navbar-height); /* Starts exactly below the Navbar */
+    left: 0;
+    width: 100vw; /* Take full viewport width */
+    height: calc(100vh - var(--current-navbar-height)); /* Take remaining height */
+
+    /* Flexbox to center the content within this remaining area */
+    display: flex;
+    justify-content: center; /* Horizontally center */
+    align-items: center;     /* Vertically center */
+
+    background-color: var(--dark-indigo); /* Background for the content area */
+    color: var(--light-gray); /* Default text color for the page */
+    overflow: hidden; /* Important to contain the animation and any overflows */
+}
+
+/* --- Coming Soon Text Styling --- */
+.careers-coming-soon-text {
+    font-size: 2.5rem; /* Smaller font as requested */
+    font-weight: 700; /* Bolder for impact */
+    color: var(--bright-yellow); /* Bright Yellow for prominence */
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4); /* Stronger shadow for pop */
+    padding: 25px 50px; /* Generous padding around the text */
+    background-color: var(--deep-magenta); /* Deep Magenta background for the text box */
+    border-radius: 15px; /* More rounded corners */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* Stronger, deeper shadow */
+    text-align: center; /* Center the text itself within its box */
+    letter-spacing: 2px; /* Add some letter spacing for style */
+    text-transform: uppercase; /* Make it uppercase for a clean look */
+    
+    /* --- ANIMATION --- */
+    opacity: 0; /* Start invisible */
+    transform: scale(0.8) translateY(50px); /* Start smaller and lower */
+    animation: fadeInPopUp 1.5s ease-out forwards; /* Apply the animation */
+}
+
+/* --- Keyframe Animation Definition --- */
+@keyframes fadeInPopUp {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(50px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* --- Optional: Subtle background pulse animation for the content area --- */
+.careers-page-container {
+    animation: backgroundPulse 10s infinite alternate ease-in-out;
+}
+
+@keyframes backgroundPulse {
+    0% { background-color: var(--dark-indigo); }
+    100% { background-color: var(--slate-gray); } /* Transition to Slate Gray */
+}
+
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .careers-coming-soon-text {
+        font-size: 2rem; /* Smaller for tablets/larger phones */
+        padding: 20px 40px;
+    }
+    .careers-page-container {
+        top: var(--current-navbar-mobile-height);
+        height: calc(100vh - var(--current-navbar-mobile-height));
+    }
+}
+
+@media (max-width: 480px) {
+    .careers-coming-soon-text {
+        font-size: 1.5rem; /* Even smaller for small phones */
+        padding: 15px 30px;
+        letter-spacing: 1px;
+    }
+    .careers-page-container {
+        top: var(--current-navbar-mobile-height); /* Using mobile height as a base, adjust if needed */
+        height: calc(100vh - var(--current-navbar-mobile-height));
+    }
+}
