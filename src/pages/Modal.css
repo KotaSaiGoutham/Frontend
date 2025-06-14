@@ -1,33 +1,32 @@
 /* --- Color Palette Definitions (consistent with other components) --- */
 :root {
-   --dark-indigo: #292551;
-   --slate-gray: #454E5B;
-   --deep-magenta: #B21F62;
-   --hot-pink: #DB1A66;
-   --light-gray: #DCD9DA;
-   --orange: #F26E26;
-   --golden-yellow: #F6A11F;
-   --bright-yellow: #FCCD11;
-   --white: #ffffff;
+    --dark-indigo: #292551;
+    --slate-gray: #454E5B;
+    --deep-magenta: #B21F62;
+    --hot-pink: #DB1A66;
+    --light-gray: #DCD9DA;
+    --orange: #F26E26;
+    --golden-yellow: #F6A11F;
+    --bright-yellow: #FCCD11;
+    --white: #ffffff;
 
-   /* Semantic mapping for easy use */
-   --brand-primary: var(--dark-indigo);
-   --brand-secondary: var(--deep-magenta);
-   --brand-accent-1: var(--bright-yellow);
-   --brand-accent-2: var(--orange);
-   --text-color-dark: var(--slate-gray);
-   --text-color-light: var(--light-gray);
-   --background-page: #f8f8f8;
-   --card-bg: var(--white);
-   --shadow-strong: rgba(0, 0, 0, 0.18);
-   --shadow-light: rgba(0, 0, 0, 0.05);
+    /* Semantic mapping for easy use */
+    --brand-primary: var(--dark-indigo);
+    --brand-secondary: var(--deep-magenta);
+    --brand-accent-1: var(--bright-yellow);
+    --brand-accent-2: var(--orange);
+    --text-color-dark: var(--slate-gray);
+    --text-color-light: var(--light-gray);
+    --background-page: #f8f8f8;
+    --card-bg: var(--white);
 
-   /* Modal Specific Colors */
-   --modal-overlay-bg: rgba(var(--dark-indigo), 0.7); /* Darker, slightly transparent overlay */
-   --modal-success-icon-color: #34d399; /* Green check, from original design */
-   --modal-error-icon-color: var(--hot-pink); /* Hot pink for error X */
-   --modal-button-bg: var(--brand-secondary); /* Use brand secondary for button */
-   --modal-button-hover-bg: var(--hot-pink); /* Use hot pink for button hover */
+    /* Modal Specific Colors */
+    /* Using a slightly darker, opaque color for the overlay base for better blur effect */
+    --modal-overlay-bg-color: rgba(41, 37, 81, 0.6); /* Dark Indigo with 60% opacity */
+    --modal-success-icon-color: #34d399; /* Green check, from original design */
+    --modal-error-icon-color: var(--hot-pink); /* Hot pink for error X */
+    --modal-button-bg: var(--brand-secondary); /* Use brand secondary for button */
+    --modal-button-hover-bg: var(--hot-pink); /* Use hot pink for button hover */
 }
 
 /* --- Modal Overlay --- */
@@ -37,7 +36,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--modal-overlay-bg);
+    background-color: var(--modal-overlay-bg-color); /* Use the new overlay color variable */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -45,26 +44,34 @@
     opacity: 0; /* Hidden initially for animation */
     pointer-events: none; /* Allows clicks through when hidden */
     transition: opacity 0.3s ease-out; /* Fade in/out overlay */
+
+    /* Apply backdrop-filter for blur and initial scaling for animation */
+    backdrop-filter: blur(0px); /* Start with no blur */
+    -webkit-backdrop-filter: blur(0px); /* For Safari compatibility */
+    transition: opacity 0.3s ease-out, backdrop-filter 0.3s ease-out;
 }
 
 .modal-overlay.open { /* Class added by JS when modal is open */
     opacity: 1;
     pointer-events: all; /* Enables clicks when visible */
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5); /* A diffused, strong shadow for the entire backdrop */
+    backdrop-filter: blur(8px); /* Apply blur when open */
+    -webkit-backdrop-filter: blur(8px); /* For Safari compatibility */
 }
 
 /* --- Modal Container --- */
 .modal {
     background: var(--card-bg);
-    padding: 40px; /* More padding */
-    border-radius: 15px; /* More rounded corners */
-    box-shadow: 0 15px 40px var(--shadow-strong); /* Stronger, professional shadow */
+    padding: 35px; /* Slightly less padding, more refined */
+    border-radius: 12px; /* Slightly less rounded corners for modern feel */
     text-align: center;
-    max-width: 450px; /* Slightly wider modal */
+    max-width: 400px; /* Adjusted max-width */
     width: 90%; /* Responsive width */
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif; /* Or 'Segoe UI' as used elsewhere */
     transform: scale(0.8) translateY(20px); /* Initial state for enter animation */
     opacity: 0;
     transition: transform 0.3s ease-out, opacity 0.3s ease-out; /* Transition for modal itself */
+    z-index: 1001; /* Ensure modal content is above the overlay */
 }
 
 /* Animation for modal entry */
@@ -75,7 +82,7 @@
 
 /* --- Modal Icon --- */
 .modal-icon {
-    margin-bottom: 25px; /* More space below icon */
+    margin-bottom: 20px; /* Adjusted space below icon */
     animation: bounceIn 0.6s ease-out forwards; /* Icon specific animation */
 }
 
@@ -95,39 +102,37 @@
 
 /* --- Modal Title --- */
 .modal-title {
-    font-size: 2rem; /* Larger, more impactful title */
+    font-size: 1.8rem; /* Adjusted title size */
     font-weight: 700;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     color: var(--brand-primary); /* Dark Indigo for title */
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px; /* Slightly refined letter spacing */
 }
 
 /* --- Modal Message --- */
 .modal-message {
-    font-size: 1.1rem; /* Clear and readable message */
+    font-size: 1rem; /* Slightly smaller message for conciseness */
     color: var(--text-color-dark); /* Slate Gray for message */
-    line-height: 1.6;
-    margin-bottom: 30px; /* More space above button */
+    line-height: 1.5;
+    margin-bottom: 25px; /* Adjusted space above button */
 }
 
 /* --- Modal Button --- */
 .modal-button {
     background: var(--modal-button-bg); /* Deep Magenta */
     border: none;
-    padding: 12px 30px; /* More padding for button */
-    border-radius: 8px; /* Rounded corners for button */
+    padding: 10px 25px; /* Adjusted padding for button */
+    border-radius: 6px; /* Adjusted rounded corners for button */
     color: var(--white);
     font-weight: 600;
-    font-size: 1rem; /* Readable button text */
+    font-size: 0.95rem; /* Slightly smaller button text */
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow for button */
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .modal-button:hover {
     background-color: var(--modal-button-hover-bg); /* Hot Pink on hover */
-    transform: translateY(-2px); /* Slight lift on hover */
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
+    transform: translateY(-1px); /* Subtle lift on hover */
 }
 
 /* --- Keyframe Animations --- */
@@ -141,9 +146,29 @@
         transform: scale(1.1);
     }
     70% {
-        transform: scale(0.9);
+        transform: scale(0.95); /* Adjusted bounce for subtlety */
     }
     100% {
         transform: scale(1);
     }
+}
+
+/* --- Responsive adjustments --- */
+@media (max-width: 480px) {
+  .modal {
+    padding: 25px;
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+  }
+
+  .modal-message {
+    font-size: 0.9rem;
+  }
+
+  .modal-button {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+  }
 }

@@ -7,19 +7,19 @@ const FacultyShowcase = () => {
       name: "K.V.S.R.Raju",
       photo: "/faculty3.jpeg",
       subject: "Maths",
-      experience: "25 yrs",
+      experience: "25 yrs Experience" ,
     },
     {
       name: "Vamshi Krishna Dulam",
       photo: "/faculty2.jpeg",
       subject: "Physics",
-      experience: "16 yrs",
+      experience: "16 yrs Experience",
     },
     {
       name: "Karunakar Reddy Bollam",
       photo: "/faculty1.jpeg",
       subject: "Chemistry",
-      experience: "15 yrs",
+      experience: "15 yrs Experience",
     },
   ];
 

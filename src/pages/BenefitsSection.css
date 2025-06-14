@@ -1,0 +1,196 @@
+:root {
+  /* Define your color variables */
+  --dark-indigo: #292551;
+  --dark-indigo-rgb: 41, 37, 81; /* Added for rgba shadows */
+  --slate-gray: #454E5B;
+  --deep-magenta: #B21F62;
+  --hot-pink: #DB1A66;
+  --light-gray: #DCD9DA;
+  --orange: #F26E26;
+  --golden-yellow: #F6A11F;
+  --bright-yellow: #FCCD11;
+
+  /* UI specific colors from your palette */
+  --color-primary-text: var(--dark-indigo);
+  --color-secondary-text: var(--slate-gray);
+  --color-accent: var(--hot-pink); /* Using Hot Pink for primary accent */
+  --color-accent-dark: var(--deep-magenta); /* Using Deep Magenta for stronger accent */
+  --color-background-light: #FDFDFD; /* A very subtle off-white for main background */
+  --color-card-background: #FFFFFF; /* Pure white for cards */
+  --color-border-light: rgba(220, 217, 218, 0.5); /* Light Gray with transparency for borders */
+}
+
+/* Optional: Import a modern font for a cleaner look */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+body {
+  font-family: 'Poppins', sans-serif; /* Apply a clean, modern font */
+}
+
+.benefits {
+  padding: 6rem 1.5rem; /* Ample padding for a spacious feel */
+  background-color: var(--color-background-light); /* Clean light background */
+  text-align: center;
+  overflow: hidden; /* Prevent content overflow during animations */
+}
+
+.benefits h2 {
+  font-size: 3.2rem; /* Prominent heading size */
+  color: var(--color-primary-text);
+  margin-bottom: 3.8rem; /* Slightly adjusted margin for balance */
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.8rem;
+  font-weight: 700; /* Bolder heading */
+  letter-spacing: -0.03em; /* Slightly tighter for a modern touch */
+}
+
+.benefits h2::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100px; /* Underline length */
+  height: 5px; /* Underline thickness */
+  background: linear-gradient(to right, var(--color-accent-dark), var(--color-accent)); /* Gradient accent */
+  border-radius: 3px;
+}
+
+.benefit-cards {
+  display: grid;
+  /* Responsive grid: 1 column on mobile, 2 on tablet/desktop, 3 on large desktop */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem; /* Gap between cards */
+  max-width: 1200px; /* Max width for the grid container */
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.card {
+  background-color: var(--color-card-background); /* Pure white background for cards */
+  border-radius: 18px; /* Clean rounded corners */
+  /* Refined Shadow: softer and uses Dark Indigo color for brand consistency */
+  box-shadow: 0 6px 20px rgba(var(--dark-indigo-rgb), 0.08);
+  padding: 3rem 2rem; /* Generous padding inside cards */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border: 1px solid var(--color-border-light); /* Subtle light border */
+  transition: transform 0.4s ease-out, box-shadow 0.4s ease-out, border-color 0.4s ease-out; /* Smooth transitions */
+  will-change: transform, box-shadow; /* Optimize for animation performance */
+
+  /* Initial state for scroll animation */
+  opacity: 0;
+  transform: translateY(60px); /* Cards start slightly below and fade in */
+}
+
+/* Class added by IntersectionObserver when in view */
+.card.fade-in-slide-up {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1); /* Smoother, bouncier animation */
+}
+
+/* Stagger animation delay (adjust values as needed) */
+.card:nth-child(1).fade-in-slide-up { transition-delay: 0s; }
+.card:nth-child(2).fade-in-slide-up { transition-delay: 0.12s; }
+.card:nth-child(3).fade-in-slide-up { transition-delay: 0.24s; }
+.card:nth-child(4).fade-in-slide-up { transition-delay: 0.36s; }
+.card:nth-child(5).fade-in-slide-up { transition-delay: 0.48s; }
+.card:nth-child(6).fade-in-slide-up { transition-delay: 0.60s; }
+
+
+.icon-container {
+  color: var(--color-accent); /* Hot Pink for icon color */
+  margin-bottom: 1.8rem; /* Space below the icon */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease-out;
+}
+
+.card:hover .icon-container {
+  transform: scale(1.1); /* Slightly enlarge icon on hover */
+}
+
+
+.card-content h3 {
+  font-size: 1.65rem; /* Well-proportioned heading size */
+  margin-bottom: 0.8rem;
+  color: var(--color-primary-text);
+  font-weight: 600; /* Semi-bold for headings */
+  letter-spacing: -0.02em;
+}
+
+.card-content p {
+  font-size: 1.05rem; /* Comfortable body text size */
+  color: var(--color-secondary-text);
+  line-height: 1.6; /* Good line height for readability */
+  margin: 0;
+  max-width: 320px; /* Constrain paragraph width for better reading flow */
+}
+
+.card:hover {
+  transform: translateY(-8px); /* Slightly less aggressive lift on hover for subtle elegance */
+  box-shadow: 0 12px 30px rgba(var(--dark-indigo-rgb), 0.12); /* More prominent shadow on hover, using Dark Indigo */
+  border-color: var(--color-accent); /* Highlight border on hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .benefits {
+    padding: 3rem 1rem;
+  }
+
+  .benefits h2 {
+    font-size: 2.2rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .benefits h2::after {
+    width: 60px;
+    height: 3px;
+  }
+
+  .benefit-cards {
+    grid-template-columns: 1fr; /* Single column on mobile */
+    gap: 1.5rem;
+  }
+
+  .card {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .icon-container {
+    margin-bottom: 1.2rem;
+  }
+
+  /* Remember to adjust icon size directly on the lucide-react component in JSX for mobile if needed (e.g., size={40}) */
+
+  .card-content h3 {
+    font-size: 1.4rem;
+  }
+
+  .card-content p {
+    font-size: 0.95rem;
+    max-width: none; /* Remove max-width for paragraphs on mobile */
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .benefit-cards {
+    grid-template-columns: repeat(2, 1fr); /* Two cards per row for tablets */
+    gap: 2rem;
+  }
+  .card {
+    padding: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .benefit-cards {
+    grid-template-columns: repeat(3, 1fr); /* Three cards per row for larger desktops */
+  }
+}

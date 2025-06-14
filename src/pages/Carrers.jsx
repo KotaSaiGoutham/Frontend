@@ -167,14 +167,14 @@ const jobs = [
     location: "Remote",
     jobType: "Part-time / Full-time",
   },
-  {
-    title: "Geology Tutor",
-    experience: "4+ years, strong foundation in earth sciences",
-    skills: "University Level/Competitive Exams, Geological maps, Rock/Mineral identification, Field trip simulation",
-    salary: "Based on experience",
-    location: "Remote",
-    jobType: "Part-time",
-  }
+{
+  title: "Zoology Tutor",
+  experience: "4+ years, strong foundation in animal biology and physiology",
+  skills: "University Level/Competitive Exams, Animal classification, Human anatomy, Ecological studies",
+  salary: "Based on experience",
+  location: "Remote",
+    jobType: "Part-time / Full-time",
+}
 ];
 
 // Define the array of gradient classes to cycle through

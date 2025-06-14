@@ -1,72 +1,332 @@
-/* src/pages/SubjectDetailPage.css */
+:root {
+  /* Updated Color Palette */
+  --primary: #1a202c; /* Darker, sophisticated blue-gray */
+  --accent: #2563eb; /* Stronger, professional blue */
+  --secondary: #f59e0b; /* Goldenrod orange */
+  --background: #f8fafc; /* Very light subtle background */
+  --text-dark: #374151; /* Darker text for body */
+  --text-light: #ffffff;
+  --card-bg: #ffffff;
+  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--background);
+  color: var(--text-dark);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 .subject-detail-page {
-  padding: 40px;
-  max-width: 900px;
-  margin: 20px auto;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  line-height: 1.8;
-  color: #333;
+  max-width: 1000px; /* Slightly wider */
+  margin: 4rem auto;
+  padding: 3rem; /* More padding */
+  background: var(--card-bg);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-medium); /* Stronger shadow */
+  overflow: hidden; /* Ensures no content overflows during animations */
 }
 
-.subject-detail-page h1 {
-  color: #292551;
-  font-size: 3em;
-  margin-bottom: 25px;
+.main-heading {
+  font-size: 2.8rem; /* Larger font */
+  font-weight: 800;
+  color: var(--primary);
   text-align: center;
+  margin-bottom: 2rem; /* More space */
+  line-height: 1.2;
+  position: relative;
 }
 
-.subject-detail-page h2 {
-  color: #F6A11F;
-  font-size: 2em;
-  margin-top: 30px;
-  margin-bottom: 15px;
+.main-heading::after {
+  content: '';
+  display: block;
+  width: 5rem; /* Wider initial underline */
+  height: 0.35rem; /* Thicker underline */
+  background: linear-gradient(to right, var(--accent), var(--secondary)); /* Gradient underline */
+  margin: 0.75rem auto 0; /* More margin */
+  border-radius: 2px;
+  transition: width 0.4s ease-out, background 0.4s ease-out; /* Smooth transition */
 }
 
-.subject-detail-page p {
-  font-size: 1.1em;
-  margin-bottom: 15px;
+.main-heading:hover::after {
+  width: 8rem; /* Even wider on hover */
+  background: linear-gradient(to right, var(--secondary), var(--accent)); /* Reverse gradient on hover */
 }
 
-.subject-detail-page ul {
-  list-style-type: disc;
-  margin-left: 25px;
-  margin-bottom: 20px;
+/* Option 1: Modern Underline (Recommended) */
+.section-heading {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 3.5rem 0 1.8rem;
+  padding-bottom: 0.5rem; /* Space for the underline */
+  position: relative; /* Needed for ::after positioning */
+  display: inline-block; /* Ensures underline only covers text */
+  line-height: 1.3;
 }
 
-.subject-detail-page li {
-  font-size: 1.05em;
-  margin-bottom: 8px;
+.section-heading::after {
+  content: '';
+  display: block;
+  width: 100%; /* Full width of the text */
+  height: 3px; /* Thin underline */
+  background: var(--accent); /* Solid accent color */
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  border-radius: 1px;
+  transform: scaleX(0); /* Start hidden */
+  transform-origin: bottom left; /* Scale from left */
+  transition: transform 0.3s ease-out; /* Animation */
 }
 
-/* Responsive adjustments */
+.section-heading:hover::after {
+  transform: scaleX(1); /* Reveal on hover */
+}
+
+.intro-text, .section-description {
+  font-size: 1.15rem; /* Slightly larger text */
+  color: var(--text-dark);
+  line-height: 1.8; /* Improved readability */
+  margin-bottom: 2.5rem; /* More space */
+}
+
+/* Common styles for row-wise lists (feature and curriculum) */
+.feature-list.one-column,
+.curriculum-list.one-column {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr; /* Single column */
+  gap: 1.2rem; /* Space between rows */
+}
+
+.feature-item-row,
+.curriculum-item-row {
+  padding: 1.2rem 0; /* Padding for each row */
+  border-bottom: 1px dashed #cbd5e1; /* Subtle separator between items */
+  display: flex;
+  align-items: flex-start;
+  font-size: 1rem;
+  color: var(--text-dark);
+  transition: background-color 0.2s ease, padding-left 0.2s ease, border-radius 0.2s ease;
+}
+
+.feature-item-row:last-child,
+.curriculum-item-row:last-child {
+  border-bottom: none; /* No border on the last item */
+}
+
+.feature-item-row:hover,
+.curriculum-item-row:hover {
+  background-color: #e2eaf5; /* Light blue background on hover */
+  padding-left: 0.5rem; /* Slight indent on hover for visual feedback */
+  border-radius: 0.4rem;
+}
+
+.feature-item-row strong,
+.curriculum-item-row strong {
+  color: var(--accent);
+  margin-right: 0.5rem; /* Space between title and description */
+  min-width: 150px; /* Ensures title takes a minimum width for alignment */
+  flex-shrink: 0; /* Prevents title from shrinking */
+}
+
+.feature-item-row::before,
+.curriculum-item-row::before {
+  content: '•'; /* Simple bullet point for consistency */
+  color: var(--secondary);
+  font-size: 1.2rem;
+  margin-right: 0.8rem;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+
+
+.section-separator {
+  border: 0;
+  height: 3px;
+  background: linear-gradient(to right, var(--accent), var(--secondary), var(--accent));
+  margin: 4rem auto;
+  width: 60%;
+  border-radius: 2px;
+  opacity: 0.8;
+}
+
+.learning-card {
+  background: linear-gradient(135deg, var(--accent) 0%, #1e3a8a 100%);
+  padding: 3rem;
+  border-radius: 1.2rem;
+  box-shadow: var(--shadow-medium);
+  text-align: center;
+  color: var(--text-light);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  margin-top: 4rem;
+}
+
+.learning-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.learning-card .card-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  color: var(--text-light);
+}
+
+.learning-card .card-subtext {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.learning-card .card-button {
+  background: var(--card-bg);
+  color: var(--accent);
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease, color 0.3s ease;
+  box-shadow: var(--shadow-light);
+}
+
+.learning-card .card-button:hover {
+  background: #e2e8f0;
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+  .subject-detail-page {
+    margin: 3rem auto;
+    padding: 2.5rem;
+  }
+  .main-heading {
+    font-size: 2.4rem;
+  }
+  .section-heading {
+    font-size: 1.9rem;
+  }
+}
+
 @media (max-width: 768px) {
   .subject-detail-page {
-    padding: 25px;
-    margin: 15px;
+    margin: 2rem auto;
+    padding: 2rem;
+    border-radius: 0.8rem;
   }
-  .subject-detail-page h1 {
-    font-size: 2.2em;
+  .main-heading {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
   }
-  .subject-detail-page h2 {
-    font-size: 1.8em;
+  .section-heading {
+    font-size: 1.6rem;
+    margin: 3rem 0 1.2rem;
   }
-  .subject-detail-page p, .subject-detail-page li {
-    font-size: 1em;
+  .intro-text, .section-description {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .feature-list.one-column,
+  .curriculum-list.one-column {
+    gap: 0.8rem;
+  }
+  .feature-item-row,
+  .curriculum-item-row {
+    padding: 1rem 0;
+    font-size: 0.95rem;
+  }
+  .feature-item-row strong,
+  .curriculum-item-row strong {
+    min-width: 120px;
+  }
+  .learning-card {
+    padding: 2.5rem;
+    border-radius: 1rem;
+  }
+  .learning-card .card-title {
+    font-size: 1.8rem;
+  }
+  .learning-card .card-subtext {
+    font-size: 1rem;
+  }
+  .learning-card .card-button {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+  }
+  .section-separator {
+    width: 70%;
+    margin: 3rem auto;
   }
 }
 
 @media (max-width: 480px) {
   .subject-detail-page {
-    padding: 15px;
-    margin: 10px;
+    margin: 1rem auto;
+    padding: 1rem;
+    border-radius: 0.5rem;
   }
-  .subject-detail-page h1 {
-    font-size: 1.8em;
+  .main-heading {
+    font-size: 1.7rem;
+    margin-bottom: 1rem;
   }
-  .subject-detail-page h2 {
-    font-size: 1.5em;
+  .main-heading::after {
+    width: 3rem;
+  }
+  .main-heading:hover::after {
+    width: 5rem;
+  }
+  .section-heading {
+    font-size: 1.3rem;
+    margin: 2.5rem 0 1rem;
+    padding-left: 0.8rem;
+  }
+  .intro-text, .section-description {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  .feature-item-row,
+  .curriculum-item-row {
+    padding: 0.8rem 0;
+    font-size: 0.9rem;
+  }
+  .feature-item-row strong,
+  .curriculum-item-row strong {
+    min-width: unset; /* Allow it to wrap */
+    margin-bottom: 0.2rem; /* Add small space below title on small screens */
+    display: block; /* Make title take full width before description */
+  }
+  .feature-item-row::before,
+  .curriculum-item-row::before {
+    font-size: 1rem;
+    margin-right: 0.6rem;
+  }
+  .learning-card {
+    padding: 1.5rem;
+  }
+  .learning-card .card-title {
+    font-size: 1.5rem;
+  }
+  .learning-card .card-subtext {
+    font-size: 0.9rem;
+  }
+  .learning-card .card-button {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.9rem;
+  }
+  .section-separator {
+    width: 80%;
+    margin: 2.5rem auto;
   }
 }

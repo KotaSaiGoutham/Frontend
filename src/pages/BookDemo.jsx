@@ -16,7 +16,7 @@ const BookDemo = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false); // This state isn't used for display in current JSX
+  const [submitted, setSubmitted] = useState(false);
 
   const validate = () => {
     const newErrors = {};
@@ -74,7 +74,7 @@ const BookDemo = () => {
       .then(() => {
         setIsLoading(false);
         setModalOpen(true);
-        setSubmitted(true); // No longer needed if modal handles success feedback
+        setSubmitted(true);
         setFormData({
           name: "",
           email: "",
@@ -87,20 +87,15 @@ const BookDemo = () => {
       .catch((error) => {
         setIsLoading(false);
         console.error("EmailJS error:", error); // Log the actual error
-        // Use the Modal for error feedback too, instead of alert
         setModalOpen(true);
-        setSubmitted(false); // No longer needed if modal handles success feedback
+        setSubmitted(false);
       });
   };
 
   return (
     <div className="book-demo-page">
-      {" "}
-      {/* Main page container */}
       {isLoading && <Loader />} {/* Loader overlay */}
       <div className="book-demo-card">
-        {" "}
-        {/* Central form card */}
         <h2 className="card-title">Book a Free Demo Class</h2>
         <p className="card-description">
           Fill in your details and we’ll schedule your one-on-one demo class
@@ -119,9 +114,9 @@ const BookDemo = () => {
             />
             {errors.name && <p className="error-message">{errors.name}</p>}
           </div>
-         <div className="form-group">
+          <div className="form-group">
             <input
-              type="number" // Use type="text" for mobile to avoid native number input issues with leading zeros
+              type="tel" // Changed to "tel" for better mobile keyboard support
               name="mobile"
               placeholder="Your Mobile Number (10 digits)"
               value={formData.mobile}
@@ -145,45 +140,50 @@ const BookDemo = () => {
             />
             {errors.email && <p className="error-message">{errors.email}</p>}
           </div>
+          {/* Custom styled select for Stream */}
           <div className="form-group">
-            <select
-              name="stream"
-              value={formData.stream}
-              onChange={handleChange}
-              required
-              className={errors.stream ? "input-error" : ""}
-            >
-              <option value="">Select Stream</option>
-              <option value="NEET">NEET</option>
-              <option value="JEE Mains">JEE Mains</option>
-              <option value="JEE Advanced">JEE Advanced</option>
-              <option value="BITSAT">BITSAT</option>
-              <option value="EAPCET">EAPCET</option>
-              <option value="CBSE">CBSE</option>
-              <option value="ICSE">ICSE</option>
-              <option value="IGCSE (Cambridge)">IGCSE (Cambridge)</option>
-              <option value="IB">IB</option>
-              <option value="Foundation">Foundation</option>
-                            <option value="Others">Others</option>
-
-            </select>
+            <div className="custom-select-wrapper">
+              <select
+                name="stream"
+                value={formData.stream}
+                onChange={handleChange}
+                required
+                className={errors.stream ? "input-error" : ""}
+              >
+                <option value="" disabled>Select Stream</option>
+                <option value="NEET">NEET</option>
+                <option value="JEE Mains">JEE Mains</option>
+                <option value="JEE Advanced">JEE Advanced</option>
+                <option value="BITSAT">BITSAT</option>
+                <option value="EAPCET">EAPCET</option>
+                <option value="CBSE">CBSE</option>
+                <option value="ICSE">ICSE</option>
+                <option value="IGCSE (Cambridge)">IGCSE (Cambridge)</option>
+                <option value="IB">IB</option>
+                <option value="Foundation">Foundation</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
             {errors.stream && <p className="error-message">{errors.stream}</p>}
           </div>
+          {/* Custom styled select for Subject */}
           <div className="form-group">
-            <select
-              name="subject"
-              value={formData.subject}
-              onChange={handleChange}
-              required
-              className={errors.subject ? "input-error" : ""}
-            >
-              <option value="">Select Subject for Demo</option>
-              <option value="Maths">Maths</option>
-              <option value="Chemistry">Chemistry</option>
-              <option value="Physics">Physics</option>
-              <option value="Biology">Biology</option>{" "}
-              <option value="Others">Others</option>
-            </select>
+            <div className="custom-select-wrapper">
+              <select
+                name="subject"
+                value={formData.subject}
+                onChange={handleChange}
+                required
+                className={errors.subject ? "input-error" : ""}
+              >              
+                <option value=""  disabled>Select Subject for Demo</option>
+                <option value="Maths">Maths</option>
+                <option value="Chemistry">Chemistry</option>
+                <option value="Physics">Physics</option>
+                <option value="Biology">Biology</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
             {errors.subject && (
               <p className="error-message">{errors.subject}</p>
             )}

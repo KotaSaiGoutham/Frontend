@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CalendarCheck, UserCheck, LineChart } from "lucide-react";
 import Footer from "../components/Footer";
-import { FaSmile, FaUsers, FaChalkboardTeacher } from "react-icons/fa";
+import { FaSmile, FaUsers, FaChalkboardTeacher, FaBook, FaCalendarAlt, FaVideo } from 'react-icons/fa';
 import PhoneDialer from "./PhoneDailer";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import FacultyVideo from "./FacultyVideo";
@@ -14,6 +14,8 @@ import Testimonials from "./Testimonial";
 import FacultyList from "./FacultyVideo";
 import FAQSection from "./FAQSection";
 import SubjectCard from "./SubjectCard";
+import BenefitsSection from "./BenefitsSection";
+import Benefits from "./BenefitsSection";
 const faculties = [
   {
     id: 1,
@@ -136,6 +138,23 @@ const facultyList = [
     experience: "5 yrs",
   },
 ];
+const getYearsOfExcellence = () => {
+  const baseDate = new Date('2019-06-15'); // set your real start date
+  const today = new Date();
+  
+  let years = today.getFullYear() - baseDate.getFullYear();
+
+  // Check if current date is before June 15 of the current year
+  const currentYearJune15 = new Date(today.getFullYear(), 5, 15); // Month is 0-based
+
+  if (today < currentYearJune15) {
+    years -= 1;
+  }
+
+  return years;
+};
+
+const yearsOfExcellence = getYearsOfExcellence();
 const Home = () => {
   const statsRef = useRef(null);
   const [startCount, setStartCount] = useState(false);
@@ -232,50 +251,48 @@ const Home = () => {
       <PhoneDialer />
       {/* Hero Section */}
       <FlashBanner />
- <section className="subjects">
-        <h2>Subjects We Teach</h2>
-        <div className="subject-list">
-          {/* Physics Card */}
-          <SubjectCard
-            title="Physics"
-            description="Explore the fundamental laws of the universe"
-            imageSrc="https://www.svgrepo.com/show/3679/physics.svg"
-            altText="Physics Icon"
-            redirectPath="/subjects/physics" // Define your redirection path
-            delayClass="delay-1"
-          />
+<section className="subjects">
+  <h2>Explore Our Academic Subjects</h2>
 
-          {/* Chemistry Card */}
-          <SubjectCard
-            title="Chemistry"
-            description="Understand matter and its transformations"
-            imageSrc="https://www.svgrepo.com/show/62122/chemistry.svg"
-            altText="Chemistry Icon"
-            redirectPath="/subjects/chemistry" // Define your redirection path
-            delayClass="delay-2"
-          />
+  <div className="subject-list">
+    <SubjectCard
+      title="Physics"
+      description="Unravel the laws that govern the universe"
+      imageSrc="https://www.svgrepo.com/show/3679/physics.svg"
+      altText="Physics Icon"
+      redirectPath="/subjects/physics"
+      delayClass="delay-1"
+    />
 
-          {/* Maths Card */}
-          <SubjectCard
-            title="Maths"
-            description="Master the language of numbers and logic"
-            imageSrc="/maths-icon.png"
-            altText="Math Icon"
-            redirectPath="/subjects/maths" // Define your redirection path
-            delayClass="delay-3"
-          />
+    <SubjectCard
+      title="Chemistry"
+      description="Dive deep into the science of substances"
+      imageSrc="https://www.svgrepo.com/show/62122/chemistry.svg"
+      altText="Chemistry Icon"
+      redirectPath="/subjects/chemistry"
+      delayClass="delay-2"
+    />
 
-          {/* Biology Card */}
-          <SubjectCard
-            title="Biology"
-            description="Discover the science of life and living organisms"
-            imageSrc="/biology-icon.png"
-            altText="Biology Icon"
-            redirectPath="/subjects/biology" // Define your redirection path
-            delayClass="delay-4"
-          />
-        </div>
-      </section>
+    <SubjectCard
+      title="Mathematics"
+      description="Develop logical reasoning & analytical skills"
+      imageSrc="/maths-icon.png"
+      altText="Math Icon"
+      redirectPath="/subjects/maths"
+      delayClass="delay-3"
+    />
+
+    <SubjectCard
+      title="Biology"
+      description="Understand life, organisms, and ecosystems"
+      imageSrc="/biology-icon.png"
+      altText="Biology Icon"
+      redirectPath="/subjects/biology"
+      delayClass="delay-4"
+    />
+  </div>
+</section>
+
 
 
 
@@ -328,253 +345,7 @@ const Home = () => {
       </div>
     </section>
 
-      <section className="benefits">
-        <h2>Why Choose Electron Academy?</h2>
-        <div className="benefit-cards">
-          <div className="card">
-            <div className="icon-avatar">
-              {/* Teacher Icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  cx="12"
-                  cy="7"
-                  r="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M5.5 21a6.5 6.5 0 0113 0"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <h3>One-on-One Learning</h3>
-            <p>
-              Personalized attention to address each student's learning style,
-              pace, and needs.
-            </p>
-          </div>
-          <div className="card">
-            <div className="icon-avatar">
-              {/* Globe Icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <line
-                  x1="2"
-                  y1="12"
-                  x2="22"
-                  y2="12"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M12 2a15.3 15.3 0 010 20"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M12 2a15.3 15.3 0 000 20"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <h3>Convenience from Anywhere</h3>
-            <p>
-              Attend classes from home, saving travel time and ensuring a safe
-              learning environment.
-            </p>
-          </div>
-          <div className="card">
-            <div className="icon-avatar">
-              {/* Clock Icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <polyline
-                  points="12 6 12 12 16 14"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <h3>Save Time</h3>
-            <p>
-              No commuting, no waiting—just focused learning at scheduled slots
-              that suit you.
-            </p>
-          </div>
-          <div className="card">
-            <div className="icon-avatar">
-              {/* Money Icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <rect
-                  x="2"
-                  y="7"
-                  width="20"
-                  height="10"
-                  rx="2"
-                  ry="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M12 11v2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M10 9h4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M10 15h4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <h3>Save Money</h3>
-            <p>
-              Affordable tuition plans without the need for expensive coaching
-              centers or transport.
-            </p>
-          </div>
-          <div className="card">
-            <div className="icon-avatar">
-              {/* Family Icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  cx="9"
-                  cy="7"
-                  r="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle
-                  cx="18"
-                  cy="7"
-                  r="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M2 21v-2a4 4 0 014-4h12a4 4 0 014 4v2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <h3>Parents Can Join</h3>
-            <p>
-              Parents can attend classes with their children and monitor
-              progress in real-time from anywhere.
-            </p>
-          </div>
-
-          {/* New Customized Micro Schedule & Tests card */}
-          <div className="card">
-            <div className="icon-avatar">
-              {/* Calendar + Test Icon (combined) */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <rect
-                  x="3"
-                  y="4"
-                  width="18"
-                  height="18"
-                  rx="2"
-                  ry="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <line
-                  x1="16"
-                  y1="2"
-                  x2="16"
-                  y2="6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <line
-                  x1="8"
-                  y1="2"
-                  x2="8"
-                  y2="6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <line
-                  x1="3"
-                  y1="10"
-                  x2="21"
-                  y2="10"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M8 14h8M8 18h8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <h3>Customized Micro Schedule & Tests</h3>
-            <p>
-              Personalized small-step schedules and regular tests to ensure
-              steady progress.
-            </p>
-          </div>
-        </div>
-      </section>
+    <Benefits/>
 
    <FacultyVideo faculties={faculties}/>
 
@@ -602,6 +373,17 @@ const Home = () => {
             </h3>
             <p>Expert Tutors</p>
           </div>
+          <div className="stat">
+      <FaBook className="stat-icon" />
+      <h3><CountUpNumber end={6} start={startCount} /></h3>
+      <p>Subjects Offered</p>
+    </div>
+
+    <div className="stat">
+      <FaCalendarAlt className="stat-icon" />
+      <h3><CountUpNumber end={yearsOfExcellence} start={startCount} /></h3>
+      <p>Years of Excellence</p>
+    </div>
         </div>
       </section>
 
