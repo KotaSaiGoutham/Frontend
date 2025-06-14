@@ -1,49 +1,40 @@
-import React, { useRef, useEffect, useCallback } from 'react';
-import './BenefitsSection.css'; // Make sure to import your CSS
-
-// Import specific icons from lucide-react
-import {
-  UserRoundCog,      // For personalized/one-on-one learning
-  Globe,             // NOW USING GLOBE for convenience from anywhere / global access
-  Timer,             // For saving time / efficiency
-  DollarSign,        // For saving money
-  Users,             // For parents can join / community
-  ClipboardCheck     // For customized schedules & tests / progress
-} from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+// Remove these imports as you won't be using react-feather icons anymore
+// import { UserRoundCog, Globe, Timer, DollarSign, Users, ClipboardCheck } from 'lucide-react'; // Or 'react-feather' if that's what you're using
+import './BenefitsSection.css'; // Assuming you have a CSS file for these benefits cards
 
 const Benefits = () => {
   const cardsRef = useRef([]);
 
-  const observerCallback = useCallback((entries, observer) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('fade-in-slide-up');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, []);
-
   useEffect(() => {
-    const observer = new IntersectionObserver(observerCallback, {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.2
-    });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.1, // Trigger when 10% of the item is visible
+      }
+    );
 
-    cardsRef.current.forEach(card => {
+    cardsRef.current.forEach((card) => {
       if (card) {
         observer.observe(card);
       }
     });
 
     return () => {
-      cardsRef.current.forEach(card => {
+      cardsRef.current.forEach((card) => {
         if (card) {
           observer.unobserve(card);
         }
       });
     };
-  }, [observerCallback]);
+  }, []);
 
   return (
     <section className="benefits">
@@ -52,7 +43,7 @@ const Benefits = () => {
         {/* Card 1: One-on-One Learning */}
         <div className="card" ref={el => cardsRef.current[0] = el}>
           <div className="icon-container">
-            <UserRoundCog size={48} strokeWidth={1.5} />
+            <div className="value-icon">🧑‍🏫</div> {/* One-on-One Learning */}
           </div>
           <div className="card-content">
             <h3>One-on-One Learning</h3>
@@ -60,10 +51,10 @@ const Benefits = () => {
           </div>
         </div>
 
-        {/* Card 2: Convenience from Anywhere - ICON CHANGED TO GLOBE */}
+        {/* Card 2: Convenience from Anywhere */}
         <div className="card" ref={el => cardsRef.current[1] = el}>
           <div className="icon-container">
-            <Globe size={48} strokeWidth={1.5} /> {/* Changed from <Cloud /> */}
+            <div className="value-icon">🌐</div> {/* Globe for Convenience */}
           </div>
           <div className="card-content">
             <h3>Convenience from Anywhere</h3>
@@ -74,7 +65,7 @@ const Benefits = () => {
         {/* Card 3: Save Time */}
         <div className="card" ref={el => cardsRef.current[2] = el}>
           <div className="icon-container">
-            <Timer size={48} strokeWidth={1.5} />
+            <div className="value-icon">⏱️</div> {/* Timer for Save Time */}
           </div>
           <div className="card-content">
             <h3>Save Time</h3>
@@ -85,7 +76,7 @@ const Benefits = () => {
         {/* Card 4: Save Money */}
         <div className="card" ref={el => cardsRef.current[3] = el}>
           <div className="icon-container">
-            <DollarSign size={48} strokeWidth={1.5} />
+            <div className="value-icon">💰</div> {/* Money Bag for Save Money */}
           </div>
           <div className="card-content">
             <h3>Save Money</h3>
@@ -96,7 +87,7 @@ const Benefits = () => {
         {/* Card 5: Parents Can Join */}
         <div className="card" ref={el => cardsRef.current[4] = el}>
           <div className="icon-container">
-            <Users size={48} strokeWidth={1.5} />
+            <div className="value-icon">👨‍👩‍👧‍👦</div> {/* Family for Parents Can Join */}
           </div>
           <div className="card-content">
             <h3>Parents Can Join</h3>
@@ -107,7 +98,7 @@ const Benefits = () => {
         {/* Card 6: Customized Micro Schedule & Tests */}
         <div className="card" ref={el => cardsRef.current[5] = el}>
           <div className="icon-container">
-            <ClipboardCheck size={48} strokeWidth={1.5} />
+            <div className="value-icon">📝</div> {/* Memo/Clipboard for Schedule & Tests */}
           </div>
           <div className="card-content">
             <h3>Customized Micro Schedule & Tests</h3>

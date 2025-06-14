@@ -190,7 +190,7 @@
 }
 
 .subjects {
-  padding: 3rem 2rem;
+  padding: 1rem 2rem;
   background: linear-gradient(to bottom right, #f8fbff, #ffffff);
   text-align: center;
   font-family: 'Inter', sans-serif;
@@ -849,99 +849,131 @@
 .slide-right {
   animation: slideInRight 0.6s ease;
 }
-
-
- .stats {
-  text-align: center;
-  padding: 50px 20px;
-  background-color: #dcd9da; /* subtle light grey background */
-  border-radius: 12px;
-  margin-top: 50px;
+.stats {
+padding: 6rem 1.5rem;
+text-align: center;
+background: linear-gradient(135deg, #f8f5ff 0%, #e6efff 100%); /* Light purple to light blue */
 }
 
 .stats h2 {
-  font-size: 36px;
-  color: #292551; /* Deep Navy */
+  font-size: 3.2rem;
+  color: var(--color-primary-text);
+  margin-bottom: 3.8rem;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.8rem;
   font-weight: 700;
-  margin-bottom: 35px;
+  letter-spacing: -0.03em;
+}
+
+.stats h2::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 5px;
+  background: linear-gradient(to right, var(--color-accent-dark), var(--color-accent));
+  border-radius: 3px;
 }
 
 .stat-grid {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 30px;
-  margin-top: 10px;
-}
-
-.stat-icon {
-  font-size: 56px;          /* Bigger icons for stronger impact */
-  color: #f6a11f;           /* Amber */
-  margin-bottom: 20px;
-  transition: color 0.3s ease;
-}
-
-.stat:hover .stat-icon {
-  color: #db1a66;           /* Bright Pink on hover */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjust minmax for better fit */
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .stat {
-  background: #fff;
-  padding: 35px 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  min-width: 180px;
-  max-width: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  user-select: none;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: default;
+  padding: 2rem 1.5rem;
+  border-radius: 12px;
+  /* Subtle shadow or border if desired, similar to benefit cards */
+  /* box-shadow: 0 4px 15px rgba(var(--dark-indigo-rgb), 0.05); */
+  /* border: 1px solid var(--color-border-light); */
+  background-color: var(--color-background-light); /* Background unchanged: using var(--color-background-light) */
+  transition: transform 0.3s ease;
+}
+
+.stat:hover {
+  transform: translateY(-5px); /* Subtle lift on hover */
+}
+
+/* Styling for the new emoji icons */
+.stat-icon {
+  font-size: 56px; /* Larger size for these main icons */
+  margin-bottom: 15px; /* Space between icon and number */
+  line-height: 1; /* Ensures emoji sits correctly */
+  /* Emojis come with their own colors, so 'color' property won't change them.
+     If you used SVGs, you could set 'fill: var(--color-accent);' for example. */
 }
 
 .stat h3 {
-  font-size: 48px;
-  color: #db1a66;
-  margin-bottom: 12px;
-  font-weight: 700;
-  line-height: 1;
+  font-size: 3rem; /* Prominent number size */
+  color: var(--color-accent-dark); /* Use an accent color for the numbers */
+  margin-bottom: 0.5rem;
+  font-weight: 800; /* Very bold for impact */
+  letter-spacing: -0.05em;
 }
 
 .stat p {
-  font-size: 18px;
-  color: #454e5b;
-  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--color-secondary-text);
   margin: 0;
-  text-align: center;
 }
 
-  section {
-    padding:20px;
+/* Responsive adjustments for stats section */
+@media (max-width: 767px) {
+  .stats {
+    padding: 3rem 1rem;
   }
-  
-  section:nth-child(even) {
-    background-color: #f8f9fa; /* light gray background for alternating sections */
+
+  .stats h2 {
+    font-size: 2.2rem;
+    margin-bottom: 2.5rem;
   }
-  
-  section h2 {
-    font-size: 28px;
-    margin-bottom: 24px;
-    text-align: center;
-    color: #1e293b;
-    position: relative;
-  }
-  
-  /* Optional: underline for heading */
-  section h2::after {
-    content: "";
-    display: block;
+
+  .stats h2::after {
     width: 60px;
     height: 3px;
-    background: #6366f1;
-    margin: 8px auto 0;
-    border-radius: 2px;
   }
+
+  .stat-grid {
+    grid-template-columns: 1fr; /* Single column on mobile */
+    gap: 1.5rem;
+  }
+
+  .stat-icon {
+    font-size: 48px; /* Slightly smaller icons for mobile */
+    margin-bottom: 10px;
+  }
+
+  .stat h3 {
+    font-size: 2.5rem;
+  }
+
+  .stat p {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr); /* Two columns for tablets */
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .stat-grid {
+    grid-template-columns: repeat(3, 1fr); /* Three columns for medium desktops */
+  }
+}
 .faculty-list-section {
   max-width: 960px;
   margin: 50px auto;

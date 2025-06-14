@@ -1,51 +1,57 @@
 /* --- Color Palette Definitions --- */
 :root {
-   --dark-indigo: #292551;
-   --slate-gray: #454E5B;
-   --deep-magenta: #B21F62;
-   --hot-pink: #DB1A66;
-   --light-gray: #DCD9DA;
-   --orange: #F26E26;
-   --golden-yellow: #F6A11F;
-   --bright-yellow: #FCCD11;
-   --white: #ffffff;
+    --dark-indigo: #292551;
+    --dark-indigo-rgb: 41, 37, 81; /* Added for rgba shadows */
+    --slate-gray: #454E5B;
+    --deep-magenta: #B21F62;
+    --hot-pink: #DB1A66;
+    --light-gray: #DCD9DA;
+    --orange: #F26E26;
+    --golden-yellow: #F6A11F;
+    --bright-yellow: #FCCD11;
+    --white: #ffffff;
 
-   /* Semantic mapping for easy use */
-   --brand-primary: var(--dark-indigo);
-   --brand-secondary: var(--deep-magenta);
-   --brand-accent-1: var(--bright-yellow);
-   --brand-accent-2: var(--orange);
-   --text-color-dark: var(--slate-gray);
-   --text-color-light: var(--light-gray);
-   --background-page: #f8f8f8; /* Slightly lighter background for clean look */
-   --card-bg: var(--white);
-   --shadow-strong: rgba(0, 0, 0, 0.18);
-   --shadow-light: rgba(0, 0, 0, 0.05); /* Lighter shadow for a floating feel */
+    /* Semantic mapping for easy use */
+    --brand-primary: var(--dark-indigo);
+    --brand-secondary: var(--deep-magenta);
+    --brand-accent-1: var(--hot-pink); /* Using hot-pink as primary accent */
+    --brand-accent-2: var(--orange); /* Keeping orange as secondary accent */
+    --text-color-heading: var(--dark-indigo);
+    --text-color-body: var(--slate-gray);
+    --text-color-light-detail: var(--light-gray); /* For subtle details if needed */
+    --background-page: #FDFDFD; /* Very subtle off-white, soft and clean */
+    --card-bg: var(--white);
+    --shadow-subtle: rgba(var(--dark-indigo-rgb), 0.06); /* Lighter, more diffused shadow */
+    --shadow-hover: rgba(var(--dark-indigo-rgb), 0.15); /* Stronger, but still diffused for hover */
+    --border-light: rgba(var(--dark-indigo-rgb), 0.05); /* Very light border for separation */
 }
+
+
 
 /* --- Base Styles --- */
 .teachers-page {
-    padding: 100px 20px; /* Ample padding for overall page */
+    padding: 40px 20px; /* More vertical padding for generous spacing */
     background: var(--background-page);
     font-family: 'Inter', sans-serif; /* Modern, professional font */
-    color: var(--text-color-dark);
+    color: var(--text-color-body);
     text-align: center;
     overflow-x: hidden; /* Prevent horizontal scroll for animations */
 }
 
 /* --- Page Title --- */
 .teachers-page .page-title {
-    font-size: 4.2rem; /* Large, impactful heading */
+    font-size: 4.8rem; /* Even larger, more impactful heading */
     font-weight: 800;
-    margin-bottom: 70px; /* More space below title */
-    color: var(--brand-primary);
-    text-transform: uppercase;
-    letter-spacing: 2.8px;
+    margin-bottom: 80px; /* More space below title */
+    color: var(--text-color-heading);
+    text-transform: capitalize; /* Capitalize instead of uppercase for softer feel */
+    letter-spacing: -0.05em; /* Tighter letter-spacing for modern look */
+    line-height: 1.1;
     position: relative;
     display: inline-block;
-    padding-bottom: 15px;
+    padding-bottom: 18px; /* More padding for the underline */
     opacity: 0;
-    animation: fadeInSlideUp 0.9s ease-out forwards; /* Slightly longer animation */
+    animation: fadeInSlideUp 1s ease-out forwards; /* Slightly longer animation */
 }
 
 .teachers-page .page-title::after {
@@ -54,70 +60,69 @@
     left: 50%;
     bottom: 0;
     transform: translateX(-50%);
-    width: 130px; /* Longer underline */
-    height: 8px; /* Thicker underline */
-    background-color: var(--brand-accent-1);
+    width: 150px; /* Longer underline */
+    height: 6px; /* Slightly thinner, more elegant underline */
+    background: linear-gradient(to right, var(--brand-secondary), var(--brand-accent-1)); /* Gradient accent */
     border-radius: 4px;
-    animation: expandUnderline 1.1s ease-out forwards 0.5s;
+    animation: expandUnderline 1.2s ease-out forwards 0.5s;
     opacity: 0;
 }
 
 /* --- Teacher Grid --- */
 .teacher-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); /* Larger min-width for cards */
-    gap: 60px; /* SIGNIFICANTLY INCREASED GAP BETWEEN CARDS */
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); /* Larger min-width for cards */
+    gap: 70px; /* Increased gap for more breathing room */
     justify-content: center;
-    max-width: 1500px; /* Wider max width for the grid */
+    max-width: 1600px; /* Wider max width for the grid */
     margin: 0 auto; /* Center the grid on the page */
+    padding: 0 30px; /* Inner padding for grid to prevent cards touching edges */
 }
 
 /* --- Teacher Card --- */
 .teacher-card {
     background: var(--card-bg);
-    border-radius: 25px; /* More rounded corners */
-    box-shadow: 0 18px 45px var(--shadow-light); /* Deeper, softer shadow */
-    padding: 50px 35px; /* Generous padding inside cards */
+    border-radius: 20px; /* Clean rounded corners */
+    box-shadow: 0 10px 30px var(--shadow-subtle); /* Softer, more professional shadow */
+    padding: 55px 40px; /* Generous padding inside cards */
     text-align: center;
-    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease;
-    border: 1px solid rgba(0, 0, 0, 0.03); /* Very subtle border */
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+    border: 1px solid var(--border-light); /* Very subtle border */
     position: relative;
     opacity: 0;
-    transform: translateY(50px); /* Initial position for slide-up animation */
+    transform: translateY(70px); /* Initial position for deeper slide-up animation */
 }
 
-/* Staggered animation for cards */
+/* Staggered animation for cards (adjust delays if more cards are added) */
 .teacher-grid .teacher-card:nth-child(1) { animation: fadeInSlideUpCard 1s ease-out forwards 0.8s; }
 .teacher-grid .teacher-card:nth-child(2) { animation: fadeInSlideUpCard 1s ease-out forwards 1.1s; }
 .teacher-grid .teacher-card:nth-child(3) { animation: fadeInSlideUpCard 1s ease-out forwards 1.4s; }
 .teacher-grid .teacher-card:nth-child(4) { animation: fadeInSlideUpCard 1s ease-out forwards 1.7s; }
-.teacher-grid .teacher-card:nth-child(5) { animation: fadeInSlideUpCard 1s ease-out forwards 2.0s; }
-.teacher-grid .teacher-card:nth-child(6) { animation: fadeInSlideUpCard 1s ease-out forwards 2.3s; }
-.teacher-grid .teacher-card:nth-child(7) { animation: fadeInSlideUpCard 1s ease-out forwards 2.6s; }
-.teacher-grid .teacher-card:nth-child(8) { animation: fadeInSlideUpCard 1s ease-out forwards 2.9s; }
+/* Add more :nth-child rules if you have more teachers */
 
 
 .teacher-card:hover {
-    transform: translateY(-20px) scale(1.03); /* More pronounced lift and subtle scale on hover */
-    box-shadow: 0 30px 70px var(--shadow-strong); /* Stronger shadow on hover */
+    transform: translateY(-15px) scale(1.02); /* More elegant lift and subtle scale on hover */
+    box-shadow: 0 25px 60px var(--shadow-hover); /* Stronger, yet elegant shadow on hover */
+    border-color: var(--brand-accent-1); /* Highlight border on hover */
 }
 
 /* --- Teacher Photo Frame (New improved UI around image) --- */
 .teacher-photo-frame {
-    width: 140px; /* Larger frame size */
-    height: 140px;
+    width: 160px; /* Larger frame size for prominence */
+    height: 160px;
     border-radius: 50%;
-    margin: 0 auto 30px auto; /* Centered with more bottom margin */
+    margin: 0 auto 35px auto; /* Centered with more bottom margin */
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden; /* Crucial to contain the image */
     position: relative; /* For the subtle ring effect */
 
-    /* Subtle gradient ring effect */
-    background: linear-gradient(45deg, var(--deep-magenta), var(--orange));
-    padding: 5px; /* This creates the outer ring padding */
-    box-shadow: 0 0 0 8px var(--white); /* White outer border */
+    /* Elegant dual-border effect */
+    background: var(--white); /* Inner background matches card */
+    box-shadow: 0 0 0 5px var(--brand-accent-1), /* Primary accent ring */
+                0 0 0 15px rgba(var(--dark-indigo-rgb), 0.05); /* Lighter, subtle outer halo */
 }
 
 .teacher-photo {
@@ -126,49 +131,51 @@
     border-radius: 50%;
     object-fit: cover; /* Ensures image covers without distortion */
     object-position: center top; /* Focus on face if needed */
-    border: 5px solid var(--white); /* Inner white border */
+    border: 4px solid var(--white); /* Inner white border around photo */
     display: block; /* Remove extra space below image */
 }
 
 /* --- Teacher Info --- */
 .teacher-card .teacher-name {
-    margin: 25px 0 15px 0; /* More space around name */
-    color: var(--brand-primary);
-    font-size: 32px; /* Larger name */
+    margin: 28px 0 18px 0; /* More space around name */
+    color: var(--text-color-heading);
+    font-size: 34px; /* Larger, more prominent name */
     font-weight: 700;
-    line-height: 1.3;
+    line-height: 1.2;
+    letter-spacing: -0.04em; /* Tighter for professionalism */
 }
 
 .teacher-card p {
-    color: var(--text-color-dark);
-    font-size: 18px; /* Slightly larger paragraph size */
-    margin: 12px 0; /* Consistent vertical spacing */
-    line-height: 1.8;
+    color: var(--text-color-body);
+    font-size: 19px; /* Slightly larger paragraph size for readability */
+    margin: 10px 0; /* Consistent vertical spacing */
+    line-height: 1.7;
 }
 
 .teacher-card p strong {
-    color: var(--slate-gray); /* Slightly darker for labels */
+    color: var(--brand-primary); /* Use primary brand color for labels */
     font-weight: 600;
 }
 
 /* New style for the bio paragraph */
 .teacher-card .teacher-bio {
-    font-size: 17px;
+    font-size: 18px; /* Refined bio font size */
     color: var(--slate-gray); /* Using slate-gray for description */
-    margin-top: 25px; /* More space above bio */
+    margin-top: 30px; /* More space above bio */
     line-height: 1.7;
     font-weight: 400;
-    font-style: italic; /* Slight italic for descriptive text */
+    /* Removed italic - often looks less formal for longer descriptions */
+    max-width: 320px; /* Constrain bio width for better readability in cards */
+    margin-left: auto;
+    margin-right: auto;
 }
-
-/* REMOVED .profile-button styles as requested */
 
 
 /* --- Keyframe Animations --- */
 @keyframes fadeInSlideUp {
     from {
         opacity: 0;
-        transform: translateY(80px);
+        transform: translateY(100px); /* Deeper slide for titles */
     }
     to {
         opacity: 1;
@@ -182,7 +189,7 @@
         opacity: 0;
     }
     to {
-        width: 130px;
+        width: 150px;
         opacity: 1;
     }
 }
@@ -190,7 +197,7 @@
 @keyframes fadeInSlideUpCard {
     from {
         opacity: 0;
-        transform: translateY(60px); /* Deeper slide for cards */
+        transform: translateY(80px); /* Deeper slide for cards */
     }
     to {
         opacity: 1;
@@ -200,60 +207,70 @@
 
 
 /* --- Responsive Design --- */
+@media (max-width: 1400px) {
+    .teacher-grid {
+        gap: 60px;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        max-width: 1300px;
+    }
+}
+
 @media (max-width: 1200px) {
-    .teachers-page { padding: 80px 20px; }
-    .teachers-page .page-title { font-size: 3.8rem; margin-bottom: 60px; }
-    .teachers-page .page-title::after { width: 110px; height: 7px; }
-    .teacher-grid { gap: 40px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-    .teacher-card { padding: 40px 30px; }
-    .teacher-photo-frame { width: 130px; height: 130px; padding: 4px; box-shadow: 0 0 0 6px var(--white); }
-    .teacher-photo { border: 4px solid var(--white); }
-    .teacher-card .teacher-name { font-size: 30px; }
-    .teacher-card p { font-size: 17px; margin: 10px 0; }
-    .teacher-card .teacher-bio { font-size: 16px; margin-top: 20px; }
+    .teachers-page { padding: 30px 20px; }
+    .teachers-page .page-title { font-size: 4rem; margin-bottom: 70px; }
+    .teachers-page .page-title::after { width: 130px; height: 5px; }
+    .teacher-grid { gap: 50px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .teacher-card { padding: 50px 35px; }
+    .teacher-photo-frame { width: 150px; height: 150px; box-shadow: 0 0 0 5px var(--brand-accent-1), 0 0 0 12px rgba(var(--dark-indigo-rgb), 0.04); }
+    .teacher-photo { border: 3px solid var(--white); }
+    .teacher-card .teacher-name { font-size: 32px; }
+    .teacher-card p { font-size: 18px; margin: 9px 0; }
+    .teacher-card .teacher-bio { font-size: 17px; margin-top: 25px; }
 }
 
 @media (max-width: 992px) {
-    .teachers-page { padding: 60px 15px; }
-    .teachers-page .page-title { font-size: 3.2rem; margin-bottom: 50px; }
-    .teachers-page .page-title::after { width: 90px; height: 6px; }
+    .teachers-page { padding: 40px 15px; }
+    .teachers-page .page-title { font-size: 3.5rem; margin-bottom: 60px; }
+    .teachers-page .page-title::after { width: 100px; height: 5px; }
     .teacher-grid {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 30px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
     }
-    .teacher-grid .teacher-card { animation-delay: 0s !important; } /* Remove stagger delay for stacked cards */
-    .teacher-card { padding: 35px 25px; }
-    .teacher-photo-frame { width: 120px; height: 120px; padding: 4px; box-shadow: 0 0 0 5px var(--white); }
+    .teacher-card { padding: 45px 30px; }
+    .teacher-photo-frame { width: 130px; height: 130px; box-shadow: 0 0 0 4px var(--brand-accent-1), 0 0 0 10px rgba(var(--dark-indigo-rgb), 0.03); }
     .teacher-photo { border: 3px solid var(--white); }
     .teacher-card .teacher-name { font-size: 28px; }
-    .teacher-card p { font-size: 16px; margin: 8px 0; }
-    .teacher-card .teacher-bio { font-size: 15px; margin-top: 15px;}
+    .teacher-card p { font-size: 17px; margin: 8px 0; }
+    .teacher-card .teacher-bio { font-size: 16px; margin-top: 20px;}
 }
 
 @media (max-width: 768px) {
-    .teachers-page { padding: 50px 10px; }
-    .teachers-page .page-title { font-size: 2.8rem; margin-bottom: 40px; }
-    .teachers-page .page-title::after { width: 70px; height: 5px; }
+    .teachers-page { padding: 20px 10px; }
+    .teachers-page .page-title { font-size: 3rem; margin-bottom: 40px; }
+    .teachers-page .page-title::after { width: 80px; height: 4px; }
     .teacher-grid {
         grid-template-columns: 1fr; /* Single column on mobile */
-        max-width: 380px; /* Constrain width for better readability */
+        max-width: 400px; /* Constrain width for better readability */
+        padding: 0 15px; /* Inner padding for grid */
+        gap: 30px;
     }
-    .teacher-card { padding: 30px 20px; }
-    .teacher-photo-frame { width: 100px; height: 100px; margin-bottom: 20px; padding: 3px; box-shadow: 0 0 0 4px var(--white); }
-    .teacher-photo { border: 3px solid var(--white); }
-    .teacher-card .teacher-name { font-size: 24px; }
-    .teacher-card p { font-size: 15px; margin: 6px 0; }
-    .teacher-card .teacher-bio { font-size: 14px; margin-top: 12px; }
+    .teacher-grid .teacher-card { animation-delay: 0s !important; } /* Remove stagger delay for stacked cards */
+    .teacher-card { padding: 40px 25px; }
+    .teacher-photo-frame { width: 120px; height: 120px; margin-bottom: 25px; box-shadow: 0 0 0 4px var(--brand-accent-1), 0 0 0 8px rgba(var(--dark-indigo-rgb), 0.02); }
+    .teacher-photo { border: 2px solid var(--white); }
+    .teacher-card .teacher-name { font-size: 26px; }
+    .teacher-card p { font-size: 16px; margin: 7px 0; }
+    .teacher-card .teacher-bio { font-size: 15px; margin-top: 15px; max-width: none; /* Allow bio to use full width */ }
 }
 
 @media (max-width: 480px) {
-    .teachers-page { padding: 40px 10px; }
-    .teachers-page .page-title { font-size: 2.2rem; margin-bottom: 30px; }
-    .teachers-page .page-title::after { width: 50px; height: 4px; }
-    .teacher-card { padding: 25px 15px; }
-    .teacher-photo-frame { width: 90px; height: 90px; padding: 2px; box-shadow: 0 0 0 3px var(--white); }
+    .teachers-page { padding: 15px; }
+    .teachers-page .page-title { font-size: 2.5rem; margin-bottom: 30px; }
+    .teachers-page .page-title::after { width: 60px; height: 3px; }
+    .teacher-card { padding: 35px 20px; }
+    .teacher-photo-frame { width: 100px; height: 100px; box-shadow: 0 0 0 3px var(--brand-accent-1), 0 0 0 6px rgba(var(--dark-indigo-rgb), 0.02); }
     .teacher-photo { border: 2px solid var(--white); }
-    .teacher-card .teacher-name { font-size: 20px; }
-    .teacher-card p { font-size: 14px; margin: 5px 0;}
-    .teacher-card .teacher-bio { font-size: 13px; margin-top: 10px; }
+    .teacher-card .teacher-name { font-size: 22px; }
+    .teacher-card p { font-size: 15px; margin: 6px 0;}
+    .teacher-card .teacher-bio { font-size: 14px; margin-top: 12px; }
 }

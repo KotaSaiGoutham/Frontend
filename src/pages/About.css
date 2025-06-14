@@ -97,86 +97,98 @@
 
 /* --- Mission & Vision Container --- */
 .mission-vision-container {
-    display: flex;
-    justify-content: center; /* Center cards if less than two */
-    flex-wrap: wrap;
-    gap: 40px;
-    margin-bottom: 80px;
+  display: flex;
+  flex-wrap: wrap; /* Allow cards to wrap on smaller screens */
+  justify-content: center;
+  gap: 2.5rem; /* Space between cards */
+  padding: 4rem 1.5rem; /* Adjust padding as needed */
+  background-color: var(--color-background-light); /* Example background */
 }
 
 .mission-vision-card {
-    flex: 1;
-    min-width: 320px; /* Adjusted min-width for better responsiveness */
-    max-width: 48%; /* Max width for two columns */
-    background: var(--mission-vision-card-bg);
-    border-radius: 12px;
-    padding: 40px;
-    box-shadow: 0 10px 15px -3px var(--shadow-light), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Softer shadow */
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    text-align: left; /* Align text within card */
-
-    opacity: 0; /* Initial state for animation */
-    transform: translateY(40px);
-    /* Staggered animation */
-    animation: fadeInSlideUp 0.8s ease-out forwards;
-}
-
-/* Specific delays for mission and vision cards */
-.mission-vision-container .mission-vision-card:nth-child(1) {
-    animation-delay: 1.0s;
-}
-.mission-vision-container .mission-vision-card:nth-child(2) {
-    animation-delay: 1.2s;
+  flex: 1; /* Allow cards to grow and shrink */
+  min-width: 300px; /* Minimum width for cards before wrapping */
+  max-width: 500px; /* Max width to prevent cards from getting too wide on large screens */
+  background-color: var(--color-card-background);
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(var(--dark-indigo-rgb), 0.08);
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border: 1px solid var(--color-border-light);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .mission-vision-card:hover {
-    transform: translateY(-8px); /* More pronounced lift */
-    box-shadow: 0 20px 35px -5px var(--shadow-strong), 0 10px 15px -5px rgba(0, 0, 0, 0.08); /* Stronger hover shadow */
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(var(--dark-indigo-rgb), 0.12);
 }
 
-.mission-vision-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 6px; /* Thicker border */
-    height: 100%;
-    background: var(--mission-vision-card-border-left); /* Gradient border */
-    border-radius: 12px 0 0 12px; /* Apply border radius to the left side only */
+.mission-vision-card .icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px; /* Space between icon and heading */
+  width: 70px; /* Larger size for these primary icons */
+  height: 70px; /* Larger size for these primary icons */
+  background-color: var(--color-accent); /* Using your accent color for the background */
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(var(--dark-indigo-rgb), 0.1);
 }
 
-.icon-container {
-    width: 60px;
-    height: 60px;
-    background: var(--mission-vision-icon-bg); /* Keep original light blue */
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 25px;
-}
-
-.icon {
-    width: 32px; /* Slightly larger icon */
-    height: 32px;
-    fill: var(--mission-vision-icon-fill); /* Keep original blue */
+/* Styling for the new emoji icons */
+.mission-vision-icon {
+  font-size: 48px; /* Size of the emoji */
+  line-height: 1; /* Ensures emoji is centered */
+  /* Emojis typically render with their own colors */
 }
 
 .mission-vision-card h2 {
-    font-size: 1.6rem; /* Slightly larger heading */
-    margin-bottom: 1rem;
-    color: var(--brand-primary); /* Dark Indigo */
-    font-weight: 600;
+  font-size: 2.2rem; /* Prominent heading */
+  color: var(--color-primary-text);
+  margin-bottom: 1rem;
+  font-weight: 700;
 }
 
 .mission-vision-card p {
-    font-size: 1rem;
-    line-height: 1.7;
-    color: var(--text-color-medium); /* Slate Gray */
+  font-size: 1.1rem;
+  color: var(--color-secondary-text);
+  line-height: 1.6;
 }
 
+/* Responsive Adjustments */
+@media (max-width: 767px) {
+  .mission-vision-container {
+    padding: 2.5rem 1rem;
+    gap: 1.5rem;
+  }
+
+  .mission-vision-card {
+    padding: 2.5rem 1.5rem;
+    min-width: unset; /* Remove min-width to allow better scaling on small screens */
+    width: 100%; /* Make cards take full width on mobile */
+  }
+
+  .mission-vision-card .icon-container {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 15px;
+  }
+
+  .mission-vision-icon {
+    font-size: 40px; /* Smaller emoji size for mobile */
+  }
+
+  .mission-vision-card h2 {
+    font-size: 1.8rem;
+  }
+
+  .mission-vision-card p {
+    font-size: 1rem;
+  }
+}
 /* --- Core Values Section --- */
 .values-section {
     background: var(--values-section-bg);

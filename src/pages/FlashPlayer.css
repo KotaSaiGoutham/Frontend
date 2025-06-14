@@ -1,22 +1,115 @@
+/* Base styles for desktop and general display */
 .flash-banner {
   width: 100%;
   overflow: hidden;
+  position: relative; /* Important for positioning custom arrows relative to the banner */
 }
 
 .slide-wrapper {
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Desktop height is controlled by max-height on banner-img, or you can uncomment this for a fixed wrapper height */
+  /* height: 544px; */ /* If you want a fixed height for the slider container on desktop */
 }
 
 .banner-img {
   width: 100%;
-  height: auto;
+  height: auto; /* Maintain aspect ratio on desktop initially */
   display: block;
   object-fit: cover;
-  max-height: 544px; /* desktop banner max height */
+  max-height: 544px; /* desktop banner max height for all desktop images */
 }
 
+/* --- Custom Arrow Styling (Desktop/General) --- */
+/* Hide default slick arrow content if you're replacing it */
+.slick-prev:before,
+.slick-next:before {
+  content: "";
+  display: none;
+}
+
+.custom-arrow {
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  border-radius: 50%; /* Make them circular */
+  width: 40px; /* Desktop width */
+  height: 40px; /* Desktop height */
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white; /* This color will be inherited by the SVG's fill */
+  z-index: 1; /* Ensure arrows are above images */
+}
+
+.custom-arrow:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Styles for the SVG icon inside the custom arrow container */
+.custom-arrow svg {
+  width: 60%;   /* SVG fills 60% of the arrow container's width */
+  height: 60%;  /* SVG fills 60% of the arrow container's height */
+  fill: currentColor; /* Inherit color from the parent .custom-arrow */
+  display: block;
+}
+
+/* Positioning for desktop arrows */
+.slick-prev.custom-arrow {
+  left: 25px; /* Adjust as needed */
+}
+
+.slick-next.custom-arrow {
+  right: 25px; /* Adjust as needed */
+}
+
+
+/* --- Mobile Responsive Adjustments (max-width: 767px) --- */
 @media (max-width: 767px) {
-  .banner-img {
-    max-height: 300px; /* smaller height for mobile */
+  .slide-wrapper {
+    /* For mobile, set the height of the wrapper to 50% of the viewport height */
+    height: 50vh;
   }
+
+  .banner-img {
+    width: 100%; /* Keep width 100% as requested */
+    height: 100%; /* Make image fill the 50vh height of the slide-wrapper */
+    max-height: unset; /* Remove desktop max-height constraint so 50vh applies */
+    object-fit: fill; /* This will crop the image if aspect ratio doesn't match, which is common for wide banners on mobile */
+  }
+
+  /* Enable arrows on mobile and set smaller size */
+  .custom-arrow {
+    width: 30px; /* Smaller width for mobile arrows */
+    height: 30px; /* Smaller height for mobile arrows */
+    left: 10px; /* Adjust positioning for mobile */
+    right: 10px; /* Adjust positioning for mobile */
+    display: flex !important; /* Ensure they are displayed */
+  }
+
+  .custom-arrow svg {
+    width: 50%; /* Make SVG slightly smaller relative to the 30px container */
+    height: 50%;
+  }
+
+  /* Adjust slick-dots for better mobile positioning if needed */
+  .slick-dots {
+    bottom: 10px; /* Example: Move dots up */
+  }
+}
+
+/* Optional: Adjust for even smaller screens if 50vh is too large */
+@media (max-width: 480px) {
+    .slide-wrapper {
+        height: 45vh; /* Slightly smaller for very small phones */
+    }
+    .custom-arrow {
+        width: 25px; /* Even smaller arrows for tiny screens */
+        height: 25px;
+    }
 }

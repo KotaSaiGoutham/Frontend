@@ -349,43 +349,42 @@ const Home = () => {
 
    <FacultyVideo faculties={faculties}/>
 
-      <section className="stats" ref={statsRef}>
-        <h2>Trusted by Hundreds of Families</h2>
-        <div className="stat-grid">
-          <div className="stat">
-            <FaSmile className="stat-icon" />
-            <h3>
-              <CountUpNumber end={500} start={startCount} />
-            </h3>
-            <p>Happy Students</p>
-          </div>
-          <div className="stat">
-            <FaUsers className="stat-icon" />
-            <h3>
-              <CountUpNumber end={500} start={startCount} />
-            </h3>
-            <p>Parent Satisfaction</p>
-          </div>
-          <div className="stat">
-            <FaChalkboardTeacher className="stat-icon" />
-            <h3>
-              <CountUpNumber end={30} start={startCount} />
-            </h3>
-            <p>Expert Tutors</p>
-          </div>
-          <div className="stat">
-      <FaBook className="stat-icon" />
-      <h3><CountUpNumber end={6} start={startCount} /></h3>
-      <p>Subjects Offered</p>
-    </div>
-
-    <div className="stat">
-      <FaCalendarAlt className="stat-icon" />
-      <h3><CountUpNumber end={yearsOfExcellence} start={startCount} /></h3>
-      <p>Years of Excellence</p>
-    </div>
+   <section className="stats" ref={statsRef}>
+      <h2>Trusted by Hundreds of Families</h2>
+      <div className="stat-grid">
+        <div className="stat">
+          <div className="stat-icon">😄</div> {/* Happy Students */}
+          <h3>
+            <CountUpNumber end={500} start={startCount} />
+          </h3>
+          <p>Happy Students</p>
         </div>
-      </section>
+        <div className="stat">
+          <div className="stat-icon">🤝</div> {/* Parent Satisfaction - Handshake for trust/agreement */}
+          <h3>
+            <CountUpNumber end={500} start={startCount} />
+          </h3>
+          <p>Parent Satisfaction</p>
+        </div>
+        <div className="stat">
+          <div className="stat-icon">🧑‍🏫</div> {/* Expert Tutors - Teacher emoji */}
+          <h3>
+            <CountUpNumber end={30} start={startCount} />
+          </h3>
+          <p>Expert Tutors</p>
+        </div>
+        <div className="stat">
+          <div className="stat-icon">📚</div> {/* Subjects Offered - Books emoji */}
+          <h3><CountUpNumber end={6} start={startCount} /></h3>
+          <p>Subjects Offered</p>
+        </div>
+        <div className="stat">
+          <div className="stat-icon">🏅</div> {/* Years of Excellence - Medal emoji */}
+          <h3><CountUpNumber end={yearsOfExcellence} start={startCount} /></h3>
+          <p>Years of Excellence</p>
+        </div>
+      </div>
+    </section>
 
   <Testimonials/>
 <FAQSection/>

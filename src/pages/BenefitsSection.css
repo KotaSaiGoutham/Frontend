@@ -87,28 +87,39 @@ body {
 }
 
 /* Class added by IntersectionObserver when in view */
-.card.fade-in-slide-up {
+.card.visible { /* Changed from fade-in-slide-up to 'visible' as per your JS logic */
   opacity: 1;
   transform: translateY(0);
   transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1); /* Smoother, bouncier animation */
 }
 
 /* Stagger animation delay (adjust values as needed) */
-.card:nth-child(1).fade-in-slide-up { transition-delay: 0s; }
-.card:nth-child(2).fade-in-slide-up { transition-delay: 0.12s; }
-.card:nth-child(3).fade-in-slide-up { transition-delay: 0.24s; }
-.card:nth-child(4).fade-in-slide-up { transition-delay: 0.36s; }
-.card:nth-child(5).fade-in-slide-up { transition-delay: 0.48s; }
-.card:nth-child(6).fade-in-slide-up { transition-delay: 0.60s; }
-
+.card:nth-child(1).visible { transition-delay: 0s; }
+.card:nth-child(2).visible { transition-delay: 0.12s; }
+.card:nth-child(3).visible { transition-delay: 0.24s; }
+.card:nth-child(4).visible { transition-delay: 0.36s; }
+.card:nth-child(5).visible { transition-delay: 0.48s; }
+.card:nth-child(6).visible { transition-delay: 0.60s; }
 
 .icon-container {
-  color: var(--color-accent); /* Hot Pink for icon color */
-  margin-bottom: 1.8rem; /* Space below the icon */
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: transform 0.3s ease-out;
+  margin-bottom: 10px; /* Space between icon and text */
+  width: 60px; /* Example size for the circle */
+  height: 60px; /* Example size for the circle */
+  background-color: var(--color-accent); /* Using your accent color for the background */
+  border-radius: 50%; /* Make it round */
+  box-shadow: 0 4px 10px rgba(var(--dark-indigo-rgb), 0.1); /* Subtle shadow for depth */
+  transition: transform 0.3s ease; /* Smooth transition for hover effect */
+}
+
+.value-icon {
+  font-size: 32px; /* Adjust emoji size here */
+  line-height: 1; /* Ensures emoji sits centrally */
+  /* Emojis typically come with their own color, so 'color: white;' might not apply directly to them.
+     If you use SVG icons, 'color: white;' on .icon-container and 'fill: currentColor;' on SVG would work.
+     For emojis, their native color is usually preferred. */
 }
 
 .card:hover .icon-container {
@@ -165,9 +176,15 @@ body {
 
   .icon-container {
     margin-bottom: 1.2rem;
+    /* You might want to adjust the size for mobile if 60px is too big/small */
+    width: 50px;
+    height: 50px;
   }
 
-  /* Remember to adjust icon size directly on the lucide-react component in JSX for mobile if needed (e.g., size={40}) */
+  .value-icon {
+    font-size: 28px; /* Slightly smaller emoji size for mobile */
+  }
+
 
   .card-content h3 {
     font-size: 1.4rem;
