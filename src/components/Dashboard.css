@@ -1,0 +1,516 @@
+/* Variables for consistent styling */
+:root {
+  --primary-color: #4a90e2; /* Blue */
+  --secondary-color: #6a737d; /* Dark Gray */
+  --accent-color: #f5a623; /* Orange/Yellow */
+  --background-light: #f7f9fc; /* Light Grayish Blue */
+  --card-background: #ffffff;
+  --text-dark: #333;
+  --text-light: #fff;
+  --border-color: #e0e6ed;
+  --success-color: #4CAF50; /* Green */
+  --warning-color: #FFC107; /* Amber */
+  --danger-color: #F44336; /* Red */
+
+  --font-family-primary: 'Poppins', sans-serif;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --border-radius: 12px;
+  --spacing-unit: 16px; /* Base spacing unit */
+}
+
+/* Base Styles */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-unit);
+  padding: var(--spacing-unit);
+  background-color: var(--background-light);
+  min-height: 100vh;
+  font-family: var(--font-family-primary);
+  color: var(--text-dark);
+}
+
+h1, h2, h3 {
+  color: var(--text-dark);
+  margin-bottom: calc(var(--spacing-unit) / 2);
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between icon and text */
+}
+
+h2 .card-icon {
+    color: var(--primary-color);
+    font-size: 1.2em;
+}
+
+/* Dashboard Card Base Style */
+.dashboard-card {
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 10px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative; /* For animations */
+}
+
+.dashboard-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+  opacity: 0; /* Start invisible */
+}
+
+/* Animation delays for staggered effect */
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+.delay-6 { animation-delay: 0.6s; }
+.delay-7 { animation-delay: 0.7s; }
+.delay-8 { animation-delay: 0.8s; }
+.delay-9 { animation-delay: 0.9s; }
+.delay-10 { animation-delay: 1.0s; }
+
+/* Header and Greeting */
+.dashboard-header {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-size: cover;
+  background-position: center;
+  color: var(--text-light); /* Text color for header */
+  padding: var(--spacing-unit) * 2;
+  position: relative;
+  overflow: hidden; /* For pseudo-element overlay */
+}
+
+.dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4); /* Dark overlay */
+  z-index: 1;
+}
+
+.dashboard-header .greeting-content,
+.dashboard-header .greeting-graphic {
+  position: relative;
+  z-index: 2;
+}
+
+.dashboard-header h1 {
+  color: var(--text-light);
+  font-size: 2.5em;
+  margin-bottom: 5px;
+}
+
+.dashboard-header p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1em;
+}
+
+.dashboard-header .greeting-icon {
+  font-size: 5em;
+  color: rgba(255, 255, 255, 0.6);
+  opacity: 0.8;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Dynamic backgrounds for greeting */
+.dashboard-header.morning {
+  background-image: var(--current-greeting-bg-image, url('https://images.unsplash.com/photo-1547463564-9273646736c9?q=80&w=2070&auto=format&fit=crop'));
+}
+.dashboard-header.afternoon {
+  background-image: var(--current-greeting-bg-image, url('https://images.unsplash.com/photo-1549490349-8643362c395f?q=80&w=2070&auto=format&fit=crop'));
+}
+.dashboard-header.evening {
+  background-image: var(--current-greeting-bg-image, url('https://images.unsplash.com/photo-1508906660126-a05d4f3b6d51?q=80&w=2070&auto=format&fit=crop'));
+}
+
+
+/* Metric Cards */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--spacing-unit);
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-unit);
+  padding: var(--spacing-unit);
+  box-shadow: var(--box-shadow);
+}
+
+.metric-icon {
+  font-size: 2.5em;
+  color: var(--primary-color);
+  background-color: rgba(74, 144, 226, 0.1); /* Light primary background */
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metric-info .metric-label {
+  font-size: 0.9em;
+  color: var(--secondary-color);
+  margin-bottom: 4px;
+}
+
+.metric-info .metric-value {
+  font-size: 1.8em;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-align: center;
+}
+
+/* Main Content Grid */
+.main-content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Two columns: wide for classes, narrower for charts */
+  grid-template-rows: auto auto; /* Rows adjust to content */
+  gap: var(--spacing-unit);
+}
+
+.upcoming-classes-card {
+    grid-column: 1 / 2; /* Spans first column */
+}
+
+.chart-card {
+    grid-column: 2 / 3; /* Spans second column */
+    min-height: 250px; /* Ensure charts have a minimum height */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: var(--spacing-unit) / 2;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 100%; /* Fill parent */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-light);
+    border-radius: var(--border-radius) / 2;
+    padding: var(--spacing-unit);
+}
+
+.chart-placeholder img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: 10px;
+}
+
+.chart-note {
+    font-size: 0.85em;
+    color: var(--secondary-color);
+    margin-top: 10px;
+}
+
+
+/* Filters Section */
+.filters-section {
+  padding: var(--spacing-unit) * 1.5;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-unit);
+  margin-top: var(--spacing-unit);
+}
+
+.filter-group label {
+  display: block;
+  font-size: 0.9em;
+  color: var(--secondary-color);
+  margin-bottom: 6px;
+}
+
+.filter-group input[type="text"],
+.filter-group input[type="number"],
+.filter-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: var(--font-family-primary);
+  font-size: 1em;
+  color: var(--text-dark);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+/* Tables */
+.data-table {
+  width: 100%;
+  border-collapse: separate; /* For rounded corners */
+  border-spacing: 0;
+  margin-top: var(--spacing-unit);
+  font-size: 0.95em;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table th {
+  background-color: var(--background-light);
+  font-weight: 600;
+  color: var(--primary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85em;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f0f4f8; /* Light hover effect */
+}
+
+/* First and last child for rounded table corners */
+.data-table thead tr:first-child th:first-child { border-top-left-radius: var(--border-radius) / 2; }
+.data-table thead tr:first-child th:last-child { border-top-right-radius: var(--border-radius) / 2; }
+.data-table tbody tr:last-child td:first-child { border-bottom-left-radius: var(--border-radius) / 2; }
+.data-table tbody tr:last-child td:last-child { border-bottom-right-radius: var(--border-radius) / 2; }
+
+
+/* Table Cell Content */
+.cell-content-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cell-icon {
+  color: var(--secondary-color);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  font-weight: 600;
+  gap: 5px;
+  text-transform: capitalize;
+}
+
+.status-badge.paid {
+  background-color: rgba(76, 175, 80, 0.15); /* Green */
+  color: var(--success-color);
+}
+
+.status-badge.unpaid {
+  background-color: rgba(244, 67, 54, 0.15); /* Red */
+  color: var(--danger-color);
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1em;
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+}
+
+.btn-primary:hover {
+  background-color: #3b7ad6; /* Slightly darker blue */
+  box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
+}
+
+.add-student-button, .add-employee-button { /* Reusing styles for similar buttons */
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.add-student-button:hover, .add-employee-button:hover {
+    background-color: #3b7ad6;
+    transform: translateY(-2px);
+}
+
+/* Table Headers with Icons */
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+/* Utility Classes */
+.table-responsive {
+  overflow-x: auto; /* Ensures table is scrollable on small screens */
+}
+
+.no-data-message, .dashboard-loading, .dashboard-error {
+  text-align: center;
+  padding: var(--spacing-unit) * 2;
+  color: var(--secondary-color);
+  font-size: 1.1em;
+}
+
+.dashboard-loading .spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--primary-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.dashboard-error {
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    background-color: rgba(244, 67, 54, 0.08);
+    border-radius: var(--border-radius);
+}
+
+.dashboard-error button {
+    margin-top: var(--spacing-unit);
+    background-color: var(--danger-color);
+    color: var(--text-light);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.dashboard-error button:hover {
+    background-color: #d32f2f;
+}
+
+/* Flex utilities for headers/buttons */
+.students-table-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-unit);
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 10px; /* Space between items if they wrap */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+  .main-content-grid {
+    grid-template-columns: 1fr; /* Stack columns on smaller desktops/tablets */
+  }
+  .upcoming-classes-card, .chart-card {
+      grid-column: 1 / -1; /* Make them span full width */
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header h1 {
+    font-size: 2em;
+  }
+  .metrics-grid, .filters-grid {
+    grid-template-columns: 1fr; /* Single column layout on small screens */
+  }
+  .dashboard-card {
+    padding: var(--spacing-unit);
+  }
+  .dashboard-header {
+      padding: var(--spacing-unit);
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header h1 {
+    font-size: 1.8em;
+  }
+  .dashboard-header .greeting-graphic .greeting-icon {
+      font-size: 3em;
+  }
+  .metric-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  .metric-icon {
+    margin-bottom: 10px;
+  }
+  .students-table-header-flex {
+      flex-direction: column;
+      align-items: flex-start; /* Align to start when stacked */
+  }
+  .students-table-header-flex h2,
+  .students-table-header-flex button {
+      width: 100%; /* Take full width when stacked */
+      justify-content: center; /* Center content */
+  }
+  .data-table th, .data-table td {
+      padding: 8px 10px;
+  }
+}

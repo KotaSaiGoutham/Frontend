@@ -190,195 +190,125 @@
   }
 }
 /* --- Core Values Section --- */
+/* Ensure the values-section provides a good base */
 .values-section {
-    background: var(--values-section-bg);
-    border-radius: 12px;
-    padding: 60px 40px;
-    box-shadow: 0 10px 15px -3px var(--shadow-light), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    opacity: 0; /* Initial state for animation */
-    transform: translateY(40px);
-    animation: fadeInSlideUp 0.9s ease-out forwards 1.4s; /* Section animates in */
+  text-align: center; /* Centers the title and grid if it's a block element */
+  padding: 40px 20px; /* Adjust padding as needed */
 }
 
-.values-title {
-    text-align: center;
-    font-size: 2.5rem; /* Larger heading */
-    font-weight: 700;
-    margin-bottom: 60px;
-    color: var(--brand-primary); /* Dark Indigo */
-    position: relative;
-    letter-spacing: 0.5px;
-    opacity: 0; /* Initial state for animation */
-    animation: fadeInSlideUp 0.8s ease-out forwards 1.6s; /* Title animates after section */
-}
-
-.values-title::after {
-    content: '';
-    position: absolute;
-    bottom: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 3px;
-    background: var(--values-title-underline); /* Deep Magenta */
-    border-radius: 2px;
-    opacity: 0; /* Initial state for animation */
-    animation: fadeIn 0.8s ease-out forwards 2.0s; /* Underline fades in after title */
-}
-
+/* Styles for the grid that holds the value items */
 .values-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); /* Slightly wider min width */
-    gap: 30px;
+  display: grid;
+  /* Adjust grid-template-columns for responsiveness.
+     Example: On desktop, 3 columns; on smaller screens, fewer columns. */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px; /* Space between grid items */
+  justify-content: center; /* Centers items if they don't fill the whole row */
+  max-width: 1200px; /* Max width for the grid */
+  margin: 0 auto; /* Center the grid itself */
 }
 
+/* Styles for each individual value item */
 .value-item {
-    text-align: center;
-    padding: 30px 20px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    background-color: var(--card-bg); /* Explicit background for items */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Subtle individual item shadow */
-
-    opacity: 0; /* Initial state for animation */
-    transform: translateY(40px);
-    /* Staggered animation handled by nth-child below */
-    animation: fadeInSlideUp 0.7s ease-out forwards;
+  display: flex;
+  flex-direction: column; /* Stack icon, title, and paragraph vertically */
+  align-items: center; /* Horizontally center content within each item */
+  text-align: center; /* Ensure text is centered */
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  padding: 25px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
-/* Staggered animation for value items */
-.values-grid .value-item:nth-child(1) { animation-delay: 2.0s; }
-.values-grid .value-item:nth-child(2) { animation-delay: 2.1s; }
-.values-grid .value-item:nth-child(3) { animation-delay: 2.2s; }
-.values-grid .value-item:nth-child(4) { animation-delay: 2.3s; }
-.values-grid .value-item:nth-child(5) { animation-delay: 2.4s; }
-
 
 .value-item:hover {
-    background: var(--value-item-hover-bg);
-    transform: translateY(-8px); /* More pronounced lift */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* Stronger hover shadow */
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
+/* --- THE KEY TO ALIGNMENT: Styling the value-icon container --- */
 .value-icon {
-    font-size: 3rem; /* Larger emoji icon */
-    margin-bottom: 20px;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); /* Subtle shadow for icon */
+  /* Use flexbox to center the emoji precisely */
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+
+  /* Give it a fixed size to ensure all icons have the same footprint */
+  width: 60px; /* Example fixed width */
+  height: 60px; /* Example fixed height */
+
+  /* Optional: Style the background of the icon container */
+  background-color: #e0f2f7; /* Light blue background example */
+  border-radius: 50%; /* Make it circular */
+  font-size: 30px; /* Size of the emoji/icon */
+  margin-bottom: 15px; /* Space between icon and title */
+  flex-shrink: 0; /* Prevent the icon container from shrinking */
 }
 
+/* Ensure the heading and paragraph within the item are styled well */
 .value-item h3 {
-    font-size: 1.35rem; /* Slightly larger heading */
-    margin-bottom: 1rem;
-    color: var(--brand-primary); /* Dark Indigo */
-    font-weight: 600;
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 10px;
 }
 
 .value-item p {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--text-color-medium); /* Slate Gray */
-}
-
-/* --- Keyframe Animations --- */
-@keyframes fadeInSlideUp {
-    from {
-        opacity: 0;
-        transform: translateY(40px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.6;
 }
 
 /* --- Responsive Adjustments --- */
-@media (max-width: 992px) {
-    .mission-vision-card {
-        max-width: 100%; /* Stack cards vertically */
-    }
-    .values-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjust grid for smaller screens */
-    }
-}
-
 @media (max-width: 768px) {
-    .about-container {
-        padding: 60px 15px;
-    }
-    .about-title {
-        font-size: 2.2rem;
-    }
-    .about-subtitle {
-        font-size: 1rem;
-    }
-    .mission-vision-container {
-        flex-direction: column;
-        gap: 30px;
-    }
-    .mission-vision-card {
-        min-width: 100%;
-        padding: 30px;
-    }
-    .mission-vision-card h2 {
-        font-size: 1.4rem;
-    }
-    .mission-vision-card p {
-        font-size: 0.95rem;
-    }
-    .values-section {
-        padding: 40px 25px;
-    }
-    .values-title {
-        font-size: 2rem;
-        margin-bottom: 40px;
-    }
-    .values-grid {
-        grid-template-columns: 1fr; /* Single column on very small screens */
-        gap: 20px;
-    }
-    .value-item {
-        padding: 25px 15px;
-    }
-    .value-item h3 {
-        font-size: 1.15rem;
-    }
-    .value-item p {
-        font-size: 0.9rem;
-    }
+  .values-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    padding: 0 15px; /* Add some horizontal padding */
+  }
+
+  .value-item {
+    padding: 20px;
+  }
+
+  .value-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 25px;
+    margin-bottom: 10px;
+  }
+
+  .value-item h3 {
+    font-size: 1.3rem;
+  }
+
+  .value-item p {
+    font-size: 0.95rem;
+  }
 }
 
 @media (max-width: 480px) {
-    .about-header {
-        margin-bottom: 60px;
-    }
-    .about-title {
-        font-size: 1.8rem;
-    }
-    .about-subtitle {
-        font-size: 0.9rem;
-    }
-    .mission-vision-card {
-        padding: 25px;
-    }
-    .mission-vision-card h2 {
-        font-size: 1.25rem;
-    }
-    .values-section {
-        padding: 30px 15px;
-    }
-    .values-title {
-        font-size: 1.6rem;
-    }
-    .value-icon {
-        font-size: 2.2rem;
-    }
+  .values-grid {
+    grid-template-columns: 1fr; /* Stack items on very small screens */
+    gap: 15px;
+    padding: 0 10px;
+  }
+
+  .value-item {
+    padding: 15px;
+  }
+
+  .value-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .value-item h3 {
+    font-size: 1.2rem;
+  }
+
+  .value-item p {
+    font-size: 0.9rem;
+  }
 }

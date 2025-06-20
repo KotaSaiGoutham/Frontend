@@ -1,0 +1,218 @@
+/* --- CSS Variables (Your Brand Colors) - Re-declare or ensure global accessibility --- */
+/* It's best to define these in a global CSS file (like index.css or app.css)
+   and import it once. Re-declaring them here provides a fallback if not globally
+   available, but can be removed if they are. */
+:root {
+    --dark-indigo: #292551;
+    --hot-pink: #DB1A66;
+    --bright-yellow: #FCCD11;
+    --slate-gray: #454E5B;
+    --white: #ffffff;
+    --light-gray-bg: #FDFDFD;
+    --border-color: #DCD9DA;
+    --success-green: #28a745;
+    --error-red: #dc3545;
+    --shadow-color-light: rgba(41, 37, 81, 0.08); /* Lighter shadow for cards */
+    --shadow-color-hover: rgba(41, 37, 81, 0.25); /* Stronger shadow on hover */
+}
+
+/* --- Base container for the Add Student form page --- */
+.add-student-page-container {
+    padding: 2rem;
+    max-width: 900px;
+    margin: 2rem auto;
+    box-sizing: border-box;
+    background-color: var(--light-gray-bg); /* Ensure background is set */
+    color: var(--slate-gray); /* Ensure text color is set */
+    font-family: 'Poppins', sans-serif; /* Consistent font */
+    min-height: 100vh; /* Occupy full height */
+}
+
+/* --- Card styling for the form itself, reusing dashboard-card --- */
+.add-student-form-card {
+    /* Inherits most styles from dashboard-card (padding, background, shadow etc.) */
+    padding: 2.5rem; /* Slightly more padding inside the card */
+    background-color: var(--white); /* Explicitly ensure white background */
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 15px var(--shadow-color-light);
+}
+
+/* --- Header for the Add Student form --- */
+.add-student-header-flex {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    color: var(--dark-indigo);
+}
+
+.add-student-header-flex h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* --- Form Sections --- */
+.add-student-form-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--hot-pink);
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* --- Form Grid for layout --- */
+.add-student-form-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr); /* Default to single column */
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive grid for tablet and larger screens */
+@media (min-width: 640px) {
+    .add-student-form-grid {
+        grid-template-columns: repeat(2, 1fr); /* Two columns */
+    }
+}
+
+/* Responsive grid for desktop and larger screens */
+@media (min-width: 1024px) {
+    .add-student-form-grid {
+        grid-template-columns: repeat(3, 1fr); /* Three columns */
+    }
+}
+
+/* --- Form Group Styling (Label + Input/Select) --- */
+.add-student-form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--slate-gray);
+    margin-bottom: 0.4rem;
+}
+
+.add-student-form-group input,
+.add-student-form-group select {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: var(--white); /* Ensure background is white */
+    color: var(--dark-indigo); /* Ensure text color is readable */
+    -webkit-appearance: none; /* Reset default browser styles for consistency */
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.add-student-form-group input:focus,
+.add-student-form-group select:focus {
+    border-color: var(--hot-pink);
+    box-shadow: 0 0 0 4px rgba(219, 26, 102, 0.25); /* Stronger focus ring */
+}
+
+/* Style for placeholder text */
+.add-student-form-group input::placeholder {
+    color: var(--slate-gray);
+    opacity: 0.7;
+}
+
+/* Specific styling for select arrow for cross-browser consistency */
+.add-student-form-group select {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23454e5b"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem; /* Make space for the custom arrow */
+}
+
+
+/* --- Button Group Styling (Save & Cancel) --- */
+.add-student-button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.add-student-primary-button,
+.add-student-secondary-button {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    -webkit-appearance: none; /* Reset default browser styles */
+    -moz-appearance: none;
+    appearance: none;
+    outline: none;
+}
+
+.add-student-primary-button {
+    background-color: var(--hot-pink);
+    color: var(--white);
+}
+
+.add-student-primary-button:hover {
+    background-color: var(--dark-indigo);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(219, 26, 102, 0.35);
+}
+
+.add-student-secondary-button {
+    background-color: var(--light-gray-bg);
+    color: var(--slate-gray);
+    border: 1px solid var(--border-color);
+}
+
+.add-student-secondary-button:hover {
+    background-color: var(--border-color);
+    color: var(--dark-indigo);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+/* Add this to your AddStudent.css file */
+.add-student-success-message {
+    background-color: var(--success-green); /* Use your defined success color */
+    color: var(--white);
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    justify-content: center; /* Center the message content */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    animation: fadeOut 3.5s forwards; /* Animation to fade out */
+    opacity: 1; /* Start fully opaque */
+}
+
+/* Optional: Keyframes for a gentle fade-out effect */
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  80% { opacity: 1; } /* Stay opaque for most of the duration */
+  100% { opacity: 0; display: none; } /* Fade out and then hide */
+}
+
+/* Ensure the success message is above the form but within the card */
+.add-student-form-card > .add-student-success-message {
+    position: relative; /* Adjust positioning if needed, but flex should handle it */
+    z-index: 10;
+}

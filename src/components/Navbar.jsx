@@ -50,9 +50,19 @@ const Navbar = () => {
         <NavLink to="/contact" onClick={handleLinkClick} activeClassName="active-link">
           Contact Us
         </NavLink>
-        <NavLink to="/book-demo" className="book-btn" onClick={handleLinkClick} activeClassName="active-btn">
-          Book Demo
-        </NavLink>
+       <NavLink to="/book-demo" className="book-btn demo-btn" onClick={handleLinkClick} activeClassName="active-btn">
+  Book Demo
+</NavLink>
+<div className="auth-buttons">
+  <NavLink to="/signup" className="auth-btn" onClick={handleLinkClick} activeClassName="active-btn">
+    Sign Up
+  </NavLink>
+  <NavLink to="/login" className="auth-btn" onClick={handleLinkClick} activeClassName="active-btn">
+    Login
+  </NavLink>
+</div>
+
+
       </nav>
     </header>
   );

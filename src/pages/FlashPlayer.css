@@ -53,8 +53,8 @@
 
 /* Styles for the SVG icon inside the custom arrow container */
 .custom-arrow svg {
-  width: 60%;   /* SVG fills 60% of the arrow container's width */
-  height: 60%;  /* SVG fills 60% of the arrow container's height */
+  width: 60%; /* SVG fills 60% of the arrow container's width */
+  height: 60%; /* SVG fills 60% of the arrow container's height */
   fill: currentColor; /* Inherit color from the parent .custom-arrow */
   display: block;
 }
@@ -62,10 +62,12 @@
 /* Positioning for desktop arrows */
 .slick-prev.custom-arrow {
   left: 25px; /* Adjust as needed */
+  right: auto; /* Ensure no right property is interfering */
 }
 
 .slick-next.custom-arrow {
   right: 25px; /* Adjust as needed */
+  left: auto; /* Ensure no left property is interfering */
 }
 
 
@@ -87,9 +89,18 @@
   .custom-arrow {
     width: 30px; /* Smaller width for mobile arrows */
     height: 30px; /* Smaller height for mobile arrows */
-    left: 10px; /* Adjust positioning for mobile */
-    right: 10px; /* Adjust positioning for mobile */
     display: flex !important; /* Ensure they are displayed */
+  }
+
+  /* Correct positioning for mobile arrows */
+  .slick-prev.custom-arrow {
+    left: 10px; /* Position left arrow on the left */
+    right: auto; /* Explicitly unset right for the left arrow */
+  }
+
+  .slick-next.custom-arrow {
+    right: 10px; /* Position right arrow on the right */
+    left: auto; /* Explicitly unset left for the right arrow */
   }
 
   .custom-arrow svg {

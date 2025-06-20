@@ -10,7 +10,11 @@ const SampleNextArrow = (props) => {
   return (
     <div
       className={`${className} custom-arrow next-arrow`}
-      style={{ ...style, display: "block", right: "25px", zIndex: 1 }}
+      // The style prop passed by react-slick already contains positioning for `right`,
+      // but if you explicitly set it here, it will override.
+      // For mobile responsiveness, rely more on CSS classes.
+      // Removed inline `right: "25px"` as it will be handled by CSS
+      style={{ ...style, display: "block", zIndex: 1 }}
       onClick={onClick}
     >
       <svg viewBox="0 0 24 24" fill="currentColor">
@@ -25,7 +29,8 @@ const SamplePrevArrow = (props) => {
   return (
     <div
       className={`${className} custom-arrow prev-arrow`}
-      style={{ ...style, display: "block", left: "25px", zIndex: 1 }}
+      // Similar to next arrow, remove inline `left: "25px"`
+      style={{ ...style, display: "block", zIndex: 1 }}
       onClick={onClick}
     >
       <svg viewBox="0 0 24 24" fill="currentColor">
@@ -47,11 +52,10 @@ const desktopBanners = [
 ];
 
 // Define the mobile-only banner
-const mobileOnlyBanner = ["/intro-banner8.jpg"];
+const mobileOnlyBanners = ["/intro-banner8.jpg","/intro-banner9.jpg","/intro-banner10.jpg","/intro-banner11.jpg","/intro-banner12.jpg"];
 
 const FlashBanner = () => {
   // Initialize `isMobileView` based on the current window width to prevent initial flicker
-  // `typeof window !== 'undefined'` is for server-side rendering compatibility
   const [isMobileView, setIsMobileView] = useState(
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
   );
@@ -61,23 +65,17 @@ const FlashBanner = () => {
       setIsMobileView(window.innerWidth <= 768);
     };
 
-    // Add event listener for window resize
     window.addEventListener("resize", checkMobile);
 
-    // Clean up event listener on component unmount
     return () => {
       window.removeEventListener("resize", checkMobile);
     };
-  }, []); // Empty dependency array means this effect runs once on mount and cleans up on unmount
+  }, []);
 
-  // Determine which set of banners to display
   const bannersToDisplay = isMobileView
-    ? mobileOnlyBanner // Only show banner 8 on mobile
-    : desktopBanners; // Show all other banners on desktop
-    console.log("bannersToDisplay",bannersToDisplay)
+    ? mobileOnlyBanners
+    : desktopBanners;
 
-  // Base settings for the Slider.
-  // These are the defaults that will apply unless overridden by `responsive` settings.
   const baseSliderSettings = {
     dots: true,
     infinite: true, // Default for desktop (multiple banners)
@@ -93,28 +91,23 @@ const FlashBanner = () => {
       {
         breakpoint: 768, // For screens 768px wide or less
         settings: {
-          arrows: true, // KEEP arrows visible on mobile (as requested)
-          dots: true, // KEEP dots visible on mobile (as requested)
-          infinite: false, // Important: Disable infinite scroll for single mobile banner
-          autoplay: false, // Important: Disable autoplay for single mobile banner
+          arrows: true, // KEEP arrows visible on mobile
+          dots: true, // KEEP dots visible on mobile
+          infinite: true, // <--- **IMPORTANT CHANGE HERE: Set to true if you want looping**
+          autoplay: false, // You might still want autoplay off for mobile
         },
       },
     ],
   };
 
-  // --- Debugging Logs ---
   console.log("Current View (isMobileView):", isMobileView);
   console.log("Banners selected for display:", bannersToDisplay);
   console.log("Number of banners to display:", bannersToDisplay.length);
-  // --- End Debugging Logs ---
 
   return (
     <section className="flash-banner">
-      {/* Only render the Slider if there are banners to display to prevent errors */}
       {bannersToDisplay.length > 0 ? (
         <Slider
-          // Use a key to force React Slick to re-initialize when the set of banners changes.
-          // This is critical for it to pick up the new set of slides.
           key={isMobileView ? 'mobile-banner-set' : 'desktop-banner-set'}
           {...baseSliderSettings}
         >
@@ -125,7 +118,6 @@ const FlashBanner = () => {
           ))}
         </Slider>
       ) : (
-        // Optional: A fallback for when no banners are loaded (e.g., during initial state or if paths are wrong)
         <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>
           Loading banners... or no banners available.
         </div>

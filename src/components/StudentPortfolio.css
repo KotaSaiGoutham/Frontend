@@ -1,0 +1,392 @@
+/* --- Re-use CSS Variables --- */
+:root {
+    --dark-indigo: #292551;
+    --hot-pink: #DB1A66;
+    --bright-yellow: #FCCD11;
+    --slate-gray: #454E5B;
+    --white: #ffffff;
+    --light-gray-bg: #FDFDFD;
+    --border-color: #DCD9DA;
+    --success-green: #28a745;
+    --error-red: #dc3545;
+    --shadow-color-light: rgba(41, 37, 81, 0.08); /* Lighter shadow for cards */
+    --shadow-color-hover: rgba(41, 37, 81, 0.25); /* Stronger shadow on hover */
+}
+
+/* --- Global Layout --- */
+.portfolio-container {
+    min-height: 100vh;
+    background-color: var(--light-gray-bg);
+    color: var(--slate-gray);
+    font-family: 'Poppins', sans-serif;
+    padding: 1.5rem; /* p-6 */
+    box-sizing: border-box;
+}
+
+/* --- Common Card Styling (similar to dashboard) --- */
+.portfolio-card {
+    background-color: var(--white);
+    border-radius: 0.75rem; /* Slightly more rounded */
+    box-shadow: 0 4px 15px var(--shadow-color-light); /* Softer initial shadow */
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Animation for hover */
+    overflow: hidden; /* Ensures content stays within bounds */
+}
+
+.portfolio-card:hover {
+    transform: translateY(-5px); /* Lift effect */
+    box-shadow: 0 8px 25px var(--shadow-color-hover); /* Deeper shadow */
+}
+
+/* --- Header and Back Button --- */
+.portfolio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem; /* More space below header */
+    padding: 2rem; /* Larger padding for header card */
+    background: linear-gradient(135deg, var(--dark-indigo) 0%, #4a457a 100%); /* Gradient background */
+    color: var(--white);
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+.portfolio-header h1 {
+    font-size: 2.5rem; /* Larger font for main title */
+    font-weight: 700;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+}
+.portfolio-header .header-icon {
+    font-size: 3rem; /* Larger icon in header */
+    color: var(--bright-yellow); /* Accent color for header icon */
+    animation: pulse 2s infinite; /* Subtle pulse animation */
+}
+
+.portfolio-back-button {
+    padding: 0.75rem 1.25rem; /* More generous padding */
+    background-color: var(--hot-pink);
+    color: var(--white);
+    border: none; /* Remove default border */
+    border-radius: 0.5rem; /* Slightly more rounded */
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.portfolio-back-button:hover {
+    background-color: var(--dark-indigo);
+    transform: translateY(-2px); /* Lift on hover */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+.portfolio-back-button .icon {
+    font-size: 1.1rem;
+}
+
+/* --- Loading/Error/Not Found States (Enhanced) --- */
+.portfolio-loading-message, .portfolio-error-message, .portfolio-not-found-message {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--light-gray-bg);
+    font-size: 1.25rem;
+    text-align: center;
+    padding: 2rem;
+    color: var(--slate-gray);
+}
+.portfolio-loading-message h3,
+.portfolio-error-message h3,
+.portfolio-not-found-message h3 {
+    font-size: 1.8rem;
+    color: var(--dark-indigo);
+    margin-bottom: 1rem;
+}
+
+.portfolio-loading-message .spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid var(--hot-pink);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+
+/* --- Personal Details Section --- */
+.details-section h2 {
+    font-size: 1.75rem; /* Larger heading */
+    font-weight: 600;
+    color: var(--dark-indigo);
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Default to 1 column */
+    gap: 1.25rem; /* More space between items */
+    font-size: 1.05rem; /* Slightly larger text */
+}
+.details-grid p {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Space between icon and text */
+    padding: 0.75rem 1rem;
+    background-color: var(--light-gray-bg);
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.details-grid p:hover {
+    background-color: rgba(252, 205, 17, 0.05); /* Very subtle highlight on hover */
+    transform: translateX(5px);
+}
+.details-grid p span:first-child {
+    font-weight: 600;
+    color: var(--dark-indigo);
+    flex-shrink: 0; /* Prevent icons/labels from shrinking */
+}
+.details-grid .detail-icon {
+    color: var(--hot-pink); /* Icon color for details */
+    font-size: 1.2rem;
+}
+.details-grid .payment-status-badge {
+    margin-left: 0.5rem;
+    padding: 0.35rem 0.9rem; /* Increased padding for badges */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    line-height: 1;
+    font-weight: 700; /* Bolder badge text */
+    border-radius: 9999px;
+    white-space: nowrap;
+    animation: fadeIn 0.5s ease-out; /* Fade in animation for badges */
+}
+.details-grid .payment-status-badge.paid {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: var(--success-green);
+}
+.details-grid .payment-status-badge.unpaid {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: var(--error-red);
+}
+
+/* --- Graph Sections (Marks & Payments) --- */
+.graph-section h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--dark-indigo);
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.graph-section .section-icon {
+    font-size: 1.8rem;
+    color: var(--bright-yellow);
+}
+.no-data-message {
+    text-align: center;
+    color: var(--slate-gray);
+    padding: 1.5rem;
+    font-size: 1.05rem;
+    background-color: var(--light-gray-bg);
+    border-radius: 0.5rem;
+    border: 1px dashed var(--border-color);
+}
+
+/* Recharts Tooltip Customization */
+.recharts-default-tooltip {
+    background-color: var(--white) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 0.5rem !important;
+    padding: 1rem !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.recharts-tooltip-label {
+    font-weight: 700 !important;
+    color: var(--dark-indigo) !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 1.1rem;
+}
+.recharts-tooltip-item {
+    color: var(--slate-gray) !important;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* --- Animations --- */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInTop {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.portfolio-card.slide-in-top { animation: slideInTop 0.6s ease-out forwards; }
+.portfolio-card.slide-in-left { animation: slideInLeft 0.6s ease-out forwards; animation-delay: 0.1s; } /* Staggered */
+.portfolio-card.slide-in-right { animation: slideInRight 0.6s ease-out forwards; animation-delay: 0.2s; } /* Staggered */
+
+
+/* --- Responsive Adjustments --- */
+
+/* Small screens (sm: 640px and up) */
+@media (max-width: 767px) {
+    .portfolio-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+    .portfolio-header h1 {
+        font-size: 2rem;
+    }
+    .portfolio-back-button {
+        width: 100%;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+}
+
+/* Medium screens (md: 768px and up) */
+@media (min-width: 768px) {
+    .details-grid {
+        grid-template-columns: repeat(2, 1fr); /* md:grid-cols-2 */
+    }
+}
+
+/* Large screens (lg: 1024px and up) */
+@media (min-width: 1024px) {
+    .details-grid {
+        grid-template-columns: repeat(3, 1fr); /* lg:grid-cols-3 */
+    }
+}
+/* In your .css file (e.g., PortfolioPage.css or a global CSS file) */
+
+/* NEW: Style for the button container in the header */
+.portfolio-header-buttons {
+    display: flex; /* Arrange buttons side-by-side */
+    gap: 10px; /* Space between buttons */
+    align-items: center; /* Vertically align them */
+}
+
+/* Style for the new Add Student button */
+.add-student-button {
+    background-color: var(--accent-color); /* Uses your new accent color */
+    color: white;
+    padding: 0.8rem 1.2rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.add-student-button:hover {
+    background-color: var(--secondary-blue); /* A slightly darker shade or another relevant color */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Ensure the back-button also looks good if you haven't already */
+.back-button {
+    background-color: #6c757d; /* A neutral gray */
+    color: white;
+    padding: 0.8rem 1.2rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.back-button:hover {
+    background-color: #5a6268;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Adjust the portfolio-header to use flexbox if it doesn't already,
+   to position the title and buttons effectively */
+.portfolio-card.portfolio-header {
+    display: flex;
+    justify-content: space-between; /* Pushes title to left, buttons to right */
+    align-items: center;
+    flex-wrap: wrap; /* Allows wrapping on smaller screens */
+    gap: 1rem; /* Space between title and buttons if they wrap */
+}
+
+/* You might need to add/adjust some existing styles depending on your current CSS: */
+/* Example placeholder for your accent color variable if not defined */
+/*
+:root {
+    --accent-color: #009688; // Use the teal color you liked
+    --secondary-blue: #1976d2;
+}
+*/

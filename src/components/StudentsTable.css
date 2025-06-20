@@ -1,0 +1,474 @@
+/* Base Styles & Utilities */
+:root {
+    --primary-color: #4a90e2; /* Blue */
+    --secondary-color: #f5a623; /* Orange */
+    --accent-color: #50e3c2; /* Teal */
+    --text-color-dark: #333;
+    --text-color-light: #fff;
+    --bg-light: #f4f7f6; /* Light greyish background */
+    --card-bg: #ffffff;
+    --border-color: #e0e0e0;
+    --shadow-light: rgba(0, 0, 0, 0.08);
+    --shadow-medium: rgba(0, 0, 0, 0.15);
+    --success-color: #4CAF50; /* Green */
+    --warning-color: #FFC107; /* Amber */
+    --error-color: #F44336; /* Red */
+    --info-color: #2196F3; /* Blue */
+
+    /* Greeting specific */
+    --morning-bg-start: #fdfbfb; /* Light sky */
+    --morning-bg-end: #ebedee;   /* Light cloud */
+    --afternoon-bg-start: #81d4fa; /* Sky blue */
+    --afternoon-bg-end: #00bcd4;   /* Cyan */
+    --evening-bg-start: #424242; /* Dark grey */
+    --evening-bg-end: #212121;   /* Black */
+    --current-greeting-bg-image: none; /* Set dynamically by JS */
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-light);
+    color: var(--text-color-dark);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.dashboard-container {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Common Card Styles */
+.dashboard-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px var(--shadow-light);
+    padding: 25px;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px var(--shadow-medium);
+}
+
+.dashboard-card h2 {
+    font-size: 1.8em;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-icon {
+    font-size: 1.2em;
+}
+
+/* Header & Greeting Section */
+.dashboard-header {
+    background-size: cover;
+    background-position: center;
+    color: var(--text-color-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px 30px;
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+    border-radius: 15px;
+    background-image: var(--current-greeting-bg-image); /* Set dynamically */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3); /* Dark overlay for text readability */
+    z-index: 1;
+}
+
+.greeting-content, .greeting-graphic {
+    position: relative;
+    z-index: 2;
+}
+
+.greeting-content h1 {
+    font-size: 3em;
+    margin-bottom: 10px;
+    color: var(--text-color-light); /* Ensure white text */
+}
+
+.greeting-content p {
+    font-size: 1.2em;
+    opacity: 0.9;
+    color: var(--text-color-light); /* Ensure white text */
+}
+
+/* Fallback/Generic background for greeting if JS fails or image doesn't load */
+.dashboard-header:not([style*="background-image"]) {
+    background: linear-gradient(135deg, var(--primary-color), #6a11cb);
+}
+
+/* Specific greeting backgrounds for icons if needed */
+.dashboard-header.morning {
+    background-image: url('https://images.unsplash.com/photo-1547463564-9273646736c9?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+}
+.dashboard-header.afternoon {
+    background-image: url('https://images.unsplash.com/photo-1549490349-8643362c395f?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+}
+.dashboard-header.evening {
+    background-image: url('https://images.unsplash.com/photo-1508906660126-a05d4f3b6d51?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+}
+
+
+/* Filters Section */
+.filters-section h2 {
+    font-size: 1.6em;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: var(--text-color-dark);
+    font-size: 0.95em;
+}
+
+.filter-group input[type="text"],
+.filter-group select {
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1em;
+    color: var(--text-color-dark);
+    background-color: #fcfcfc;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.filter-group input[type="text"]:focus,
+.filter-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+    outline: none;
+    background-color: #ffffff;
+}
+
+/* Students Table Section */
+.students-table-container {
+    padding: 25px;
+}
+
+.students-table-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 15px; /* Space between h2 and button when wrapped */
+}
+
+.students-table-header-flex h2 {
+    margin: 0; /* Override default h2 margin */
+    font-size: 1.8em;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.add-student-button {
+    background-color: var(--primary-color);
+    color: var(--text-color-light);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-student-button:hover {
+    background-color: #3b7ad7; /* Slightly darker primary */
+    transform: translateY(-2px);
+}
+
+.students-table-wrapper {
+    overflow-x: auto; /* Enables horizontal scrolling for the table */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.students-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--card-bg);
+    min-width: 900px; /* Ensure table doesn't get too squished */
+}
+
+.students-table th,
+.students-table td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.students-table th {
+    background-color: #f8fbfd; /* Light background for headers */
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 0.95em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.students-table td {
+    color: var(--text-color-dark);
+    font-size: 0.9em;
+}
+
+.students-table tbody tr:last-child td {
+    border-bottom: none; /* No border for the last row */
+}
+
+.students-table tbody tr:hover {
+    background-color: #f0f5f8; /* Light hover effect for rows */
+}
+
+/* Table Header Icons */
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Student Name Link in Table */
+.student-name-cell {
+    font-weight: 500;
+}
+
+.student-name-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.student-name-link:hover {
+    color: #3b7ad7; /* Darker blue on hover */
+    text-decoration: underline;
+}
+
+/* Payment Status Badge */
+.payment-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: bold;
+    text-transform: capitalize;
+    gap: 6px;
+}
+
+.payment-status-badge.paid {
+    background-color: #e8f5e9; /* Light green */
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+}
+
+.payment-status-badge.unpaid {
+    background-color: #ffebee; /* Light red */
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+}
+
+/* No Students Message */
+.no-students-message {
+    text-align: center;
+    padding: 50px 20px;
+    font-size: 1.1em;
+    color: #777;
+    background-color: #fbfbfb;
+    border-radius: 8px;
+    margin-top: 20px;
+    border: 1px dashed var(--border-color);
+}
+
+/* Loading and Error States */
+.dashboard-loading, .dashboard-error {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    font-size: 1.2em;
+    color: var(--text-color-dark);
+    text-align: center;
+}
+
+.spinner {
+    border: 5px solid rgba(0, 0, 0, 0.1);
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.dashboard-error h3 {
+    color: var(--error-color);
+    margin-bottom: 10px;
+}
+
+.dashboard-error button {
+    background-color: var(--error-color);
+    color: var(--text-color-light);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+}
+
+.dashboard-error button:hover {
+    background-color: #d32f2f;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .dashboard-header {
+        padding: 30px 20px;
+        min-height: 150px;
+    }
+    .greeting-content h1 {
+        font-size: 2.5em;
+    }
+    .greeting-content p {
+        font-size: 1em;
+    }
+    .filters-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    .students-table th,
+    .students-table td {
+        padding: 12px 15px;
+        font-size: 0.85em;
+    }
+    .add-student-button {
+        padding: 10px 18px;
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 15px;
+    }
+    .dashboard-card {
+        padding: 20px;
+    }
+    .dashboard-card h2 {
+        font-size: 1.5em;
+        margin-bottom: 15px;
+    }
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        padding: 25px 20px;
+        min-height: 120px;
+    }
+    .greeting-content {
+        margin-bottom: 15px;
+    }
+    .greeting-content h1 {
+        font-size: 2em;
+    }
+    .greeting-content p {
+        font-size: 0.9em;
+    }
+    .students-table-header-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .students-table-header-flex h2 {
+        font-size: 1.6em;
+    }
+    .add-student-button {
+        width: fit-content; /* Adjust width for smaller screens */
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 10px;
+    }
+    .dashboard-card {
+        padding: 15px;
+    }
+    .dashboard-card h2 {
+        font-size: 1.3em;
+    }
+    .greeting-content h1 {
+        font-size: 1.8em;
+    }
+    .greeting-content p {
+        font-size: 0.8em;
+    }
+    .filter-group input[type="text"],
+    .filter-group select {
+        padding: 10px 12px;
+        font-size: 0.9em;
+    }
+    .students-table th,
+    .students-table td {
+        padding: 10px;
+        font-size: 0.8em;
+    }
+    .payment-status-badge {
+        padding: 4px 8px;
+        font-size: 0.75em;
+    }
+}

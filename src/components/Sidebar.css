@@ -1,0 +1,147 @@
+/* src/components/Sidebar.css */
+
+/* Define CSS Variables for consistent theming (ensure these are also in your global CSS) */
+:root {
+    --navbar-height: 100px; /* IMPORTANT: This MUST accurately match your Navbar's height from global CSS */
+    --sidebar-width: 250px;
+
+    /* Your Provided Color Palette */
+    --dark-indigo: #292551;
+    --slate-gray: #454E5B;
+    --deep-magenta: #B21F62;
+    --hot-pink: #DB1A66;
+    --light-gray: #DCD9DA;
+    --orange: #F26E26;
+    --golden-yellow: #F6A11F;
+    --bright-yellow: #FCCD11;
+
+    /* Sidebar Specific Colors (derived from your palette for a professional look) */
+    --sidebar-bg: var(--dark-indigo); /* Main sidebar background */
+    --sidebar-text: var(--light-gray); /* Default text color */
+    --sidebar-active-bg: var(--slate-gray); /* Background for the active menu item */
+    --sidebar-active-text: var(--bright-yellow); /* Text/icon color for the active menu item */
+    --sidebar-hover-bg: var(--deep-magenta); /* New hover background from your palette */
+    --sidebar-header-icon-color: var(--bright-yellow); /* Color for the header logo icon */
+    --shadow-color: rgba(0, 0, 0, 0.4); /* Stronger shadow for depth */
+}
+
+/* Base Sidebar Styles */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    padding: 1.5rem 0;
+    position: fixed; /* Ensures it stays in place when scrolling */
+    top: var(--navbar-height); /* Positions sidebar right below the Navbar */
+    left: 0;
+    height: calc(100vh - var(--navbar-height)); /* Fills remaining vertical height */
+    box-shadow: 2px 0 10px var(--shadow-color);
+    display: flex;
+    flex-direction: column;
+    z-index: 999; /* Ensures sidebar is above main content but below a higher Navbar z-index */
+
+    /* Smooth animation for sidebar slide-in/out (mobile) */
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(0); /* Default: visible on desktop */
+    border-right: 1px solid var(--slate-gray); /* Subtle right border for definition */
+}
+
+/* Sidebar Header (for the logo icon) */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center the logo icon */
+    padding: 0 1.5rem 2rem; /* Added bottom padding for spacing */
+    color: var(--sidebar-header-icon-color); /* Color for the logo icon */
+    border-bottom: 1px solid var(--slate-gray); /* Subtle separator line */
+    margin-bottom: 1rem; /* Space below the header */
+    height: 40px; /* Give it a fixed height for consistent spacing */
+}
+
+.sidebar-logo-icon {
+    font-size: 2.5rem; /* Larger icon size for prominence */
+    /* No margin-right, as there's no text beside it now */
+}
+
+/* Navigation List */
+.sidebar-nav ul {
+    list-style: none; /* Remove bullet points */
+    padding: 0;
+    margin: 0;
+}
+
+/* Individual Navigation Item */
+.sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1.5rem; /* Consistent padding */
+    color: var(--sidebar-text);
+    text-decoration: none; /* Remove underline */
+    font-size: 1.1rem;
+    font-weight: 500;
+    border-left: 5px solid transparent; /* For active indicator, starts transparent */
+
+    /* Smooth transitions for hover and active states */
+    transition: background-color 0.2s ease-in-out,
+                color 0.2s ease-in-out,
+                border-left-color 0.2s ease-in-out;
+}
+
+/* Icon within Navigation Item */
+.sidebar-nav-item svg { /* Target the SVG (icon) inside NavLink */
+    font-size: 1.4rem; /* Icon size */
+    margin-right: 1rem;
+    transition: transform 0.2s ease-in-out; /* Animation for icon on hover */
+}
+
+/* Hover Effect for Navigation Item */
+.sidebar-nav-item:hover {
+    background-color: var(--sidebar-hover-bg); /* Deep Magenta for hover background */
+    color: var(--sidebar-active-text); /* Bright Yellow text on hover */
+}
+
+.sidebar-nav-item:hover svg {
+    transform: scale(1.1); /* Slight zoom effect on icon hover */
+}
+
+/* Active State for Navigation Item */
+.sidebar-nav-item.active {
+    background-color: var(--sidebar-active-bg); /* Slate Gray for active item */
+    color: var(--sidebar-active-text); /* Bright Yellow for active text */
+    border-left-color: var(--sidebar-active-text); /* Bright Yellow highlight border on left */
+    font-weight: 600; /* Bolder text for active */
+}
+
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+    display: none; /* Hidden by default on desktop */
+    position: fixed;
+    top: calc(var(--navbar-height) + 1rem); /* Position below Navbar */
+    left: 1.5rem;
+    background-color: var(--hot-pink); /* Use Hot Pink for toggle button */
+    color: var(--light-gray); /* Using light gray for contrast */
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1.5rem;
+    z-index: 1001; /* Higher than sidebar, always clickable */
+    box-shadow: 0 2px 10px var(--shadow-color);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.mobile-menu-toggle:hover {
+    background-color: var(--deep-magenta); /* Darker shade of Hot Pink/Deep Magenta on hover */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%); /* Hide sidebar off-screen on mobile by default */
+    }
+    .sidebar.open {
+        transform: translateX(0); /* Slide in when 'open' class is applied */
+    }
+    .mobile-menu-toggle {
+        display: block; /* Show toggle button on mobile */
+    }
+}

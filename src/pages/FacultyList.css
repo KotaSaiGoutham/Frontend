@@ -83,7 +83,7 @@
   display: flex;
   align-items: center;
   position: relative;
-  max-width: 1100px;
+  max-width: 1500px;
   margin: 0 auto;
   /* Removed padding here if you want cards to potentially go to edge,
      or keep it if you want space for future arrows */
@@ -303,5 +303,59 @@
   .faculty-subject,
   .faculty-exp {
     font-size: 0.8rem;
+  }
+}
+/* Add this to your existing CSS, or modify the .faculty-video-wrapper */
+.faculty-video-wrapper {
+  /* Ensure it takes full width of its parent */
+  width: 100%;
+  /* Use flexbox for better alignment and responsiveness of its child iframe */
+  display: flex;
+  justify-content: center; /* Center the iframe horizontally */
+  align-items: center; /* Center the iframe vertically */
+  /* Remove any conflicting padding that might be causing the gap */
+  padding: 0;
+  /* Ensure no extra space from margin */
+  margin: 0;
+  box-sizing: border-box; /* Crucial for consistent sizing */
+}
+
+.faculty-video-wrapper iframe {
+  /* Make sure the iframe itself also takes 100% of its parent's width */
+  width: 100%;
+  /* Max-width can prevent it from overflowing on very large screens if needed,
+     but for mobile, it ensures it doesn't get too big and keeps it contained. */
+  max-width: 100%;
+  /* Display block helps remove any extra space that inline elements might add */
+  display: block;
+  /* Ensure no extra space from margin */
+  margin: 0;
+  /* Reset padding to 0 if any was applied and causing issues */
+  padding: 0;
+  box-sizing: border-box; /* Inherit or set explicitly for the iframe too */
+}
+
+/* Consider adjusting the faculty-item's padding if it's adding unwanted space
+   around the content and video on smaller screens. */
+@media (max-width: 767px) {
+  .faculty-item {
+    padding: 10px; /* Adjust as needed, but ensure it's consistent */
+    box-sizing: border-box;
+  }
+
+  .faculty-content,
+  .faculty-video-wrapper {
+    width: 100%; /* Ensure both content and video take full available width */
+  }
+
+  .faculty-layout-normal,
+  .faculty-layout-reverse {
+    flex-direction: column; /* Stack elements vertically on smaller screens */
+  }
+}
+
+@media (max-width: 575px) {
+  .faculty-item {
+    padding: 8px; /* Slightly less padding for very small screens */
   }
 }

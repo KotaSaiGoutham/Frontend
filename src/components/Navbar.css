@@ -1,4 +1,48 @@
+.auth-buttons {
+  display: flex;
+  gap: 12px;
+  margin-left: 20px;
+}
 
+/* Shared style for Login & Sign Up */
+.auth-btn {
+  background-color: #facc15; /* Yellow */
+  color: #1e1e1e !important;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  border: none;
+}
+
+.auth-btn:hover {
+  background-color: #292551;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(41, 37, 81, 0.4);
+}
+
+/* Optional: Active state */
+.auth-btn.active-btn {
+  background-color: #DB1A66;
+  color: #ffffff !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .auth-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .auth-btn {
+    width: 80%;
+    text-align: center;
+  }
+}
 
 .navbar {
   display: flex;

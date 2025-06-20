@@ -1,3 +1,4 @@
+/* --- Benefits Section CSS --- */
 :root {
   /* Define your color variables */
   --dark-indigo: #292551;
@@ -27,22 +28,24 @@ body {
   font-family: 'Poppins', sans-serif; /* Apply a clean, modern font */
 }
 
+/* ... (previous styles for :root, body, flash-banner, etc. remain the same) ... */
+
 .benefits {
-  padding: 6rem 1.5rem; /* Ample padding for a spacious feel */
-  background-color: var(--color-background-light); /* Clean light background */
+  padding: 6rem 1.5rem;
+  background-color: var(--color-background-light);
   text-align: center;
-  overflow: hidden; /* Prevent content overflow during animations */
+  overflow: hidden;
 }
 
 .benefits h2 {
-  font-size: 3.2rem; /* Prominent heading size */
+  font-size: 3.2rem;
   color: var(--color-primary-text);
-  margin-bottom: 3.8rem; /* Slightly adjusted margin for balance */
+  margin-bottom: 3.8rem;
   position: relative;
   display: inline-block;
   padding-bottom: 0.8rem;
-  font-weight: 700; /* Bolder heading */
-  letter-spacing: -0.03em; /* Slightly tighter for a modern touch */
+  font-weight: 700;
+  letter-spacing: -0.03em;
 }
 
 .benefits h2::after {
@@ -51,49 +54,44 @@ body {
   left: 50%;
   bottom: 0;
   transform: translateX(-50%);
-  width: 100px; /* Underline length */
-  height: 5px; /* Underline thickness */
-  background: linear-gradient(to right, var(--color-accent-dark), var(--color-accent)); /* Gradient accent */
+  width: 100px;
+  height: 5px;
+  background: linear-gradient(to right, var(--color-accent-dark), var(--color-accent));
   border-radius: 3px;
 }
 
 .benefit-cards {
   display: grid;
-  /* Responsive grid: 1 column on mobile, 2 on tablet/desktop, 3 on large desktop */
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2.5rem; /* Gap between cards */
-  max-width: 1200px; /* Max width for the grid container */
+  gap: 2.5rem;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
 }
 
 .card {
-  background-color: var(--color-card-background); /* Pure white background for cards */
-  border-radius: 18px; /* Clean rounded corners */
-  /* Refined Shadow: softer and uses Dark Indigo color for brand consistency */
+  background-color: var(--color-card-background);
+  border-radius: 18px;
   box-shadow: 0 6px 20px rgba(var(--dark-indigo-rgb), 0.08);
-  padding: 3rem 2rem; /* Generous padding inside cards */
+  padding: 3rem 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  border: 1px solid var(--color-border-light); /* Subtle light border */
-  transition: transform 0.4s ease-out, box-shadow 0.4s ease-out, border-color 0.4s ease-out; /* Smooth transitions */
-  will-change: transform, box-shadow; /* Optimize for animation performance */
+  border: 1px solid var(--color-border-light);
+  transition: transform 0.4s ease-out, box-shadow 0.4s ease-out, border-color 0.4s ease-out;
+  will-change: transform, box-shadow;
 
-  /* Initial state for scroll animation */
   opacity: 0;
-  transform: translateY(60px); /* Cards start slightly below and fade in */
+  transform: translateY(60px);
 }
 
-/* Class added by IntersectionObserver when in view */
-.card.visible { /* Changed from fade-in-slide-up to 'visible' as per your JS logic */
+.card.visible {
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1); /* Smoother, bouncier animation */
+  transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* Stagger animation delay (adjust values as needed) */
 .card:nth-child(1).visible { transition-delay: 0s; }
 .card:nth-child(2).visible { transition-delay: 0.12s; }
 .card:nth-child(3).visible { transition-delay: 0.24s; }
@@ -102,52 +100,76 @@ body {
 .card:nth-child(6).visible { transition-delay: 0.60s; }
 
 .icon-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 10px; /* Space between icon and text */
-  width: 60px; /* Example size for the circle */
-  height: 60px; /* Example size for the circle */
-  background-color: var(--color-accent); /* Using your accent color for the background */
-  border-radius: 50%; /* Make it round */
-  box-shadow: 0 4px 10px rgba(var(--dark-indigo-rgb), 0.1); /* Subtle shadow for depth */
-  transition: transform 0.3s ease; /* Smooth transition for hover effect */
+  margin-bottom: 10px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  flex-shrink: 0; /* Prevents container from shrinking */
+
+  /* --- CENTERING THE .value-icon DIV WITHIN ITS CONTAINER --- */
+  display: grid; /* Most reliable for centering a single item */
+  place-items: center; /* Shorthand for align-items: center and justify-items: center */
 }
 
 .value-icon {
-  font-size: 32px; /* Adjust emoji size here */
-  line-height: 1; /* Ensures emoji sits centrally */
-  /* Emojis typically come with their own color, so 'color: white;' might not apply directly to them.
-     If you use SVG icons, 'color: white;' on .icon-container and 'fill: currentColor;' on SVG would work.
-     For emojis, their native color is usually preferred. */
+  font-size: 32px; /* Set the desired emoji size */
+  line-height: 1; /* Crucial for vertical alignment of text/emojis */
+
+  /* --- CENTERING THE EMOJI *WITHIN* THE .value-icon DIV --- */
+  /* Use display: flex on the value-icon itself to align the emoji content */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Set explicit width/height to the font-size to ensure a precise box for the emoji */
+  width: 1em; /* This means 32px (1 * 32px) */
+  height: 1em; /* This means 32px (1 * 32px) */
+
+  /* --- FINE-TUNING FOR VISUAL ALIGNMENT --- */
+  /* Emojis often need slight pixel nudges for perfect *visual* centering
+     because their glyph box doesn't always match their perceived center.
+     Adjust these `top` values *very slightly* based on visual inspection
+     for each problematic emoji. You might need different values for each. */
+  position: relative;
+  /* Default subtle nudge that often works for many emojis */
+  top: 0.02em; /* Try 0.02em, 0.03em, 0.05em, or even -0.01em if it's too low */
+  /* left: 0.00em; */ /* Uncomment and adjust if horizontal alignment is off */
+
+  /* You can add specific overrides if a particular emoji is still problematic: */
+  /* For example, if the globe (🌐) is still high: */
+  /* .card:nth-child(2) .value-icon { top: 0.05em; } */
+  /* If the timer (⏱️) is too low: */
+  /* .card:nth-child(3) .value-icon { top: -0.01em; } */
 }
 
+/* Hover effect for the entire card */
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(var(--dark-indigo-rgb), 0.12);
+  border-color: var(--color-accent);
+}
+
+/* Icon scale on card hover */
 .card:hover .icon-container {
-  transform: scale(1.1); /* Slightly enlarge icon on hover */
+  transform: scale(1.1);
 }
 
 
 .card-content h3 {
-  font-size: 1.65rem; /* Well-proportioned heading size */
+  font-size: 1.65rem;
   margin-bottom: 0.8rem;
   color: var(--color-primary-text);
-  font-weight: 600; /* Semi-bold for headings */
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
 .card-content p {
-  font-size: 1.05rem; /* Comfortable body text size */
+  font-size: 1.05rem;
   color: var(--color-secondary-text);
-  line-height: 1.6; /* Good line height for readability */
+  line-height: 1.6;
   margin: 0;
-  max-width: 320px; /* Constrain paragraph width for better reading flow */
+  max-width: 320px;
 }
 
-.card:hover {
-  transform: translateY(-8px); /* Slightly less aggressive lift on hover for subtle elegance */
-  box-shadow: 0 12px 30px rgba(var(--dark-indigo-rgb), 0.12); /* More prominent shadow on hover, using Dark Indigo */
-  border-color: var(--color-accent); /* Highlight border on hover */
-}
 
 /* Responsive adjustments */
 @media (max-width: 767px) {
@@ -166,7 +188,7 @@ body {
   }
 
   .benefit-cards {
-    grid-template-columns: 1fr; /* Single column on mobile */
+    grid-template-columns: 1fr;
     gap: 1.5rem;
   }
 
@@ -176,15 +198,16 @@ body {
 
   .icon-container {
     margin-bottom: 1.2rem;
-    /* You might want to adjust the size for mobile if 60px is too big/small */
     width: 50px;
     height: 50px;
   }
 
   .value-icon {
-    font-size: 28px; /* Slightly smaller emoji size for mobile */
+    font-size: 28px; /* Smaller font size for mobile */
+    /* Adjust these nudges for mobile if needed, might be different */
+    top: 0.02em;
+    /* left: 0.00em; */
   }
-
 
   .card-content h3 {
     font-size: 1.4rem;
@@ -192,13 +215,13 @@ body {
 
   .card-content p {
     font-size: 0.95rem;
-    max-width: none; /* Remove max-width for paragraphs on mobile */
+    max-width: none;
   }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .benefit-cards {
-    grid-template-columns: repeat(2, 1fr); /* Two cards per row for tablets */
+    grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
   }
   .card {
@@ -208,6 +231,6 @@ body {
 
 @media (min-width: 1024px) {
   .benefit-cards {
-    grid-template-columns: repeat(3, 1fr); /* Three cards per row for larger desktops */
+    grid-template-columns: repeat(3, 1fr);
   }
 }

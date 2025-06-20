@@ -103,6 +103,47 @@ const Careers = () => {
   }, []);
 
 const jobs = [
+    {
+    title: "Physics Tutor",
+    experience: "5+ years, strong track record",
+    skills: "JEE/NEET Prep, Zoom teaching, Concept clarity, Student engagement",
+    salary: "Based on experience",
+    location: "Remote",
+    jobType: "Part-time / Full-time",
+  },
+  
+  {
+    title: "Chemistry Tutor",
+    experience: "4+ years, proven teaching success",
+    skills: "JEE/NEET Prep, Online teaching tools, Practical examples, Doubt resolution",
+    salary: "Based on experience",
+    location: "Remote",
+    jobType: "Part-time",
+  },
+    {
+    title: "Maths Tutor",
+    experience: "5+ years, expertise in competitive exams",
+    skills: "JEE/NEET/Boards Prep, Interactive online sessions, Problem-solving techniques",
+    salary: "Based on experience",
+    location: "Remote",
+    jobType: "Part-time / Full-time",
+  },
+   {
+    title: "Botany Tutor",
+    experience: "3+ years, expertise in plant science",
+    skills: "NEET/Boards Prep, Online diagrams, Specimen explanation, Concept visualization",
+    salary: "Based on experience",
+    location: "Remote",
+    jobType: "Part-time / Full-time",
+  },
+{
+  title: "Zoology Tutor",
+  experience: "4+ years, strong foundation in animal biology and physiology",
+  skills: "University Level/Competitive Exams, Animal classification, Human anatomy, Ecological studies",
+  salary: "Based on experience",
+  location: "Remote",
+    jobType: "Part-time / Full-time",
+},
   {
     title: "Typist",
     experience: "1–2 years",
@@ -119,32 +160,10 @@ const jobs = [
     location: "Remote",
     jobType: "Full-time",
   },
+
+
   {
-    title: "Physics Tutor",
-    experience: "5+ years, strong track record",
-    skills: "JEE/NEET Prep, Zoom teaching, Concept clarity, Student engagement",
-    salary: "Based on experience",
-    location: "Remote",
-    jobType: "Part-time / Full-time",
-  },
-  {
-    title: "Chemistry Tutor",
-    experience: "4+ years, proven teaching success",
-    skills: "JEE/NEET Prep, Online teaching tools, Practical examples, Doubt resolution",
-    salary: "Based on experience",
-    location: "Remote",
-    jobType: "Part-time",
-  },
-  {
-    title: "Maths Tutor",
-    experience: "5+ years, expertise in competitive exams",
-    skills: "JEE/NEET/Boards Prep, Interactive online sessions, Problem-solving techniques",
-    salary: "Based on experience",
-    location: "Remote",
-    jobType: "Part-time / Full-time",
-  },
-  {
-    title: "Student Enrollment Specialist", // Suggestion for student data/guidance
+    title: "Student Enrollment Specialist", 
     experience: "1-3 years in student recruitment or admissions",
     skills: "Lead management, Student onboarding, Communication, CRM, Goal-oriented",
     salary: "Competitive + Incentives",
@@ -152,29 +171,14 @@ const jobs = [
     jobType: "Full-time",
   },
   {
-    title: "Demo Class Coordinator", // Suggestion for guiding demo classes
+    title: "Demo Class Coordinator", 
     experience: "2+ years in scheduling or educational coordination",
     skills: "Scheduling, Communication, CRM, Student follow-up, Technical coordination (Zoom/Google Meet)",
     salary: "Negotiable",
     location: "Remote",
     jobType: "Full-time",
   },
-  {
-    title: "Botany Tutor",
-    experience: "3+ years, expertise in plant science",
-    skills: "NEET/Boards Prep, Online diagrams, Specimen explanation, Concept visualization",
-    salary: "Based on experience",
-    location: "Remote",
-    jobType: "Part-time / Full-time",
-  },
-{
-  title: "Zoology Tutor",
-  experience: "4+ years, strong foundation in animal biology and physiology",
-  skills: "University Level/Competitive Exams, Animal classification, Human anatomy, Ecological studies",
-  salary: "Based on experience",
-  location: "Remote",
-    jobType: "Part-time / Full-time",
-}
+ 
 ];
 
 // Define the array of gradient classes to cycle through
