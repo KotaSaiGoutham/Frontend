@@ -1,5 +1,4 @@
 .home {
-    font-family: 'Poppins', sans-serif;
     text-align: center;
   }
   
@@ -193,7 +192,7 @@
   padding: 1rem 2rem;
   background: linear-gradient(to bottom right, #f8fbff, #ffffff);
   text-align: center;
-  font-family: 'Inter', sans-serif;
+  
 }
 
 .subjects h2 {
@@ -470,7 +469,7 @@
   border-radius: 16px;
   margin-top: 60px;
   text-align: center;
-  font-family: 'Inter', sans-serif;
+  
   overflow: hidden; /* Important for animation starting off-screen */
 }
 
@@ -617,7 +616,7 @@
 .faq-section {
   background-color: var(--background-light-orange);
   padding: 80px 20px;
-  font-family: 'Inter', sans-serif;
+  
   color: var(--text-color-dark);
   overflow: hidden; /* Crucial for animation overflow */
 }
@@ -978,7 +977,7 @@ background: linear-gradient(135deg, #f8f5ff 0%, #e6efff 100%); /* Light purple t
   max-width: 1100px;
   margin: 50px auto;
   padding: 20px 30px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
   color: #292551; /* Deep Indigo */
 }
 
@@ -1052,7 +1051,7 @@ background: linear-gradient(135deg, #f8f5ff 0%, #e6efff 100%); /* Light purple t
   color: #db1a66; /* Bright Pink */
   font-weight: 800;
   margin-bottom: 50px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
   letter-spacing: 1.2px;
 }
 /* Responsive: stack vertically on small screens */

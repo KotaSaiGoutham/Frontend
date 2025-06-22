@@ -1,284 +1,362 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { format, parse, parseISO, isSameDay } from "date-fns"; // Changed from parseISO to parse
+// src/pages/TimetablePage.jsx
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  FaCalendarAlt,
-  FaBookOpen,
-  FaUser,
-  FaClock,
-  FaHome,
-  FaPlusCircle,
-  FaFilter,
-} from "react-icons/fa"; // Added FaPlusCircle
-import "./TimetablePage.css";
+    FaCalendarAlt, FaChalkboardTeacher, FaUserGraduate, FaBook,
+    FaClock, FaFilter, FaPlusCircle, FaSearch, FaArrowRight,
+    FaMoneyBillWave, FaCheckCircle, FaExclamationCircle, FaInfoCircle // Added FaInfoCircle
+} from 'react-icons/fa';
+import {
+    format, parse, isValid, startOfDay, endOfDay,
+    addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
+    startOfYear, endOfYear, isWithinInterval, subDays, subWeeks,
+    subMonths, subYears, parseISO
+} from 'date-fns';
+import {
+    Typography, Box, Paper, TableContainer, Table, TableHead, TableBody,
+    TableRow, TableCell, CircularProgress, Alert
+} from '@mui/material';
+
+import { MuiInput, MuiSelect, MuiButton, MuiDatePicker } from '../components/MuiCustomFormFields'; // Ensure MuiDatePicker is imported
+
+import './TimetablePage.css';
 
 const TimetablePage = () => {
-  const [timetable, setTimetable] = useState([]);
-  // Stores ALL upcoming timetable entries after initial fetch
-  const [allUpcomingClasses, setAllUpcomingClasses] = useState([]);
-  // State for the date filter input, initialized to today's date (YYYY-MM-DD)
-  const [filterDate, setFilterDate] = useState(
-    format(new Date(), "yyyy-MM-dd")
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
-  const currentDate = new Date();
-  // --- EFFECT TO FETCH ALL UPCOMING TIMETABLE DATA ---
-  useEffect(() => {
-    const fetchAllTimetableData = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/login");
-        return;
-      }
+    const navigate = useNavigate();
+    const [timetables, setTimetables] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterDurationType, setFilterDurationType] = useState('Daily');
+    const [filterDate, setFilterDate] = useState(new Date());
 
-      try {
-        const timetableResponse = await fetch(
-          "http://localhost:5000/api/data/timetable",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+    useEffect(() => {
+        const fetchTimetables = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                navigate('/login');
+                return;
+            }
 
-        if (!timetableResponse.ok) {
-          const errorData = await timetableResponse.json();
-          throw new Error(errorData.message || "Failed to fetch timetable.");
+            setIsLoading(true);
+            setError('');
+
+            try {
+                const response = await fetch('http://localhost:5000/api/data/timetable', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch timetables.');
+                }
+
+                const data = await response.json();
+                console.log("Fetched Timetables:", data);
+                setTimetables(data);
+            } catch (err) {
+                console.error('Error fetching timetables:', err);
+                setError(`Failed to load timetables: ${err.message}. Please try again.`);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchTimetables();
+    }, [navigate]);
+
+    // Options for the new duration filter dropdown with dynamic dates
+    const durationOptions = useMemo(() => {
+        const today = new Date(); // Get current date for calculations
+
+        // Helper function to format dates
+        const formatDateForLabel = (date) => format(date, 'dd/MM/yyyy');
+
+        return [
+            { value: 'Daily', label: `Daily (${formatDateForLabel(filterDate)})` }, // Daily uses the selected `filterDate`
+            { value: '2days', label: `Next 2 Days (until ${formatDateForLabel(addDays(today, 1))})` },
+            { value: '3days', label: `Next 3 Days (until ${formatDateForLabel(addDays(today, 2))})` },
+            { value: '4days', label: `Next 4 Days (until ${formatDateForLabel(addDays(today, 3))})` },
+            { value: '5days', label: `Next 5 Days (until ${formatDateForLabel(addDays(today, 4))})` },
+            { value: 'Week', label: `This Week (until ${formatDateForLabel(endOfWeek(today, { weekStartsOn: 1 }))})` }, // weekStartsOn: 1 for Monday
+            { value: 'Month', label: `This Month (until ${formatDateForLabel(endOfMonth(today))})` },
+            { value: 'Year', label: `This Year (until ${formatDateForLabel(endOfYear(today))})` },
+        ];
+    }, [filterDate]); // Re-generate options if `filterDate` changes (only relevant for 'Daily' label)
+
+
+    const sortedFilteredTimetables = useMemo(() => {
+        let currentTimetables = [...timetables];
+        const now = new Date();
+
+        let startDate = null;
+        let endDate = null;
+
+        switch (filterDurationType) {
+            case 'Daily':
+                startDate = startOfDay(filterDate);
+                endDate = endOfDay(filterDate);
+                break;
+            case '2days':
+                startDate = startOfDay(now);
+                endDate = endOfDay(addDays(now, 1));
+                break;
+            case '3days':
+                startDate = startOfDay(now);
+                endDate = endOfDay(addDays(now, 2));
+                break;
+            case '4days':
+                startDate = startOfDay(now);
+                endDate = endOfDay(addDays(now, 3));
+                break;
+            case '5days':
+                startDate = startOfDay(now);
+                endDate = endOfDay(addDays(now, 4));
+                break;
+            case 'Week':
+                startDate = startOfWeek(now, { weekStartsOn: 1 });
+                endDate = endOfWeek(now, { weekStartsOn: 1 });
+                break;
+            case 'Month':
+                startDate = startOfMonth(now);
+                endDate = endOfMonth(now);
+                break;
+            case 'Year':
+                startDate = startOfYear(now);
+                endDate = endOfYear(now);
+                break;
+            default:
+                break;
         }
 
-        const rawTimetableData = await timetableResponse.json();
+        if (startDate && endDate) {
+            currentTimetables = currentTimetables.filter(item => {
+                const itemDate = parse(item.Day, 'dd/MM/yyyy', new Date());
+                return isValid(itemDate) && isWithinInterval(itemDate, { start: startDate, end: endDate });
+            });
+        }
 
-        const mappedTimetable = rawTimetableData.map((item) => {
-          const timeValue = item.Time || "";
-          const timePart = timeValue.split("to")[0]?.trim();
-
-          let parsedDateTime;
-          if (item.Day && timePart) {
-            const combinedDateTimeString = `${item.Day} ${timePart}`;
-            parsedDateTime = parse(
-              combinedDateTimeString,
-              "dd/MM/yyyy hh:mma",
-              new Date()
+        if (searchTerm) {
+            currentTimetables = currentTimetables.filter(item =>
+                item.Faculty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.Subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.Topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.Student.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.Time.toLowerCase().includes(searchTerm.toLowerCase())
             );
-          } else if (item.Day) {
-            parsedDateTime = parse(item.Day, "dd/MM/yyyy", new Date());
-          } else {
-            parsedDateTime = new Date(NaN);
-          }
+        }
 
-          return {
-            id: item.id,
-            subject: item.Subject,
-            facultyName: item.Faculty,
-            dateTimeObject: parsedDateTime,
-            dayString: item.Day,
-            timeString: item.Time,
-            topic: item.Topic,
-          };
+        currentTimetables.sort((a, b) => {
+            const dateA = parse(a.Day, 'dd/MM/yyyy', new Date());
+            const dateB = parse(b.Day, 'dd/MM/yyyy', new Date());
+
+            if (dateA.getTime() !== dateB.getTime()) {
+                return dateA.getTime() - dateB.getTime();
+            }
+
+            const timeA = a.Time.split(' to ')[0];
+            const timeB = b.Time.split(' to ')[0];
+            return timeA.localeCompare(timeB);
         });
 
-        // Filter out entries where date parsing failed (dateTimeObject is an Invalid Date)
-        const validTimetableEntries = mappedTimetable.filter(
-          (item) => item.dateTimeObject && !isNaN(item.dateTimeObject)
-        );
+        return currentTimetables;
+    }, [timetables, searchTerm, filterDurationType, filterDate]); // Dependencies for re-running memo
 
-        // Filter for ALL upcoming classes (today or future) to store them for later filtering
-        const futureAndTodayClasses = validTimetableEntries
-          .filter((item) => item.dateTimeObject >= new Date())
-          .sort(
-            (a, b) => a.dateTimeObject.getTime() - b.dateTimeObject.getTime()
-          );
-
-        setAllUpcomingClasses(futureAndTodayClasses); // Store all valid upcoming classes
-        
-      } catch (err) {
-        console.error("Error fetching timetable data:", err);
-        setError(err.message || "Failed to load timetable data.");
-        if (
-          err.message.includes("Token") ||
-          err.message.includes("Denied") ||
-          err.message.includes("authorized")
-        ) {
-          localStorage.removeItem("token");
-          navigate("/login");
-        }
-      } finally {
-        setIsLoading(false);
-      }
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
     };
 
-    fetchAllTimetableData();
-  }, [navigate]); // Only runs on component mount or if navigate changes
+    const handleFilterDurationChange = (e) => {
+        setFilterDurationType(e.target.value);
+        // When duration changes, reset filterDate to today for consistency,
+        // as 2days/week/month/year are relative to 'now'
+        setFilterDate(new Date());
+    };
 
-  // --- EFFECT TO FILTER TIMETABLE BASED ON SELECTED DATE ---
-  useEffect(() => {
-    if (allUpcomingClasses.length > 0 || !isLoading) {
-      // Ensure data is loaded or there's no data
-      const selectedDateObject = parse(filterDate, "yyyy-MM-dd", new Date());
+    const handleAddTimetableClick = () => {
+        navigate('/add-timetable');
+    };
 
-      const filteredClasses = allUpcomingClasses
-        .filter((classItem) =>
-          isSameDay(classItem.dateTimeObject, selectedDateObject)
-        )
-        .sort(
-          (a, b) => a.dateTimeObject.getTime() - b.dateTimeObject.getTime()
+    if (isLoading) {
+        return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', gap: 2, backgroundColor: '#f7f8fc', p: 3 }}>
+                <CircularProgress size={60} sx={{ color: '#292551' }} />
+                <Typography variant="h6" color="text.secondary">Loading Timetable...</Typography>
+            </Box>
         );
-      setTimetable(filteredClasses);
     }
-  }, [filterDate, allUpcomingClasses, isLoading]); // Re-run when filterDate or allUpcomingClasses change
 
-  const handleFilterDateChange = (e) => {
-    setFilterDate(e.target.value);
-  };
+    if (error) {
+        return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', gap: 2, backgroundColor: '#f7f8fc', p: 3 }}>
+                <Alert severity="error" sx={{ width: '100%', maxWidth: 400, justifyContent: 'center' }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FaExclamationCircle style={{ marginRight: '10px' }} /> Error: {error}
+                    </Typography>
+                </Alert>
+                <MuiButton
+                    variant="contained"
+                    onClick={() => window.location.reload()}
+                    sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' }, borderRadius: '8px', px: 3, py: 1.2 }}
+                >
+                    Retry
+                </MuiButton>
+            </Box>
+        );
+    }
 
-  const handleGoHome = () => {
-    navigate("/dashboard");
-  };
-
-  const handleCreateTimetable = () => {
-    navigate("/add-timetable"); // Redirect to the new page
-  };
-
-  if (isLoading) {
     return (
-      <div className="timetable-loading-message">
-        <div className="spinner"></div>
-        Loading Timetable...
-      </div>
+        <Box sx={{
+            minHeight: '100vh',
+            backgroundColor: '#f7f8fc',
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3
+        }}>
+            {/* Header Card */}
+            <Paper elevation={3} sx={{
+                p: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <FaCalendarAlt style={{ marginRight: '15px', fontSize: '2.5rem', color: '#292551' }} />
+                    <Box>
+                        <Typography variant="h4" component="h1" sx={{ color: '#292551', fontWeight: 700, mb: 0.5 }}>
+                            Timetable
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            View and manage your scheduled classes. Today is <span className="current-date">{format(new Date(), 'EEEE, MMMM dd, yyyy')}</span>.
+                        </Typography>
+                    </Box>
+                </Box>
+                <MuiButton
+                    variant="contained"
+                    startIcon={<FaPlusCircle />}
+                    onClick={handleAddTimetableClick}
+                    sx={{
+                        bgcolor: '#4caf50',
+                        '&:hover': { bgcolor: '#388e3c' },
+                        borderRadius: '8px',
+                        px: 3,
+                        py: 1.2
+                    }}
+                >
+                    Add Timetable
+                </MuiButton>
+            </Paper>
+
+            {/* Filters and Search Section */}
+            <Paper elevation={3} sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                    <Typography variant="h5" component="h2" sx={{ display: 'flex', alignItems: 'center', color: '#333', fontWeight: 600 }}>
+                        <FaFilter style={{ marginRight: '10px', fontSize: '1.8rem' }} /> Filters
+                    </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    {/* Search Input */}
+                    <Box sx={{ flexGrow: 1, minWidth: '200px', maxWidth: '350px' }}>
+                        <MuiInput
+                            label="Search"
+                            icon={FaSearch}
+                            name="searchTerm"
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            placeholder="Search by faculty, subject, topic, student..."
+                        />
+                    </Box>
+
+                    {/* New: Duration Filter Dropdown */}
+                    <Box sx={{ minWidth: '150px' }}>
+                        <MuiSelect
+                            label="Show"
+                            name="filterDurationType"
+                            value={filterDurationType}
+                            onChange={handleFilterDurationChange}
+                            options={durationOptions}
+                            icon={FaCalendarAlt}
+                        />
+                    </Box>
+
+                    {/* Only show DatePicker if 'Daily' filter is selected */}
+                    {filterDurationType === 'Daily' && (
+                        <Box sx={{ minWidth: '150px' }}>
+                            <MuiDatePicker
+                                label="Specific Date"
+                                icon={FaCalendarAlt}
+                                name="filterDate"
+                                value={format(filterDate, 'yyyy-MM-dd')}
+                                onChange={(e) => setFilterDate(parseISO(e.target.value))}
+                            />
+                        </Box>
+                    )}
+
+                </Box>
+            </Paper>
+
+            {/* Timetable Table */}
+            <Paper elevation={3} sx={{ p: 2, overflowX: 'auto' }}>
+                {sortedFilteredTimetables.length > 0 ? (
+                    <TableContainer>
+                        <Table sx={{ minWidth: 800 }} aria-label="timetable">
+                            <TableHead>
+                                <TableRow sx={{ backgroundColor: '#eff2f7' }}>
+                                    <TableCell sx={{ color: '#333', fontWeight: 'bold', fontSize: '1.05rem', padding: '18px 12px' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}><FaCalendarAlt style={{ marginRight: '8px' }} /> Day</Box>
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#333', fontWeight: 'bold', fontSize: '1.05rem', padding: '18px 12px' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}><FaChalkboardTeacher style={{ marginRight: '8px' }} /> Faculty</Box>
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#333', fontWeight: 'bold', fontSize: '1.05rem', padding: '18px 12px' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}><FaBook style={{ marginRight: '8px' }} /> Subject</Box>
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#333', fontWeight: 'bold', fontSize: '1.05rem', padding: '18px 12px' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}><FaClock style={{ marginRight: '8px' }} /> Time</Box>
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#333', fontWeight: 'bold', fontSize: '1.05rem', padding: '18px 12px' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}><FaInfoCircle style={{ marginRight: '8px' }} /> Topic</Box>
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#333', fontWeight: 'bold', fontSize: '1.05rem', padding: '18px 12px' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}><FaUserGraduate style={{ marginRight: '8px' }} /> Student</Box>
+                                    </TableCell>
+                                    {/* Add other table headers as needed for your data structure */}
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {sortedFilteredTimetables.map((item, index) => (
+                                    <TableRow
+                                        key={index}
+                                        sx={{
+                                            backgroundColor: index % 2 === 0 ? '#FFFFFF' : '#f7f8fc',
+                                            '&:hover': { backgroundColor: '#e3f2fd !important' },
+                                            '& > td': { borderBottom: '1px solid rgba(0, 0, 0, 0.05) !important' }
+                                        }}
+                                    >
+                                        <TableCell sx={{ fontSize: '0.9rem' }}>{item.Day}</TableCell>
+                                        <TableCell sx={{ fontSize: '0.9rem' }}>{item.Faculty}</TableCell>
+                                        <TableCell sx={{ fontSize: '0.9rem' }}>{item.Subject}</TableCell>
+                                        <TableCell sx={{ fontSize: '0.9rem' }}>{item.Time}</TableCell>
+                                        <TableCell sx={{ fontSize: '0.9rem' }}>{item.Topic}</TableCell>
+                                        <TableCell sx={{ fontSize: '0.9rem' }}>{item.Student}</TableCell>
+                                        {/* Add other table cells */}
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                ) : (
+                    <Typography variant="body1" sx={{ textAlign: 'center', p: 3, color: 'text.secondary' }}>
+                        No timetable entries found matching your filters.
+                    </Typography>
+                )}
+            </Paper>
+        </Box>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="timetable-error-message">
-        <h3>Error: {error}</h3>
-        <button
-          onClick={() => window.location.reload()}
-          className="timetable-retry-button"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="timetable-page-container">
-      {/* Main Header Card - Added Create Timetable Button */}
-   <div className="main-header-card">
-    <div className="header-left">
-        <h1 className="header-title">
-            <FaCalendarAlt className="header-icon" /> Timetable
-        </h1>
-        <p className="header-subtitle">
-            View schedule for{" "}
-            <span className="current-date">
-                {format(currentDate, "EEEE, MMMM dd, h:mm a")}
-            </span>
-        </p>
-    </div>
-    <div
-        className="header-right"
-        style={{
-            display: "flex",
-            // Change justifyContent to 'center' or 'flex-end' if you want it all on the right
-            justifyContent: "center", // This will center the combined button and filter
-            alignItems: "center",     // Vertically aligns them in the middle
-            // Remove width: "100%" if you want the content to dictate the width
-            // If you keep width: "100%", the content will be centered within that 100% width.
-            // If you want it more like aligned with the left section's right edge,
-            // you might need to adjust the parent .main-header-card's display properties.
-            gap: "20px",              // Adds space between the two elements
-            // Consider if this div should take full width or be content-sized when centered
-            // For now, let's assume you want the content block centered.
-            // If you want it on the right side of the main-header-card but centered within header-right:
-            // If main-header-card is flex and header-right is flex-grow: 1, then
-            // this `justifyContent: "center"` would center it within the remaining space.
-            // If you specifically want it aligned to the right of `main-header-card`, use `justifyContent: "flex-end"`
-            // on `main-header-card` or make `header-right` take up available space and align its content.
-          }}
-    >
-        {/* "Create Timetable" button - REMAINS FIRST IN ORDER */}
-        <button
-            onClick={handleCreateTimetable}
-            className="add-employee-button-timetable"
-        >
-            <FaPlusCircle /> Create Timetable
-        </button>
-
-        {/* Date Filter Input - REMAINS SECOND IN ORDER */}
-        <div
-            className="add-student-form-group"
-            style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-            }}
-        >
-            <label htmlFor="dateFilter" style={{ whiteSpace: "nowrap" }}>
-                <FaFilter className="filter-icon" /> Filter by Date:
-            </label>
-            <input
-                type="date"
-                id="dateFilter"
-                value={filterDate}
-                onChange={handleFilterDateChange}
-                className="date-filter-input"
-                min={format(new Date(), "yyyy-MM-dd")}
-                style={{
-                    padding: "8px",
-                    borderRadius: "5px",
-                    border: "1px solid #ccc",
-                }}
-            />
-        </div>
-    </div>
-</div>
-
-      <div className="timetable-content-card">
-        {timetable.length > 0 ? (
-          <div className="timetable-grid">
-            {timetable.map((classItem) => (
-              <div key={classItem.id} className="timetable-item card-animation">
-                <div className="timetable-item-header">
-                  <FaBookOpen className="subject-icon" />
-                  {/* Subject should be here as per "subject down" from Faculty */}
-                  <h3>{classItem.subject}</h3>
-                </div>
-                <div className="timetable-details">
-                  {/* Faculty Name (Now at the top of details) */}
-                  <p>
-                    <FaUser className="detail-icon" />
-                    <span>Faculty:</span> {classItem.facultyName}
-                  </p>
-                  {/* Date */}
-                  <p>
-                    <FaCalendarAlt className="detail-icon" />
-                    <span>Date:</span>{" "}
-                    {format(classItem.dateTimeObject, "EEEE, MMM dd")}
-                  </p>
-                  {/* Time */}
-                  <p>
-                    <FaClock className="detail-icon" />
-                    <span>Time:</span> {classItem.timeString}
-                  </p>
-                  {/* NEW: Topic */}
-                  <p>
-                    <FaBookOpen className="detail-icon" />
-                    <span>Topic:</span> {classItem.topic}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="no-classes-message">
-            No upcoming classes scheduled. Click "Create Timetable" to add some!
-          </p>
-        )}
-      </div>
-    </div>
-  );
 };
 
 export default TimetablePage;

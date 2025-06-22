@@ -24,7 +24,6 @@
     box-sizing: border-box;
     background-color: var(--light-gray-bg); /* Ensure background is set */
     color: var(--slate-gray); /* Ensure text color is set */
-    font-family: 'Poppins', sans-serif; /* Consistent font */
     min-height: 100vh; /* Occupy full height */
 }
 

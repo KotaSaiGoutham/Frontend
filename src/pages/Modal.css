@@ -67,7 +67,7 @@
     text-align: center;
     max-width: 400px; /* Adjusted max-width */
     width: 90%; /* Responsive width */
-    font-family: 'Inter', sans-serif; /* Or 'Segoe UI' as used elsewhere */
+     /* Or 'Segoe UI' as used elsewhere */
     transform: scale(0.8) translateY(20px); /* Initial state for enter animation */
     opacity: 0;
     transition: transform 0.3s ease-out, opacity 0.3s ease-out; /* Transition for modal itself */

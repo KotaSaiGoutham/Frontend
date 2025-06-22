@@ -94,7 +94,7 @@ const AddEmployeePage = () => {
             <div className="dashboard-card add-student-form-card">
                 <div className="add-student-header-flex">
                     <button onClick={() => navigate('/employees')} className="back-button">
-                        <FaArrowLeft /> Back to Employees
+                        <FaArrowLeft /> Back
                     </button>
                     <h2><FaUserPlus /> Add New Employee</h2>
                 </div>

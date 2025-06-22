@@ -40,7 +40,6 @@
   align-items: center;
   padding: 60px 20px;
   background: var(--background-page);
-  font-family: 'Inter', sans-serif;
   color: var(--text-color-dark);
   overflow-x: hidden;
   box-sizing: border-box;
@@ -126,7 +125,6 @@
   border-radius: 10px;
   border: 1px solid var(--input-border-color);
   font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
   color: var(--text-color-dark);
   background-color: var(--white);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;

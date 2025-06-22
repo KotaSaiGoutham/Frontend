@@ -34,6 +34,8 @@ import AddStudent from './components/AddStudent'
 import AddEmployeePage from "./components/AddEmployeePage";
 import StudentsTable from "./components/StudentsTable";
 import AddTimetablePage from "./components/AddTimetablePage";
+import { ThemeProvider } from '@mui/material/styles';
+import theme from "./components/theme";
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -41,6 +43,8 @@ const PrivateRoute = ({ children }) => {
 };
 function App() {
   return (
+        <ThemeProvider theme={theme}>
+
     <Router>
       <ScrollToTop /> {/* ✅ Handles scrolling on route change */}
       <div>
@@ -153,6 +157,8 @@ function App() {
         </Routes>
       </div>
     </Router>
+        </ThemeProvider>
+
   );
 }
 

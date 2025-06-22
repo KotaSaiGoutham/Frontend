@@ -1,230 +1,73 @@
-// src/components/Dashboard.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import "./StudentsTable.css";
-
+// Material-UI Imports
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Box,
+  TableSortLabel,
+  CircularProgress, // <--- Import CircularProgress for loading spinner
+  Snackbar,         // <--- Import Snackbar for notifications
+  Alert             // <--- Import Alert for Snackbar content
+} from "@mui/material";
 // Import ALL necessary icons
 import {
-  FaSun,
-  FaCloudMoon,
   FaSearch,
   FaUserGraduate,
   FaTransgender,
   FaDollarSign,
   FaBookOpen,
   FaCalendarAlt,
-  FaClock,
   FaCheckCircle,
   FaExclamationCircle,
-  FaUser,
   FaUsers,
   FaHourglassHalf,
   FaIdCard,
   FaUserCircle,
-  FaMoneyBillWave,
-  FaUserTie,
-  FaBuilding,
-  FaWallet,
-  FaTimesCircle,
-  FaGlobe,
-  FaPlus, // Existing and FaPlus
+  FaPlus,
   FaGraduationCap,
   FaUniversity,
   FaSearchDollar,
-  FaCalendarCheck, // Newly added for table columns
+  FaCalendarCheck,
+  FaArrowUp,
+  FaArrowDown,
 } from "react-icons/fa";
+import { MuiButton, MuiSelect, MuiInput } from "./MuiCustomFormFields";
+import { genderOptions, paymentStatusOptions, subjectOptions } from "../mockdata/Options";
 
 const StudentsTable = () => {
-  const [userName, setUserName] = useState("Goutham");
-  const [greetingTime, setGreetingTime] = useState("");
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
-  const [timetable, setTimetable] = useState([]);
-  const [salaries, setSalaries] = useState([]);
   const [filters, setFilters] = useState({
     studentName: "",
     subject: "",
     paymentStatus: "",
-    minClasses: "",
-    maxClasses: "",
+    gender: "",
+    stream: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [streamOptions, setStreamOptions] = useState([]);
+  const [orderBy, setOrderBy] = useState("");
+  const [order, setOrder] = useState("asc");
+
+  // State for handling payment status updates
+  const [updatingStudentId, setUpdatingStudentId] = useState(null); // Tracks which student is being updated
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   const navigate = useNavigate();
 
-  const getGreetingInfo = () => {
-    const hour = new Date().getHours();
-    let text, className, imageUrl;
-
-    if (hour >= 5 && hour < 12) {
-      text = "Morning";
-      className = "morning";
-      imageUrl =
-        "https://images.unsplash.com/photo-1547463564-9273646736c9?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-    } else if (hour >= 12 && hour < 18) {
-      text = "Afternoon";
-      className = "afternoon";
-      imageUrl =
-        "https://images.unsplash.com/photo-1549490349-8643362c395f?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-    } else {
-      text = "Evening";
-      className = "evening";
-      imageUrl =
-        "https://images.unsplash.com/photo-1508906660126-a05d4f3b6d51?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-    }
-    return { text, className, imageUrl };
-  };
-
-  // Mock data for employees and salaries (up to 10)
-  const mockSalariesData = [
-    {
-      id: "emp001",
-      name: "Alice Johnson",
-      role: "Physics Teacher",
-      salary: 65000,
-      paid: true,
-      lastPaid: "2025-05-28",
-    },
-    {
-      id: "emp002",
-      name: "Bob Williams",
-      role: "Maths Teacher",
-      salary: 70000,
-      paid: true,
-      lastPaid: "2025-05-29",
-    },
-    {
-      id: "emp003",
-      name: "Charlie Brown",
-      role: "Chemistry Teacher",
-      salary: 68000,
-      paid: false,
-      lastPaid: "2025-04-30",
-    },
-    {
-      id: "emp004",
-      name: "Diana Miller",
-      role: "Biology Teacher",
-      salary: 67000,
-      paid: true,
-      lastPaid: "2025-05-27",
-    },
-    {
-      id: "emp005",
-      name: "Eve Davis",
-      role: "Admin Staff",
-      salary: 45000,
-      paid: true,
-      lastPaid: "2025-05-30",
-    },
-    {
-      id: "emp006",
-      name: "Frank White",
-      role: "Physics Teacher",
-      salary: 66000,
-      paid: true,
-      lastPaid: "2025-05-28",
-    },
-    {
-      id: "emp007",
-      name: "Grace Taylor",
-      role: "Counselor",
-      salary: 55000,
-      paid: false,
-      lastPaid: "2025-04-25",
-    },
-    {
-      id: "emp008",
-      name: "Henry King",
-      role: "Maintenance",
-      salary: 35000,
-      paid: true,
-      lastPaid: "2025-05-26",
-    },
-    {
-      id: "emp009",
-      name: "Ivy Green",
-      role: "Chemistry Teacher",
-      salary: 69000,
-      paid: true,
-      lastPaid: "2025-05-29",
-    },
-    {
-      id: "emp010",
-      name: "Jack Hall",
-      role: "IT Support",
-      salary: 50000,
-      paid: false,
-      lastPaid: "2025-04-20",
-    },
-  ];
-
-  // Mock Timetable Data (to demonstrate the timetable section)
-  const mockTimetableData = [
-    {
-      id: "tt001",
-      studentName: "Student A",
-      subject: "Physics",
-      time: "10:00 AM",
-      day: "Monday",
-      teacher: "Alice Johnson",
-    },
-    {
-      id: "tt002",
-      studentName: "Student B",
-      subject: "Maths",
-      time: "02:00 PM",
-      day: "Tuesday",
-      teacher: "Bob Williams",
-    },
-    {
-      id: "tt003",
-      studentName: "Student C",
-      subject: "Chemistry",
-      time: "11:00 AM",
-      day: "Wednesday",
-      teacher: "Charlie Brown",
-    },
-    {
-      id: "tt004",
-      studentName: "Student D",
-      subject: "Biology",
-      time: "03:30 PM",
-      day: "Thursday",
-      teacher: "Diana Miller",
-    },
-    {
-      id: "tt005",
-      studentName: "Student E",
-      subject: "Physics",
-      time: "09:00 AM",
-      day: "Friday",
-      teacher: "Frank White",
-    },
-  ];
-
+  // --- Data Fetching Effect ---
   useEffect(() => {
-    const { text, imageUrl } = getGreetingInfo();
-    setGreetingTime(text);
-
-    // Dynamically set CSS variables for background images
-    document.documentElement.style.setProperty(
-      "--current-greeting-bg-image",
-      `url(${imageUrl})`
-    );
-
-    const storedUserName = localStorage.getItem("userName");
-    if (storedUserName) {
-      setUserName(storedUserName);
-    } else {
-      const storedUserEmail = localStorage.getItem("userEmail");
-      if (storedUserEmail) {
-        setUserName(storedUserEmail.split("@")[0]);
-      }
-    }
-
     const fetchDashboardData = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -233,7 +76,6 @@ const StudentsTable = () => {
       }
 
       try {
-        // Fetch Students
         const studentsResponse = await fetch(
           "http://localhost:5000/api/data/students",
           {
@@ -243,15 +85,22 @@ const StudentsTable = () => {
         const studentsData = await studentsResponse.json();
         if (!studentsResponse.ok)
           throw new Error(studentsData.message || "Failed to fetch students.");
+        
         setStudents(studentsData);
-        setFilteredStudents(studentsData);
+        setFilteredStudents(studentsData); // Initially, filtered students are all students
 
-        // Simulate fetching Timetable
-        await new Promise((resolve) => setTimeout(resolve, 300)); // Simulate delay
-        setTimetable(mockTimetableData);
-
-        await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate delay
-        setSalaries(mockSalariesData);
+        if (studentsData.length > 0) {
+          const uniqueStreams = new Set(
+            studentsData.map((student) => student.Stream).filter(Boolean)
+          );
+          const options = [{ value: "", label: "All Streams" }];
+          uniqueStreams.forEach((stream) => {
+            options.push({ value: stream, label: stream });
+          });
+          setStreamOptions(options);
+        } else {
+          setStreamOptions([{ value: "", label: "All Streams" }]);
+        }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError(err.message || "Failed to load dashboard data.");
@@ -267,68 +116,89 @@ const StudentsTable = () => {
     fetchDashboardData();
   }, [navigate]);
 
+  // --- Filtering Effect ---
   useEffect(() => {
-    let tempStudents = [...students]; // Assuming 'students' holds your original, unfiltered data
+    let tempStudents = [...students];
 
-    // NEW: Filter by Student Name
-  if (filters.studentName) {
-  tempStudents = tempStudents.filter((student) => {
-    // 1. Ensure 'student' object exists
-    // 2. Ensure 'student.Name' property exists (use correct casing, likely 'Name' based on your form)
-    // 3. Ensure 'student.Name' is a string
-    //    Using typeof student?.Name === 'string' is modern JS and concise
-    const studentName = student?.Name; // Use optional chaining to safely access 'Name'
-
-    // If studentName is not a string, or is null/undefined, this student doesn't match
-    if (typeof studentName !== 'string') {
-      return false; // Exclude this student
+    if (filters.studentName) {
+      tempStudents = tempStudents.filter((student) =>
+        student.Name?.toLowerCase().includes(filters.studentName.toLowerCase())
+      );
     }
 
-    // Now safely perform the comparison
-    return studentName.toLowerCase().includes(filters.studentName.toLowerCase());
-  });
-}
-
-    // Existing Subject Filter
     if (filters.subject) {
       tempStudents = tempStudents.filter(
-        (student) => student.subject === filters.subject
+        (student) => student.Subject?.trim() === filters.subject.trim()
       );
     }
 
-    // Existing Payment Status Filter
     if (filters.paymentStatus) {
       tempStudents = tempStudents.filter(
-        (student) => student.paymentStatus === filters.paymentStatus
-      );
-    }
-
-    // Existing Min Classes Filter
-    if (filters.minClasses !== "") {
-      // Use !== '' to check for actual value
-      // Note: student.totalClasses is from mock data.
-      // If you're fetching from Firestore, use student.classesCompleted
-      tempStudents = tempStudents.filter(
         (student) =>
-          (student.totalClasses || student.classesCompleted) >=
-          parseInt(filters.minClasses)
+          student["Payment Status"]?.trim() === filters.paymentStatus.trim()
       );
     }
 
-    // Existing Max Classes Filter
-    if (filters.maxClasses !== "") {
-      // Use !== '' to check for actual value
-      // Note: student.totalClasses is from mock data.
-      // If you're fetching from Firestore, use student.classesCompleted
+    if (filters.gender) {
       tempStudents = tempStudents.filter(
-        (student) =>
-          (student.totalClasses || student.classesCompleted) <=
-          parseInt(filters.maxClasses)
+        (student) => student.Gender?.trim() === filters.gender.trim()
       );
     }
 
-    setFilteredStudents(tempStudents); // Assuming you have a setFilteredStudents state
-  }, [filters, students]); // Add 'students' to dependency array if not already there
+    if (filters.stream && filters.stream !== "") {
+      tempStudents = tempStudents.filter(
+        (student) => student.Stream?.trim() === filters.stream.trim()
+      );
+    }
+
+    setFilteredStudents(tempStudents);
+  }, [filters, students]);
+
+  // --- Handle Sort Request ---
+  const handleSortRequest = (property) => {
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
+
+  // --- Memoized Sorted Students Data ---
+  const sortedFilteredStudents = useMemo(() => {
+    if (!orderBy) return filteredStudents;
+
+    return [...filteredStudents].sort((a, b) => {
+      let aValue;
+      let bValue;
+
+      if (orderBy === "monthlyFee") {
+        aValue = typeof a["Monthly Fee"] === "number" ? a["Monthly Fee"] : parseFloat(a["Monthly Fee"]) || 0;
+        bValue = typeof b["Monthly Fee"] === "number" ? b["Monthly Fee"] : parseFloat(b["Monthly Fee"]) || 0;
+      } else if (orderBy === "classesCompleted") {
+        aValue = typeof a["Classes Completed"] === "number" ? a["Classes Completed"] : parseFloat(a["Classes Completed"]) || 0;
+        bValue = typeof b["Classes Completed"] === "number" ? b["Classes Completed"] : parseFloat(b["Classes Completed"]) || 0;
+      } else {
+        // For other columns, you might want to implement string comparison or other logic
+        // For now, return 0 if no specific sort logic is defined for the column
+        const valA = a[orderBy];
+        const valB = b[orderBy];
+
+        if (typeof valA === 'string' && typeof valB === 'string') {
+            return valA.localeCompare(valB);
+        }
+        if (typeof valA === 'number' && typeof valB === 'number') {
+            return valA - valB;
+        }
+        return 0; // Default: no specific sorting
+      }
+
+      if (aValue < bValue) {
+        return order === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return order === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [filteredStudents, orderBy, order]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -338,19 +208,65 @@ const StudentsTable = () => {
     }));
   };
 
-  // Calculate dashboard metrics
-  const totalStudents = students.length;
-  console.log("students,students",students)
- const paidStudents = students.filter(
-  (s) => s["Payment Status"] === "Paid" // <--- Corrected key access
-).length;
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
 
-const unpaidStudents = students.filter(
-  (s) => s["Payment Status"] === "Unpaid" // <--- Corrected key access
-).length;
-  const totalEmployees = salaries.length; // Using salaries data as a proxy for employees
+  // --- NEW: Handle Payment Status Toggle ---
+  const handlePaymentStatusToggle = async (studentId, currentStatus) => {
+    if (currentStatus === "Paid") {
+      setSnackbarMessage("Student payment status is already 'Paid'.");
+      setSnackbarSeverity("info");
+      setSnackbarOpen(true);
+      return; // Already paid, no action needed
+    }
 
-  const { className: greetingClass } = getGreetingInfo(); // Get class name for greeting
+    setUpdatingStudentId(studentId); // Set the ID of the student being updated
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/data/students/${studentId}`, {
+        method: "PATCH", // Use PATCH for partial updates
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ "Payment Status": "Paid" }), // Send the update
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update payment status.");
+      }
+
+      // Update the local state to reflect the change immediately
+      setStudents(prevStudents =>
+        prevStudents.map(student =>
+          student.id === studentId ? { ...student, "Payment Status": "Paid" } : student
+        )
+      );
+
+      setSnackbarMessage("Payment status updated to 'Paid' successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+
+    } catch (err) {
+      console.error("Error updating payment status:", err);
+      setSnackbarMessage(err.message || "Error updating payment status.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUpdatingStudentId(null); // Clear the updating state
+    }
+  };
+
 
   if (isLoading) {
     return <div className="loading-message">Loading Dashboard...</div>;
@@ -366,11 +282,9 @@ const unpaidStudents = students.filter(
       </div>
     );
   }
-  console.log("filteredStudents", filteredStudents);
 
   return (
     <div className="dashboard-container">
-
       {/* Filters Section */}
       <div className="dashboard-card filters-section">
         <h2>
@@ -379,196 +293,439 @@ const unpaidStudents = students.filter(
         </h2>
         <div className="filters-grid">
           {/* Student Name Filter */}
-          <div className="filter-group">
-            <label htmlFor="studentName">Student Name</label>
-            <input
-              type="text"
-              id="studentName"
-              name="studentName"
-              value={filters.studentName}
-              onChange={handleFilterChange}
-              placeholder="Search by student name..."
-            />
-          </div>
+          <MuiInput
+            label="Student Name"
+            name="studentName"
+            value={filters.studentName}
+            onChange={handleFilterChange}
+            placeholder="Search by student name..."
+            icon={FaUserCircle}
+          />
 
-          {/* Existing Subject Filter */}
-          <div className="filter-group">
-            <label htmlFor="subject">Subject</label>
-            <select
-              id="subject"
-              name="subject"
-              value={filters.subject}
-              onChange={handleFilterChange}
-            >
-              <option value="">All Subjects</option>
-              <option value="Physics">Physics</option>
-              <option value="Chemistry">Chemistry</option>
-              <option value="Maths">Maths</option>
-              <option value="Biology">Biology</option>
-            </select>
-          </div>
+          {/* Subject Filter */}
+          <MuiSelect
+            label="Subject"
+            name="subject"
+            value={filters.subject}
+            onChange={handleFilterChange}
+            options={subjectOptions}
+            icon={FaBookOpen}
+          />
 
-          {/* Existing Payment Status Filter */}
-          <div className="filter-group">
-            <label htmlFor="paymentStatus">Payment Status</label>
-            <select
-              id="paymentStatus"
-              name="paymentStatus"
-              value={filters.paymentStatus}
-              onChange={handleFilterChange}
-            >
-              <option value="">All Statuses</option>
-              <option value="Paid">Paid</option>
-              <option value="Unpaid">Unpaid</option>
-            </select>
-          </div>
+          {/* Payment Status Filter */}
+          <MuiSelect
+            label="Payment Status"
+            name="paymentStatus"
+            value={filters.paymentStatus}
+            onChange={handleFilterChange}
+            options={paymentStatusOptions}
+            icon={FaIdCard}
+          />
+          <MuiSelect
+            label="Gender"
+            name="gender" 
+            value={filters.gender}
+            onChange={handleFilterChange}
+            options={genderOptions}
+            icon={FaUsers}
+          />
+          <MuiSelect
+            label="Stream"
+            name="stream" 
+            value={filters.stream}
+            onChange={handleFilterChange}
+            options={streamOptions}
+            icon={FaGraduationCap}
+          />
         </div>
       </div>
 
       {/* Students List Table */}
       <div className="dashboard-card students-table-container">
         <div className="students-table-header-flex">
-          {" "}
-          {/* NEW CONTAINER FOR H2 AND BUTTON */}
           <h2>
-            <FaUsers /> Student Overview
-          </h2>{" "}
-          {/* Removed inline-block mr-2 */}
-          <button
+            <FaUsers /> Students Overview
+          </h2>
+          <MuiButton
+            variant="contained"
+            color="primary"
             onClick={() => navigate("/add-student")}
-            className="add-student-button"
+            startIcon={<FaPlus />}
           >
-            <FaPlus /> Add New Student {/* Removed inline-block mr-2 */}
-          </button>
+            Add New Student
+          </MuiButton>
         </div>
-        {filteredStudents.length > 0 ? (
-          <div className="students-table-wrapper">
-            <table className="students-table">
-              <thead>
-                <tr>
-                  <th>
-                    <div className="header-content">
-                      <FaUserCircle /> Name
-                    </div>
-                  </th>
-                  <th>
-                    <div className="header-content">
-                      <FaTransgender /> Gender
-                    </div>
-                  </th>
-                  <th>
-                    <div className="header-content">
-                      <FaHourglassHalf /> Classes Completed
-                    </div>
-                  </th>
-                  <th>
-                    <div className="header-content">
-                      <FaDollarSign /> Monthly Fee
-                    </div>
-                  </th>
-                  <th>
-                    <div className="header-content">
-                      <FaBookOpen /> Subject
-                    </div>
-                  </th>
-                  {/* NEW: Stream Header */}
-                  <th>
-                    <div className="header-content">
-                      <FaGraduationCap /> Stream
-                    </div>
-                  </th>
-                  {/* NEW: College Header */}
-                  <th>
-                    <div className="header-content">
-                      <FaUniversity /> College
-                    </div>
-                  </th>
-                  {/* NEW: Group Header */}
-                  <th>
-                    <div className="header-content">
-                      <FaUsers /> Group
-                    </div>
-                  </th>
-                  {/* NEW: Source Header */}
-                  <th>
-                    <div className="header-content">
-                      <FaSearchDollar /> Source
-                    </div>
-                  </th>
-                  {/* NEW: Year Header */}
-                  <th>
-                    <div className="header-content">
-                      <FaCalendarCheck /> Year
-                    </div>
-                  </th>
-                  <th>
-                    <div className="header-content">
-                      <FaCalendarAlt /> Next Class
-                    </div>
-                  </th>
-                  <th>
-                    <div className="header-content">
-                      <FaIdCard /> Payment Status
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStudents.map((student) => (
-                  <tr key={student.id}>
-                    <td className="student-name-cell">
+        {sortedFilteredStudents.length > 0 ? (
+          <TableContainer
+            component={Paper}
+            sx={{
+              boxShadow: 3,
+              borderRadius: 2,
+              overflowX: "auto",
+              minWidth: "100%",
+            }}
+          >
+            <Table sx={{ minWidth: 1200 }} aria-label="student table">
+              <TableHead>
+                <TableRow sx={{ backgroundColor: (theme) => theme.palette.grey[100] }}>
+                    <TableCell align="center" sx={{ fontWeight: "bold" }}>S.No.</TableCell>
+
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <FaUserCircle style={{ marginRight: 8, color: "#333" }} />
+                        Name
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 100,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaTransgender style={{ marginRight: 8, color: "#e91e63" }} />
+                        Gender
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 120,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaBookOpen style={{ marginRight: 8, color: "#03a9f4" }} />
+                        Subject
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 80,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaCalendarCheck style={{ marginRight: 8, color: "#ff9800" }} />
+                        Year
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 120,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaGraduationCap style={{ marginRight: 8, color: "#4caf50" }} />
+                        Stream
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaUniversity style={{ marginRight: 8, color: "#673ab7" }} />
+                        College
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 100,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaUsers style={{ marginRight: 8, color: "#9c27b0" }} />
+                        Group
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 100,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaSearchDollar style={{ marginRight: 8, color: "#795548" }} />
+                        Source
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sortDirection={orderBy === "monthlyFee" ? order : false}
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 140,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <TableSortLabel
+                        active={orderBy === "monthlyFee"}
+                        direction={orderBy === "monthlyFee" ? order : "asc"}
+                        onClick={() => handleSortRequest("monthlyFee")}
+                        IconComponent={orderBy === "monthlyFee" ? (order === "asc" ? FaArrowUp : FaArrowDown) : undefined}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                          "& .MuiTableSortLabel-icon": {
+                            marginLeft: "8px",
+                            marginRight: "0px",
+                          },
+                          "& .MuiTableSortLabel-iconDirectionDesc": {
+                            transform: "rotate(0deg)",
+                          },
+                          "& .MuiTableSortLabel-iconDirectionAsc": {
+                            transform: "rotate(180deg)",
+                          },
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <FaDollarSign style={{ marginRight: 8, color: "#28a745" }} />
+                          Monthly Fee
+                        </Box>
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sortDirection={orderBy === "classesCompleted" ? order : false}
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 160,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <TableSortLabel
+                        active={orderBy === "classesCompleted"}
+                        direction={orderBy === "classesCompleted" ? order : "asc"}
+                        onClick={() => handleSortRequest("classesCompleted")}
+                        IconComponent={orderBy === "classesCompleted" ? (order === "asc" ? FaArrowUp : FaArrowDown) : undefined}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                          "& .MuiTableSortLabel-icon": {
+                            marginLeft: "8px",
+                            marginRight: "0px",
+                          },
+                          "& .MuiTableSortLabel-iconDirectionDesc": {
+                            transform: "rotate(0deg)",
+                          },
+                          "& .MuiTableSortLabel-iconDirectionAsc": {
+                            transform: "rotate(180deg)",
+                          },
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <FaHourglassHalf style={{ marginRight: 8, color: "#ffc107" }} />
+                          Classes Completed
+                        </Box>
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaCalendarAlt style={{ marginRight: 8, color: "#17a2b8" }} />
+                        Next Class
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaIdCard style={{ marginRight: 8, color: "#6c757d" }} />
+                        Payment Status
+                      </Box>
+                    </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sortedFilteredStudents.map((student,index) => ( 
+                  <TableRow
+                    key={student.id}
+                    sx={{
+                      "&:last-child td, &:last-child th": { border: 0 },
+                      "&:hover": { backgroundColor: "action.hover" },
+                    }}
+                  >
+                    <TableCell component="th" scope="row" align="center" sx={{ fontSize: "0.9rem", fontWeight: "bold" }}>
+                      {index + 1}
+                    </TableCell>
+                    <TableCell component="th" scope="row" sx={{ fontSize: "0.9rem" }}>
                       <Link
                         to={`/student/${student.id}`}
+                        state={{ studentData: student }}
                         className="student-name-link"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          textDecoration: "underline",
+                          color: "inherit",
+                          fontWeight: 500,
+                        }}
                       >
-                        <FaUserGraduate /> {student.Name}
+                        <FaUserGraduate style={{ marginRight: 8, color: "#007bff" }} />
+                        {student.Name}
                       </Link>
-                    </td>
-                    <td>{student.Gender}</td>
-                    <td>{student["Classes Completed"] || "N/A"}</td>
-                    <td>₹{student["Monthly Fee"] || "0"}</td>
-                    <td>{student.Subject}</td>
-                    {/* NEW: Stream Data */}
-                    <td>{student.Stream || "N/A"}</td>
-                    {/* NEW: College Data */}
-                    <td>{student.College || "N/A"}</td>
-                    {/* NEW: Group Data (Note: 'Group ' has a space in your backend key) */}
-                    <td>{student["Group "] || "N/A"}</td>
-                    {/* NEW: Source Data */}
-                    <td>{student.Source || "N/A"}</td>
-                    {/* NEW: Year Data */}
-                    <td>{student.Year || "N/A"}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>{student.Gender || "N/A"}</TableCell>
+                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>{student.Subject || "N/A"}</TableCell>
+                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>{student.Year || "N/A"}</TableCell>
+                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>{student.Stream || "N/A"}</TableCell>
+                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>{student.College || "N/A"}</TableCell>
+                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>{student["Group "] || "N/A"}</TableCell>
+                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>{student.Source || "N/A"}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: "0.9rem" }}>
+                      ₹
+                      {(typeof student["Monthly Fee"] === "number"
+                        ? student["Monthly Fee"]
+                        : parseFloat(student["Monthly Fee"]) || 0
+                      ).toLocaleString()}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontSize: "0.9rem" }}>
+                      {student["Classes Completed"] || "N/A"}
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                       {student.nextClass
                         ? format(parseISO(student.nextClass), "MMM dd, p")
                         : "N/A"}
-                    </td>
-                    <td>
-                      <span
-                        className={`payment-status-badge ${student[
-                          "Payment Status"
-                        ]?.toLowerCase()}`}
-                      >
-                        {student["Payment Status"] === "Paid" ? (
-                          <FaCheckCircle />
+                    </TableCell>
+                    {/* Payment Status Cell with Click Handler and Loading */}
+                    <TableCell
+                        align="center"
+                        sx={{
+                            fontSize: "0.9rem",
+                            cursor: student["Payment Status"] === "Unpaid" ? "pointer" : "default", // Only clickable if 'Unpaid'
+                            "&:hover": {
+                                backgroundColor: student["Payment Status"] === "Unpaid" ? "rgba(0, 0, 0, 0.04)" : "inherit",
+                            },
+                        }}
+                        onClick={() => handlePaymentStatusToggle(student.id, student["Payment Status"])}
+                    >
+                        {updatingStudentId === student.id ? (
+                            <CircularProgress size={20} color="primary" /> // Show spinner if updating
                         ) : (
-                          <FaExclamationCircle />
+                            <span
+                                className={`payment-status-badge ${student["Payment Status"]?.toLowerCase()}`}
+                                style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    padding: "4px 8px",
+                                    borderRadius: "16px",
+                                    fontWeight: "bold",
+                                    color: student["Payment Status"] === "Paid" ? "#155724" : "#721c24",
+                                    backgroundColor: student["Payment Status"] === "Paid" ? "#d4edda" : "#f8d7da",
+                                    border: `1px solid ${student["Payment Status"] === "Paid" ? "#28a745" : "#dc3545"}`,
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                {student["Payment Status"] === "Paid" ? (
+                                    <FaCheckCircle style={{ marginRight: 4 }} />
+                                ) : (
+                                    <FaExclamationCircle style={{ marginRight: 4 }} />
+                                )}
+                                {student["Payment Status"]}
+                            </span>
                         )}
-                        {student["Payment Status"]}
-                      </span>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </TableContainer>
         ) : (
-          <p className="no-students-message">
-            No students match your criteria.
-          </p>
+          <p className="no-students-message">No students match your criteria.</p>
         )}
       </div>
-      {/* ... (rest of your dashboard content like Timetable, Salaries) */}
+
+      {/* Snackbar for Notifications */}
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

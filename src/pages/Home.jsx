@@ -4,7 +4,14 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CalendarCheck, UserCheck, LineChart } from "lucide-react";
 import Footer from "../components/Footer";
-import { FaSmile, FaUsers, FaChalkboardTeacher, FaBook, FaCalendarAlt, FaVideo } from 'react-icons/fa';
+import {
+  FaSmile,
+  FaUsers,
+  FaChalkboardTeacher,
+  FaBook,
+  FaCalendarAlt,
+  FaVideo,
+} from "react-icons/fa";
 import PhoneDialer from "./PhoneDailer";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import FacultyVideo from "./FacultyVideo";
@@ -16,6 +23,7 @@ import FAQSection from "./FAQSection";
 import SubjectCard from "./SubjectCard";
 import BenefitsSection from "./BenefitsSection";
 import Benefits from "./BenefitsSection";
+import StatsSection from "./StatsSection";
 const faculties = [
   {
     id: 1,
@@ -99,7 +107,7 @@ const faqs = [
       "We provide monthly progress reports and conduct regular mock tests to ensure you're on the right track.",
   },
 ];
-console.log("faqs",faqs)
+console.log("faqs", faqs);
 const facultyList = [
   {
     name: "Karunakar Reddy Bollam",
@@ -139,9 +147,9 @@ const facultyList = [
   },
 ];
 const getYearsOfExcellence = () => {
-  const baseDate = new Date('2019-06-15'); // set your real start date
+  const baseDate = new Date("2019-06-15"); // set your real start date
   const today = new Date();
-  
+
   let years = today.getFullYear() - baseDate.getFullYear();
 
   // Check if current date is before June 15 of the current year
@@ -186,8 +194,8 @@ const Home = () => {
 
     return () => observer.disconnect();
   }, []);
-  
- // useRef to store all the DOM node references for steps
+
+  // useRef to store all the DOM node references for steps
   const stepRefs = useRef([]);
   stepRefs.current = []; // Clear refs on each render to ensure we only have current DOM nodes
 
@@ -239,155 +247,117 @@ const Home = () => {
   // Helper to determine the animation type based on index
   const getStepAnimationType = (index) => {
     // We'll use different animations for each step for variety
-    if (index === 0) return 'fade-in-up';     // First step fades up
-    if (index === 1) return 'zoom-in';       // Second step zooms in
-    if (index === 2) return 'slide-in-right'; // Third step slides from right
-    return 'fade-in-up'; // Default, though we only have 3 steps here
+    if (index === 0) return "fade-in-up"; // First step fades up
+    if (index === 1) return "zoom-in"; // Second step zooms in
+    if (index === 2) return "slide-in-right"; // Third step slides from right
+    return "fade-in-up"; // Default, though we only have 3 steps here
   };
-
 
   return (
     <div className="home">
       <PhoneDialer />
       {/* Hero Section */}
       <FlashBanner />
-<section className="subjects">
-  <h2>Explore Our Academic Subjects</h2>
+      <section className="subjects">
+        <h2>Explore Our Academic Subjects</h2>
 
-  <div className="subject-list">
-    <SubjectCard
-      title="Physics"
-      description="Unravel the laws that govern the universe"
-      imageSrc="https://www.svgrepo.com/show/3679/physics.svg"
-      altText="Physics Icon"
-      redirectPath="/subjects/physics"
-      delayClass="delay-1"
-    />
+        <div className="subject-list">
+          <SubjectCard
+            title="Physics"
+            description="Unravel the laws that govern the universe"
+            imageSrc="https://www.svgrepo.com/show/3679/physics.svg"
+            altText="Physics Icon"
+            redirectPath="/subjects/physics"
+            delayClass="delay-1"
+          />
 
-    <SubjectCard
-      title="Chemistry"
-      description="Dive deep into the science of substances"
-      imageSrc="https://www.svgrepo.com/show/62122/chemistry.svg"
-      altText="Chemistry Icon"
-      redirectPath="/subjects/chemistry"
-      delayClass="delay-2"
-    />
+          <SubjectCard
+            title="Chemistry"
+            description="Dive deep into the science of substances"
+            imageSrc="https://www.svgrepo.com/show/62122/chemistry.svg"
+            altText="Chemistry Icon"
+            redirectPath="/subjects/chemistry"
+            delayClass="delay-2"
+          />
 
-    <SubjectCard
-      title="Mathematics"
-      description="Develop logical reasoning & analytical skills"
-      imageSrc="/maths-icon.png"
-      altText="Math Icon"
-      redirectPath="/subjects/maths"
-      delayClass="delay-3"
-    />
+          <SubjectCard
+            title="Mathematics"
+            description="Develop logical reasoning & analytical skills"
+            imageSrc="/maths-icon.png"
+            altText="Math Icon"
+            redirectPath="/subjects/maths"
+            delayClass="delay-3"
+          />
 
-    <SubjectCard
-      title="Biology"
-      description="Understand life, organisms, and ecosystems"
-      imageSrc="/biology-icon.png"
-      altText="Biology Icon"
-      redirectPath="/subjects/biology"
-      delayClass="delay-4"
-    />
-  </div>
-</section>
-
-
-
-
-
-
+          <SubjectCard
+            title="Biology"
+            description="Understand life, organisms, and ecosystems"
+            imageSrc="/biology-icon.png"
+            altText="Biology Icon"
+            redirectPath="/subjects/biology"
+            delayClass="delay-4"
+          />
+        </div>
+      </section>
 
       <FacultyShowcase />
 
       <section className="how-it-works">
-      <h2>How It Works</h2>
-      <div className="steps">
-        {/* Map over the steps to dynamically add refs and classes */}
-        {[1, 2, 3].map((stepNum, index) => { // Using a simple array for mapping as the content is hardcoded
-          const stepId = `how-it-works-step-${index}`;
-          const animationType = getStepAnimationType(index);
-          const isStepVisible = visibleSteps[stepId];
+        <h2>How It Works</h2>
+        <div className="steps">
+          {/* Map over the steps to dynamically add refs and classes */}
+          {[1, 2, 3].map((stepNum, index) => {
+            // Using a simple array for mapping as the content is hardcoded
+            const stepId = `how-it-works-step-${index}`;
+            const animationType = getStepAnimationType(index);
+            const isStepVisible = visibleSteps[stepId];
 
-          return (
-            <div
-              key={stepId}
-              id={stepId}
-              className={`step ${isStepVisible ? animationType : ''}`}
-              ref={addStepRef}
-              style={{
-                // Stagger the animation of steps as they become visible
-                animationDelay: isStepVisible ? `${index * 0.2}s` : '0s',
-              }}
-            >
-              <div className="step-header">
-                {/* Icons can be passed as props or determined by index */}
-                <span className="icon">
-                  {index === 0 && '📅'}
-                  {index === 1 && '👩‍🏫'}
-                  {index === 2 && '📈'}
-                </span>
-                <h3>
-                  {index === 0 && 'Book a Free Demo'}
-                  {index === 1 && 'Meet Your Tutor'}
-                  {index === 2 && 'Learn & Track Progress'}
-                </h3>
+            return (
+              <div
+                key={stepId}
+                id={stepId}
+                className={`step ${isStepVisible ? animationType : ""}`}
+                ref={addStepRef}
+                style={{
+                  // Stagger the animation of steps as they become visible
+                  animationDelay: isStepVisible ? `${index * 0.2}s` : "0s",
+                }}
+              >
+                <div className="step-header">
+                  {/* Icons can be passed as props or determined by index */}
+                  <span className="icon">
+                    {index === 0 && "📅"}
+                    {index === 1 && "👩‍🏫"}
+                    {index === 2 && "📈"}
+                  </span>
+                  <h3>
+                    {index === 0 && "Book a Free Demo"}
+                    {index === 1 && "Meet Your Tutor"}
+                    {index === 2 && "Learn & Track Progress"}
+                  </h3>
+                </div>
+                <p>
+                  {index === 0 &&
+                    "Schedule a trial class to see how one-on-one learning fits your child."}
+                  {index === 1 &&
+                    "We assign a subject expert based on your needs and learning goals."}
+                  {index === 2 &&
+                    "Attend sessions via Zoom. Parents get progress updates weekly."}
+                </p>
               </div>
-              <p>
-                {index === 0 && 'Schedule a trial class to see how one-on-one learning fits your child.'}
-                {index === 1 && 'We assign a subject expert based on your needs and learning goals.'}
-                {index === 2 && 'Attend sessions via Zoom. Parents get progress updates weekly.'}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </section>
+            );
+          })}
+        </div>
+      </section>
 
-    <Benefits/>
+      <Benefits />
 
-   <FacultyVideo faculties={faculties}/>
+      <FacultyVideo faculties={faculties} />
 
-   <section className="stats" ref={statsRef}>
-      <h2>Trusted by Hundreds of Families</h2>
-      <div className="stat-grid">
-        <div className="stat">
-          <div className="stat-icon">😄</div> {/* Happy Students */}
-          <h3>
-            <CountUpNumber end={500} start={startCount} />
-          </h3>
-          <p>Happy Students</p>
-        </div>
-        <div className="stat">
-          <div className="stat-icon">🤝</div> {/* Parent Satisfaction - Handshake for trust/agreement */}
-          <h3>
-            <CountUpNumber end={500} start={startCount} />
-          </h3>
-          <p>Parent Satisfaction</p>
-        </div>
-        <div className="stat">
-          <div className="stat-icon">🧑‍🏫</div> {/* Expert Tutors - Teacher emoji */}
-          <h3>
-            <CountUpNumber end={30} start={startCount} />
-          </h3>
-          <p>Expert Tutors</p>
-        </div>
-        <div className="stat">
-          <div className="stat-icon">📚</div> {/* Subjects Offered - Books emoji */}
-          <h3><CountUpNumber end={6} start={startCount} /></h3>
-          <p>Subjects Offered</p>
-        </div>
-        <div className="stat">
-          <div className="stat-icon">🏅</div> {/* Years of Excellence - Medal emoji */}
-          <h3><CountUpNumber end={yearsOfExcellence} start={startCount} /></h3>
-          <p>Years of Excellence</p>
-        </div>
-      </div>
-    </section>
+    <StatsSection />
 
-  <Testimonials/>
-<FAQSection/>
+      <Testimonials />
+      <FAQSection />
 
       {/* Call to Action */}
       <section className="cta">
@@ -404,26 +374,3 @@ const Home = () => {
 export default Home;
 // CountUpNumber.jsx
 
-function CountUpNumber({ end, start }) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!start) return;
-
-    let startTimestamp = null;
-    const duration = 1500; // animation duration in ms
-
-    const step = (timestamp) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      setCount(Math.floor(progress * end));
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      }
-    };
-
-    requestAnimationFrame(step);
-  }, [start, end]);
-
-  return <>{count}</>;
-}

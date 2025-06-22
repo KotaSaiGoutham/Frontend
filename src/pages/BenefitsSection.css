@@ -21,14 +21,6 @@
   --color-border-light: rgba(220, 217, 218, 0.5); /* Light Gray with transparency for borders */
 }
 
-/* Optional: Import a modern font for a cleaner look */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
-
-body {
-  font-family: 'Poppins', sans-serif; /* Apply a clean, modern font */
-}
-
-/* ... (previous styles for :root, body, flash-banner, etc. remain the same) ... */
 
 .benefits {
   padding: 6rem 1.5rem;

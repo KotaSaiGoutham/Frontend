@@ -53,14 +53,14 @@ const Navbar = () => {
        <NavLink to="/book-demo" className="book-btn demo-btn" onClick={handleLinkClick} activeClassName="active-btn">
   Book Demo
 </NavLink>
-<div className="auth-buttons">
+{/* <div className="auth-buttons">
   <NavLink to="/signup" className="auth-btn" onClick={handleLinkClick} activeClassName="active-btn">
     Sign Up
   </NavLink>
   <NavLink to="/login" className="auth-btn" onClick={handleLinkClick} activeClassName="active-btn">
     Login
   </NavLink>
-</div>
+</div> */}
 
 
       </nav>

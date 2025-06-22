@@ -1,54 +1,80 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaCalendarPlus,
   FaUserTie,
   FaClock,
   FaBook,
-  FaTasks,
   FaArrowLeft,
   FaSave,
   FaExclamationCircle,
+  FaCalendarAlt,
+  FaUserGraduate,
+  FaLightbulb,
 } from "react-icons/fa";
-import { format, parse } from "date-fns";
-import "./AddTimetablePage.css"; // Make sure this path is correct!
+import {
+  format,
+  isValid,
+  parseISO,
+  startOfDay,
+  addHours,
+  isToday,
+  setHours,
+  setMinutes,
+} from "date-fns";
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+
+import "./AddTimetablePage.css";
+import {
+  MuiInput,
+  MuiSelect,
+  MuiDatePicker,
+  MuiTimePicker,
+} from "../components/MuiCustomFormFields";
+import { validRoles, topicOptions } from "../mockdata/Options";
 
 const AddTimetablePage = () => {
   const navigate = useNavigate();
+
+  // --- ALL REACT HOOKS MUST BE DECLARED AT THE TOP LEVEL ---
   const [employees, setEmployees] = useState([]);
-    const [students, setStudents] = useState([]);
-  
+  const [students, setStudents] = useState([]);
+
   const [formData, setFormData] = useState({
-    date: format(new Date(), "yyyy-MM-dd"),
+    date: format(new Date(), "yyyy-MM-dd"), // Initialize with today's date
     facultyId: "",
-    fromHour: "09",
-    fromMinute: "00",
-    fromAmPm: "AM",
-    toHour: "10",
-    toMinute: "00",
-    toAmPm: "AM",
+    fromTime: null,
+    toTime: null,
     subject: "",
     topic: "",
     student: "",
   });
+
   const [submitMessage, setSubmitMessage] = useState({ type: "", message: "" });
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const subjects = [
-    "Physics",
-    "Chemistry",
-    "Maths",
-    "Biology",
-    "Zoology",
-    "English",
-    "History",
-    "Computer Science",
-  ];
+  // UseMemo for filtered topics
+  const filteredTopicOptions = useMemo(() => {
+    const filtered = topicOptions.filter((topicObj) => topicObj.subject === formData.subject);
+    return filtered.map((topicObj) => ({
+      value: topicObj.topic,
+      label: topicObj.topic,
+    }));
+  }, [formData.subject]);
 
+  // useEffect for resetting topic
   useEffect(() => {
-    const fetchEmployees = async () => {
+    if (formData.topic && !filteredTopicOptions.some(opt => opt.value === formData.topic)) {
+      setFormData(prev => ({ ...prev, topic: '' }));
+    }
+  }, [formData.subject, formData.topic, filteredTopicOptions]);
+
+  // useEffect for fetching dependencies
+  useEffect(() => {
+    const fetchDependencies = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
         navigate("/login");
@@ -56,163 +82,147 @@ const AddTimetablePage = () => {
       }
 
       try {
-        // *** CRITICAL CORRECTION: Use the correct backend endpoint /api/employees ***
-        const response = await fetch(
+        const employeesResponse = await fetch(
           "http://localhost:5000/api/data/empolyees",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        if (!response.ok) {
+        if (!employeesResponse.ok) {
           throw new Error("Failed to fetch employees.");
         }
-        const data = await response.json();
-        setEmployees(data);
-        // Set a default faculty if available and not already set
-        if (data.length > 0 && !formData.facultyId) {
-          setFormData((prev) => ({ ...prev, facultyId: data[0].id }));
+        const employeesData = await employeesResponse.json();
+        setEmployees(employeesData);
+        if (employeesData.length > 0 && !formData.facultyId) {
+          setFormData((prev) => ({ ...prev, facultyId: employeesData[0].id }));
         }
+
         const studentsResponse = await fetch(
           "http://localhost:5000/api/data/students",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         const studentsData = await studentsResponse.json();
-        if (!studentsResponse.ok)
+        if (!studentsResponse.ok) {
           throw new Error(studentsData.message || "Failed to fetch students.");
+        }
         setStudents(studentsData);
       } catch (err) {
-        console.error("Error fetching employees:", err);
+        console.error("Error fetching dependencies:", err);
         setSubmitMessage({
           type: "error",
-          message: "Failed to load faculty list.",
+          message: "Failed to load faculty or student list.",
         });
       } finally {
         setIsLoading(false);
       }
     };
-    fetchEmployees();
-  }, [navigate, formData.facultyId]); // Added formData.facultyId to dependency array for default selection logic
+    fetchDependencies();
+  }, [navigate, formData.facultyId]);
+
+  // >>>>>> MOVED THIS USEMEMO HOOK HERE <<<<<<
+  // Calculate minTime for 'Time From' picker
+  const minTimeForFromPicker = useMemo(() => {
+    const selectedDate = parseISO(formData.date);
+    const now = new Date(); // Current date and time (e.g., June 21, 2025, 5:56:35 PM IST)
+
+    if (isToday(selectedDate)) {
+      // If the selected date is today, set minTime to the current time (rounded up)
+      let minimumTime = now; // Start with current time
+
+      // Round up to the next half-hour or hour
+      const currentMinute = now.getMinutes();
+      if (currentMinute > 30) {
+          // If past half hour, set to next full hour (e.g., 5:56 PM -> 6:00 PM)
+          minimumTime = addHours(setMinutes(now, 0), 1);
+      } else if (currentMinute > 0) {
+          // If before or at half hour, set to current hour and 30 minutes (e.g., 5:10 PM -> 5:30 PM)
+          minimumTime = setMinutes(now, 30);
+      }
+      // If currentMinute is 0, minimumTime remains the current hour, 0 minutes.
+
+      return minimumTime;
+    }
+    // If it's not today (future date), allow all times (minTime as start of day)
+    return startOfDay(selectedDate);
+  }, [formData.date]);
+
+
+  const handleTimeChange = (name, newDateObject) => {
+    setFormData((prevData) => {
+      let updatedData = {
+        ...prevData,
+        [name]: newDateObject,
+      };
+
+      if (name === 'fromTime' && newDateObject && isValid(newDateObject)) {
+        // Only auto-set toTime if it's currently null or less than fromTime
+        // This prevents overwriting a manually selected toTime if fromTime is adjusted backwards
+        if (!prevData.toTime || newDateObject.getTime() >= prevData.toTime.getTime()) {
+            const oneHourLater = addHours(newDateObject, 1);
+            updatedData.toTime = oneHourLater;
+        }
+      }
+      return updatedData;
+    });
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    // Specific handling for time inputs to restrict to 2 digits and validate as numbers
-    if (["fromHour", "fromMinute", "toHour", "toMinute"].includes(name)) {
-      // Allow only digits and limit to 2 characters
-      const cleanedValue = value.replace(/\D/g, "").slice(0, 2);
-
-      // Basic validation for hours (1-12) and minutes (0-59)
-      if (name.includes("Hour")) {
-        const numValue = parseInt(cleanedValue, 10);
-        if (
-          cleanedValue !== "" &&
-          (isNaN(numValue) || numValue < 1 || numValue > 12)
-        ) {
-          // Optionally, set an error or prevent update, but for now, just apply slice(0,2)
-          // We'll rely on the main validateForm for strict numerical checks
-        }
-      } else if (name.includes("Minute")) {
-        const numValue = parseInt(cleanedValue, 10);
-        if (
-          cleanedValue !== "" &&
-          (isNaN(numValue) || numValue < 0 || numValue > 59)
-        ) {
-          // Same as above, rely on main validateForm for strict checks
-        }
-      }
-
-      setFormData((prevData) => ({ ...prevData, [name]: cleanedValue }));
-    } else {
-      // For other inputs, update directly
-      setFormData((prevData) => ({ ...prevData, [name]: value }));
-    }
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
   const validateForm = () => {
     const {
       date,
       facultyId,
-      fromHour,
-      fromMinute,
-      fromAmPm,
-      toHour,
-      toMinute,
-      toAmPm,
+      fromTime,
+      toTime,
       subject,
       topic,
-      student
+      student,
     } = formData;
+
     if (
       !date ||
       !facultyId ||
-      !fromHour ||
-      !fromMinute ||
-      !fromAmPm ||
-      !toHour ||
-      !toMinute ||
-      !toAmPm ||
       !subject ||
-      !topic||
-            !student
-
+      !topic ||
+      !student
     ) {
       setFormError("All fields are required.");
       return false;
     }
 
-    // Additional numerical validation for time fields after input cleaning
-    const numFromHour = parseInt(fromHour, 10);
-    const numFromMinute = parseInt(fromMinute, 10);
-    const numToHour = parseInt(toHour, 10);
-    const numToMinute = parseInt(toMinute, 10);
-
-    if (isNaN(numFromHour) || numFromHour < 1 || numFromHour > 12) {
-      setFormError("Start hour must be between 1 and 12.");
-      return false;
-    }
-    if (isNaN(numFromMinute) || numFromMinute < 0 || numFromMinute > 59) {
-      setFormError("Start minute must be between 0 and 59.");
-      return false;
-    }
-    if (isNaN(numToHour) || numToHour < 1 || numToHour > 12) {
-      setFormError("End hour must be between 1 and 12.");
-      return false;
-    }
-    if (isNaN(numToMinute) || numToMinute < 0 || numToMinute > 59) {
-      setFormError("End minute must be between 0 and 59.");
-      return false;
-    }
-
-    try {
-      const parseTime = (hour, minute, ampm) => {
-        let h = parseInt(hour, 10);
-        const m = parseInt(minute, 10);
-        if (ampm === "PM" && h !== 12) h += 12;
-        if (ampm === "AM" && h === 12) h = 0;
-        return h * 60 + m;
-      };
-
-      const fromMinutes = parseTime(numFromHour, numFromMinute, fromAmPm); // Use parsed numbers
-      const toMinutes = parseTime(numToHour, numToMinute, toAmPm); // Use parsed numbers
-
-      if (fromMinutes >= toMinutes) {
-        setFormError("End time must be after start time.");
+    if (!fromTime || !toTime) {
+        setFormError("Both start and end times are required.");
         return false;
-      }
-    } catch (e) {
-      setFormError(
-        "Invalid time format. Please enter valid numbers for hours and minutes."
-      );
+    }
+
+    if (fromTime.getTime() >= toTime.getTime()) {
+      setFormError("End time must be after start time.");
       return false;
     }
+
+    // New validation: Check if 'fromTime' is after current time if the date is today
+    if (isToday(parseISO(date))) {
+        const now = new Date();
+        // Create a comparable date object for fromTime on today's date
+        // Ensure comparison is only based on time, not date
+        const selectedFromTimeComparable = setMinutes(setHours(new Date(), fromTime.getHours()), fromTime.getMinutes());
+        const currentTimeComparable = setMinutes(setHours(new Date(), now.getHours()), now.getMinutes());
+
+
+        if (selectedFromTimeComparable.getTime() <= currentTimeComparable.getTime()) {
+            setFormError("For today's date, 'Time From' must be in the future.");
+            return false;
+        }
+    }
+
 
     setFormError("");
     return true;
   };
 
   const handleSubmit = async (e) => {
+    console.log("formData",formData)
     e.preventDefault();
     if (!validateForm()) {
       return;
@@ -234,38 +244,39 @@ const AddTimetablePage = () => {
       ? selectedFaculty.name
       : "Unknown Faculty";
 
-    // Ensure hour and minute are two digits
-    const startTime = `${formData.fromHour.padStart(
-      2,
-      "0"
-    )}:${formData.fromMinute.padStart(
-      2,
-      "0"
-    )}${formData.fromAmPm.toLowerCase()}`;
-    const endTime = `${formData.toHour.padStart(
-      2,
-      "0"
-    )}:${formData.toMinute.padStart(2, "0")}${formData.toAmPm.toLowerCase()}`;
-    const timeRange = `${startTime} to ${endTime}`;
-    // --- START OF MODIFICATION ---
-    // 1. Parse the date from 'yyyy-MM-dd' string (from input type="date") into a Date object
-    const dateObject = parse(formData.date, "yyyy-MM-dd", new Date());
+    const selectedStudent = students.find(
+      (stu) => stu.id === formData.student
+    );
+    const studentName = selectedStudent
+      ? selectedStudent.Name
+      : "Unknown Student";
 
-    // 2. Format the Date object into 'dd/MM/yyyy' string
+    const formattedStartTime = formData.fromTime ? format(formData.fromTime, "hh:mm a") : '';
+    const formattedEndTime = formData.toTime ? format(formData.toTime, "hh:mm a") : '';
+    const timeRange = `${formattedStartTime} to ${formattedEndTime}`;
+
+    const dateObject = new Date(formData.date);
     const formattedDate = format(dateObject, "dd/MM/yyyy");
-    // --- END OF MODIFICATION ---
-    console.log("formData",formData)
+
+    console.log("Payload being sent:", {
+        Day: formattedDate,
+        Faculty: facultyName,
+        Subject: formData.subject,
+        Time: timeRange,
+        Topic: formData.topic,
+        Student: studentName,
+    });
+
     const payload = {
-      Day: formattedDate, // YYYY-MM-DD
+      Day: formattedDate,
       Faculty: facultyName,
       Subject: formData.subject,
       Time: timeRange,
       Topic: formData.topic,
-      Student:formData.student
+      Student: studentName,
     };
 
     try {
-      // *** Backend endpoint for adding timetable is /api/timetable (POST) ***
       const response = await fetch(
         "http://localhost:5000/api/data/addTimetable",
         {
@@ -288,19 +299,15 @@ const AddTimetablePage = () => {
         message: "Timetable entry added successfully!",
       });
       setFormData({
-        // Reset form after successful submission
         date: format(new Date(), "yyyy-MM-dd"),
-        facultyId: "", // Reset to empty or set a new default
-        fromHour: "09",
-        fromMinute: "00",
-        fromAmPm: "AM",
-        toHour: "10",
-        toMinute: "00",
-        toAmPm: "AM",
+        facultyId: "",
+        fromTime: null,
+        toTime: null,
         subject: "",
         topic: "",
+        student: "",
       });
-      setTimeout(() => navigate("/timetable"), 1500); // Redirect after short delay
+      setTimeout(() => navigate("/timetable"), 1500);
     } catch (err) {
       console.error("Error adding timetable entry:", err);
       setSubmitMessage({
@@ -312,265 +319,167 @@ const AddTimetablePage = () => {
     }
   };
 
+  const facultyOptions = employees
+    .filter((emp) => emp.role && validRoles.includes(emp.role.trim()))
+    .map((emp) => ({
+      value: emp.id,
+      label: emp.name,
+    }));
+
+  const studentOptions = students.map((stu) => ({
+    value: stu.id,
+    label: stu.Name,
+  }));
+
+  const subjects = [
+    "Physics", "Chemistry", "Maths", "Biology", "Zoology", "English", "History", "Computer Science",
+  ];
+  const subjectOptions = subjects.map((sub) => ({ value: sub, label: sub }));
+
+
   if (isLoading) {
     return (
       <div className="ats-loading-message">
-        {" "}
-        {/* Updated class name */}
-        <div className="spinner"></div>{" "}
-        {/* Ensure .spinner is defined in a global CSS or TimetablePage.css */}
+        <div className="spinner"></div>
         Loading Form...
       </div>
     );
   }
-const today = format(new Date(), 'yyyy-MM-dd');
 
   return (
-    <div className="ats-page-container">
-      {" "}
-      {/* Updated class name */}
-      <div className="ats-header-card">
-        {" "}
-        {/* Updated class name */}
-        <button
-          onClick={() => navigate("/timetable")}
-          className="ats-back-button"
-        >
-          {" "}
-          {/* Updated class name */}
-          <FaArrowLeft /> Back to Timetable
-        </button>
-        <h1 className="ats-form-title">
-          {" "}
-          {/* Updated class name */}
-          <FaCalendarPlus className="ats-title-icon" />{" "}
-          {/* Updated class name */}
-          Create New Timetable Entry
-        </h1>
-        <p className="ats-form-subtitle">
-          Fill in the details for the new class.
-        </p>{" "}
-        {/* Updated class name */}
-      </div>
-      <div className="ats-form-card">
-        {" "}
-        {/* Updated class name */}
-        <form onSubmit={handleSubmit} className="ats-timetable-form">
-          {" "}
-          {/* Updated class name */}
-          {submitMessage.message && (
-            <div className={`ats-form-message ${submitMessage.type}`}>
-              {" "}
-              {/* Updated class name */}
-              {submitMessage.type === "error" && (
-                <FaExclamationCircle className="ats-message-icon" />
-              )}{" "}
-              {/* Updated class name */}
-              {submitMessage.message}
-            </div>
-          )}
-          {formError && (
-            <div className="ats-form-message error">
-              {" "}
-              {/* Updated class name */}
-              <FaExclamationCircle className="ats-message-icon" />{" "}
-              {/* Updated class name */}
-              {formError}
-            </div>
-          )}
-          <div className="ats-form-grid">
-            {" "}
-            {/* Updated class name */}
-            <div className="add-student-form-group">
-              {" "}
-              {/* Updated class name */}
-              <label htmlFor="date">Date:</label>
-              <input
-                type="date"
-                id="date"
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <div className="ats-page-container">
+        <div className="ats-header-card">
+          <button
+            onClick={() => navigate("/timetable")}
+            className="ats-back-button"
+          >
+            <FaArrowLeft /> Back to Timetable
+          </button>
+          <h1 className="ats-form-title">
+            <FaCalendarPlus className="ats-title-icon" /> Create New Timetable Entry
+          </h1>
+          <p className="ats-form-subtitle">
+            Fill in the details for the new class.
+          </p>
+        </div>
+        <div className="ats-form-card">
+          <form onSubmit={handleSubmit} className="ats-form">
+            <h3>Schedule New Class</h3>
+            {formError && (
+              <div className="ats-form-error">
+                <FaExclamationCircle /> {formError}
+              </div>
+            )}
+            {submitMessage.message && (
+              <div
+                className={`ats-submit-message ${submitMessage.type === "success" ? "ats-submit-success" : "ats-submit-error"}`}
+              >
+                {submitMessage.type === "error" && <FaExclamationCircle />}{" "}
+                {submitMessage.message}
+              </div>
+            )}
+            <div className="ats-form-grid">
+              {/* Date */}
+              <MuiDatePicker
+                label="Date"
+                icon={FaCalendarAlt}
                 name="date"
                 value={formData.date}
                 onChange={handleInputChange}
-                min={today}
+                minDate={startOfDay(new Date())} // Minimum date is today
                 required
               />
-            </div>
-            <div className="add-student-form-group">
-              {" "}
-              {/* Updated class name */}
-              <label htmlFor="Stream">Faculty:</label>
-              <select
-                id="facultyId"
+
+              {/* Faculty */}
+              <MuiSelect
+                label="Faculty"
+                icon={FaUserTie}
                 name="facultyId"
                 value={formData.facultyId}
                 onChange={handleInputChange}
+                options={facultyOptions}
                 required
-              >
-                <option value="">Select Faculty</option>
-                {employees.length > 0 ? (
-                  employees.map((employee) => (
-                    <option key={employee.id} value={employee.id}>
-                      {employee.name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>
-                    No Faculty Available
-                  </option>
-                )}
-              </select>
-            </div>
-                  <div className="add-student-form-group">
-              {" "}
-              {/* Updated class name */}
-              <label htmlFor="Stream">Student:</label>
-              <select
-                id="student"
+              />
+
+              {/* Student */}
+              <MuiSelect
+                label="Student"
+                icon={FaUserGraduate}
                 name="student"
                 value={formData.student}
                 onChange={handleInputChange}
+                options={studentOptions}
                 required
-              >
-                <option value="">Select Student</option>
-                {students.length > 0 ? (
-                  students.map((student) => (
-                    <option key={student.id} value={student.id}>
-                      {student.Name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>
-                    No Faculty Available
-                  </option>
-                )}
-              </select>
-            </div>
-            <div className="add-student-form-group">
-              {" "}
-              {/* Updated class name */}
-              <label>Time From:</label>
-              <div className="ats-time-input-group">
-                {" "}
-                {/* Updated class name */}
-                <input
-                  type="number"
-                  name="fromHour"
-                  value={formData.fromHour}
-                  onChange={handleInputChange}
-                  min="1"
-                  max="12"
-                  required
-                />
-                <span>:</span>
-                <input
-                  type="number"
-                  name="fromMinute"
-                  value={formData.fromMinute}
-                  onChange={handleInputChange}
-                  min="0"
-                  max="59"
-                  step="15"
-                  required
-                />
-                <select
-                  name="fromAmPm"
-                  value={formData.fromAmPm}
-                  onChange={handleInputChange}
-                >
-                  <option value="AM">AM</option>
-                  <option value="PM">PM</option>
-                </select>
-              </div>
-            </div>
-            <div className="add-student-form-group">
-              {" "}
-              {/* Updated class name */}
-              <label>Time To:</label>
-              <div className="ats-time-input-group">
-                {" "}
-                {/* Updated class name */}
-                <input
-                  type="number"
-                  name="toHour"
-                  value={formData.toHour}
-                  onChange={handleInputChange}
-                  min="1"
-                  max="12"
-                  required
-                />
-                <span>:</span>
-                <input
-                  type="number"
-                  name="toMinute"
-                  value={formData.toMinute}
-                  onChange={handleInputChange}
-                  min="0"
-                  max="59"
-                  step="15"
-                  required
-                />
-                <select
-                  name="toAmPm"
-                  value={formData.toAmPm}
-                  onChange={handleInputChange}
-                >
-                  <option value="AM">AM</option>
-                  <option value="PM">PM</option>
-                </select>
-              </div>
-            </div>
-            <div className="add-student-form-group">
-              {" "}
-              {/* Updated class name */}
-              <label htmlFor="Stream">Subject:</label>
-              <select
-                id="subject"
+              />
+
+              {/* Subject (before Topic) */}
+              <MuiSelect
+                label="Subject"
                 name="subject"
                 value={formData.subject}
                 onChange={handleInputChange}
+                options={subjectOptions} // Using the derived subjectOptions
                 required
-              >
-                <option value="">Select Subject</option>
-                {subjects.map((sub) => (
-                  <option key={sub} value={sub}>
-                    {sub}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="add-student-form-group">
-              {" "}
-              {/* Updated class name */}
-              <label htmlFor="topic">Topic:</label>
-              <input
-                type="text"
-                id="topic"
+              />
+
+              {/* Topic (depends on Subject) */}
+              <MuiSelect
+                label="Topic"
+                icon={FaLightbulb}
                 name="topic"
                 value={formData.topic}
                 onChange={handleInputChange}
-                placeholder="Enter class topic"
+                options={filteredTopicOptions}
+                required
+                disabled={!formData.subject || filteredTopicOptions.length === 0}
+              />
+
+              {/* Time From */}
+              <MuiTimePicker
+                label="Time From"
+                icon={FaClock}
+                name="fromTime"
+                value={formData.fromTime}
+                onChange={handleTimeChange}
+                minTime={minTimeForFromPicker} // Pass the dynamically calculated minTime
+                required
+              />
+
+              {/* Time To */}
+              <MuiTimePicker
+                label="Time To"
+                icon={FaClock}
+                name="toTime"
+                value={formData.toTime}
+                onChange={handleTimeChange}
+                // minTime for 'toTime' should be at least 'fromTime'
+                minTime={formData.fromTime || startOfDay(new Date())}
                 required
               />
             </div>
-          </div>
-          <button
-            type="submit"
-            className="ats-submit-button"
-            disabled={isSubmitting}
-          >
-            {" "}
-            {/* Updated class name */}
-            {isSubmitting ? (
-              "Adding..."
-            ) : (
-              <>
-                <FaSave /> Add Timetable Entry
-              </>
-            )}
-          </button>
-        </form>
+
+            <div className="add-student-button-group">
+              <button
+                type="submit"
+                className="add-student-primary-button"
+                disabled={isSubmitting}
+              >
+                <FaSave /> {isSubmitting ? "Scheduling..." : "Schedule Class"}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/timetable")}
+                className="add-student-secondary-button"
+                disabled={isSubmitting}
+              >
+                <FaArrowLeft /> Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </LocalizationProvider>
   );
 };
 

@@ -51,7 +51,7 @@
   min-height: 30vh;
   background: linear-gradient(135deg, var(--dark-indigo) 0%, var(--slate-gray) 100%);
   padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
   box-sizing: border-box;
 }
 

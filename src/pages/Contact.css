@@ -27,7 +27,7 @@
 .contact-us-page {
     padding: 100px 30px;
     background-color: var(--background-page);
-    font-family: 'Inter', sans-serif;
+    
     color: var(--text-color-dark);
     text-align: center; /* This centers the overall page content, including sections */
     overflow-x: hidden;

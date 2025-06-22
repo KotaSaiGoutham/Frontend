@@ -25,16 +25,6 @@
     --current-greeting-bg-image: none; /* Set dynamically by JS */
 }
 
-body {
-    font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: var(--bg-light);
-    color: var(--text-color-dark);
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
 
 .dashboard-container {
     padding: 20px;

@@ -11,15 +11,6 @@
   --shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
-body {
-  margin: 0;
-  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background-color: var(--background);
-  color: var(--text-dark);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
 
 .subject-detail-page {
   max-width: 1000px; /* Slightly wider */

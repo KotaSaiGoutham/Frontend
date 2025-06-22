@@ -1,0 +1,101 @@
+/* Ensure these styles are in an active CSS file, e.g., StudentPortfolio.css */
+
+/* The semi-transparent background that covers the whole screen */
+.add-marks-modal-overlay {
+    position: fixed; /* This is CRUCIAL for it to overlay the entire viewport */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6); /* Dark semi-transparent background */
+    z-index: 10000; /* A very high z-index to ensure it's on top of everything */
+    display: flex; /* Use flexbox to easily center the modal content */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    /* Optional: for smooth fade-in/out transitions */
+    opacity: 1; /* Should be 0 initially if using animations to fade in */
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* The actual white box containing the form */
+.add-marks-modal-content {
+    background-color: var(--color-background-card); /* Use your theme's card background color */
+    padding: var(--spacing-xl); /* Generous padding */
+    border-radius: var(--border-radius-lg); /* Rounded corners */
+    box-shadow: var(--shadow-lg); /* A clear shadow to make it pop */
+    z-index: 10001; /* Slightly higher than overlay, but still part of the modal layer */
+    position: relative; /* Important for absolute positioning of the close button inside */
+    width: 90%; /* Responsive width */
+    max-width: 600px; /* Max width to prevent it from getting too wide on large screens */
+    max-height: 90vh; /* Max height to prevent it from going off-screen on small screens */
+    overflow-y: auto; /* Enable scrolling if content exceeds max-height */
+    /* Optional: for smooth scale-in/fade-in transitions */
+    transform: scale(1); /* Should be 0.8 initially if using animations to scale in */
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Styles for the close button inside the modal */
+.add-marks-modal-content .MuiButton-root.MuiButton-text {
+    position: absolute; /* Position relative to .add-marks-modal-content */
+    top: 10px;
+    right: 10px;
+    color: var(--color-text-light); /* Example color */
+}
+
+/* Add some spacing for form groups within the modal */
+.add-marks-modal-content .form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+/* Style for error/success messages */
+.add-marks-modal-content .error-message {
+    color: var(--color-error);
+    margin-top: var(--spacing-md);
+    font-size: 0.9em;
+}
+
+.add-marks-modal-content .success-message {
+    color: var(--color-success);
+    margin-top: var(--spacing-md);
+    font-size: 0.9em;
+}
+
+/* Adjust for larger screens to have multiple columns if desired */
+@media (min-width: 600px) {
+    .add-student-form-grid-weekly {
+        grid-template-columns: repeat(2, 1fr); /* Two columns for larger screens */
+    }
+}
+/* Responsive grid for desktop and larger screens */
+@media (min-width: 1024px) {
+    .add-student-form-grid-weekly {
+        grid-template-columns: repeat(1, 1fr); /* Three columns */
+    }
+}
+@media (min-width: 640px) {
+    .add-student-form-grid-weekly {
+        grid-template-columns: repeat(2, 1fr); /* Two columns */
+    }
+}
+
+/* Specific styling for custom mark fields in 'Others' */
+.custom-mark-field-group {
+    grid-column: span 1; /* Each custom field group takes one column */
+    border: 1px dashed var(--color-border-light);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Style for the "Remove" button within custom field group */
+.custom-mark-field-group .MuiButton-root.MuiButton-outlined {
+    align-self: flex-end; /* Align remove button to the right */
+    margin-top: 5px;
+}
+
+/* Adjust MuiInput field appearance if needed */
+.MuiFormControl-root {
+    width: 100%; /* Ensure inputs take full width of their grid column */
+}

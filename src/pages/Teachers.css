@@ -32,7 +32,7 @@
 .teachers-page {
     padding: 40px 20px; /* More vertical padding for generous spacing */
     background: var(--background-page);
-    font-family: 'Inter', sans-serif; /* Modern, professional font */
+     /* Modern, professional font */
     color: var(--text-color-body);
     text-align: center;
     overflow-x: hidden; /* Prevent horizontal scroll for animations */

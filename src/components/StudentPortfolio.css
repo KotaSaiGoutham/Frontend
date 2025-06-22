@@ -1,124 +1,361 @@
-/* --- Re-use CSS Variables --- */
+/* src/components/StudentPortfolio.css */
+
+/* --- Custom CSS Variables (Refined Professional Palette) --- */
 :root {
-    --dark-indigo: #292551;
-    --hot-pink: #DB1A66;
-    --bright-yellow: #FCCD11;
-    --slate-gray: #454E5B;
-    --white: #ffffff;
-    --light-gray-bg: #FDFDFD;
-    --border-color: #DCD9DA;
-    --success-green: #28a745;
-    --error-red: #dc3545;
-    --shadow-color-light: rgba(41, 37, 81, 0.08); /* Lighter shadow for cards */
-    --shadow-color-hover: rgba(41, 37, 81, 0.25); /* Stronger shadow on hover */
+    /* Backgrounds & Surfaces */
+    --color-background-primary: #F8F9FA; /* Very light gray */
+    --color-background-card: #FFFFFF; /* Pure white for cards */
+    --color-background-hover: #F0F2F5; /* Light gray for subtle hover effects */
+
+    /* Text Colors */
+    --color-text-heading: #212529; /* Dark charcoal for main titles */
+    --color-text-body: #495057;   /* Medium gray for paragraphs/labels */
+    --color-text-light: #6C757D;  /* Lighter gray for secondary text, axes */
+
+    /* Accent & Brand Colors */
+    --color-accent-primary: #007BFF; /* A clean, professional blue */
+    --color-accent-secondary: #28A745; /* Green for success/good performance */
+    --color-accent-tertiary: #FFC107; /* Orange for warnings/attention */
+    --color-accent-danger: #DC3545; /* Red for errors/alerts */
+    --color-accent-highlight: #FFF3CD; /* Light yellow for highlighting */
+    --color-accent-highlight-border: #FFD280; /* Slightly darker border for highlight */
+
+
+    /* Borders & Shadows */
+    --color-border-light: #DEE2E6; /* Very light border */
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08); /* Gentle shadow */
+    --shadow-medium: 0 8px 20px rgba(0, 0, 0, 0.12); /* Slightly deeper shadow on hover */
+
+    /* Spacing (consistent rhythm) */
+    --spacing-xs: 0.5rem;   /* 8px */
+    --spacing-sm: 0.75rem;  /* 12px */
+    --spacing-md: 1rem;     /* 16px */
+    --spacing-lg: 1.5rem;   /* 24px */
+    --spacing-xl: 2rem;     /* 32px */
+    --spacing-xxl: 3rem;    /* 48px */
 }
 
-/* --- Global Layout --- */
-.portfolio-container {
-    min-height: 100vh;
-    background-color: var(--light-gray-bg);
-    color: var(--slate-gray);
-    font-family: 'Poppins', sans-serif;
-    padding: 1.5rem; /* p-6 */
-    box-sizing: border-box;
+/* --- Global / Base Styles --- */
+body {
+    font-family: 'Roboto', sans-serif; /* Fallback to generic sans-serif */
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-background-primary);
+    color: var(--color-text-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* --- Common Card Styling (similar to dashboard) --- */
-.portfolio-card {
-    background-color: var(--white);
-    border-radius: 0.75rem; /* Slightly more rounded */
-    box-shadow: 0 4px 15px var(--shadow-color-light); /* Softer initial shadow */
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Animation for hover */
-    overflow: hidden; /* Ensures content stays within bounds */
+/* Base container for the entire portfolio page */
+.portfolio-page-container {
+    max-width: 1200px; /* Max width for content */
+    margin: var(--spacing-xxl) auto; /* Center content with generous top/bottom margin */
+    padding: 0 var(--spacing-lg); /* Horizontal padding for responsiveness */
+    box-sizing: border-box; /* Include padding in element's total width */
+    animation: fadeInPage 0.8s ease-out forwards; /* Initial fade-in for the whole page */
 }
 
-.portfolio-card:hover {
-    transform: translateY(-5px); /* Lift effect */
-    box-shadow: 0 8px 25px var(--shadow-color-hover); /* Deeper shadow */
-}
-
-/* --- Header and Back Button --- */
+/* --- Header Section --- */
 .portfolio-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem; /* More space below header */
-    padding: 2rem; /* Larger padding for header card */
-    background: linear-gradient(135deg, var(--dark-indigo) 0%, #4a457a 100%); /* Gradient background */
-    color: var(--white);
-    border-radius: 0.75rem;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-}
-.portfolio-header h1 {
-    font-size: 2.5rem; /* Larger font for main title */
-    font-weight: 700;
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-}
-.portfolio-header .header-icon {
-    font-size: 3rem; /* Larger icon in header */
-    color: var(--bright-yellow); /* Accent color for header icon */
-    animation: pulse 2s infinite; /* Subtle pulse animation */
+    background-color: var(--color-background-card);
+    padding: var(--spacing-xl);
+    border-radius: 12px;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: var(--spacing-xxl);
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: var(--spacing-md); /* Space between title and button if wrapped */
+    opacity: 0; /* Hidden initially for animation */
+    animation: slideInTop 0.8s ease-out forwards; /* Header animation */
+    animation-delay: 0.2s;
 }
 
-.portfolio-back-button {
-    padding: 0.75rem 1.25rem; /* More generous padding */
-    background-color: var(--hot-pink);
-    color: var(--white);
-    border: none; /* Remove default border */
-    border-radius: 0.5rem; /* Slightly more rounded */
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
+.portfolio-header .title-group {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    gap: var(--spacing-md);
 }
-.portfolio-back-button:hover {
-    background-color: var(--dark-indigo);
-    transform: translateY(-2px); /* Lift on hover */
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+
+.portfolio-header h1 {
+    font-size: 2.5rem; /* Large, prominent title */
+    font-weight: 700;
+    color: var(--color-text-heading);
+    margin: 0; /* Reset default margin */
 }
-.portfolio-back-button .icon {
+
+.portfolio-header .header-icon {
+    font-size: 2.8rem;
+    color: var(--color-accent-primary);
+}
+
+.portfolio-header .back-button {
+    background-color: var(--color-accent-primary);
+    color: var(--color-background-card);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    box-shadow: var(--shadow-soft);
+}
+
+.portfolio-header .back-button:hover {
+    background-color: #0056b3; /* Darker shade of accent */
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+/* --- Main Content Area & Card Styling --- */
+.portfolio-content-area {
+    display: grid;
+    grid-template-columns: 1fr; /* Single column by default */
+    gap: var(--spacing-xxl); /* Generous space between cards */
+}
+
+.portfolio-card {
+    background-color: var(--color-background-card);
+    padding: var(--spacing-xl);
+    border-radius: 12px;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    opacity: 0; /* Hidden initially for animation */
+    animation: fadeInCard 0.8s ease-out forwards; /* Card animation */
+}
+
+/* Staggered card animations */
+.portfolio-card.delay-1 { animation-delay: 0.4s; }
+.portfolio-card.delay-2 { animation-delay: 0.6s; }
+.portfolio-card.delay-3 { animation-delay: 0.8s; }
+
+
+.portfolio-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-medium);
+}
+
+.portfolio-card h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--color-text-heading);
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border-light);
+    padding-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.portfolio-card .card-icon {
+    font-size: 1.8rem;
+    color: var(--color-accent-primary); /* Accent color for card titles */
+}
+
+/* --- Personal Details Card Specifics --- */
+.personal-details-card .details-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Single column by default */
+    gap: var(--spacing-md); /* Vertical gap */
+    /* On larger screens, this will become multi-column via media queries */
+}
+
+.personal-details-card .detail-item {
+    display: flex;
+    flex-direction: column; /* Stack label and value */
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px dashed var(--color-border-light); /* Subtle separator */
+}
+
+.personal-details-card .detail-item:last-child {
+    border-bottom: none; /* No border for the last item */
+}
+
+/* Highlighting specific detail items */
+.personal-details-card .detail-item.highlighted {
+    background-color: var(--color-accent-highlight);
+    border: 1px solid var(--color-accent-highlight-border);
+    border-radius: 8px; /* Rounded corners for highlighted item */
+    padding: var(--spacing-md); /* More padding */
+    margin: var(--spacing-xs) 0; /* Adjust margins for visual separation */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: background-color 0.3s ease;
+}
+.personal-details-card .detail-item.highlighted .detail-label {
+    color: var(--color-text-heading); /* Make label darker in highlighted item */
+}
+.personal-details-card .detail-item.highlighted .detail-value {
+    color: var(--color-text-heading); /* Make value darker in highlighted item */
+    font-weight: 700;
+}
+/* Ensure the last highlighted item also doesn't have border-bottom from general rule */
+.personal-details-card .detail-item.highlighted:last-child {
+    border-bottom: none;
+}
+
+
+.personal-details-card .detail-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-xs); /* Space between label and value */
+}
+
+.personal-details-card .detail-icon {
+    font-size: 1.1rem;
+    color: var(--color-accent-primary);
+}
+
+.personal-details-card .detail-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text-body);
+    /* Removed margin-left: calc(...) for cleaner alignment with column structure */
+}
+
+/* Payment Status Badge */
+.payment-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 20px; /* Pill shape */
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+    animation: fadeIn 0.5s ease-out forwards; /* subtle fade in for badge */
+}
+
+.payment-status-badge.paid {
+    background-color: rgba(40, 167, 69, 0.15); /* Light green background */
+    color: var(--color-accent-secondary); /* Darker green text */
+}
+
+.payment-status-badge.unpaid {
+    background-color: rgba(220, 53, 69, 0.15); /* Light red background */
+    color: var(--color-accent-danger); /* Darker red text */
+}
+
+/* --- Chart Sections (Marks & Payments) --- */
+.chart-container {
+    padding: var(--spacing-md) 0; /* Padding around the chart itself */
+}
+
+/* Recharts Customizations (using !important for overrides) */
+.recharts-default-tooltip {
+    background-color: var(--color-background-card) !important;
+    border: 1px solid var(--color-border-light) !important;
+    border-radius: 8px !important;
+    padding: var(--spacing-md) !important;
+    box-shadow: var(--shadow-soft) !important;
+    line-height: 1.4 !important;
+}
+
+.recharts-tooltip-label {
+    font-weight: 600 !important;
+    color: var(--color-text-heading) !important;
+    margin-bottom: var(--spacing-xs) !important;
+    font-size: 1rem !important;
+}
+
+.recharts-tooltip-item {
+    color: var(--color-text-body) !important;
+    font-size: 0.9rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--spacing-xs) !important;
+}
+.recharts-tooltip-item-name {
+    font-weight: 500;
+}
+.recharts-tooltip-item-value {
+    font-weight: 600;
+}
+
+/* No Data Message */
+.no-data-message {
+    text-align: center;
+    padding: var(--spacing-lg);
+    background-color: var(--color-background-primary);
+    border: 1px dashed var(--color-border-light);
+    border-radius: 8px;
+    color: var(--color-text-light);
     font-size: 1.1rem;
 }
 
-/* --- Loading/Error/Not Found States (Enhanced) --- */
-.portfolio-loading-message, .portfolio-error-message, .portfolio-not-found-message {
+/* --- Loading / Error / Not Found States --- */
+.full-page-message-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: var(--light-gray-bg);
-    font-size: 1.25rem;
+    background-color: var(--color-background-primary);
     text-align: center;
-    padding: 2rem;
-    color: var(--slate-gray);
-}
-.portfolio-loading-message h3,
-.portfolio-error-message h3,
-.portfolio-not-found-message h3 {
-    font-size: 1.8rem;
-    color: var(--dark-indigo);
-    margin-bottom: 1rem;
+    padding: var(--spacing-xl);
+    box-sizing: border-box;
 }
 
-.portfolio-loading-message .spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    border-top: 4px solid var(--hot-pink);
+.full-page-message-card {
+    background-color: var(--color-background-card);
+    padding: var(--spacing-xxl);
+    border-radius: 12px;
+    box-shadow: var(--shadow-medium);
+    max-width: 500px;
+    width: 100%;
+    animation: fadeInCard 0.6s ease-out forwards; /* Animation for the message card */
+}
+
+.full-page-message-card h3 {
+    font-size: 2rem;
+    color: var(--color-accent-danger); /* Red for error/not found */
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.full-page-message-card p {
+    font-size: 1.1rem;
+    color: var(--color-text-body);
+    margin-bottom: var(--spacing-xl);
+}
+
+.loading-spinner {
+    border: 4px solid var(--color-border-light);
+    border-top: 4px solid var(--color-accent-primary);
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     animation: spin 1s linear infinite;
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-xl);
+}
+
+/* --- Animations --- */
+@keyframes fadeInPage {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInCard {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInTop {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes spin {
@@ -126,267 +363,137 @@
     100% { transform: rotate(360deg); }
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
+/* --- Responsive Design --- */
 
-
-/* --- Personal Details Section --- */
-.details-section h2 {
-    font-size: 1.75rem; /* Larger heading */
-    font-weight: 600;
-    color: var(--dark-indigo);
-    margin-bottom: 1.25rem;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-.details-grid {
-    display: grid;
-    grid-template-columns: 1fr; /* Default to 1 column */
-    gap: 1.25rem; /* More space between items */
-    font-size: 1.05rem; /* Slightly larger text */
-}
-.details-grid p {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem; /* Space between icon and text */
-    padding: 0.75rem 1rem;
-    background-color: var(--light-gray-bg);
-    border-radius: 0.5rem;
-    border: 1px solid var(--border-color);
-    transition: background-color 0.2s ease, transform 0.2s ease;
-}
-.details-grid p:hover {
-    background-color: rgba(252, 205, 17, 0.05); /* Very subtle highlight on hover */
-    transform: translateX(5px);
-}
-.details-grid p span:first-child {
-    font-weight: 600;
-    color: var(--dark-indigo);
-    flex-shrink: 0; /* Prevent icons/labels from shrinking */
-}
-.details-grid .detail-icon {
-    color: var(--hot-pink); /* Icon color for details */
-    font-size: 1.2rem;
-}
-.details-grid .payment-status-badge {
-    margin-left: 0.5rem;
-    padding: 0.35rem 0.9rem; /* Increased padding for badges */
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.9rem;
-    line-height: 1;
-    font-weight: 700; /* Bolder badge text */
-    border-radius: 9999px;
-    white-space: nowrap;
-    animation: fadeIn 0.5s ease-out; /* Fade in animation for badges */
-}
-.details-grid .payment-status-badge.paid {
-    background-color: rgba(40, 167, 69, 0.2);
-    color: var(--success-green);
-}
-.details-grid .payment-status-badge.unpaid {
-    background-color: rgba(220, 53, 69, 0.2);
-    color: var(--error-red);
-}
-
-/* --- Graph Sections (Marks & Payments) --- */
-.graph-section h2 {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: var(--dark-indigo);
-    margin-bottom: 1.25rem;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-.graph-section .section-icon {
-    font-size: 1.8rem;
-    color: var(--bright-yellow);
-}
-.no-data-message {
-    text-align: center;
-    color: var(--slate-gray);
-    padding: 1.5rem;
-    font-size: 1.05rem;
-    background-color: var(--light-gray-bg);
-    border-radius: 0.5rem;
-    border: 1px dashed var(--border-color);
-}
-
-/* Recharts Tooltip Customization */
-.recharts-default-tooltip {
-    background-color: var(--white) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 0.5rem !important;
-    padding: 1rem !important;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-.recharts-tooltip-label {
-    font-weight: 700 !important;
-    color: var(--dark-indigo) !important;
-    margin-bottom: 0.5rem !important;
-    font-size: 1.1rem;
-}
-.recharts-tooltip-item {
-    color: var(--slate-gray) !important;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/* --- Animations --- */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideInTop {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.portfolio-card.slide-in-top { animation: slideInTop 0.6s ease-out forwards; }
-.portfolio-card.slide-in-left { animation: slideInLeft 0.6s ease-out forwards; animation-delay: 0.1s; } /* Staggered */
-.portfolio-card.slide-in-right { animation: slideInRight 0.6s ease-out forwards; animation-delay: 0.2s; } /* Staggered */
-
-
-/* --- Responsive Adjustments --- */
-
-/* Small screens (sm: 640px and up) */
-@media (max-width: 767px) {
-    .portfolio-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-        padding: 1.5rem;
+/* Tablet & Smaller Desktops (768px - 1199px) */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .portfolio-page-container {
+        padding: 0 var(--spacing-md);
+        margin: var(--spacing-xl) auto;
     }
     .portfolio-header h1 {
         font-size: 2rem;
     }
-    .portfolio-back-button {
+    .portfolio-header .header-icon {
+        font-size: 2.2rem;
+    }
+    .portfolio-card h2 {
+        font-size: 1.6rem;
+    }
+    .portfolio-card .card-icon {
+        font-size: 1.6rem;
+    }
+
+    /* Personal details: 2 columns */
+    .personal-details-card .details-grid {
+        grid-template-columns: repeat(2, 1fr);
+        column-gap: var(--spacing-xl); /* More horizontal space */
+    }
+    .personal-details-card .detail-item.highlighted {
+        grid-column: span 2; /* Highlighted items span full width in 2-column layout */
+    }
+}
+
+/* Larger Desktops (1200px and up) */
+@media (min-width: 1200px) {
+    /* Personal details: 3 columns */
+    .personal-details-card .details-grid {
+        grid-template-columns: repeat(3, 1fr);
+        column-gap: var(--spacing-xl);
+    }
+    /* Highlighted items span 2 columns in 3-column layout, or full 3 if preferred */
+    .personal-details-card .detail-item.highlighted {
+        grid-column: span 2; /* Span 2 columns */
+    }
+    /* If you want the highlighted item to take the full row (3 columns) uncomment below */
+    /* .personal-details-card .detail-item.highlighted {
+        grid-column: span 3;
+    } */
+}
+
+
+/* Mobile (up to 767px) */
+@media (max-width: 767px) {
+    .portfolio-page-container {
+        padding: 0 var(--spacing-md);
+        margin: var(--spacing-lg) auto;
+    }
+    .portfolio-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+    .portfolio-header .title-group {
+        width: 100%;
+        margin-bottom: var(--spacing-md);
+        justify-content: center;
+    }
+    .portfolio-header h1 {
+        font-size: 1.8rem;
+        text-align: center;
+    }
+    .portfolio-header .header-icon {
+        font-size: 2rem;
+    }
+    .portfolio-header .back-button {
         width: 100%;
         justify-content: center;
-        margin-top: 1rem;
+    }
+    .portfolio-card {
+        padding: var(--spacing-lg);
+    }
+    .portfolio-card h2 {
+        font-size: 1.4rem;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        text-align: center;
+    }
+    .portfolio-card .card-icon {
+        font-size: 1.5rem;
+    }
+
+    /* Personal details remain single column on mobile */
+    .personal-details-card .detail-value {
+        /* Removed margin-left as column layout is single */
+    }
+    .personal-details-card .detail-item.highlighted {
+        grid-column: span 1; /* Highlighted items also single column */
     }
 }
+/* src/components/StudentPortfolio.css */
 
-/* Medium screens (md: 768px and up) */
-@media (min-width: 768px) {
-    .details-grid {
-        grid-template-columns: repeat(2, 1fr); /* md:grid-cols-2 */
-    }
+/* ... (your existing CSS styles) ... */
+
+/* Style for the Weekly Marks Performance card header */
+.portfolio-card.marks-card h2 {
+    display: flex;               /* Make the h2 a flex container */
+    justify-content: space-between; /* Pushes first item (group) to left, second item (button) to right */
+    align-items: center;         /* Vertically align items in the middle */
+    margin-bottom: var(--spacing-lg); /* Maintain some space below the header */
+    color: var(--color-text-heading);
+    /* Ensure there's space for the button */
+    padding-right: var(--spacing-md); /* Add a little padding to the right if button touches edge */
 }
 
-/* Large screens (lg: 1024px and up) */
-@media (min-width: 1024px) {
-    .details-grid {
-        grid-template-columns: repeat(3, 1fr); /* lg:grid-cols-3 */
-    }
-}
-/* In your .css file (e.g., PortfolioPage.css or a global CSS file) */
-
-/* NEW: Style for the button container in the header */
-.portfolio-header-buttons {
-    display: flex; /* Arrange buttons side-by-side */
-    gap: 10px; /* Space between buttons */
-    align-items: center; /* Vertically align them */
+/* Style the new group containing the icon and text */
+.portfolio-card.marks-card h2 .title-and-icon-group {
+    display: flex;             /* Make this group a flex container too */
+    align-items: center;       /* Vertically align icon and text within the group */
+    gap: var(--spacing-sm);    /* Add a small gap between icon and text */
+    /* If you want the text to wrap, consider `flex-wrap: wrap;` here, though usually not needed for a short title */
 }
 
-/* Style for the new Add Student button */
-.add-student-button {
-    background-color: var(--accent-color); /* Uses your new accent color */
-    color: white;
-    padding: 0.8rem 1.2rem;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+/* Optional: Adjust button styling if necessary */
+.portfolio-card.marks-card h2 .MuiButton-root {
+    flex-shrink: 0; /* Prevent the button from shrinking if space is tight */
+    /* Any specific margin or padding overrides for MUI buttons if default ones cause issues */
 }
 
-.add-student-button:hover {
-    background-color: var(--secondary-blue); /* A slightly darker shade or another relevant color */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Ensure the back-button also looks good if you haven't already */
-.back-button {
-    background-color: #6c757d; /* A neutral gray */
-    color: white;
-    padding: 0.8rem 1.2rem;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.back-button:hover {
-    background-color: #5a6268;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Adjust the portfolio-header to use flexbox if it doesn't already,
-   to position the title and buttons effectively */
-.portfolio-card.portfolio-header {
-    display: flex;
-    justify-content: space-between; /* Pushes title to left, buttons to right */
-    align-items: center;
-    flex-wrap: wrap; /* Allows wrapping on smaller screens */
-    gap: 1rem; /* Space between title and buttons if they wrap */
-}
-
-/* You might need to add/adjust some existing styles depending on your current CSS: */
-/* Example placeholder for your accent color variable if not defined */
-/*
-:root {
-    --accent-color: #009688; // Use the teal color you liked
-    --secondary-blue: #1976d2;
-}
+/* Original card-icon styles might need adjustment if they had direct margins
+   that now conflict with 'gap' on .title-and-icon-group.
+   You can remove direct margins on .card-icon inside this h2.
 */
+.portfolio-card.marks-card h2 .card-icon {
+    /* If you had 'margin-right' here, remove it, as 'gap' handles it now */
+}

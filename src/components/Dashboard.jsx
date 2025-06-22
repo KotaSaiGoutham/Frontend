@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { format, parseISO, addDays } from "date-fns";
 import "./Dashboard.css"; // Ensure this CSS file is correctly linked
+import axios from 'axios'; // Import axios
 
+import { sortAndFilterTimetableData } from "../mockdata/funcation";
 // Import ALL necessary icons
 import {
   FaSun,
@@ -12,10 +14,22 @@ import {
   FaCalendarDay, // For Upcoming Classes Metric
   FaMoneyBillAlt, // For Fee Collection Metric
   FaCalendarCheck, // For Upcoming Classes Card Header
-  FaChartBar, // For Student Statistics Chart
-  FaChartLine, // For Test Results Chart
-  FaSearchDollar, // For Fee Collection Chart
+  FaLightbulb, // For morning (idea/knowledge)
+  FaChalkboardTeacher, // For afternoon (teaching/learning)
+  FaMoon, // A slightly more refined moon for evening
+  FaBookOpen, // Another option for afternoon
+  FaGraduationCap, // Consider for a general academic icon if needed elsewhere
+  FaCloudSun,   // For general weather icon (or other specific weather icons)
+  FaThermometerHalf // For temperature icon
 } from "react-icons/fa";
+import { getUniqueQuote, getInitialShownQuoteIndices, saveShownQuoteIndices } from "../mockdata/mockdata"; // Adjust path as needed
+import StatsSection from "../pages/StatsSection";
+// --- Weather API Configuration ---
+const WEATHER_API_KEY = 'eb5a71e29d26ddab85144879fe13cd34'; // This key is now active!
+const HYDERABAD_LAT = 17.3850;
+const HYDERABAD_LON = 78.4867;
+const WEATHER_API_URL = `https://api.openweathermap.org/data/2.5/weather?lat=${HYDERABAD_LAT}&lon=${HYDERABAD_LON}&appid=${WEATHER_API_KEY}&units=metric`;
+
 
 // --- Comprehensive Mock Data (Used as fallback and for generating dynamic parts like Upcoming Classes & Chart data) ---
 const mockStudentsData = [
@@ -210,11 +224,15 @@ const Dashboard = () => {
     className: "",
     imageUrl: "",
   });
+    const [weatherData, setWeatherData] = useState(null); // State for weather
+  const [currentQuote, setCurrentQuote] = useState(''); // State for quote
 
   // States to be populated by API calls
   const [students, setStudents] = useState([]);
   const [employees, setEmployees] = useState([]);
 
+  // Initialize shownQuoteIndices using the utility function
+  const [shownQuoteIndices, setShownQuoteIndices] = useState(getInitialShownQuoteIndices);
   // States for other data, populated by test data logic
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [chartData, setChartData] = useState({
@@ -229,7 +247,6 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
 
-  // Function to determine greeting and background
   const getGreetingInfo = () => {
     const hour = new Date().getHours();
     let text, className, imageUrl;
@@ -237,142 +254,192 @@ const Dashboard = () => {
     if (hour >= 5 && hour < 12) {
       text = "Morning";
       className = "morning";
-      imageUrl =
-        "https://images.unsplash.com/photo-1547463564-9273646736c9?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"; // Sunny morning
+      // Bright, minimalist study space with good light
+      imageUrl = "https://images.unsplash.com/photo-1549725838-8c1143c72b53?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
     } else if (hour >= 12 && hour < 18) {
       text = "Afternoon";
       className = "afternoon";
-      imageUrl =
-        "https://images.unsplash.com/photo-1549490349-8643362c395f?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"; // Bright afternoon
-    } else {
+      // Empty, clean, naturally lit classroom
+      imageUrl = "https://images.unsplash.com/photo-1498243691581-b145c3f54bfb?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB4MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+    } else { // 18 (6 PM) onwards to 4 AM
       text = "Evening";
       className = "evening";
-      imageUrl =
-        "https://images.unsplash.com/photo-1508906660126-a05d4f3b6d51?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"; // Calm evening/night
+      // Modern office/study with ambient lighting, still bright, glowing screen
+      imageUrl = "https://images.unsplash.com/photo-1454165205744-bdc3fd1d49db?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
     }
     return { text, className, imageUrl };
   };
 
+
+  // Effect for greeting info and quote (MODIFIED FOR DAILY UPDATE)
   useEffect(() => {
-    // Initial setup for greeting and user name from localStorage
-    const info = getGreetingInfo();
-    setGreetingInfo(info);
+    const updateAndSaveQuote = () => {
+      setShownQuoteIndices(prevIndices => {
+        const { quote, newShownIndices } = getUniqueQuote(prevIndices);
+        setCurrentQuote(quote);
+        saveShownQuoteIndices(newShownIndices); // Save the updated list to localStorage
+        return newShownIndices; // Return the new state for shownQuoteIndices
+      });
+    };
 
-    document.documentElement.style.setProperty(
-      "--current-greeting-bg-image",
-      `url(${info.imageUrl})`
-    );
+    // Set initial greeting and quote when component mounts
+    setGreetingInfo(getGreetingInfo());
+    updateAndSaveQuote(); // Call it once immediately
 
-    const storedUserName = localStorage.getItem("userName");
-    if (storedUserName) {
-      setUserName(storedUserName);
-    } else {
-      const storedUserEmail = localStorage.getItem("userEmail");
-      if (storedUserEmail) {
-        setUserName(storedUserEmail.split("@")[0]);
+    // Set up the interval for DAILY updates (every 24 hours)
+    // For testing, you might want to temporarily reduce this, e.g., to 5000ms (5 seconds)
+    // but for production, 24 hours is 24 * 60 * 60 * 1000 milliseconds
+    const interval = setInterval(() => {
+      setGreetingInfo(getGreetingInfo()); // Update greeting as well (hourly is fine here if needed)
+      updateAndSaveQuote(); // This will now happen once every 24 hours
+    }, 24 * 60 * 60 * 1000); // 24 hours
+
+    // Cleanup the interval when the component unmounts
+    return () => clearInterval(interval);
+  }, []);
+ // Effect for fetching weather data
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const response = await axios.get(WEATHER_API_URL);
+        setWeatherData(response.data);
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+        setWeatherData(null); // Clear weather data on error
       }
-    }
-
-    // Async function to fetch and process all dashboard data
+    };
+    fetchWeather();
+    // Fetch weather every 15 minutes (or as frequently as your API allows/you deem necessary)
+    const weatherInterval = setInterval(fetchWeather, 15 * 60 * 1000);
+    return () => clearInterval(weatherInterval);
+  }, []); // Run once on mount, then by interval
+ 
+  useEffect(() => {
     const fetchAndGenerateDashboardData = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
         navigate("/login");
-        return; // Stop execution if no token
+        return;
       }
 
-      setIsLoading(true); // Start loading state
-      setError(""); // Clear any previous errors
+      setIsLoading(true);
+      setError("");
 
-      // Variables to hold fetched data, initialized to empty arrays
-      // This ensures they are always defined for processing in the 'finally' block,
-      // even if some API calls fail.
       let fetchedStudents = [];
       let fetchedEmployees = [];
       let rawTimetableData = [];
 
       try {
         // --- API Call for Students ---
-        const studentsResponse = await fetch(
-          "http://localhost:5000/api/data/students",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!studentsResponse.ok) {
-          const errorData = await studentsResponse.json();
-          throw new Error(
-            errorData.message || "Failed to fetch students data."
-          );
+        const studentsResponse = await fetch("http://localhost:5000/api/data/students", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (studentsResponse.ok) {
+          fetchedStudents = await studentsResponse.json();
+          setStudents(fetchedStudents);
+          console.log("fetchedStudents from API:", fetchedStudents);
+        } else {
+          // If API fails, use mock data for students
+          console.warn("Failed to fetch students from API. Using mock data.");
+          fetchedStudents = mockStudentsData; // Use mock data as fallback
+          setStudents(mockStudentsData);
         }
-        fetchedStudents = await studentsResponse.json();
-        setStudents(fetchedStudents); // Update state with API data
 
         // --- API Call for Employees ---
-        const employeesResponse = await fetch(
-          "http://localhost:5000/api/data/empolyees", // Corrected typo
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!employeesResponse.ok) {
-          const errorData = await employeesResponse.json();
-          throw new Error(
-            errorData.message || "Failed to fetch employees data."
-          );
+        const employeesResponse = await fetch("http://localhost:5000/api/data/empolyees", { // Fix typo here in real backend!
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (employeesResponse.ok) {
+          fetchedEmployees = await employeesResponse.json();
+          setEmployees(fetchedEmployees);
+          console.log("fetchedEmployees from API:", fetchedEmployees);
+        } else {
+          // If API fails, use mock data for employees
+          console.warn("Failed to fetch employees from API. Using mock data.");
+          fetchedEmployees = mockEmployeesData; // Use mock data as fallback
+          setEmployees(mockEmployeesData);
         }
-        fetchedEmployees = await employeesResponse.json();
-        setEmployees(fetchedEmployees); // Update state with API data
 
         // --- API Call for Timetable ---
-        const timetableResponse = await fetch(
-          "http://localhost:5000/api/data/timetable",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!timetableResponse.ok) {
-          const errorData = await timetableResponse.json();
-          throw new Error(
-            errorData.message || "Failed to fetch timetable data."
-          );
-        }
-        rawTimetableData = await timetableResponse.json();
-        console.log("rawTimetableData,rawTimetableData", rawTimetableData);
-        setUpcomingClasses(rawTimetableData);
-      } catch (err) {
-        // This single catch block handles errors from ANY of the above API fetches
-        console.error("Error fetching dashboard data:", err);
-        setError(
-          err.message ||
-            "Failed to load dashboard data. Please check your connection or try again."
-        );
+        const timetableResponse = await fetch("http://localhost:5000/api/data/timetable", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+       if (timetableResponse.ok) {
+    let rawTimetableData = await timetableResponse.json();
+    const sortedTimetableData = sortAndFilterTimetableData(rawTimetableData);
+    setUpcomingClasses(sortedTimetableData);
+    console.log("Sorted timetable data:", sortedTimetableData);
+} else {
+    console.warn("Failed to fetch timetable from API. Generating mock data.");
+    let rawTimetableData = generateMockTimetableData(fetchedStudents);
+    const sortedTimetableData = sortAndFilterTimetableData(rawTimetableData);
+    setUpcomingClasses(sortedTimetableData);
+}
 
-        // Specific error handling for unauthorized access
-        if (
-          err.message.includes("authorized") ||
-          err.message.includes("Token") ||
-          err.message.includes("Denied")
-        ) {
-          localStorage.removeItem("token"); // Clear invalid token
-          navigate("/login"); // Redirect to login
+        // Generate chart data using the (potentially mock) fetched data
+        const testResultsData = generateMockTestScores(); // This one is always mock
+        const studentDemographicsData = generateMockStudentDemographics(fetchedStudents);
+        const paymentStatusData = generateMockPaymentStatus(fetchedStudents);
+
+        setChartData({
+          testResults: {
+            labels: testResultsData.labels,
+            datasets: [{
+              label: testResultsData.label,
+              data: testResultsData.data,
+              backgroundColor: 'rgba(75, 192, 192, 0.6)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+            }]
+          },
+          studentDemographics: {
+            labels: studentDemographicsData.labels,
+            datasets: [{
+              data: studentDemographicsData.data,
+              backgroundColor: studentDemographicsData.backgroundColors,
+              hoverOffset: 4
+            }]
+          },
+          paymentStatus: {
+            labels: paymentStatusData.labels,
+            datasets: [{
+              data: paymentStatusData.data,
+              backgroundColor: paymentStatusData.backgroundColors,
+              hoverOffset: 4
+            }]
+          },
+        });
+
+      } catch (err) {
+        console.error("Error during dashboard data fetching:", err);
+        setError(err.message || "Failed to load dashboard data. Please check your connection or try again.");
+        // Even on error, populate with mock data to show something
+        setStudents(mockStudentsData);
+        setEmployees(mockEmployeesData);
+        setUpcomingClasses(generateMockTimetableData(mockStudentsData)); // Ensure mock timetable uses mock students
+        // And ensure charts are generated from mock data too
+        setChartData({
+            testResults: { labels: generateMockTestScores().labels, datasets: [{ label: generateMockTestScores().label, data: generateMockTestScores().data, backgroundColor: 'rgba(75, 192, 192, 0.6)', borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1, }] },
+            studentDemographics: { labels: generateMockStudentDemographics(mockStudentsData).labels, datasets: [{ data: generateMockStudentDemographics(mockStudentsData).data, backgroundColor: generateMockStudentDemographics(mockStudentsData).backgroundColors, hoverOffset: 4 }] },
+            paymentStatus: { labels: generateMockPaymentStatus(mockStudentsData).labels, datasets: [{ data: generateMockPaymentStatus(mockStudentsData).data, backgroundColor: generateMockPaymentStatus(mockStudentsData).backgroundColors, hoverOffset: 4 }] },
+        });
+
+        if (err.message.includes("authorized") || err.message.includes("Token") || err.message.includes("Denied")) {
+          localStorage.removeItem("token");
+          navigate("/login");
         }
-        // If an error occurred, fetchedStudents, fetchedEmployees, and rawTimetableData
-        // will retain their initial empty array values, preventing subsequent errors
-        // and gracefully showing "No data" where applicable.
       } finally {
-        setIsLoading(false); // Set loading to false only after all data processing is complete
+        setIsLoading(false);
       }
     };
 
-    // Call the async function
     fetchAndGenerateDashboardData();
-  }, [navigate]); // Dependency array: navigate is used inside useEffect
+  }, [navigate]);
 
   // Calculate dashboard metrics from state (which is populated by API or mock fallback)
   const totalStudents = students.length;
   const totalEmployees = employees.length;
-
+console.log("students",students)
   // Calculate Fee Collection (uses data from 'students' state, which can be API or mock)
   const totalFeeCollection = students.reduce((sum, student) => {
     // Corrected: Access "Payment Status" using bracket notation
@@ -469,24 +536,40 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       {/* Header and Greeting */}
-      <div
+  <div
         className={`dashboard-card dashboard-header ${greetingInfo.className}`}
+        style={{ backgroundImage: `url(${greetingInfo.imageUrl})` }}
       >
+        <div className="background-overlay"></div>
+
         <div className="greeting-content">
           <h1>
-            Good {greetingInfo.text}, {userName}!
+            Good {greetingInfo.text}, {userName || "User"}!
           </h1>
-          <p>Welcome to your Electron Academy Dashboard.</p>
+          <p className="welcome-message">Welcome to your Electron Academy Dashboard.</p>
+          {currentQuote && (
+            <p className="motivational-quote">"{currentQuote}"</p>
+          )}
         </div>
+        {/* Moved weather info here, inside greeting-graphic for flexbox */}
         <div className="greeting-graphic">
           {greetingInfo.className === "morning" && (
             <FaSun className="greeting-icon" />
           )}
+          {greetingInfo.className === "afternoon" && (
+            <FaBookOpen className="greeting-icon" />
+          )}
           {greetingInfo.className === "evening" && (
-            <FaCloudMoon className="greeting-icon" />
+            <FaMoon className="greeting-icon" />
+          )}
+          {weatherData && (
+            <p className="weather-info weather-right">
+              <FaCloudSun className="weather-icon" /> {weatherData.name}: {weatherData.main.temp.toFixed(1)}°C
+            </p>
           )}
         </div>
       </div>
+
 
       {/* Metric Cards Section */}
       <div className="metrics-grid">
@@ -527,7 +610,8 @@ const Dashboard = () => {
           <div className="metric-info">
             <p className="metric-label">Monthly Fee Collection</p>
             <p className="metric-value">
-              ₹{totalFeeCollection.toLocaleString()}
+              {"200000"}
+              {/* ₹{totalFeeCollection.toLocaleString()} */}
             </p>
           </div>
         </div>
@@ -570,74 +654,73 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Test Results Chart (Dynamic Test Data) */}
-        <div className="dashboard-card chart-card test-results-card fade-in-up delay-5">
-          <h2>
-            <FaChartLine className="card-icon" /> Test Results Overview
-          </h2>
-          <div className="chart-placeholder">
-            {chartData.testResults.labels && (
-              <img
-                src={getQuickChartUrl("line", chartData.testResults)}
-                alt="Test Results Chart"
-                style={{
-                  maxWidth: "100%",
-                  height: "auto",
-                  borderRadius: "8px",
-                }}
-              />
-            )}
-            <p className="chart-note">
-              Simulated student performance trends over time.
-            </p>
-          </div>
+      <div className="dashboard-card chart-card test-results-card fade-in-up delay-5">
+        <h2>
+          {/* <FaChartLine className="card-icon" /> */} Test Results Overview
+        </h2>
+        <div className="chart-placeholder">
+          {chartData.testResults.labels && (
+            <img
+              src={getQuickChartUrl("line", chartData.testResults)}
+              alt="Test Results Chart"
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+                borderRadius: "8px",
+              }}
+            />
+          )}
+          <p className="chart-note">
+            Simulated student performance trends over time.
+          </p>
         </div>
+      </div>
 
-        {/* Student Statistics Chart (Dynamic Test Data) */}
-        <div className="dashboard-card chart-card student-stats-card fade-in-up delay-6">
-          <h2>
-            <FaChartBar className="card-icon" /> Student Demographics
-          </h2>
-          <div className="chart-placeholder">
-            {chartData.studentDemographics.labels && (
-              <img
-                src={getQuickChartUrl("pie", chartData.studentDemographics)}
-                alt="Student Demographics Chart"
-                style={{
-                  maxWidth: "100%",
-                  height: "auto",
-                  borderRadius: "8px",
-                }}
-              />
-            )}
-            <p className="chart-note">
-              Simulated breakdown of students by subject.
-            </p>
-          </div>
+      {/* Student Statistics Chart (Dynamic Test Data) */}
+      <div className="dashboard-card chart-card student-stats-card fade-in-up delay-6">
+        <h2>
+          {/* <FaChartBar className="card-icon" /> */} Student Demographics
+        </h2>
+        <div className="chart-placeholder">
+          {chartData.studentDemographics.labels && (
+            <img
+              src={getQuickChartUrl("pie", chartData.studentDemographics)}
+              alt="Student Demographics Chart"
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+                borderRadius: "8px",
+              }}
+            />
+          )}
+          <p className="chart-note">
+            Simulated breakdown of students by subject.
+          </p>
         </div>
+      </div>
 
-        {/* Fee Collection Chart (Dynamic Test Data) */}
-        <div className="dashboard-card chart-card fee-collection-chart-card fade-in-up delay-7">
-          <h2>
-            <FaSearchDollar className="card-icon" /> Payment Status Summary
-          </h2>
-          <div className="chart-placeholder">
-            {chartData.paymentStatus.labels && (
-              <img
-                src={getQuickChartUrl("doughnut", chartData.paymentStatus)}
-                alt="Fee Collection Chart"
-                style={{
-                  maxWidth: "100%",
-                  height: "auto",
-                  borderRadius: "8px",
-                }}
-              />
-            )}
-            <p className="chart-note">
-              Simulated overview of payment statuses.
-            </p>
-          </div>
+      {/* Fee Collection Chart (Dynamic Test Data) */}
+      <div className="dashboard-card chart-card fee-collection-chart-card fade-in-up delay-7">
+        <h2>
+          {/* <FaSearchDollar className="card-icon" /> */} Payment Status Summary
+        </h2>
+        <div className="chart-placeholder">
+          {chartData.paymentStatus.labels && (
+            <img
+              src={getQuickChartUrl("doughnut", chartData.paymentStatus)}
+              alt="Fee Collection Chart"
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+                borderRadius: "8px",
+              }}
+            />
+          )}
+          <p className="chart-note">
+            Simulated overview of payment statuses.
+          </p>
         </div>
+      </div>
       </div>
     </div>
   );

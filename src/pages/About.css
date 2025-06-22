@@ -43,7 +43,7 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 80px 20px;
-    font-family: 'Inter', sans-serif; /* Use Inter for consistency */
+     /* Use Inter for consistency */
     color: var(--text-color-dark); /* Default text color for the page */
     background-color: var(--background-page); /* Ensures consistent background */
     overflow: hidden; /* Helps with animations */

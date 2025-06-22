@@ -2,10 +2,10 @@
 
 /* Page Container */
 .ats-page-container {
+    
     padding: 20px;
     background-color: var(--background-color-light); /* From variables.css */
     min-height: 100vh;
-    font-family: var(--font-family-primary); /* From variables.css */
     display: flex;
     flex-direction: column;
     align-items: center; /* Center content horizontally */

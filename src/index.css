@@ -4,13 +4,18 @@ html, body {
     padding: 0;
     overflow-x: hidden; /* Temporarily hide horizontal overflow to find the culprit */
     width: 100%; /* Ensure they take full width */
-      font-family: 'Poppins', sans-serif;
-
+    font-family: 'Poppins', sans-serif;
+     height: 100%; /* Ensure html, body, and the root div (where your React app mounts) take full height */
+  width: 100%; /* Ensure full width */
 }
 
 /* Universal box-sizing for predictable layouts */
 *, *::before, *::after {
-    box-sizing: border-box;
+    box-sizing:inherit;
+}
+body{
+     overflow-y: scroll;
+  overflow-x: hidden; /* Prevent horizontal scrollbar unless explicitly needed */
 }
 
 :root {
@@ -72,4 +77,8 @@ html, body {
         width: 100% !important;
         padding-top: 0; /* Content padding handled by its own component */
     }
+}
+.h3{
+    display: flex;
+    justify-content: center;
 }
