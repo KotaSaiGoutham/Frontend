@@ -130,7 +130,6 @@
 .signup-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
   position: relative;
   z-index: 1;
 }

@@ -3,7 +3,7 @@ import "./Home.css";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CalendarCheck, UserCheck, LineChart } from "lucide-react";
-import Footer from "../components/Footer";
+import Footer from "../pages/Footer";
 import {
   FaSmile,
   FaUsers,

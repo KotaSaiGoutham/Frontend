@@ -8,8 +8,12 @@ import {
 
 import './Employees.css';
 import './AddStudent.css';
+import { useSelector, useDispatch } from 'react-redux';
+import { addEmployee } from '../redux/actions';
 
 const AddEmployeePage = () => {
+      const dispatch  = useDispatch()
+    
     const navigate = useNavigate();
     const [newEmployee, setNewEmployee] = useState({
         name: '',
@@ -19,6 +23,11 @@ const AddEmployeePage = () => {
         lastPaid: '', // Will be sent as an empty string if not filled
         paid: false,
     });
+        const { 
+        addingEmployee, 
+        addEmployeeSuccess, 
+        addEmployeeError 
+    } = useSelector(state => state.employees); // Assuming 'employees' is the key for employeeReducer in rootReducer
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
@@ -55,38 +64,30 @@ const AddEmployeePage = () => {
         setError('');
         setSuccessMessage('');
 
+        const payload = {
+            ...newEmployee,
+            salary: parseFloat(newEmployee.salary), // Convert salary to number
+        };
+
         try {
-            const token = localStorage.getItem('token'); // Get your authentication token
+            // --- DISPATCH THE REDUX ACTION HERE ---
+            // Await the dispatch if your `addEmployee` action returns a promise
+            // which the `apiRequest` pattern in your middleware should do.
+            await dispatch(addEmployee(payload));
 
-            // Make API call to your Node.js backend
-            const response = await fetch('http://localhost:5000/api/data/addEmployee', { // Adjust URL as needed
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // Send token for authentication
-                },
-                body: JSON.stringify(newEmployee) // Send the employee data
-            });
+            // No need for direct response checks or local state updates here.
+            // The useEffect above will handle success/error messages and navigation
+            // based on changes in Redux state (`addEmployeeSuccess`, `addEmployeeError`).
 
-            const data = await response.json(); // Parse the JSON response
-
-            if (response.ok) { // Check if the request was successful (status 2xx)
-                console.log("Employee added successfully:", data);
-                setSuccessMessage('Employee added successfully! Redirecting...');
-                setTimeout(() => {
-                    navigate('/employees'); // Redirect back to the employees list
-                }, 1000);
-            } else {
-                // Handle errors from the backend
-                console.error("Error from backend:", data.message || 'Failed to add employee.');
-                setError(data.message || 'Failed to add employee. Please try again.');
-            }
         } catch (err) {
-            console.error("Network error or unexpected issue:", err);
-            setError('An unexpected error occurred. Please try again.');
-        } finally {
-            setIsSaving(false);
-        }
+            // This catch block would primarily handle errors from the dispatch itself
+            // (e.g., if the action wasn't properly formed or middleware failed unexpectedly),
+            // not typical API errors, as those are caught by the apiMiddleware
+            // and reflected in the Redux store states.
+            console.error("Unexpected error during addEmployee dispatch:", err);
+            // Optionally, set a local error state if this catch is reached for unexpected issues
+            // setError('An unexpected client-side error occurred.');
+        } 
     };
 
     return (
@@ -167,7 +168,7 @@ const AddEmployeePage = () => {
 
                     <div className="add-student-button-group">
                         <button type="submit" className="add-student-primary-button" disabled={isSaving}>
-                            <FaPlus /> {isSaving ? 'Adding Employee...' : 'Add Employee'}
+                            <FaPlus /> {addingEmployee   ? 'Adding Employee...' : 'Add Employee'}
                         </button>
                         <button type="button" onClick={() => navigate('/employees')} className="add-student-secondary-button">
                             <FaTimesCircle /> Cancel

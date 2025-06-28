@@ -46,11 +46,8 @@ const formatSubjectNameForDisplay = (subjectKey) => {
 };
 
 const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType }) => {
-  console.log("WeeklyMarksTrendGraph: received weeklyMarksData (array):", weeklyMarksData);
-  console.log("WeeklyMarksTrendGraph: received programType:", programType);
 
   if (!weeklyMarksData || weeklyMarksData.length === 0) {
-    console.warn("WeeklyMarksTrendGraph: 'weeklyMarksData' prop is empty or null. Cannot render trend graph.");
     return <p>No weekly marks data available to display the trend graph.</p>;
   }
 
@@ -79,7 +76,6 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType }) => {
   if (programType && MARK_SCHEMES[programType]) {
     // Get subjects from the predefined scheme
     subjectsToTrack = Object.keys(MARK_SCHEMES[programType]).map(s => s.toLowerCase().replace(/\s/g, ""));
-    console.log("WeeklyMarksTrendGraph: Subjects from scheme:", subjectsToTrack);
   } else {
     // For 'Others' or any unspecified programType, dynamically find all mark-related keys
     const allKeys = new Set();
@@ -96,7 +92,6 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType }) => {
       }
     });
     subjectsToTrack = Array.from(allKeys);
-    console.log("WeeklyMarksTrendGraph: Dynamically found subjects for 'Others' or fallback:", subjectsToTrack);
   }
 
 
