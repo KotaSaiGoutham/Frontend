@@ -48,7 +48,7 @@ const JobCard = ({ title, experience, skills, salary, location, jobType, gradien
       <div className="card-actions">
         {/* Attach the handler to the button */}
         <button className="apply-button" onClick={handleApplyClick}>Apply Now</button>
-        <div className="share-container" ref={shareContainerRef}>
+        {/* <div className="share-container" ref={shareContainerRef}>
           <button className="share-button" onClick={toggleShareOptions}>
             <i className="fas fa-share-alt"></i>
           </button>
@@ -58,7 +58,7 @@ const JobCard = ({ title, experience, skills, salary, location, jobType, gradien
             <a href="#" className="social-icon linkedin" aria-label="Share on LinkedIn"><i class="fab fa-linkedin-in"></i></a>
             <a href="#" class="social-icon twitter" aria-label="Share on Twitter"><i class="fab fa-twitter"></i></a>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
