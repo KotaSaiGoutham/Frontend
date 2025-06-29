@@ -16,6 +16,10 @@ import {
   CircularProgress, // <--- Import CircularProgress for loading spinner
   Snackbar, // <--- Import Snackbar for notifications
   Alert, // <--- Import Alert for Snackbar content
+    Slide, // Import Slide for entrance animation
+  Fade, // Import Fade for loading/error
+  Typography,
+  IconButton
 } from "@mui/material";
 // Import ALL necessary icons
 import {
@@ -38,6 +42,8 @@ import {
   FaCalendarCheck,
   FaArrowUp,
   FaArrowDown,
+  FaMinusCircle ,
+  FaPlusCircle 
 } from "react-icons/fa";
 import {
   MuiButton,
@@ -49,9 +55,8 @@ import {
   paymentStatusOptions,
   subjectOptions,
 } from "../mockdata/Options";
-import { fetchStudents } from "../redux/actions";
+import { fetchStudents,updateStudentPaymentStatus,updateClassesCompleted } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
-import { updateStudentPaymentStatus } from "../redux/actions";
 const StudentsTable = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -83,9 +88,19 @@ const StudentsTable = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [updatingClasses, setUpdatingClasses] = useState(null); // For classes completed
+  const [lastUpdatedTimestamps, setLastUpdatedTimestamps] = useState({});
 
   const navigate = useNavigate();
-
+useEffect(() => {
+    const newTimestamps = {};
+    students.forEach(student => {
+      if (student.lastUpdatedClassesAt) {
+        newTimestamps[student.id] = student.lastUpdatedClassesAt;
+      }
+    });
+    setLastUpdatedTimestamps(newTimestamps);
+  }, [students]);
   // --- Data Fetching Effect ---
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -270,152 +285,308 @@ const StudentsTable = () => {
   const showSubjectColumn = user?.AllowAll; // It will be true only if user.AllowAll is true
   // Modified handlePaymentStatusToggle to use Redux action
  const handlePaymentStatusToggle = async (studentId, currentStatus) => {
-    // Determine the new status
+    if (updatingStudent) return;
+    setUpdatingStudent(studentId);
+
     const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid";
+    try {
+      const updatedStudent = await dispatch(updateStudentPaymentStatus(studentId, newStatus));
+      setSnackbarMessage(`Payment status updated to "${newStatus}" for ${updatedStudent.Name}!`);
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
 
-    // Optimistic UI update or just show loading state.
-    // Dispatch the Redux action. The action's success/failure callbacks
-    // will update the Redux state, which in turn triggers the useEffect for Snackbar.
-    dispatch(updateStudentPaymentStatus(studentId, newStatus));
+      // Update local timestamp after successful backend update
+      // Clear any existing timeout for this student to avoid overwriting
+      if (updateTimestampTimeoutRef.current[studentId]) {
+        clearTimeout(updateTimestampTimeoutRef.current[studentId]);
+      }
+      updateTimestampTimeoutRef.current[studentId] = setTimeout(() => {
+        setLastUpdatedTimestamps(prev => ({
+          ...prev,
+          [studentId]: updatedStudent.lastUpdatedClassesAt,
+        }));
+        delete updateTimestampTimeoutRef.current[studentId]; // Clean up ref
+      }, 2000); // Delay for 2 seconds
 
-    // Optionally provide immediate feedback via Snackbar before API response
-    setSnackbarMessage(`Setting payment status to '${newStatus}'...`);
-    setSnackbarSeverity("success");
-    setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMessage(`Failed to update payment status: ${err.message}`);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUpdatingStudent(null);
+    }
   };
+
+  const handleClassChange = async (studentId, currentClasses, increment) => {
+    if (updatingClasses) return;
+    setUpdatingClasses(studentId);
+
+    let newClassesCompleted = currentClasses;
+    if (increment) {
+      newClassesCompleted += 1;
+    } else {
+      newClassesCompleted = Math.max(0, newClassesCompleted - 1); // Prevent negative classes
+    }
+
+    try {
+      const updatedStudent = await dispatch(updateClassesCompleted(studentId, newClassesCompleted));
+      setSnackbarMessage(`Classes completed updated to ${updatedStudent['Classes Completed']} for ${updatedStudent.Name}!`);
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+
+      // Update local timestamp after successful backend update
+      // Clear any existing timeout for this student to avoid overwriting
+      if (updateTimestampTimeoutRef.current[studentId]) {
+        clearTimeout(updateTimestampTimeoutRef.current[studentId]);
+      }
+      updateTimestampTimeoutRef.current[studentId] = setTimeout(() => {
+        setLastUpdatedTimestamps(prev => ({
+          ...prev,
+          [studentId]: updatedStudent.lastUpdatedClassesAt,
+        }));
+        delete updateTimestampTimeoutRef.current[studentId]; // Clean up ref
+      }, 2000); // Delay for 2 seconds
+
+    } catch (err) {
+      setSnackbarMessage(`Failed to update classes: ${err.message}`);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUpdatingClasses(null);
+    }
+  };
+
   return (
-    <div className="dashboard-container">
-      {/* Filters Section */}
-      <div className="dashboard-card filters-section">
-        <h2>
-          <FaSearch className="inline-block mr-2" />
-          Filter Students
-        </h2>
-        <div className="filters-grid">
-          {/* Student Name Filter */}
-          <MuiInput
-            label="Student Name"
-            name="studentName"
-            value={filters.studentName}
-            onChange={handleFilterChange}
-            placeholder="Search by student name..."
-            icon={FaUserCircle}
-          />
-
-          {/* Subject Filter */}
-          <MuiSelect
-            label="Subject"
-            name="subject"
-            value={filters.subject}
-            onChange={handleFilterChange}
-            options={subjectOptions}
-            icon={FaBookOpen}
-          />
-
-          {/* Payment Status Filter */}
-          <MuiSelect
-            label="Payment Status"
-            name="paymentStatus"
-            value={filters.paymentStatus}
-            onChange={handleFilterChange}
-            options={paymentStatusOptions}
-            icon={FaIdCard}
-          />
-          <MuiSelect
-            label="Gender"
-            name="gender"
-            value={filters.gender}
-            onChange={handleFilterChange}
-            options={genderOptions}
-            icon={FaUsers}
-          />
-          <MuiSelect
-            label="Stream"
-            name="stream"
-            value={filters.stream}
-            onChange={handleFilterChange}
-            options={streamOptions}
-            icon={FaGraduationCap}
-          />
-        </div>
-      </div>
-
-      {/* Students List Table */}
-      <div className="dashboard-card students-table-container">
-        <div className="students-table-header-flex">
-          <h2>
-            <FaUsers /> Students Overview
-          </h2>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: "#f7f8fc",
+        p: 3,
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+      }}
+    >
+      {/* Header Section */}
+      <Slide direction="down" in={true} mountOnEnter unmountOnExit timeout={500}>
+        <Paper
+          elevation={6} // Increased elevation for more depth
+          sx={{
+            p: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 2,
+            borderRadius: "12px", // Rounded corners for consistency
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <FaUsers
+              style={{
+                marginRight: "15px",
+                fontSize: "2.5rem",
+                color: "#1976d2", // Primary blue color
+              }}
+            />
+            <Box>
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }} // Darker text for headings
+              >
+                Students Overview
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Manage and filter your student records.
+              </Typography>
+            </Box>
+          </Box>
           <MuiButton
             variant="contained"
-            color="primary"
-            onClick={() => navigate("/add-student")}
             startIcon={<FaPlus />}
+            onClick={() => navigate("/add-student")}
+            sx={{
+              bgcolor: "#1976d2", // Changed to primary blue
+              "&:hover": { bgcolor: "#1565c0" }, // Darker blue on hover
+              borderRadius: "8px",
+              px: 3,
+              py: 1.2,
+              minWidth: "180px",
+              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Subtle shadow
+            }}
           >
             Add New Student
           </MuiButton>
-        </div>
-        {sortedFilteredStudents.length > 0 ? (
-          <TableContainer
-            component={Paper}
+        </Paper>
+      </Slide>
+
+      {/* Filters Section */}
+      <Slide direction="right" in={true} mountOnEnter unmountOnExit timeout={600}>
+        <Paper elevation={6} sx={{ p: 3, borderRadius: "12px" }}>
+          <Box
             sx={{
-              boxShadow: 3,
-              borderRadius: 2,
-              overflowX: "auto",
-              minWidth: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 3,
+              flexWrap: "wrap",
+              gap: 2,
             }}
           >
-            <Table sx={{ minWidth: 1200 }} aria-label="student table">
-              <TableHead>
-                <TableRow
-                  sx={{ backgroundColor: (theme) => theme.palette.grey[100] }}
-                >
-                  <TableCell align="center" sx={{ fontWeight: "bold" }}>
-                    S.No.
-                  </TableCell>
+            <Typography
+              variant="h5"
+              component="h2"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                color: "#292551",
+                fontWeight: 600,
+              }}
+            >
+              <FaSearch style={{ marginRight: "10px", fontSize: "1.8rem", color: "#1976d2" }} />{" "}
+              Filter Students
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(3, 1fr)",
+                lg: "repeat(5, 1fr)",
+              },
+              gap: 2,
+            }}
+          >
+            <MuiInput
+              label="Student Name"
+              name="studentName"
+              value={filters.studentName}
+              onChange={handleFilterChange}
+              placeholder="Search by student name..."
+              icon={FaUserCircle}
+            />
+            {showSubjectColumn && (
+ <MuiSelect
+              label="Subject"
+              name="subject"
+              value={filters.subject}
+              onChange={handleFilterChange}
+              options={subjectOptions}
+              icon={FaBookOpen}
+            />
+            )}
+           
+            <MuiSelect
+              label="Payment Status"
+              name="paymentStatus"
+              value={filters.paymentStatus}
+              onChange={handleFilterChange}
+              options={paymentStatusOptions}
+              icon={FaIdCard}
+            />
+            <MuiSelect
+              label="Gender"
+              name="gender"
+              value={filters.gender}
+              onChange={handleFilterChange}
+              options={genderOptions}
+              icon={FaUsers}
+            />
+            <MuiSelect
+              label="Stream"
+              name="stream"
+              value={filters.stream}
+              onChange={handleFilterChange}
+              options={streamOptions}
+              icon={FaGraduationCap}
+            />
+          </Box>
+        </Paper>
+      </Slide>
 
-                  <TableCell
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 150,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <FaUserCircle style={{ marginRight: 8, color: "#333" }} />
-                      Name
-                    </Box>
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 100,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <Box
+      {/* Students List Table */}
+      <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
+        <Paper elevation={6} sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}>
+          {sortedFilteredStudents.length > 0 ? (
+            <TableContainer>
+              <Table sx={{ minWidth: 1200 }} aria-label="student table">
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: "#e3f2fd" }}> {/* Light blue header */}
+                    <TableCell align="center" sx={{ fontWeight: "bold", color: "#1a237e", fontSize: "1.05rem", padding: "12px 8px" }}>
+                      S.No.
+                    </TableCell>
+                    <TableCell
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e", // Dark blue for header text
                       }}
                     >
-                      <FaTransgender
-                        style={{ marginRight: 8, color: "#e91e63" }}
-                      />
-                      Gender
-                    </Box>
-                  </TableCell>
-                  {showSubjectColumn && (
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <FaUserCircle style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        Name
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 100,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaTransgender style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        Gender
+                      </Box>
+                    </TableCell>
+                    {showSubjectColumn && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 120,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <FaBookOpen style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                          Subject
+                        </Box>
+                      </TableCell>
+                    )}
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 80,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaCalendarCheck style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        Year
+                      </Box>
+                    </TableCell>
                     <TableCell
                       align="center"
                       sx={{
@@ -424,450 +595,409 @@ const StudentsTable = () => {
                         minWidth: 120,
                         p: 1.5,
                         textTransform: "uppercase",
-                        fontSize: "0.75rem",
-                        color: "text.secondary",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
                       }}
                     >
-                      <Box
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaGraduationCap style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        Stream
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaUniversity style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        College
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 100,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaUsers style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        Group
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 100,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaSearchDollar style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        Source
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sortDirection={orderBy === "monthlyFee" ? order : false}
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 140,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <TableSortLabel
+                        active={orderBy === "monthlyFee"}
+                        direction={orderBy === "monthlyFee" ? order : "asc"}
+                        onClick={() => handleSortRequest("monthlyFee")}
+                        IconComponent={
+                          orderBy === "monthlyFee"
+                            ? order === "asc"
+                              ? FaArrowUp
+                              : FaArrowDown
+                            : undefined
+                        }
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
+                          justifyContent: "flex-end",
+                          "& .MuiTableSortLabel-icon": {
+                            marginLeft: "8px",
+                            marginRight: "0px",
+                          },
+                          "& .MuiTableSortLabel-iconDirectionDesc": {
+                            transform: "rotate(0deg)",
+                          },
+                          "& .MuiTableSortLabel-iconDirectionAsc": {
+                            transform: "rotate(180deg)",
+                          },
                         }}
                       >
-                        <FaBookOpen
-                          style={{ marginRight: 8, color: "#03a9f4" }}
-                        />
-                        Subject
-                      </Box>
-                    </TableCell>
-                  )}
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 80,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <FaCalendarCheck
-                        style={{ marginRight: 8, color: "#ff9800" }}
-                      />
-                      Year
-                    </Box>
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 120,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <FaGraduationCap
-                        style={{ marginRight: 8, color: "#4caf50" }}
-                      />
-                      Stream
-                    </Box>
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 150,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <FaUniversity
-                        style={{ marginRight: 8, color: "#673ab7" }}
-                      />
-                      College
-                    </Box>
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 100,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <FaUsers style={{ marginRight: 8, color: "#9c27b0" }} />
-                      Group
-                    </Box>
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 100,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <FaSearchDollar
-                        style={{ marginRight: 8, color: "#795548" }}
-                      />
-                      Source
-                    </Box>
-                  </TableCell>
-                  <TableCell
-                    align="right"
-                    sortDirection={orderBy === "monthlyFee" ? order : false}
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 140,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <TableSortLabel
-                      active={orderBy === "monthlyFee"}
-                      direction={orderBy === "monthlyFee" ? order : "asc"}
-                      onClick={() => handleSortRequest("monthlyFee")}
-                      IconComponent={
-                        orderBy === "monthlyFee"
-                          ? order === "asc"
-                            ? FaArrowUp
-                            : FaArrowDown
-                          : undefined
-                      }
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "flex-end",
-                        "& .MuiTableSortLabel-icon": {
-                          marginLeft: "8px",
-                          marginRight: "0px",
-                        },
-                        "& .MuiTableSortLabel-iconDirectionDesc": {
-                          transform: "rotate(0deg)",
-                        },
-                        "& .MuiTableSortLabel-iconDirectionAsc": {
-                          transform: "rotate(180deg)",
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <FaDollarSign
-                          style={{ marginRight: 8, color: "#28a745" }}
-                        />
-                        Monthly Fee
-                      </Box>
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell
-                    align="right"
-                    sortDirection={
-                      orderBy === "classesCompleted" ? order : false
-                    }
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 160,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <TableSortLabel
-                      active={orderBy === "classesCompleted"}
-                      direction={orderBy === "classesCompleted" ? order : "asc"}
-                      onClick={() => handleSortRequest("classesCompleted")}
-                      IconComponent={
-                        orderBy === "classesCompleted"
-                          ? order === "asc"
-                            ? FaArrowUp
-                            : FaArrowDown
-                          : undefined
-                      }
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "flex-end",
-                        "& .MuiTableSortLabel-icon": {
-                          marginLeft: "8px",
-                          marginRight: "0px",
-                        },
-                        "& .MuiTableSortLabel-iconDirectionDesc": {
-                          transform: "rotate(0deg)",
-                        },
-                        "& .MuiTableSortLabel-iconDirectionAsc": {
-                          transform: "rotate(180deg)",
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <FaHourglassHalf
-                          style={{ marginRight: 8, color: "#ffc107" }}
-                        />
-                        Classes Completed
-                      </Box>
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 150,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <FaCalendarAlt
-                        style={{ marginRight: 8, color: "#17a2b8" }}
-                      />
-                      Next Class
-                    </Box>
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      minWidth: 150,
-                      p: 1.5,
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <FaIdCard style={{ marginRight: 8, color: "#6c757d" }} />
-                      Payment Status
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sortedFilteredStudents.map((student, index) => (
-                  <TableRow
-                    key={student.id}
-                    sx={{
-                      "&:last-child td, &:last-child th": { border: 0 },
-                      "&:hover": { backgroundColor: "action.hover" },
-                    }}
-                  >
-                    <TableCell
-                      component="th"
-                      scope="row"
-                      align="center"
-                      sx={{ fontSize: "0.9rem", fontWeight: "bold" }}
-                    >
-                      {index + 1}
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <FaDollarSign style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                          Monthly Fee
+                        </Box>
+                      </TableSortLabel>
                     </TableCell>
                     <TableCell
-                      component="th"
-                      scope="row"
-                      sx={{ fontSize: "0.9rem" }}
+                      align="right"
+                      sortDirection={
+                        orderBy === "classesCompleted" ? order : false
+                      }
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 160,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
                     >
-                      <Link
-                        to={`/student/${student.id}`}
-                        state={{ studentData: student }}
-                        className="student-name-link"
-                        style={{
+                      <TableSortLabel
+                        active={orderBy === "classesCompleted"}
+                        direction={orderBy === "classesCompleted" ? order : "asc"}
+                        onClick={() => handleSortRequest("classesCompleted")}
+                        IconComponent={
+                          orderBy === "classesCompleted"
+                            ? order === "asc"
+                              ? FaArrowUp
+                              : FaArrowDown
+                            : undefined
+                        }
+                        sx={{
                           display: "flex",
                           alignItems: "center",
-                          textDecoration: "underline",
-                          color: "inherit",
-                          fontWeight: 500,
+                          justifyContent: "flex-end",
+                          "& .MuiTableSortLabel-icon": {
+                            marginLeft: "8px",
+                            marginRight: "0px",
+                          },
+                          "& .MuiTableSortLabel-iconDirectionDesc": {
+                            transform: "rotate(0deg)",
+                          },
+                          "& .MuiTableSortLabel-iconDirectionAsc": {
+                            transform: "rotate(180deg)",
+                          },
                         }}
                       >
-                        <FaUserGraduate
-                          style={{ marginRight: 8, color: "#007bff" }}
-                        />
-                        {student.Name}
-                      </Link>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <FaHourglassHalf style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                          Classes Completed
+                        </Box>
+                      </TableSortLabel>
                     </TableCell>
-                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                      {student.Gender || "N/A"}
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaCalendarCheck style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        Next Class
+                      </Box>
                     </TableCell>
-                    {showSubjectColumn && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.Subject || "N/A"}
-                      </TableCell>
-                    )}
-                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                      {student.Year || "N/A"}
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FaIdCard style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        Payment Status
+                      </Box>
                     </TableCell>
-                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                      {student.Stream || "N/A"}
-                    </TableCell>
-                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                      {student.College || "N/A"}
-                    </TableCell>
-                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                      {student["Group "] || "N/A"}
-                    </TableCell>
-                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                      {student.Source || "N/A"}
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontSize: "0.9rem" }}>
-                      ₹
-                      {(typeof student["Monthly Fee"] === "number"
-                        ? student["Monthly Fee"]
-                        : parseFloat(student["Monthly Fee"]) || 0
-                      ).toLocaleString()}
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontSize: "0.9rem" }}>
-                      {student["Classes Completed"] || "N/A"}
-                    </TableCell>
-                    <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                      {student.nextClass
-                        ? format(parseISO(student.nextClass), "MMM dd, p")
-                        : "N/A"}
-                    </TableCell>
-                    {/* Payment Status Cell with Click Handler and Loading */}
-                   <TableCell
-                    align="center"
-                    sx={{
-                      fontSize: "0.9rem",
-                      cursor: "pointer", // Always clickable to allow toggling
-                      "&:hover": {
-                        backgroundColor: "rgba(0, 0, 0, 0.04)", // Hover effect for all states
-                      },
-                      // Disable pointer events if this specific student is being updated
-                      pointerEvents: updatingStudent === student.id ? 'none' : 'auto',
-                      // Optional: Visually indicate disabled state if needed beyond spinner
-                      opacity: updatingStudent === student.id ? 0.7 : 1,
-                    }}
-                    onClick={() =>
-                      handlePaymentStatusToggle(
-                        student.id,
-                        student["Payment Status"]
-                      )
-                    }
-                  >
-                    {/* Show CircularProgress if this student's payment status is being updated */}
-                    {updatingStudent === student.id ? (
-                      <CircularProgress size={20} color="primary" /> // Show spinner
-                    ) : (
-                      <span
-                        className={`payment-status-badge ${String(student["Payment Status"] || '').toLowerCase()}`}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          padding: "4px 8px",
-                          borderRadius: "16px",
-                          fontWeight: "bold",
-                          color:
-                            student["Payment Status"] === "Paid"
-                              ? "#155724" // Dark green for text
-                              : "#721c24", // Dark red for text
-                          backgroundColor:
-                            student["Payment Status"] === "Paid"
-                              ? "#d4edda" // Light green background
-                              : "#f8d7da", // Light red background
-                          border: `1px solid ${
-                            student["Payment Status"] === "Paid"
-                              ? "#28a745" // Green border
-                              : "#dc3545" // Red border
-                          }`,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {student["Payment Status"] === "Paid" ? (
-                          <FaCheckCircle style={{ marginRight: 4 }} />
-                        ) : (
-                          <FaExclamationCircle style={{ marginRight: 4 }} />
-                        )}
-                        {student["Payment Status"]}
-                      </span>
-                    )}
-                  </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        ) : (
-          <p className="no-students-message">
-            No students match your criteria.
-          </p>
-        )}
-      </div>
+                </TableHead>
+                <TableBody>
+                  {sortedFilteredStudents.map((student, index) => (
+                    <TableRow
+                      key={student.id}
+                      sx={{
+                        backgroundColor: index % 2 === 0 ? "#FFFFFF" : "#fbfbfb", // Alternating row colors
+                        "&:hover": { backgroundColor: "#e9f7fe !important" }, // Soft light blue on hover
+                        "& > td": {
+                          borderBottom: "1px solid rgba(0, 0, 0, 0.05) !important", // Lighter borders
+                          fontSize: "0.95rem",
+                          color: "#424242", // Darker text for content
+                        },
+                      }}
+                    >
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        align="center"
+                        sx={{ fontSize: "0.9rem", fontWeight: "bold" }}
+                      >
+                        {index + 1}
+                      </TableCell>
+                      <TableCell component="th" scope="row" sx={{ fontSize: "0.9rem" }}>
+                        <Link
+                          to={`/student/${student.id}`}
+                          state={{ studentData: student }}
+                          className="student-name-link"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            textDecoration: "underline",
+                            color: "inherit",
+                            fontWeight: 500,
+                          }}
+                        >
+                          <FaUserGraduate style={{ marginRight: 8, color: "#007bff" }} />
+                          {student.Name}
+                        </Link>
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.Gender || "N/A"}
+                      </TableCell>
+                      {showSubjectColumn && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student.Subject || "N/A"}
+                        </TableCell>
+                      )}
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.Year || "N/A"}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.Stream || "N/A"}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.College || "N/A"}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student["Group "] || "N/A"}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.Source || "N/A"}
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontSize: "0.9rem" }}>
+                        ₹
+                        {(typeof student["Monthly Fee"] === "number"
+                          ? student["Monthly Fee"]
+                          : parseFloat(student["Monthly Fee"]) || 0
+                        ).toLocaleString()}
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontSize: "0.9rem", whiteSpace: "nowrap" }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 0.5,
+                            pointerEvents: updatingClasses === student.id ? 'none' : 'auto',
+                            opacity: updatingClasses === student.id ? 0.7 : 1,
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            <IconButton
+                              color="primary"
+                              size="small"
+                              onClick={() => handleClassChange(student.id, student["Classes Completed"] || 0, false)}
+                              disabled={updatingClasses === student.id || (student["Classes Completed"] || 0) <= 0}
+                            >
+                              <FaMinusCircle fontSize="small" />
+                            </IconButton>
+                            {updatingClasses === student.id ? (
+                              <CircularProgress size={20} color="primary" />
+                            ) : (
+                              <Typography variant="body1" component="span" sx={{ fontWeight: 600 }}>
+                                {student["Classes Completed"] || 0}
+                              </Typography>
+                            )}
+                            <IconButton
+                              color="primary"
+                              size="small"
+                              onClick={() => handleClassChange(student.id, student["Classes Completed"] || 0, true)}
+                              disabled={updatingClasses === student.id}
+                            >
+                              <FaPlusCircle fontSize="small" />
+                            </IconButton>
+                          </Box>
+                          {lastUpdatedTimestamps[student.id] && (
+                            <Fade in={true} timeout={1000}>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                                Last Updated: {format(parseISO(lastUpdatedTimestamps[student.id]), "MMM dd, hh:mm a")}
+                              </Typography>
+                            </Fade>
+                          )}
+                           {student["Payment Status"] === "Unpaid" && (student["Classes Completed"] || 0) >= 12 && (
+                                <Typography
+                                    variant="caption"
+                                    sx={{
+                                        color: '#ef5350', // Red color for the message
+                                        fontWeight: 'bold',
+                                        mt: 0.5,
+                                        fontSize: '0.75rem',
+                                        animation: 'pulse-red 1.5s infinite alternate', // Subtle animation
+                                        '@keyframes pulse-red': {
+                                            '0%': { opacity: 0.7 },
+                                            '100%': { opacity: 1 },
+                                        },
+                                    }}
+                                >
+                                    Payment Pending!
+                                </Typography>
+                            )}
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.nextClass
+                          ? format(parseISO(student.nextClass), "MMM dd, p")
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontSize: "0.9rem",
+                          cursor: "pointer",
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 0, 0, 0.04)",
+                          },
+                          pointerEvents: updatingStudent === student.id ? "none" : "auto",
+                          opacity: updatingStudent === student.id ? 0.7 : 1,
+                        }}
+                        onClick={() =>
+                          handlePaymentStatusToggle(
+                            student.id,
+                            student["Payment Status"]
+                          )
+                        }
+                      >
+                        {updatingStudent === student.id ? (
+                          <CircularProgress size={20} color="primary" />
+                        ) : (
+                          <span
+                            className={`payment-status-badge ${String(student["Payment Status"] || '').toLowerCase()}`}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              padding: "4px 8px",
+                              borderRadius: "16px",
+                              fontWeight: "bold",
+                              color:
+                                student["Payment Status"] === "Paid"
+                                  ? "#155724"
+                                  : "#721c24",
+                              backgroundColor:
+                                student["Payment Status"] === "Paid"
+                                  ? "#d4edda"
+                                  : "#f8d7da",
+                              border: `1px solid ${
+                                student["Payment Status"] === "Paid"
+                                  ? "#28a745"
+                                  : "#dc3545"
+                              }`,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {student["Payment Status"] === "Paid" ? (
+                              <FaCheckCircle style={{ marginRight: 4 }} />
+                            ) : (
+                              <FaExclamationCircle style={{ marginRight: 4 }} />
+                            )}
+                            {student["Payment Status"]}
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography
+              variant="body1"
+              sx={{ textAlign: "center", p: 3, color: "text.secondary" }}
+            >
+              No students match your criteria.
+            </Typography>
+          )}
+        </Paper>
+      </Slide>
 
       {/* Snackbar for Notifications */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Alert
           onClose={handleCloseSnackbar}
@@ -877,7 +1007,7 @@ const StudentsTable = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </div>
+    </Box>
   );
 };
 

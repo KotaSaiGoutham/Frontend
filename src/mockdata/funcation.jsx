@@ -1,3 +1,5 @@
+import { format, parseISO } from 'date-fns';
+
 export const sortAndFilterTimetableData = (data) => {
     const now = new Date(); // Current date and time
     const todayFormatted = now.toLocaleDateString('en-GB'); // Format: DD/MM/YYYY
@@ -64,3 +66,18 @@ export const sortAndFilterTimetableData = (data) => {
         return timeA - timeB;
     });
 };
+ export const formatFirebaseDate = (timestampObject) => {
+    // Check if it's a valid timestamp object and has _seconds property
+    if (!timestampObject || typeof timestampObject._seconds !== 'number') {
+      return "N/A";
+    }
+
+    try {
+      // Firestore Timestamp objects have a toDate() method to convert to a JavaScript Date object
+      const date = new Date(timestampObject._seconds * 1000 + timestampObject._nanoseconds / 1000000);
+      return format(date, "dd/MM/yyyy");
+    } catch (error) {
+      console.error("Error parsing Firestore Timestamp:", timestampObject, error);
+      return "Invalid Date";
+    }
+  };

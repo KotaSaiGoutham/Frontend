@@ -42,6 +42,12 @@ import {
     FETCH_WEEKLY_MARKS_REQUEST, // <-- NEW
   FETCH_WEEKLY_MARKS_SUCCESS, // <-- NEW
   FETCH_WEEKLY_MARKS_FAILURE, // <-- NEW
+  UPDATE_STUDENT_PAYMENT_STATUS_REQUEST,
+  UPDATE_STUDENT_PAYMENT_STATUS_SUCCESS,
+  UPDATE_STUDENT_PAYMENT_STATUS_FAILURE,
+  UPDATE_STUDENT_CLASSES_REQUEST,
+  UPDATE_STUDENT_CLASSES_SUCCESS,
+  UPDATE_STUDENT_CLASSES_FAILURE
 } from "../types";
 
 // --- 2. Import Utility Functions ---
@@ -91,12 +97,25 @@ export const logoutUser = () => {
     type: LOGOUT,
   };
 };
-export const updateStudentPaymentStatus = (studentId, newStatus) =>
-  apiRequest({
+export const updateStudentPaymentStatus = (studentId, currentStatus) => {
+  const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid"; // Toggle logic
+
+  // Data to send to the backend
+  const updateData = { "Payment Status": newStatus };
+
+  // If changing to Paid, signal backend to calculate paidDate and nextDueDate.
+  if (newStatus === "Paid") {
+    updateData.triggerPaidDateCalculation = true; // New flag for the backend
+  }
+
+  return apiRequest({
     url: `/api/data/students/${studentId}`, // Backend endpoint for updating a student
     method: "PATCH", // Use PATCH for partial update
-    data: { "Payment Status": newStatus }, // The payload to send
-    onStart: UPDATE_STUDENT_PAYMENT_REQUEST,
+    data: updateData, // The payload to send
+    onStart: () => ({
+        type: UPDATE_STUDENT_PAYMENT_REQUEST,
+        payload: studentId // Pass the studentId to track loading for this specific student
+    }),
     onSuccess: (data, dispatch) => {
       console.log(
         `Student ${studentId} payment status updated successfully:`,
@@ -108,11 +127,12 @@ export const updateStudentPaymentStatus = (studentId, newStatus) =>
           studentId,
           newStatus,
           message: data.message || "Payment status updated.",
+          paidDate: data.paidDate,     // Receive the calculated paidDate from backend
+          nextDueDate: data.nextDueDate // Receive the calculated nextDueDate from backend
         },
       });
       // OPTIONAL BUT RECOMMENDED: Re-fetch all students to ensure UI consistency
-      // This will trigger a FETCH_STUDENTS_SUCCESS which updates the entire student list.
-      dispatch(fetchStudents()); // Assuming fetchStudents is also an action in this file
+      dispatch(fetchStudents());
     },
     onFailure: (error, dispatch) => {
       console.error(
@@ -124,7 +144,10 @@ export const updateStudentPaymentStatus = (studentId, newStatus) =>
         "Failed to update payment status.";
       dispatch({
         type: UPDATE_STUDENT_PAYMENT_FAILURE,
-        payload: errorMessage,
+        payload: {
+          studentId, // Pass studentId to clear loading state for this specific student
+          error: errorMessage
+        },
       });
       // If error is 401/403, consider logging out
       if (error && (error.status === 401 || error.status === 403)) {
@@ -136,6 +159,7 @@ export const updateStudentPaymentStatus = (studentId, newStatus) =>
     },
     authRequired: true, // This API call requires authentication
   });
+};
 // --- NEW: Signup User Action Creator ---
 export const signupUser = ({ name, email, mobile, password }) =>
   apiRequest({
@@ -520,4 +544,37 @@ export const addTimetableEntry = (timetableData) =>
       });
     },
     authRequired: true,
+  });
+
+export const updateClassesCompleted = (studentId, newClassesCompletedValue) =>
+  apiRequest({
+    url: `/api/data/students/${studentId}/classes`,
+    method: "PUT",
+    data: { newClassesCompletedValue }, // The payload for the backend
+    onStart: UPDATE_STUDENT_CLASSES_REQUEST,
+    onSuccess: (data, dispatch) => {
+      console.log("Classes completed updated successfully:", data);
+      dispatch({
+        type: UPDATE_STUDENT_CLASSES_SUCCESS,
+        payload: data, // The updated student object from the backend
+      });
+      // You might want to dispatch fetchStudents() here if your reducer doesn't handle the update
+      // by replacing the specific student, or if you need to ensure the entire list is fresh.
+      // dispatch(fetchStudents());
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error updating classes completed:", error);
+      const errorMessage =
+        error.error || error.message || "Failed to update classes completed.";
+      // Assuming apiRequest handles general auth errors, but you can add specific logic here if needed
+      if (error.status === 401 || error.status === 403) {
+        // Example: dispatch a global auth error if you have one
+        // dispatch(setAuthError("Authentication failed or session expired. Please log in again."));
+      }
+      dispatch({
+        type: UPDATE_STUDENT_CLASSES_FAILURE,
+        payload: { error: errorMessage },
+      });
+    },
+    authRequired: true, // Assuming class updates require authentication
   });

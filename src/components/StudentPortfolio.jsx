@@ -1,6 +1,8 @@
 // StudentPortfolio.jsx
 import React, { useState, useEffect } from "react"; // Removed useMemo as latestWeeklyMark is no longer needed
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { format, parseISO } from "date-fns";
+import { formatFirebaseDate } from "../mockdata/funcation";
 import {
   BarChart,
   Bar,
@@ -11,7 +13,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"; // Keep Recharts imports if you use them elsewhere (e.g., Payment History)
-import { format, parseISO } from "date-fns";
 import "./StudentPortfolio.css";
 import AddWeeklyMarksModal from "./AddWeeklyMarksForm";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,6 +38,9 @@ import {
   FaChartLine,
   FaPlus,
   FaSpinner,
+  FaCalendarDay,
+  FaHistory,
+  FaWallet
 } from "react-icons/fa";
 import { MuiButton } from "./customcomponents/MuiCustomFormFields";
 // Import the new line graph component
@@ -44,14 +48,14 @@ import WeeklyMarksTrendGraph from "./WeeklyMarksBarChart"; // <--- NEW IMPORT
 
 const StudentPortfolio = () => {
   const { id: studentId } = useParams();
-  console.log("studentId",studentId)
+  console.log("studentId", studentId);
   const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const {
+  const dispatch = useDispatch();
+  const {
     weeklyMarks, // NEW: from fetchWeeklyMarks
     loadingWeeklyMarks, // NEW: loading state for weeklyMarks
     weeklyMarksError, // NEW: error state for weeklyMarks
-  } = useSelector(state => state.students); 
+  } = useSelector((state) => state.students);
   const location = useLocation();
 
   const [studentData, setStudentData] = useState(
@@ -64,14 +68,12 @@ const StudentPortfolio = () => {
   const [error, setError] = useState(null);
   const [marksError, setMarksError] = useState(null);
 
-
   // Function to fetch Weekly Marks (returns an array)
 
   // Callback to refresh marks after a new one is adde
 
   useEffect(() => {
-
-      dispatch(fetchWeeklyMarks(studentId)); // Fetch weekly marks
+    dispatch(fetchWeeklyMarks(studentId)); // Fetch weekly marks
   }, []); // Depend on studentId and dispatch
 
   // --- REMOVED: No longer need to derive latestWeeklyMark as we are passing the full array for trend graph ---
@@ -143,7 +145,7 @@ const StudentPortfolio = () => {
       name: payment.month || "Month",
       Amount: payment.amount || 0,
     })) || [];
-
+  console.log("studentData", studentData);
   return (
     <div className="portfolio-page-container">
       {/* Header Section */}
@@ -211,15 +213,12 @@ const StudentPortfolio = () => {
               value={`₹${(studentData["Monthly Fee"] || 0).toLocaleString()}`}
               isHighlighted={true}
             />
-            <div className="detail-item highlighted">
-              <div className="detail-label">
-                <FaMoneyBillWave className="detail-icon" />
-                <span>Payment Status</span>
-              </div>
-              <div className="detail-value">
-                {getPaymentStatusDisplay(studentData["Payment Status"])}
-              </div>
-            </div>
+          <DetailItem
+          icon={FaMoneyBillWave}
+          label="Payment Status"
+          value={getPaymentStatusDisplay(studentData["Payment Status"])}
+          isHighlighted={true} // Keep highlighted
+        />
             <DetailItem
               icon={FaChalkboardTeacher}
               label="Total Classes Attended"
@@ -233,6 +232,20 @@ const StudentPortfolio = () => {
                   ? format(parseISO(studentData.nextClass), "MMM dd, p")
                   : "N/A"
               }
+            />
+            <DetailItem
+              icon={FaHistory} // Icon for historical payment date
+              label="Previous Payment Date"
+              value={formatFirebaseDate(studentData.paidDate)}
+              isHighlighted={false} // Adjust as needed
+            />
+
+            {/* New: Next Expected Payment Date (nextDueDate) */}
+            <DetailItem
+              icon={FaCalendarDay} // Icon for future payment date
+              label="Next Expected Payment Date"
+              value={formatFirebaseDate(studentData.nextDueDate)}
+              isHighlighted={studentData["Payment Status"] === "Unpaid"} // Highlight if unpaid
             />
           </div>
         </section>

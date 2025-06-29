@@ -36,13 +36,14 @@ import { addStudent } from "../redux/actions";
 const AddStudent = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch(); // Get the dispatch function
+  const { user } = useSelector((state) => state.auth);
 
   // Initial state for the new student form
   const initialStudentData = {
     Name: "",
     Gender: "",
     ContactNumber: "",
-    Subject: "",
+    Subject: user.isPhysics ? "Physics": user.isChemistry?"Chemistry":"",
     "Monthly Fee": "",
     "Payment Status": "Unpaid",
     Stream: "",
@@ -60,18 +61,6 @@ const {
         addStudentSuccess, 
         addStudentError 
     } = useSelector(state => state.students); // Assuming 'students' is the key for studentReducer in rootReducer
-  // Example of how to get the token (replace with your actual token retrieval logic)
-  useEffect(() => {
-    // In a real app, you'd get this from localStorage, sessionStorage, or a context API
-    const token = localStorage.getItem("token");
-    if (token) {
-      setToken(token);
-    } else {
-      // If no token, maybe redirect to login or show an error
-      // navigate('/login');
-      console.warn("No authentication token found. API calls might fail.");
-    }
-  }, []);
 useEffect(() => {
         if (addStudentSuccess) {
             // Only show alert/message if a successful payload is received
@@ -102,7 +91,6 @@ useEffect(() => {
     }, [addStudentSuccess, addStudentError, navigate, dispatch]); // Dependencies
   // Handle input changes
   // Assuming studentData is your state object, e.g., const [studentData, setStudentData] = useState({});
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -152,6 +140,7 @@ useEffect(() => {
   };
   // Options for your select fields
 
+const showSubjectColumn = user?.AllowAll;
   return (
     <div className="add-student-page-container dashboard-container">
       <div className="dashboard-card add-student-form-card">
@@ -206,7 +195,8 @@ useEffect(() => {
           <div className="add-student-form-section-title">Academic Details</div>
           <div className="add-student-form-grid">
             {/* Primary Subject */}
-            <MuiInput
+          {showSubjectColumn && (
+    <MuiInput
               label="Primary Subject"
               icon={FaBookOpen}
               name="Subject"
@@ -215,6 +205,8 @@ useEffect(() => {
               placeholder="e.g., Physics, Maths"
               required
             />
+          )}
+        
 
             {/* Stream */}
             <MuiSelect

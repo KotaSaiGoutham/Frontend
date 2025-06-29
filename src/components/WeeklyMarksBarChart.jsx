@@ -4,14 +4,15 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement, // Required for line charts
-  LineElement,  // Required for line charts
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Line } from 'react-chartjs-2'; // Import Line component for line charts
-import { format, parseISO } from 'date-fns'; // For date formatting
+import { Line } from 'react-chartjs-2';
+import { format, parseISO } from 'date-fns';
+import { useSelector, useDispatch } from "react-redux";
 
 // Register Chart.js components
 ChartJS.register(
@@ -35,14 +36,14 @@ const MARK_SCHEMES = {
 
 // Helper function (reused)
 const formatSubjectNameForDisplay = (subjectKey) => {
-    if (!subjectKey) return '';
-    let formatted = subjectKey
-      .replace(/([A-Z])/g, " $1")
-      .replace(/^./, (str) => str.toUpperCase());
-    if (formatted.startsWith('Max')) {
-        formatted = formatted.substring(3);
-    }
-    return formatted.trim();
+  if (!subjectKey) return '';
+  let formatted = subjectKey
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (str) => str.toUpperCase());
+  if (formatted.startsWith('Max')) {
+    formatted = formatted.substring(3);
+  }
+  return formatted.trim();
 };
 
 const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType }) => {
@@ -56,17 +57,15 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType }) => {
     const dateA = a.weekDate ? parseISO(a.weekDate).getTime() : 0;
     const dateB = b.weekDate ? parseISO(b.weekDate).getTime() : 0;
 
-    // Fallback to timestamp if weekDate is identical or missing, for finer sorting
     if (dateA === dateB) {
-        // Handle Firestore Timestamps and regular Date strings
-        const timestampA = a.timestamp ? (a.timestamp._seconds * 1000 + a.timestamp._nanoseconds / 1_000_000) : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-        const timestampB = b.timestamp ? (b.timestamp._seconds * 1000 + b.timestamp._nanoseconds / 1_000_000) : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
-        return timestampA - timestampB; // Ascending order by exact time
+      const timestampA = a.timestamp ? (a.timestamp._seconds * 1000 + a.timestamp._nanoseconds / 1_000_000) : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+      const timestampB = b.timestamp ? (b.timestamp._seconds * 1000 + b.timestamp._nanoseconds / 1_000_000) : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+      return timestampA - timestampB;
     }
-    return dateA - dateB; // Ascending order by weekDate
+    return dateA - dateB;
   });
 
-  // 2. Extract unique labels (dates) for the X-axis
+  // 2. Extract unique labels (dates) for the X-axis (shared across all individual graphs)
   const labels = sortedData.map(entry =>
     entry.weekDate ? format(parseISO(entry.weekDate), 'MMM dd, yyyy') : 'Unknown Date'
   );
@@ -74,14 +73,11 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType }) => {
   // 3. Determine subjects to track based on programType or dynamically
   let subjectsToTrack = [];
   if (programType && MARK_SCHEMES[programType]) {
-    // Get subjects from the predefined scheme
     subjectsToTrack = Object.keys(MARK_SCHEMES[programType]).map(s => s.toLowerCase().replace(/\s/g, ""));
   } else {
-    // For 'Others' or any unspecified programType, dynamically find all mark-related keys
     const allKeys = new Set();
     sortedData.forEach(entry => {
       for (const key in entry) {
-        // Exclude metadata fields and 'max' fields, ensure it's a number, and has a corresponding max score
         if (
           key !== 'id' && key !== 'userId' && key !== 'weekDate' &&
           key !== 'recordedBy' && key !== 'timestamp' && key !== 'createdAt' &&
@@ -93,81 +89,149 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType }) => {
     });
     subjectsToTrack = Array.from(allKeys);
   }
+    const { user } = useSelector((state) => state.auth);
 
+   const { AllowAll, isPhysics, isChemistry } = user// Destructure with default empty object for safety
 
-  // 4. Create datasets for each subject
-  const datasets = subjectsToTrack.map((subjectKey, index) => {
-    // Generate a consistent color for each subject for visual distinction
-    const colors = [
-      'rgba(75, 192, 192, 1)',  // Teal
-      'rgba(255, 99, 132, 1)',  // Red
-      'rgba(54, 162, 235, 1)',  // Blue
-      'rgba(255, 206, 86, 1)',  // Yellow
-      'rgba(153, 102, 255, 1)', // Purple
-      'rgba(255, 159, 64, 1)',  // Orange
-      'rgba(192, 192, 75, 1)',  // Olive (add more if you have many subjects)
-    ];
-    const borderColor = colors[index % colors.length];
-
-    return {
-      label: formatSubjectNameForDisplay(subjectKey), // Display formatted subject name
-      data: sortedData.map(entry => entry[subjectKey] !== undefined ? entry[subjectKey] : null), // Use null for missing data points for smooth line breaks
-      borderColor: borderColor,
-      backgroundColor: borderColor.replace('1)', '0.2)'), // Lighter fill for the area under the line
-      fill: false, // Do not fill the area under the line to emphasize trend
-      tension: 0.3, // Adds a slight curve to the lines
-      pointRadius: 5, // Make individual data points visible
-      pointHoverRadius: 7, // Enlarge points on hover
-    };
-  });
-
-  const chartData = {
-    labels: labels,
-    datasets: datasets,
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: `Weekly Marks Trend for ${programType || 'All Subjects'}`,
-      },
-      tooltip: {
-        mode: 'index', // Show all dataset values for the hovered X-point
-        intersect: false, // Tooltip shows even if not directly on a point
-      },
-    },
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: 'Week Date',
-        },
-        type: 'category', // Treat labels as distinct categories (dates)
-      },
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: 'Marks Obtained',
-        },
-      },
-    },
-  };
-
-  // Final check before rendering the chart
-  if (labels.length === 0 || subjectsToTrack.length === 0 || datasets.every(ds => ds.data.every(d => d === null))) {
-    return <p>No sufficient data to display the trend graph (dates, subjects, or valid marks missing).</p>;
+  if (AllowAll) {
+    // If 'allowAll' is true, show all subjects found for the programType
+    subjectsToTrack = subjectsToTrack;
+  } else if (isPhysics) {
+    // If 'isPhysics' is true, filter for subjects that include 'physics'
+    subjectsToTrack = subjectsToTrack.filter(sub => sub.toLowerCase().includes('physics'));
+  } else if (isChemistry) {
+    // If 'isChemistry' is true, filter for subjects that include 'chemistry'
+    subjectsToTrack = subjectsToTrack.filter(sub => sub.toLowerCase().includes('chemistry'));
+  } else {
+    // Default case: if no specific permission allows any subjects, show none.
+    subjectsToTrack = [];
   }
 
+  // Define a set of consistent colors for individual graphs
+  const graphColors = [
+    'rgba(75, 192, 192, 1)',   // Teal
+    'rgba(255, 99, 132, 1)',   // Red
+    'rgba(54, 162, 235, 1)',   // Blue
+    'rgba(255, 206, 86, 1)',   // Yellow
+    'rgba(153, 102, 255, 1)',  // Purple
+    'rgba(255, 159, 64, 1)',   // Orange
+    'rgba(192, 75, 75, 1)',    // Muted Red
+    'rgba(75, 75, 192, 1)',    // Muted Blue
+    'rgba(192, 192, 75, 1)',   // Olive
+    'rgba(75, 192, 75, 1)',    // Green
+  ];
+
+  // 4. Render a separate chart for each subject
   return (
-    <div style={{ width: '100%', height: '400px' }}>
-      <Line data={chartData} options={chartOptions} />
+    <div>
+      {subjectsToTrack.length === 0 ? (
+        <p>No subjects found to display individual trend graphs.</p>
+      ) : (
+        subjectsToTrack.map((subjectKey, index) => {
+          const subjectDisplayName = formatSubjectNameForDisplay(subjectKey);
+          const dataForSubject = sortedData.map(entry => entry[subjectKey] !== undefined ? entry[subjectKey] : null);
+
+          // Find the maximum possible score for this subject
+          let maxScore = null;
+          if (programType && MARK_SCHEMES[programType] && MARK_SCHEMES[programType][subjectDisplayName]) {
+              maxScore = MARK_SCHEMES[programType][subjectDisplayName];
+          } else {
+              // Dynamically find max score from data if programType is 'Others' or specific max key exists
+              const maxKey = `max${subjectKey.charAt(0).toUpperCase() + subjectKey.slice(1)}`; // e.g., maxMaths
+              const relevantMaxScores = sortedData.map(entry => entry[maxKey]).filter(val => typeof val === 'number');
+              if (relevantMaxScores.length > 0) {
+                  maxScore = Math.max(...relevantMaxScores);
+              }
+          }
+
+          // Generate data and options for this specific subject's chart
+          const chartData = {
+            labels: labels,
+            datasets: [
+              {
+                label: `${subjectDisplayName} Marks`,
+                data: dataForSubject,
+                borderColor: graphColors[index % graphColors.length],
+                backgroundColor: graphColors[index % graphColors.length].replace('1)', '0.2)'),
+                fill: false,
+                tension: 0.3,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+              },
+            ],
+          };
+
+          const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false, // Hide legend for individual graphs as title already indicates subject
+              },
+              title: {
+                display: true,
+                text: `${subjectDisplayName} Marks Trend`, // Title for individual subject graph
+                font: {
+                    size: 16, // Slightly larger title for clarity
+                },
+                color: '#333', // Darker color for title
+              },
+              tooltip: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                  title: function(context) {
+                    return `Week: ${context[0].label}`;
+                  },
+                  label: function(context) {
+                    const value = context.raw;
+                    const maxPossible = maxScore !== null ? ` / ${maxScore}` : '';
+                    return ` ${subjectDisplayName}: ${value !== null ? value : 'N/A'}${maxPossible}`;
+                  }
+                }
+              },
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Week Date',
+                  color: '#555',
+                },
+                ticks: {
+                    maxRotation: 45, // Rotate labels if they overlap
+                    minRotation: 0,
+                },
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Marks Obtained',
+                  color: '#555',
+                },
+                max: maxScore !== null ? maxScore : undefined, // Set max y-axis based on subject scheme or detected max
+              },
+            },
+          };
+
+          // Only render chart if there's actual data for this subject (not all nulls)
+          const hasValidData = dataForSubject.some(mark => mark !== null);
+          if (!hasValidData) {
+            return (
+              <div key={subjectKey} className="chart-placeholder" style={{marginBottom: '20px'}}>
+                <p>No valid data for {subjectDisplayName} to display a trend graph.</p>
+              </div>
+            );
+          }
+
+          return (
+            <div key={subjectKey} style={{ width: '100%', height: '350px', marginBottom: '30px' }}>
+              <Line data={chartData} options={chartOptions} />
+            </div>
+          );
+        })
+      )}
     </div>
   );
 };

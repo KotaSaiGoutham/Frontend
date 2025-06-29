@@ -1,168 +1,94 @@
-/* src/pages/TimetablePage.css */
+/* TimetablePage.css */
 
-/* General Page Container */
-.timetable-page-container {
-  min-height: 100vh;
-  background-color: #f7f8fc; /* Changed to a very light, professional blue-grey tint */
+/* --- Global Base Styles --- */
+/* Ensures a clean slate and consistent font rendering */
+body {
+  margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif; /* Standard MUI font */
+  background-color: #f7f8fc; /* Consistent light background for the entire page */
+  -webkit-font-smoothing: antialiased; /* Improves font rendering on macOS/iOS */
+  -moz-osx-font-smoothing: grayscale; /* Improves font rendering on macOS/iOS */
+  overflow-x: hidden; /* Prevent horizontal scroll due to animations */
 }
 
-/* NEW HEADER UI STYLES */
-.main-header-card {
-    background-color: #FFFFFF; /* Stays pure white for contrast and prominence */
-    padding: 20px 30px;
-    margin-bottom: 25px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+/* --- Color Variables (Optional but good practice) --- */
+/* Define your core colors for easier management and consistency */
+:root {
+  --primary-blue: #1976d2; /* Standard Material UI primary blue */
+  --dark-blue: #1a237e;    /* Darker blue for headings/strong text */
+  --secondary-text: #616161; /* Standard Material UI secondary text color */
+  --light-background: #f7f8fc; /* Page background */
+  --paper-background: #ffffff; /* Card background */
+  --table-header-bg: #e3f2fd; /* Light blue for table header */
+  --success-green: #4caf50; /* Green for success/add actions */
+  --hover-light-blue: #e0f7fa; /* Lightest blue for hover effects */
 }
 
-.header-left {
-    /* No specific styling needed unless for alignment */
-}
-
-.header-right {
-    /* No specific styling needed, the MuiButton handles its own layout */
-}
-
-.header-title {
-    font-size: 2.2rem;
-    color: #292551; /* Dark Indigo */
-    margin: 0 0 8px 0;
-    display: flex;
-    align-items: center;
-    font-weight: 700;
-}
-
-.header-icon {
-    font-size: 2.2rem;
-    color: #292551; /* Dark Indigo */
-    margin-right: 10px;
-}
-
-.header-subtitle {
-    font-size: 1.05rem;
-    color: #666;
-    margin: 0;
-}
-
+/* --- Typography Enhancements --- */
 .current-date {
-    font-weight: bold;
-    color: #292551; /* Dark Indigo */
+  font-weight: 700; /* Bolder for emphasis */
+  color: var(--primary-blue); /* Highlighted with primary blue */
 }
 
+/* --- Custom Animations (Keyframes) --- */
 
-/* Timetable Content Card (Table Container) */
-.timetable-content-card {
-  background-color: #ffffff; /* Table content card itself remains white */
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  padding: 0;
-}
-
-/* Table Specific Styles */
-.MuiTableHead-root .MuiTableRow-root { /* Targeting the header row directly */
-  background-color: #eff2f7; /* Changed to a slightly darker professional tint */
-}
-
-/* Styling for header cells */
-.MuiTableCell-head {
-  color: #333 !important;
-  font-weight: bold !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important; /* Soft border */
-  padding: 18px 12px !important;
-  vertical-align: middle;
-  font-size: 1.05rem !important;
-}
-
-/* Icons within table header cells */
-.MuiTableCell-head svg {
-    color: #555;
-    margin-right: 5px;
-    font-size: 1.2rem !important;
-}
-
-/* Table body rows */
-.MuiTableBody-root .MuiTableRow-root:nth-of-type(odd) {
-  background-color: #FFFFFF; /* Pure white for odd rows */
-}
-
-.MuiTableBody-root .MuiTableRow-root:nth-of-type(even) {
-  background-color: #f7f8fc; /* Matches the page background for even rows */
-}
-
-.MuiTableBody-root .MuiTableRow-root:hover {
-  background-color: #e3f2fd !important; /* Standard light blue on hover */
-}
-
-/* Table body cells */
-.MuiTableCell-body {
-  color: #444;
-  padding: 18px 12px !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important; /* Softer border */
-  font-size: 1rem !important;
-}
-
-/* No Classes Message */
-.timetable-no-classes-message {
-  text-align: center;
-  padding: 40px;
-  font-size: 1.1rem;
-  font-style: italic;
-  background-color: #ffffff;
-  border-radius: 12px;
-}
-
-/* Loading and Error Messages */
-.timetable-loading-message,
-.timetable-error-message {
-  text-align: center;
-  padding: 50px;
-  font-size: 1.2rem;
-  color: #555;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 100px);
-}
-
-.timetable-loading-message .spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #1976d2;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
-}
-
+/* Spin/Pulse for Loading Icons (Example: Can be applied to any icon) */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.timetable-error-message h3 {
-  color: #d32f2f;
-  margin-bottom: 20px;
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-.timetable-retry-button {
-  background-color: #1976d2;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
+/* Fade In for Content (Used if not using MUI's Fade component) */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.timetable-retry-button:hover {
-  background-color: #1565c0;
+/* Slide In from Left/Right (Example, MUI's Slide is better for components) */
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* --- Utility Classes (Apply these in JSX via className if needed) --- */
+
+/* Example: Apply to an icon for a subtle continuous spin */
+.icon-spin {
+  animation: spin 2s linear infinite;
+}
+
+/* Example: Apply to a button or card for a subtle pulse on load or hover */
+.element-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Example: For a section that should fade in (less control than MUI Fade) */
+.section-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+
+/* --- Component-Specific Adjustments (Minimal, prefer sx prop) --- */
+
+/* Enhancing the hover state for table rows (already in JSX, but for reference) */
+/* .MuiTableRow-root:hover {
+  background-color: var(--hover-light-blue) !important;
+  transition: background-color 0.3s ease-in-out;
+} */
+
+/* Ensure custom form fields maintain consistent styling */
+/* .MuiFormControl-root {
+  margin-bottom: 16px; /* Example spacing, prefer gap in Box */
+/* } */

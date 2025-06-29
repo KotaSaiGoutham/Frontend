@@ -9,17 +9,18 @@
 
     /* Text Colors */
     --color-text-heading: #212529; /* Dark charcoal for main titles */
-    --color-text-body: #495057;   /* Medium gray for paragraphs/labels */
-    --color-text-light: #6C757D;  /* Lighter gray for secondary text, axes */
+    --color-text-body: #495057;    /* Medium gray for paragraphs/labels */
+    --color-text-light: #6C757D;   /* Lighter gray for secondary text, axes */
 
     /* Accent & Brand Colors */
     --color-accent-primary: #007BFF; /* A clean, professional blue */
     --color-accent-secondary: #28A745; /* Green for success/good performance */
     --color-accent-tertiary: #FFC107; /* Orange for warnings/attention */
     --color-accent-danger: #DC3545; /* Red for errors/alerts */
-    --color-accent-highlight: #FFF3CD; /* Light yellow for highlighting */
-    --color-accent-highlight-border: #FFD280; /* Slightly darker border for highlight */
 
+    /* Simpler Highlight Colors (Softer Yellow Tones) */
+    --color-highlight-soft-bg: #FFFDF5; /* Very light, almost off-white yellow */
+    --color-highlight-soft-border: #FFECB3; /* Softer, muted yellow border */
 
     /* Borders & Shadows */
     --color-border-light: #DEE2E6; /* Very light border */
@@ -27,15 +28,23 @@
     --shadow-medium: 0 8px 20px rgba(0, 0, 0, 0.12); /* Slightly deeper shadow on hover */
 
     /* Spacing (consistent rhythm) */
-    --spacing-xs: 0.5rem;   /* 8px */
-    --spacing-sm: 0.75rem;  /* 12px */
-    --spacing-md: 1rem;     /* 16px */
-    --spacing-lg: 1.5rem;   /* 24px */
-    --spacing-xl: 2rem;     /* 32px */
-    --spacing-xxl: 3rem;    /* 48px */
+    --spacing-xs: 0.5rem;    /* 8px */
+    --spacing-sm: 0.75rem;   /* 12px */
+    --spacing-md: 1rem;      /* 16px */
+    --spacing-lg: 1.5rem;    /* 24px */
+    --spacing-xl: 2rem;      /* 32px */
+    --spacing-xxl: 3rem;     /* 48px */
 }
 
 /* --- Global / Base Styles --- */
+html, body {
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+
+*, *:before, *:after {
+    box-sizing: inherit; /* Inherit box-sizing for all elements */
+}
+
 body {
     font-family: 'Roboto', sans-serif; /* Fallback to generic sans-serif */
     margin: 0;
@@ -126,14 +135,13 @@ body {
     border-radius: 12px;
     box-shadow: var(--shadow-soft);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    opacity: 0; /* Hidden initially for animation */
-    animation: fadeInCard 0.8s ease-out forwards; /* Card animation */
+    /* This card has individual animation delays via .delay-X classes */
 }
 
 /* Staggered card animations */
-.portfolio-card.delay-1 { animation-delay: 0.4s; }
-.portfolio-card.delay-2 { animation-delay: 0.6s; }
-.portfolio-card.delay-3 { animation-delay: 0.8s; }
+.portfolio-card.delay-1 { animation: fadeInCard 0.8s ease-out forwards; animation-delay: 0.4s; }
+.portfolio-card.delay-2 { animation: fadeInCard 0.8s ease-out forwards; animation-delay: 0.6s; }
+.portfolio-card.delay-3 { animation: fadeInCard 0.8s ease-out forwards; animation-delay: 0.8s; }
 
 
 .portfolio-card:hover {
@@ -161,46 +169,52 @@ body {
 /* --- Personal Details Card Specifics --- */
 .personal-details-card .details-grid {
     display: grid;
-    grid-template-columns: 1fr; /* Single column by default */
-    gap: var(--spacing-md); /* Vertical gap */
-    /* On larger screens, this will become multi-column via media queries */
+    /* Use auto-fit for flexible columns based on content width */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-md); /* Consistent gap between items */
 }
 
+/* Base style for all detail items (non-highlighted appear more like list items) */
 .personal-details-card .detail-item {
     display: flex;
     flex-direction: column; /* Stack label and value */
-    padding: var(--spacing-sm) 0;
-    border-bottom: 1px dashed var(--color-border-light); /* Subtle separator */
+    padding: var(--spacing-sm) 0; /* Vertical padding only for list-like appearance */
+    border: none; /* No individual box border by default */
+    border-radius: 0; /* No border-radius by default */
+    background-color: transparent; /* No background by default */
+    border-bottom: 1px dashed var(--color-border-light); /* Subtle separator for list items */
+    transition: all 0.2s ease-in-out; /* Smooth transitions for animation and hover */
+
+    /* Animation properties for individual detail items */
+    opacity: 0; /* Start invisible */
+    transform: translateY(20px); /* Start slightly below */
+    animation: slideInDetail 0.5s ease-out forwards; /* Apply the new animation */
 }
 
+/* Remove bottom border for the very last detail item in the list */
 .personal-details-card .detail-item:last-child {
-    border-bottom: none; /* No border for the last item */
-}
-
-/* Highlighting specific detail items */
-.personal-details-card .detail-item.highlighted {
-    background-color: var(--color-accent-highlight);
-    border: 1px solid var(--color-accent-highlight-border);
-    border-radius: 8px; /* Rounded corners for highlighted item */
-    padding: var(--spacing-md); /* More padding */
-    margin: var(--spacing-xs) 0; /* Adjust margins for visual separation */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    transition: background-color 0.3s ease;
-}
-.personal-details-card .detail-item.highlighted .detail-label {
-    color: var(--color-text-heading); /* Make label darker in highlighted item */
-}
-.personal-details-card .detail-item.highlighted .detail-value {
-    color: var(--color-text-heading); /* Make value darker in highlighted item */
-    font-weight: 700;
-}
-/* Ensure the last highlighted item also doesn't have border-bottom from general rule */
-.personal-details-card .detail-item.highlighted:last-child {
     border-bottom: none;
 }
 
+/* Staggered animation delays for each detail item */
+/* These delays are added on top of the parent card's delay (0.4s for delay-1) */
+.personal-details-card .detail-item:nth-child(1) { animation-delay: calc(0.4s + 0.05s); }
+.personal-details-card .detail-item:nth-child(2) { animation-delay: calc(0.4s + 0.10s); }
+.personal-details-card .detail-item:nth-child(3) { animation-delay: calc(0.4s + 0.15s); }
+.personal-details-card .detail-item:nth-child(4) { animation-delay: calc(0.4s + 0.20s); }
+.personal-details-card .detail-item:nth-child(5) { animation-delay: calc(0.4s + 0.25s); }
+.personal-details-card .detail-item:nth-child(6) { animation-delay: calc(0.4s + 0.30s); }
+.personal-details-card .detail-item:nth-child(7) { animation-delay: calc(0.4s + 0.35s); }
+.personal-details-card .detail-item:nth-child(8) { animation-delay: calc(0.4s + 0.40s); }
+.personal-details-card .detail-item:nth-child(9) { animation-delay: calc(0.4s + 0.45s); } /* Monthly Payment */
+.personal-details-card .detail-item:nth-child(10) { animation-delay: calc(0.4s + 0.50s); } /* Payment Status */
+.personal-details-card .detail-item:nth-child(11) { animation-delay: calc(0.4s + 0.55s); }
+.personal-details-card .detail-item:nth-child(12) { animation-delay: calc(0.4s + 0.60s); }
+.personal-details-card .detail-item:nth-child(13) { animation-delay: calc(0.4s + 0.65s); } /* Previous Payment Date */
+.personal-details-card .detail-item:nth-child(14) { animation-delay: calc(0.4s + 0.70s); } /* Next Due Date */
 
-.personal-details-card .detail-label {
+
+.personal-details-card .detail-item .detail-label {
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
@@ -210,19 +224,47 @@ body {
     margin-bottom: var(--spacing-xs); /* Space between label and value */
 }
 
-.personal-details-card .detail-icon {
+.personal-details-card .detail-item .detail-icon {
     font-size: 1.1rem;
     color: var(--color-accent-primary);
 }
 
-.personal-details-card .detail-value {
+.personal-details-card .detail-item .detail-value {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--color-text-body);
-    /* Removed margin-left: calc(...) for cleaner alignment with column structure */
+    word-break: break-word; /* Prevent long words from overflowing */
 }
 
-/* Payment Status Badge */
+/* Highlighting specific detail items (these are now distinct cards) */
+.personal-details-card .detail-item.highlighted {
+    background-color: var(--color-highlight-soft-bg); /* Very light yellow background */
+    border: 1px solid var(--color-highlight-soft-border); /* Softer yellow border */
+    border-radius: 8px; /* Rounded corners for highlighted item */
+    padding: var(--spacing-md); /* More padding for highlighted items */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Gentle shadow */
+    border-bottom: none; /* Override dashed border if this is highlighted */
+}
+
+/* Specific styles for highlighted items' text */
+.personal-details-card .detail-item.highlighted .detail-label {
+    color: var(--color-text-heading); /* Make label darker in highlighted item */
+    font-weight: 600; /* Slightly bolder label */
+}
+.personal-details-card .detail-item.highlighted .detail-value {
+    color: var(--color-text-heading); /* Make value darker in highlighted item */
+    font-weight: 700;
+    font-size: 1.15rem; /* Slightly larger value font for emphasis */
+}
+
+/* Optional: Add subtle hover effect for highlighted detail items only */
+.personal-details-card .detail-item.highlighted:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08); /* A bit more shadow for highlighted on hover */
+}
+
+
+/* Payment Status Badge (for direct use inside DetailItem value) */
 .payment-status-badge {
     display: inline-flex;
     align-items: center;
@@ -358,6 +400,12 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* New animation for individual detail items */
+@keyframes slideInDetail {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -383,32 +431,20 @@ body {
     .portfolio-card .card-icon {
         font-size: 1.6rem;
     }
-
-    /* Personal details: 2 columns */
-    .personal-details-card .details-grid {
-        grid-template-columns: repeat(2, 1fr);
-        column-gap: var(--spacing-xl); /* More horizontal space */
-    }
-    .personal-details-card .detail-item.highlighted {
-        grid-column: span 2; /* Highlighted items span full width in 2-column layout */
-    }
+    /*
+    .personal-details-card .details-grid now uses auto-fit,
+    so no fixed column definitions here are strictly necessary.
+    The minmax(280px, 1fr) ensures it adapts.
+    */
 }
 
 /* Larger Desktops (1200px and up) */
 @media (min-width: 1200px) {
-    /* Personal details: 3 columns */
-    .personal-details-card .details-grid {
-        grid-template-columns: repeat(3, 1fr);
-        column-gap: var(--spacing-xl);
-    }
-    /* Highlighted items span 2 columns in 3-column layout, or full 3 if preferred */
-    .personal-details-card .detail-item.highlighted {
-        grid-column: span 2; /* Span 2 columns */
-    }
-    /* If you want the highlighted item to take the full row (3 columns) uncomment below */
-    /* .personal-details-card .detail-item.highlighted {
-        grid-column: span 3;
-    } */
+    /*
+    .personal-details-card .details-grid now uses auto-fit,
+    so no fixed column definitions here are strictly necessary.
+    The minmax(280px, 1fr) ensures it adapts.
+    */
 }
 
 
@@ -453,47 +489,29 @@ body {
         font-size: 1.5rem;
     }
 
-    /* Personal details remain single column on mobile */
-    .personal-details-card .detail-value {
-        /* Removed margin-left as column layout is single */
-    }
-    .personal-details-card .detail-item.highlighted {
-        grid-column: span 1; /* Highlighted items also single column */
-    }
+    /* Personal details remain single column on mobile due to minmax(280px, 1fr) */
 }
-/* src/components/StudentPortfolio.css */
-
-/* ... (your existing CSS styles) ... */
 
 /* Style for the Weekly Marks Performance card header */
 .portfolio-card.marks-card h2 {
-    display: flex;               /* Make the h2 a flex container */
-    justify-content: space-between; /* Pushes first item (group) to left, second item (button) to right */
-    align-items: center;         /* Vertically align items in the middle */
-    margin-bottom: var(--spacing-lg); /* Maintain some space below the header */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
     color: var(--color-text-heading);
-    /* Ensure there's space for the button */
-    padding-right: var(--spacing-md); /* Add a little padding to the right if button touches edge */
+    padding-right: var(--spacing-md);
 }
 
-/* Style the new group containing the icon and text */
 .portfolio-card.marks-card h2 .title-and-icon-group {
-    display: flex;             /* Make this group a flex container too */
-    align-items: center;       /* Vertically align icon and text within the group */
-    gap: var(--spacing-sm);    /* Add a small gap between icon and text */
-    /* If you want the text to wrap, consider `flex-wrap: wrap;` here, though usually not needed for a short title */
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
-/* Optional: Adjust button styling if necessary */
 .portfolio-card.marks-card h2 .MuiButton-root {
-    flex-shrink: 0; /* Prevent the button from shrinking if space is tight */
-    /* Any specific margin or padding overrides for MUI buttons if default ones cause issues */
+    flex-shrink: 0;
 }
 
-/* Original card-icon styles might need adjustment if they had direct margins
-   that now conflict with 'gap' on .title-and-icon-group.
-   You can remove direct margins on .card-icon inside this h2.
-*/
 .portfolio-card.marks-card h2 .card-icon {
-    /* If you had 'margin-right' here, remove it, as 'gap' handles it now */
+    /* No specific margin-right here, gap handles it */
 }

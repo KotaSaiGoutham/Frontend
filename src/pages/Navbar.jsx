@@ -1,14 +1,13 @@
-import { useState, useEffect } from "react"; // Import useEffect
-import { NavLink, useLocation, useNavigate } from "react-router-dom"; // Import useLocation, useNavigate
-import { useDispatch, useSelector } from "react-redux"; // Import useDispatch, useSelector
-import { logoutUser } from '../redux/actions'; // Import your logout action
+import { useState, useEffect } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutUser } from '../redux/actions';
 import "./Navbar.css";
 
-// Define your protected paths here (or import them from a central config file if preferred)
 const PROTECTED_BASE_PATHS = [
   "/dashboard",
   "/students",
-  "/student/", // For dynamic student IDs
+  "/student/",
   "/timetable",
   "/employees",
   "/add-student",
@@ -19,55 +18,41 @@ const PROTECTED_BASE_PATHS = [
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const dispatch = useDispatch();
-  const location = useLocation(); // Get current location
-  const navigate = useNavigate(); // For manual logout redirection
-  const isAuthenticated = useSelector(state => state.auth.isAuthenticated); // Get auth status from Redux
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
 
   const handleLinkClick = () => {
     setMenuOpen(false);
   };
 
-  // --- Auto-logout useEffect (Moved here from App.js) ---
   useEffect(() => {
-    // Define public routes that are explicitly related to authentication (login, signup, forgot-password)
-    // or the main home page. These should NOT trigger a logout if an authenticated user visits them.
     const AUTH_RELATED_PUBLIC_PAGES = [
       "/login",
       "/signup",
       "/forgot-password",
-      "/", // Home page is public
+      "/",
     ];
 
-    // Determine if the current path is considered a protected route
     const isCurrentPathProtected = PROTECTED_BASE_PATHS.some(basePath => location.pathname.startsWith(basePath));
-
-    // Determine if the current path is an auth-related public page
     const isAuthRelatedPublicPage = AUTH_RELATED_PUBLIC_PAGES.includes(location.pathname);
 
-    // Logic for automatic logout:
-    // If user is authenticated AND
-    // the current path is NOT a protected route AND
-    // the current path is NOT an auth-related public page
     if (isAuthenticated && !isCurrentPathProtected && !isAuthRelatedPublicPage) {
       console.log(
         `Authenticated user navigated to a non-protected, non-auth public path: ${location.pathname}. Clearing authentication.`
       );
-      dispatch(logoutUser()); // This clears isAuthenticated in Redux and localStorage
-      // No explicit navigate('/login') here; rely on App.js's PrivateRoute/fallback
-      // to redirect once isAuthenticated becomes false.
+      dispatch(logoutUser());
     }
-  }, [location.pathname, isAuthenticated, dispatch]); // Dependencies: responds to changes in path, auth status
+  }, [location.pathname, isAuthenticated, dispatch]);
 
-  // Handle manual logout (e.g., from a logout button in Navbar)
   const handleLogoutClick = () => {
     dispatch(logoutUser());
-    setMenuOpen(false); // Close menu on logout
-    navigate('/login'); // Redirect to login page after manual logout
+    setMenuOpen(false);
+    navigate('/login');
   };
 
   return (
     <header className="navbar">
-      {/* Use NavLink for the logo if it also navigates to home */}
       <NavLink to="/" onClick={handleLinkClick} style={{ textDecoration: "none" }}>
         <div className="navbar-left">
           <img src="/spaceship.png" alt="Logo" className="logo" />
@@ -86,11 +71,9 @@ const Navbar = () => {
         <NavLink to="/" onClick={handleLinkClick} exact activeClassName="active-link">
           Home
         </NavLink>
-        {/* MODIFIED AI LINK HERE */}
         <NavLink to="/ai-summarizer" onClick={handleLinkClick} activeClassName="active-link">
           AI <span className="try-it-highlight">Try it!</span>
         </NavLink>
-        {/* END MODIFIED AI LINK */}
         <NavLink to="/about" onClick={handleLinkClick} activeClassName="active-link">
           About Us
         </NavLink>
@@ -100,14 +83,12 @@ const Navbar = () => {
         <NavLink to="/careers" onClick={handleLinkClick} activeClassName="active-link">
           Careers{" "}
         </NavLink>
-        <NavLink to="/blog" onClick={handleLinkClick} activeClassName="active-link">
+        {/* Removed Blog Link as requested */}
+        {/* <NavLink to="/blog" onClick={handleLinkClick} activeClassName="active-link">
           Blog{" "}
-        </NavLink>
+        </NavLink> */}
         <NavLink to="/contact" onClick={handleLinkClick} activeClassName="active-link">
           Contact Us
-        </NavLink>
-        <NavLink to="/book-demo" className="book-btn demo-btn" onClick={handleLinkClick} activeClassName="active-btn">
-          Book Demo
         </NavLink>
 
         {/* Conditional rendering for auth buttons based on isAuthenticated state */}
@@ -117,18 +98,22 @@ const Navbar = () => {
             <NavLink to="/dashboard" className="auth-btn" onClick={handleLinkClick} activeClassName="active-btn">
               Dashboard
             </NavLink>
-            <button onClick={handleLogoutClick} className="auth-btn logout-btn"> {/* Use a button for logout */}
+            <button onClick={handleLogoutClick} className="auth-btn logout-btn">
               Logout
             </button>
           </div>
         ) : (
-          // If not authenticated, show Sign Up and Login
+          // If not authenticated, show Sign Up, Login, AND Book Demo directly
           <div className="auth-buttons">
-            <NavLink to="/signup" className="auth-btn" onClick={handleLinkClick} activeClassName="active-btn">
+            <NavLink to="/signup" className="auth-btn auth-secondary-btn" onClick={handleLinkClick} activeClassName="active-btn">
               Sign Up
             </NavLink>
-            <NavLink to="/login" className="auth-btn" onClick={handleLinkClick} activeClassName="active-btn">
+            <NavLink to="/login" className="auth-btn auth-secondary-btn" onClick={handleLinkClick} activeClassName="active-btn">
               Login
+            </NavLink>
+            {/* Book Demo is still prominent CTA, potentially with a different class to distinguish its style */}
+            <NavLink to="/book-demo" className="book-btn demo-btn" onClick={handleLinkClick} activeClassName="active-btn">
+              Book Demo
             </NavLink>
           </div>
         )}

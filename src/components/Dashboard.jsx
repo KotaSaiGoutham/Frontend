@@ -257,6 +257,7 @@ let filteredStudents = [];
       </div>
     );
   }
+  const firstName = user && user.name ? user.name.split(' ')[0] : 'Guest'; // Default to 'Guest' if name is not available
 
   return (
     <div className="dashboard-container">
@@ -269,7 +270,7 @@ let filteredStudents = [];
 
         <div className="greeting-content">
           <h1>
-            Good {greetingInfo.text}, {user.name}!
+            Good {greetingInfo.text}, {firstName}!
           </h1>
           <p className="welcome-message">Welcome to your Electron Academy Dashboard.</p>
           {currentQuote && (
