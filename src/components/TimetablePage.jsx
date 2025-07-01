@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // Import useLocation
 import {
   FaCalendarAlt,
   FaChalkboardTeacher,
@@ -13,6 +13,8 @@ import {
   FaHourglassHalf,
   FaExclamationCircle,
 } from "react-icons/fa";
+import { MdCurrencyRupee, MdEdit, MdDelete } from "react-icons/md"; // Import MdEdit, MdDelete
+
 import {
   format,
   parse,
@@ -30,7 +32,6 @@ import {
   parseISO,
   differenceInMinutes,
 } from "date-fns";
-import { MdCurrencyRupee } from "react-icons/md";
 
 import {
   Typography,
@@ -44,8 +45,14 @@ import {
   TableCell,
   CircularProgress,
   Alert,
-  Slide,   // Import Slide for entrance animation
-  Fade,    // Import Fade for loading/error
+  Slide,
+  Fade,
+  // Dialog components for confirmation
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 
 import {
@@ -56,8 +63,7 @@ import {
 } from "../components/customcomponents/MuiCustomFormFields";
 
 import "./TimetablePage.css";
-import { fetchUpcomingClasses } from "../redux/actions";
-import { fetchStudents } from "../redux/actions";
+import { fetchUpcomingClasses, fetchStudents, deleteTimetable } from "../redux/actions"; // Import deleteTimetable
 import { useSelector, useDispatch } from "react-redux";
 
 const TimetablePage = () => {
@@ -78,6 +84,10 @@ const TimetablePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDurationType, setFilterDurationType] = useState("Daily");
   const [filterDate, setFilterDate] = useState(new Date());
+
+  // State for Delete Confirmation Dialog
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
+  const [timetableToDelete, setTimetableToDelete] = useState(null); // Stores the item to be deleted
 
   useEffect(() => {
     dispatch(fetchUpcomingClasses());
@@ -271,7 +281,7 @@ const TimetablePage = () => {
         if (typeof matchedStudent.monthlyFee === 'number' && matchedStudent.monthlyFee > 0) {
           feeToUse = matchedStudent.monthlyFee;
         } else if (typeof matchedStudent['Monthly Fee'] === 'string' && parseFloat(matchedStudent['Monthly Fee']) > 0) {
-           feeToUse = parseFloat(matchedStudent['Monthly Fee']);
+          feeToUse = parseFloat(matchedStudent['Monthly Fee']);
         }
 
         if (feeToUse > 0) {
@@ -313,6 +323,39 @@ const TimetablePage = () => {
   const handleAddTimetableClick = () => {
     navigate("/add-timetable");
   };
+
+  // --- New Handlers for Edit and Delete ---
+  const handleEditTimetable = (timetableItem) => {
+    // Navigate to add-timetable page, passing the full item data as state
+    navigate("/add-timetable", { state: { timetableToEdit: timetableItem } });
+  };
+
+  const handleDeleteClick = (timetableItem) => {
+    setTimetableToDelete(timetableItem);
+    setOpenDeleteConfirm(true);
+  };
+
+  const handleCloseDeleteConfirm = () => {
+    setOpenDeleteConfirm(false);
+    setTimetableToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    console.log("timetableToDelete",timetableToDelete)
+    if (timetableToDelete && timetableToDelete.id) {
+      try {
+        await dispatch(deleteTimetable(timetableToDelete.id));
+        // Success feedback can be added here (e.g., a toast message)
+      } catch (error) {
+        // Error feedback can be added here
+        console.error("Failed to delete timetable:", error);
+        alert(`Failed to delete timetable: ${error.message}`); // Simple alert for now
+      } finally {
+        handleCloseDeleteConfirm();
+      }
+    }
+  };
+  // --- End New Handlers ---
 
   // Centralized loading and error states with Fade animation
   if (classesLoading || studentsLoading) {
@@ -437,7 +480,7 @@ const TimetablePage = () => {
               </Typography>
             </Box>
           </Box>
-           <MuiButton
+          <MuiButton
             variant="contained"
             startIcon={<FaPlusCircle />}
             onClick={handleAddTimetableClick}
@@ -641,12 +684,24 @@ const TimetablePage = () => {
                         <MdCurrencyRupee style={{ marginRight: "8px", color: "#1976d2" }} /> Fee / Class
                       </Box>
                     </TableCell>
+                    {/* New: Actions Table Header */}
+                    <TableCell
+                      sx={{
+                        color: "#1a237e",
+                        fontWeight: "bold",
+                        fontSize: "1.05rem",
+                        padding: "18px 12px",
+                        textAlign: 'center',
+                      }}
+                    >
+                      Actions
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {sortedFilteredTimetables.map((item, index) => (
                     <TableRow
-                      key={index}
+                      key={item.id || index} // Use item.id if available, otherwise index
                       sx={{
                         backgroundColor: index % 2 === 0 ? "#FFFFFF" : "#fbfbfb",
                         "&:hover": { backgroundColor: "#e9f7fe !important" }, // Changed hover color to a softer light blue
@@ -670,9 +725,49 @@ const TimetablePage = () => {
                       <TableCell>{item.Time}</TableCell>
                       <TableCell>{calculateDuration(item.Time)}</TableCell>
                       <TableCell>
-                          {item.monthlyFeePerClass !== "N/A"
-                              ? `₹${item.monthlyFeePerClass}`
-                              : "N/A"}
+                        {item.monthlyFeePerClass !== "N/A"
+                          ? `₹${item.monthlyFeePerClass}`
+                          : "N/A"}
+                      </TableCell>
+                      {/* New: Actions Table Cell */}
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                          {/* <MuiButton
+                            variant="outlined"
+                            size="small"
+                            startIcon={<MdEdit />}
+                            onClick={() => handleEditTimetable(item)}
+                            sx={{
+                              borderColor: '#1976d2',
+                              color: '#1976d2',
+                              '&:hover': {
+                                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                                borderColor: '#1565c0',
+                                color: '#1565c0',
+                              },
+                            }}
+                          >
+                            Edit
+                          </MuiButton> */}
+                          <MuiButton
+                            variant="outlined"
+                            size="small"
+                            startIcon={<MdDelete />}
+                            color="error" // Use error color for delete button
+                            onClick={() => handleDeleteClick(item)}
+                            sx={{
+                              borderColor: '#d32f2f',
+                              color: '#d32f2f',
+                              '&:hover': {
+                                backgroundColor: 'rgba(211, 47, 47, 0.04)',
+                                borderColor: '#c62828',
+                                color: '#c62828',
+                              },
+                            }}
+                          >
+                            Delete
+                          </MuiButton>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -689,6 +784,40 @@ const TimetablePage = () => {
           )}
         </Paper>
       </Slide>
+
+      {/* Delete Confirmation Dialog */}
+   <Dialog
+      open={openDeleteConfirm}
+      onClose={handleCloseDeleteConfirm}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">
+        {"Confirm Deletion?"}
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          Are you sure you want to delete the timetable entry for{" "}
+          <b>{timetableToDelete?.Student}</b> on{" "}
+          <b>{timetableToDelete?.Day}</b> at{" "}
+          <b>{timetableToDelete?.Time}</b>? This action cannot be undone.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions
+        // Add sx prop to DialogActions to center the content
+        sx={{
+          justifyContent: 'center', // Centers items horizontally
+          gap: 2, // Adds some space between buttons (optional)
+        }}
+      >
+        <MuiButton onClick={handleCloseDeleteConfirm} color="primary">
+          Cancel
+        </MuiButton>
+        <MuiButton onClick={handleConfirmDelete} color="error" autoFocus>
+          Delete
+        </MuiButton>
+      </DialogActions>
+    </Dialog>
     </Box>
   );
 };

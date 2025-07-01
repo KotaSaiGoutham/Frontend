@@ -39,7 +39,7 @@ import {
   UPDATE_STUDENT_PAYMENT_REQUEST, // <-- NEW
   UPDATE_STUDENT_PAYMENT_SUCCESS, // <-- NEW
   UPDATE_STUDENT_PAYMENT_FAILURE, // <-- NEW
-    FETCH_WEEKLY_MARKS_REQUEST, // <-- NEW
+  FETCH_WEEKLY_MARKS_REQUEST, // <-- NEW
   FETCH_WEEKLY_MARKS_SUCCESS, // <-- NEW
   FETCH_WEEKLY_MARKS_FAILURE, // <-- NEW
   UPDATE_STUDENT_PAYMENT_STATUS_REQUEST,
@@ -47,7 +47,13 @@ import {
   UPDATE_STUDENT_PAYMENT_STATUS_FAILURE,
   UPDATE_STUDENT_CLASSES_REQUEST,
   UPDATE_STUDENT_CLASSES_SUCCESS,
-  UPDATE_STUDENT_CLASSES_FAILURE
+  UPDATE_STUDENT_CLASSES_FAILURE,
+  DELETE_TIMETABLE_REQUEST,
+  DELETE_TIMETABLE_SUCCESS,
+  DELETE_TIMETABLE_FAILURE,
+  UPDATE_TIMETABLE_REQUEST,
+  UPDATE_TIMETABLE_SUCCESS,
+  UPDATE_TIMETABLE_FAILURE,
 } from "../types";
 
 // --- 2. Import Utility Functions ---
@@ -113,8 +119,8 @@ export const updateStudentPaymentStatus = (studentId, currentStatus) => {
     method: "PATCH", // Use PATCH for partial update
     data: updateData, // The payload to send
     onStart: () => ({
-        type: UPDATE_STUDENT_PAYMENT_REQUEST,
-        payload: studentId // Pass the studentId to track loading for this specific student
+      type: UPDATE_STUDENT_PAYMENT_REQUEST,
+      payload: studentId, // Pass the studentId to track loading for this specific student
     }),
     onSuccess: (data, dispatch) => {
       console.log(
@@ -127,8 +133,8 @@ export const updateStudentPaymentStatus = (studentId, currentStatus) => {
           studentId,
           newStatus,
           message: data.message || "Payment status updated.",
-          paidDate: data.paidDate,     // Receive the calculated paidDate from backend
-          nextDueDate: data.nextDueDate // Receive the calculated nextDueDate from backend
+          paidDate: data.paidDate, // Receive the calculated paidDate from backend
+          nextDueDate: data.nextDueDate, // Receive the calculated nextDueDate from backend
         },
       });
       // OPTIONAL BUT RECOMMENDED: Re-fetch all students to ensure UI consistency
@@ -146,7 +152,7 @@ export const updateStudentPaymentStatus = (studentId, currentStatus) => {
         type: UPDATE_STUDENT_PAYMENT_FAILURE,
         payload: {
           studentId, // Pass studentId to clear loading state for this specific student
-          error: errorMessage
+          error: errorMessage,
         },
       });
       // If error is 401/403, consider logging out
@@ -389,18 +395,20 @@ export const fetchWeeklyMarks = (studentId) =>
   apiRequest({
     // IMPORTANT: Make sure this URL is correct and matches your backend API
     url: `/api/data/${studentId}/marks/weekly`, // Consistent URL with your previous component snippet
-    method: 'GET',
+    method: "GET",
     onStart: FETCH_WEEKLY_MARKS_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log('Weekly marks fetched successfully:', data);
+      console.log("Weekly marks fetched successfully:", data);
       dispatch({
         type: FETCH_WEEKLY_MARKS_SUCCESS,
         payload: data, // Assuming data is the array of weekly marks
       });
     },
     onFailure: (error, dispatch) => {
-      console.error('Error fetching weekly marks:', error);
-      const errorMessage = (error && (error.error || error.message)) || 'Failed to fetch weekly marks.';
+      console.error("Error fetching weekly marks:", error);
+      const errorMessage =
+        (error && (error.error || error.message)) ||
+        "Failed to fetch weekly marks.";
       dispatch({
         type: FETCH_WEEKLY_MARKS_FAILURE,
         payload: errorMessage,
@@ -408,7 +416,9 @@ export const fetchWeeklyMarks = (studentId) =>
       // Handle unauthorized/expired token through the middleware's global error handling
       // or explicitly here if needed.
       if (error && (error.status === 401 || error.status === 403)) {
-        dispatch(setAuthError("Session expired or unauthorized. Please log in again."));
+        dispatch(
+          setAuthError("Session expired or unauthorized. Please log in again.")
+        );
         dispatch(logoutUser());
       }
     },
@@ -578,3 +588,69 @@ export const updateClassesCompleted = (studentId, newClassesCompletedValue) =>
     },
     authRequired: true, // Assuming class updates require authentication
   });
+export const deleteTimetable = (timetableId) =>
+  apiRequest({
+    url: `/api/data/timetables/${timetableId}`, // This must match your backend DELETE route
+    method: "DELETE",
+    onStart: DELETE_TIMETABLE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      console.log("Timetable entry deleted successfully:", data);
+      dispatch({
+        type: DELETE_TIMETABLE_SUCCESS,
+        payload: timetableId, // Send the ID of the deleted item for potential UI updates
+      });
+      // Re-fetch to update the list immediately after successful deletion
+      dispatch(fetchUpcomingClasses());
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error deleting timetable entry:", error);
+      const errorMessage =
+        error.error || error.message || "Failed to delete timetable entry.";
+      if (error.status === 401 || error.status === 403) {
+        dispatch(
+          setAuthError(
+            "Authentication failed or session expired. Please log in again."
+          )
+        );
+      }
+      dispatch({
+        type: DELETE_TIMETABLE_FAILURE,
+        payload: { error: errorMessage },
+      });
+      // No need to throw error here, as the component will handle dispatching
+      // the failure type and potentially showing a notification based on that.
+    },
+    authRequired: true, // Assuming deletion requires authentication
+  });
+
+export const updateTimetableEntry = (timetableData) => async (dispatch) => {
+  try {
+    dispatch({ type: UPDATE_TIMETABLE_REQUEST });
+
+    // The timetableData object should contain the 'id' of the entry to update,
+    // along with the updated fields (Day, Faculty, Subject, Time, Topic, Student).
+    // Make sure your backend expects the ID in the URL params or as part of the body.
+    // For RESTful APIs, it's common to have the ID in the URL for PUT/PATCH.
+    const { id, ...fieldsToUpdate } = timetableData;
+
+    if (!id) {
+      throw new Error("Timetable ID is missing for update operation.");
+    }
+
+    const response = await apiRequest({
+      url: `/api/data/timetables/${id}`, // **Adjust this API endpoint to match your backend's PUT/PATCH route**
+      method: "PUT", // Use PUT or PATCH for updates
+      data: fieldsToUpdate, // Send the updated fields in the request body
+    });
+
+    dispatch({ type: UPDATE_TIMETABLE_SUCCESS, payload: response.data });
+    // After a successful update, re-fetch your list of classes to show the latest data
+    dispatch(fetchUpcomingClasses());
+
+    return response.data; // Return updated data if needed by the component
+  } catch (error) {
+    console.error("Error updating timetable entry:", error);
+    dispatch({ type: UPDATE_TIMETABLE_FAILURE, payload: error.message });
+    throw error; // Re-throw to be caught by the component for UI feedback
+  }
+};

@@ -88,6 +88,8 @@ const AddTimetablePage = () => {
 
   const [submitMessage, setSubmitMessage] = useState({ type: "", message: "" });
   const [formError, setFormError] = useState("");
+    const [showSuccessAnimation, setShowSuccessAnimation] = useState(false); // New state for animation
+
 
   // State for Select options and disability based on user roles
   const [computedFacultyOptions, setComputedFacultyOptions] = useState([]);
@@ -101,23 +103,33 @@ const AddTimetablePage = () => {
 
   // UseMemo for filtered topics (depends on formData.subject)
   const filteredTopicOptions = useMemo(() => {
-    if (!formData.subject) return [{ value: "", label: "Select Topic" }];
+    if (!formData.subject) {
+        return [{ value: "", label: "Select Topic" }];
+    }
 
     const filtered = topicOptions.filter(
-      (topicObj) => topicObj.subject === formData.subject
+        (topicObj) => topicObj.subject === formData.subject
     );
-    const options = filtered.map((topicObj) => ({
-      value: topicObj.topic,
-      label: topicObj.topic,
+
+    // Sort the filtered topics alphabetically by their 'topic' property
+    const sortedFiltered = [...filtered].sort((a, b) => {
+        return a.topic.localeCompare(b.topic);
+    });
+
+    const options = sortedFiltered.map((topicObj) => ({
+        value: topicObj.topic,
+        label: topicObj.topic,
     }));
 
+    // Handle initial "Select Topic" or "No Topics Available"
     if (options.length > 0 && !options.some((opt) => opt.value === "")) {
-      options.unshift({ value: "", label: "Select Topic" });
+        options.unshift({ value: "", label: "Select Topic" });
     } else if (options.length === 0) {
-      return [{ value: "", label: "No Topics Available" }];
+        return [{ value: "", label: "No Topics Available" }];
     }
+
     return options;
-  }, [formData.subject]);
+}, [formData.subject, topicOptions]); // Add topicOptions to dependency array if it can change
 
   // useEffect for resetting topic if subject changes and current topic is invalid
   useEffect(() => {
@@ -256,8 +268,13 @@ const AddTimetablePage = () => {
     } else {
       filteredByRoleStudents = students;
     }
-
-    let options = filteredByRoleStudents.map((stu) => ({
+   const sortedStudents = [...filteredByRoleStudents].sort((a, b) => {
+        // Ensure 'Name' exists and is a string for comparison
+        const nameA = a.Name ? String(a.Name).toUpperCase() : '';
+        const nameB = b.Name ? String(b.Name).toUpperCase() : '';
+        return nameA.localeCompare(nameB);
+    });
+    let options = sortedStudents.map((stu) => ({
       value: String(stu.id),
       label: stu.Name,
     }));
@@ -449,6 +466,7 @@ const AddTimetablePage = () => {
     if (!validateForm()) {
       return;
     }
+    setShowSuccessAnimation(false); // Reset animation state before new submission
 
     setSubmitMessage({ type: "", message: "" }); // Clear previous messages
 
@@ -495,6 +513,8 @@ const AddTimetablePage = () => {
         type: "success",
         message: "Timetable entry added successfully!",
       });
+              setShowSuccessAnimation(true); // Trigger animation on success (even simulated)
+
       setFormData((prev) => ({
         ...prev,
         date: format(new Date(), "yyyy-MM-dd"),
@@ -505,9 +525,15 @@ const AddTimetablePage = () => {
         topic: "",
         student: isStudentSelectDisabled ? prev.student : "", // Retain if disabled and pre-selected
       }));
-      setTimeout(() => navigate("/timetable"), 1500);
+      setTimeout(() => {
+        setSubmitMessage({ type: "", message: "" }); // Clear message
+        setShowSuccessAnimation(false); // Reset animation state
+        navigate("/timetable");
+      }, 1500); // This delay is for the message and redirection
     } catch (err) {
       console.error("Error during dispatch of addTimetableEntry:", err);
+            setShowSuccessAnimation(false); // Ensure animation is off for errors
+
     }
   };
 
@@ -681,6 +707,18 @@ const AddTimetablePage = () => {
             </div>
           </form>
         </div>
+          {submitMessage.message && (
+              <div
+                className={`ats-submit-message ${
+                  submitMessage.type === "success"
+                    ? "ats-submit-success"
+                    : "ats-submit-error"
+                } ${showSuccessAnimation ? 'ats-success-animate' : ''}`} 
+              >
+                {submitMessage.type === "error" && <FaExclamationCircle />}{" "}
+                {submitMessage.message}
+              </div>
+            )}
       </div>
     </LocalizationProvider>
   );

@@ -279,6 +279,7 @@ const StudentPortfolio = () => {
             <WeeklyMarksTrendGraph
               weeklyMarksData={weeklyMarks} // <--- IMPORTANT: Pass the full array here
               programType={studentData.Stream}
+              studentData={studentData}
             />
           ) : (
             <div className="no-data-message">

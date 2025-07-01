@@ -103,6 +103,14 @@ const Careers = () => {
   }, []);
 
 const jobs = [
+      {
+    title: "Maths Tutor",
+    experience: "5+ years, expertise in competitive exams",
+    skills: "JEE/NEET/Boards Prep, Interactive online sessions, Problem-solving techniques",
+    salary: "Based on experience",
+    location: "Remote",
+    jobType: "Part-time / Full-time",
+  },
     {
     title: "Physics Tutor",
     experience: "5+ years, strong track record",
@@ -120,14 +128,7 @@ const jobs = [
     location: "Remote",
     jobType: "Part-time",
   },
-    {
-    title: "Maths Tutor",
-    experience: "5+ years, expertise in competitive exams",
-    skills: "JEE/NEET/Boards Prep, Interactive online sessions, Problem-solving techniques",
-    salary: "Based on experience",
-    location: "Remote",
-    jobType: "Part-time / Full-time",
-  },
+
    {
     title: "Botany Tutor",
     experience: "3+ years, expertise in plant science",
