@@ -5,18 +5,19 @@ import {
   CategoryScale,
   LinearScale,
   PointElement,
-  BarElement,
+  BarElement, // Required for bar charts
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2"; // Import Bar component for UI rendering
 import { format, parseISO } from "date-fns";
 import { useSelector } from "react-redux";
 
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
+// Register Chart.js components and datalabels plugin
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -25,7 +26,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  ChartDataLabels // Register the datalabels plugin
+  ChartDataLabels
 );
 
 // MARK_SCHEMES (reused from your previous code for subject identification)
@@ -56,7 +57,8 @@ const formatSubjectNameForDisplay = (subjectKey) => {
 };
 
 /**
- * Determines a color (Red, Yellow, Green, or Gray) based on the mark's percentage.
+ * Determines a more vibrant color (Red, Yellow, Green, or Gray) based on the mark's percentage.
+ * Adjusted for better visual reflection.
  * @param {number} mark - The actual mark obtained.
  * @param {number} maxScore - The maximum possible score.
  * @param {number} [baseAlpha=0.7] - Alpha value for the background color.
@@ -82,21 +84,21 @@ const getColorByPercentage = (
   let r, g, b; // RGB components
 
   if (percentage < 50) {
-    // Red for less than 50%
+    // Brighter Red for less than 50%
+    r = 220;
+    g = 53;
+    b = 69; // Bootstrap 'danger' red
+  } else if (percentage >= 50 && percentage < 75) {
+    // Vibrant Orange/Yellow for 50-74%
     r = 255;
-    g = 99;
-    b = 132; // Standard Chart.js red
-  } else if (percentage >= 50 && percentage < 80) {
-    // Yellow for 50-79%
-    r = 255;
-    g = 206;
-    b = 86; // Standard Chart.js yellow
+    g = 193;
+    b = 7; // Bootstrap 'warning' yellow
   } else {
-    // percentage >= 80
-    // Green for 80% and above
+    // percentage >= 75
+    // Strong Green for 75% and above
     r = 40;
     g = 167;
-    b = 69; // Vibrant green
+    b = 69; // Bootstrap 'success' green
   }
 
   return {
@@ -147,7 +149,7 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
 
   // 3. Determine subjects to track based on programType or dynamically
   let subjectsToTrack = [];
-  const effectiveProgramType = studentData?.Stream || programType; // Use studentData.Stream if available
+  const effectiveProgramType = studentData?.Stream || programType;
 
   if (effectiveProgramType && MARK_SCHEMES[effectiveProgramType]) {
     subjectsToTrack = Object.keys(MARK_SCHEMES[effectiveProgramType]).map((s) =>
@@ -216,59 +218,58 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
     return row;
   });
 
-  // --- NEW: Prepare Data for Overall Performance Bar Graph for PDF ---
-  let overallChartDataForPdf = null;
-  let overallChartOptionsForPdf = null;
+  // --- Prepare Array of Chart Data and Options for PDF (Subject-wise) ---
+  const pdfCharts = []; // This will hold all charts for the PDF
 
-  if (subjectsToTrack.length > 0) {
-    // Calculate total marks for each week
-    const totalMarksPerWeek = sortedData.map(entry => {
-      let weekTotal = 0;
-      let maxWeekTotal = 0;
-      subjectsToTrack.forEach(subjectKey => {
-        const mark = entry[subjectKey];
-        const display = formatSubjectNameForDisplay(subjectKey);
-        const maxScoreForSubject = effectiveProgramType && MARK_SCHEMES[effectiveProgramType]?.[display] != null
-          ? MARK_SCHEMES[effectiveProgramType][display]
-          : null;
-
-        if (typeof mark === 'number' && maxScoreForSubject !== null) {
-          weekTotal += mark;
-          maxWeekTotal += maxScoreForSubject;
-        }
-      });
-      return { total: weekTotal, maxTotal: maxWeekTotal };
-    });
-
-    const marksData = totalMarksPerWeek.map(item => item.total);
-    const maxMarksData = totalMarksPerWeek.map(item => item.maxTotal);
-
-    // Get background/border colors based on overall performance percentage
-    const backgroundColors = marksData.map((mark, idx) =>
-      getColorByPercentage(mark, maxMarksData[idx], 0.7, 1).bgColor
-    );
-    const borderColors = marksData.map((mark, idx) =>
-      getColorByPercentage(mark, maxMarksData[idx], 0.7, 1).borderColor
+  subjectsToTrack.forEach((subjectKey) => {
+    const subjectDisplayName = formatSubjectNameForDisplay(subjectKey);
+    const dataForSubject = sortedData.map((entry) =>
+      entry[subjectKey] !== undefined ? entry[subjectKey] : null
     );
 
+    let maxScore = null;
+    if (
+      effectiveProgramType &&
+      MARK_SCHEMES[effectiveProgramType] &&
+      MARK_SCHEMES[effectiveProgramType][subjectDisplayName]
+    ) {
+      maxScore = MARK_SCHEMES[effectiveProgramType][subjectDisplayName];
+    } else {
+      const maxKey = `max${
+        subjectKey.charAt(0).toUpperCase() + subjectKey.slice(1)
+      }`;
+      const relevantMaxScores = sortedData
+        .map((entry) => entry[maxKey])
+        .filter((val) => typeof val === "number");
+      if (relevantMaxScores.length > 0) {
+        maxScore = Math.max(...relevantMaxScores);
+      }
+    }
 
-    overallChartDataForPdf = {
+    const backgroundColors = dataForSubject.map(
+      (mark) => getColorByPercentage(mark, maxScore, 0.7, 1).bgColor // Adjusted alpha for PDF
+    );
+    const borderColors = dataForSubject.map(
+      (mark) => getColorByPercentage(mark, maxScore, 0.7, 1).borderColor
+    );
+
+    const chartData = {
       labels: labels,
       datasets: [
         {
-          label: 'Total Marks',
-          data: marksData,
+          label: `${subjectDisplayName} Marks`,
+          data: dataForSubject,
           backgroundColor: backgroundColors,
           borderColor: borderColors,
-          borderWidth: 1,
-          datalabels: { // Add datalabels plugin configuration here
+          borderWidth: 1, // Thinner border for PDF charts
+          datalabels: {
             anchor: "end",
             align: "top",
             offset: 4,
             color: "#444",
             font: {
               weight: "bold",
-              size: 12,
+              size: 10, // Smaller font for marks in PDF
             },
             formatter: function (value, context) {
               return value !== null ? value.toFixed(0) : "";
@@ -284,12 +285,10 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
       ],
     };
 
-    // Determine the maximum possible total score to set the Y-axis max
-    const overallMaxScoreForChart = Math.max(...maxMarksData.filter(val => val > 0)); // Determine overall max for chart scale
-
-    overallChartOptionsForPdf = {
+    const chartOptions = {
       responsive: true,
       maintainAspectRatio: false,
+      animation: false, // No animation for PDF charts
       scales: {
         x: {
           title: {
@@ -305,10 +304,9 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
           beginAtZero: true,
           title: {
             display: true,
-            text: "Total Marks Obtained",
+            text: "Marks Obtained",
           },
-          // Set max to the overall maximum possible score across all weeks, plus a small buffer
-          max: overallMaxScoreForChart > 0 ? overallMaxScoreForChart * 1.1 : undefined,
+          max: maxScore !== null ? maxScore * 1.1 : undefined, // Slightly more space above max mark
           ticks: {
             callback: function (value) {
               if (Number.isInteger(value)) {
@@ -325,16 +323,18 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
         },
         title: {
           display: true,
-          text: 'Overall Weekly Performance Trend',
-          font: { size: 16, weight: 'bold' },
+          text: `${subjectDisplayName} Marks Trend`,
+          font: { size: 14, weight: 'bold' }, // Smaller title for PDF charts
           color: '#333'
         },
         tooltip: {
             callbacks: {
                 label: function(context) {
                     const value = context.raw;
-                    const maxPossible = maxMarksData[context.dataIndex]; // Use maxMarksData for specific week
-                    return `Total: ${value} / ${maxPossible}`;
+                    const maxPossible = maxScore !== null ? ` / ${maxScore}` : "";
+                    return ` ${subjectDisplayName}: ${
+                      value !== null ? value : "N/A"
+                    }${maxPossible}`;
                 }
             }
         },
@@ -343,13 +343,16 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
         }
       },
     };
-  }
-  // --- END NEW: Prepare Data for Overall Performance Bar Graph for PDF ---
 
+    const hasValidData = dataForSubject.some((mark) => mark !== null);
+    if (hasValidData) {
+      pdfCharts.push({ chartData, chartOptions, title: `${subjectDisplayName} Marks Trend` });
+    }
+  });
 
   return (
     <div className="weekly-marks-trend-container">
-      {/* Download PDF Button */}
+      {/* Download PDF Button - Now passes an array of charts */}
       {subjectsToTrack.length > 0 && (
         <div style={{ textAlign: "right", marginBottom: 20, paddingRight: 15 }}>
           <PdfDownloadButton
@@ -364,12 +367,12 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
                 ? parseISO(sortedData[sortedData.length - 1].weekDate)
                 : new Date()
             }
-            chartData={overallChartDataForPdf}
-            chartOptions={overallChartOptionsForPdf}
+            charts={pdfCharts} // <--- NEW: Passing an array of charts
           />
         </div>
       )}
 
+      {/* Render individual subject charts on the webpage */}
       {subjectsToTrack.length === 0 ? (
         <p>
           No subjects found to display individual trend graphs based on your
@@ -402,29 +405,21 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
           }
 
           const backgroundColors = dataForSubject.map(
-            (mark) => getColorByPercentage(mark, maxScore, 0.7, 1).bgColor
+            (mark) => getColorByPercentage(mark, maxScore, 0.8, 1).bgColor
           );
           const borderColors = dataForSubject.map(
-            (mark) => getColorByPercentage(mark, maxScore, 0.7, 1).borderColor
-          );
-          const hoverBackgroundColors = dataForSubject.map(
-            (mark) => getColorByPercentage(mark, maxScore, 1, 1).bgColor
-          );
-          const hoverBorderColors = dataForSubject.map(
-            (mark) => getColorByPercentage(mark, maxScore, 1, 1).borderColor
+            (mark) => getColorByPercentage(mark, maxScore, 0.8, 1).borderColor
           );
 
           const chartData = {
             labels: labels,
             datasets: [
               {
-                label: `${subjectDisplayName}`,
+                label: `${subjectDisplayName} Marks`,
                 data: dataForSubject,
                 backgroundColor: backgroundColors,
                 borderColor: borderColors,
                 borderWidth: 2,
-                hoverBackgroundColor: hoverBackgroundColors,
-                hoverBorderColor: hoverBorderColors,
                 borderSkipped: false,
                 datalabels: {
                   anchor: "end",
@@ -433,7 +428,7 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
                   color: "#444",
                   font: {
                     weight: "bold",
-                    size: 12,
+                    size: 14,
                   },
                   formatter: function (value, context) {
                     return value !== null ? value.toFixed(0) : "";
@@ -467,7 +462,7 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
                   size: 18,
                   weight: "bold",
                 },
-                color: "#333",
+                color: '#333',
               },
               tooltip: {
                 mode: "index",
@@ -486,6 +481,9 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
                   },
                 },
               },
+              datalabels: {
+                  display: true,
+              }
             },
             scales: {
               x: {

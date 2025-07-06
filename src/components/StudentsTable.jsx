@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, fromUnixTime } from "date-fns";
 import "./StudentsTable.css";
 // Material-UI Imports
 import {
@@ -16,10 +16,10 @@ import {
   CircularProgress, // <--- Import CircularProgress for loading spinner
   Snackbar, // <--- Import Snackbar for notifications
   Alert, // <--- Import Alert for Snackbar content
-    Slide, // Import Slide for entrance animation
+  Slide, // Import Slide for entrance animation
   Fade, // Import Fade for loading/error
   Typography,
-  IconButton
+  IconButton,
 } from "@mui/material";
 // Import ALL necessary icons
 import {
@@ -42,8 +42,8 @@ import {
   FaCalendarCheck,
   FaArrowUp,
   FaArrowDown,
-  FaMinusCircle ,
-  FaPlusCircle 
+  FaMinusCircle,
+  FaPlusCircle,
 } from "react-icons/fa";
 import {
   MuiButton,
@@ -55,8 +55,14 @@ import {
   paymentStatusOptions,
   subjectOptions,
 } from "../mockdata/Options";
-import { fetchStudents,updateStudentPaymentStatus,updateClassesCompleted } from "../redux/actions";
+import {
+  fetchStudents,
+  updateStudentPaymentStatus,
+  updateClassesCompleted,
+} from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
+import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
+
 const StudentsTable = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -65,9 +71,9 @@ const StudentsTable = () => {
     students,
     loading: studentsLoading,
     error: studentsError,
-     updatingStudent, // ID of student currently being updated
-    updateError,     // Error from update operation
-    updateSuccess    // Success flag for update operation
+    updatingStudent, // ID of student currently being updated
+    updateError, // Error from update operation
+    updateSuccess, // Success flag for update operation
   } = useSelector((state) => state.students);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [filters, setFilters] = useState({
@@ -84,7 +90,7 @@ const StudentsTable = () => {
   const [order, setOrder] = useState("asc");
 
   // State for handling payment status updates
-  const [updatingStudentId, setUpdatingStudentId] = useState(null); // Tracks which student is being updated
+  // const [updatingStudentId, setUpdatingStudentId] = useState(null); // Tracks which student is being updated
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -92,9 +98,9 @@ const StudentsTable = () => {
   const [lastUpdatedTimestamps, setLastUpdatedTimestamps] = useState({});
 
   const navigate = useNavigate();
-useEffect(() => {
+  useEffect(() => {
     const newTimestamps = {};
-    students.forEach(student => {
+    students.forEach((student) => {
       if (student.lastUpdatedClassesAt) {
         newTimestamps[student.id] = student.lastUpdatedClassesAt;
       }
@@ -284,77 +290,169 @@ useEffect(() => {
   }
   const showSubjectColumn = user?.AllowAll; // It will be true only if user.AllowAll is true
   // Modified handlePaymentStatusToggle to use Redux action
- const handlePaymentStatusToggle = async (studentId, currentStatus) => {
-    if (updatingStudent) return;
-    setUpdatingStudent(studentId);
+  // In your component file (e.g., StudentList.jsx or wherever handlePaymentStatusToggle is defined)
 
+  const handlePaymentStatusToggle = async (
+    studentId,
+    currentStatus,
+    studentName
+  ) => {
     const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid";
     try {
-      const updatedStudent = await dispatch(updateStudentPaymentStatus(studentId, newStatus));
-      setSnackbarMessage(`Payment status updated to "${newStatus}" for ${updatedStudent.Name}!`);
+      // Dispatch the Redux action to update the payment status
+      await dispatch(updateStudentPaymentStatus(studentId, currentStatus));
+
+      // Display success message using the passed studentName
+      setSnackbarMessage(
+        `Payment status updated to "${newStatus}" for ${studentName}!`
+      );
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
 
-      // Update local timestamp after successful backend update
-      // Clear any existing timeout for this student to avoid overwriting
-      if (updateTimestampTimeoutRef.current[studentId]) {
-        clearTimeout(updateTimestampTimeoutRef.current[studentId]);
-      }
-      updateTimestampTimeoutRef.current[studentId] = setTimeout(() => {
-        setLastUpdatedTimestamps(prev => ({
-          ...prev,
-          [studentId]: updatedStudent.lastUpdatedClassesAt,
-        }));
-        delete updateTimestampTimeoutRef.current[studentId]; // Clean up ref
-      }, 2000); // Delay for 2 seconds
-
+      // Removed all logic related to `updateTimestampTimeoutRef` and `lastUpdatedClassesAt`
+      // as per your request to simplify.
     } catch (err) {
       setSnackbarMessage(`Failed to update payment status: ${err.message}`);
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
-    } finally {
-      setUpdatingStudent(null);
     }
   };
 
-  const handleClassChange = async (studentId, currentClasses, increment) => {
-    if (updatingClasses) return;
-    setUpdatingClasses(studentId);
+  // --------------------------------
+  // ClassesColumn.jsx   (or similar)
+  // --------------------------------
+const handleClassChange = async (studentId, increment) => {
+  if (updatingClasses) return;
+  setUpdatingClasses(studentId);
 
-    let newClassesCompleted = currentClasses;
-    if (increment) {
-      newClassesCompleted += 1;
-    } else {
-      newClassesCompleted = Math.max(0, newClassesCompleted - 1); // Prevent negative classes
+  const delta = increment ? 1 : -1;
+
+  try {
+    const updatedStudent = await dispatch(
+      updateClassesCompleted(studentId, delta)
+    );
+
+    console.log("🎉  updatedStudent returned", updatedStudent); // <-- will be an object now
+
+    setSnackbarMessage(
+      `Classes completed updated to ${updatedStudent.classesCompleted} for ${updatedStudent.Name}!`
+    );
+    setSnackbarSeverity("success");
+    setSnackbarOpen(true);
+  } catch (err) {
+    setSnackbarMessage(`Failed to update classes: ${err.message}`);
+    setSnackbarSeverity("error");
+    setSnackbarOpen(true);
+  } finally {
+    setUpdatingClasses(null);
+  }
+};
+
+
+
+  const getPdfTitle = () => {
+    if (sortedFilteredStudents.length === 0) {
+      return "Timetable Report"; // Default if no data
     }
 
-    try {
-      const updatedStudent = await dispatch(updateClassesCompleted(studentId, newClassesCompleted));
-      setSnackbarMessage(`Classes completed updated to ${updatedStudent['Classes Completed']} for ${updatedStudent.Name}!`);
-      setSnackbarSeverity("success");
-      setSnackbarOpen(true);
+    // Get unique subjects from the filtered timetable
+    const uniqueSubjects = [
+      ...new Set(sortedFilteredStudents.map((item) => item.Subject)),
+    ];
+    const name = user?.name;
 
-      // Update local timestamp after successful backend update
-      // Clear any existing timeout for this student to avoid overwriting
-      if (updateTimestampTimeoutRef.current[studentId]) {
-        clearTimeout(updateTimestampTimeoutRef.current[studentId]);
+    if (uniqueSubjects.length === 1) {
+      const subject = uniqueSubjects[0];
+      if (subject === "Physics") {
+        return `${name} Students`;
+      } else if (subject === "Chemistry") {
+        return `${name} Students`;
       }
-      updateTimestampTimeoutRef.current[studentId] = setTimeout(() => {
-        setLastUpdatedTimestamps(prev => ({
-          ...prev,
-          [studentId]: updatedStudent.lastUpdatedClassesAt,
-        }));
-        delete updateTimestampTimeoutRef.current[studentId]; // Clean up ref
-      }, 2000); // Delay for 2 seconds
-
-    } catch (err) {
-      setSnackbarMessage(`Failed to update classes: ${err.message}`);
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-    } finally {
-      setUpdatingClasses(null);
     }
+    // Default title if multiple subjects or subject doesn't match specific criteria
+    return "Students";
   };
+  // Function to get the PDF table headers
+  const getPdfTableHeaders = (showSubjectColumn) => {
+    const headers = [
+      { key: "sno", label: "S.No." },
+      { key: "Name", label: "Name" },
+      { key: "Gender", label: "Gender" },
+    ];
+
+    if (showSubjectColumn) {
+      headers.push({ key: "Subject", label: "Subject" });
+    }
+
+    headers.push(
+      { key: "Year", label: "Year" },
+      { key: "Stream", label: "Stream" },
+      { key: "College", label: "College" },
+      { key: "Group ", label: "Group" }, // Note the space in "Group " key
+      { key: "Source", label: "Source" },
+      { key: "Monthly Fee", label: "Monthly Fee" },
+      { key: "Classes Completed", label: "Classes Completed" },
+      { key: "nextClass", label: "Next Class" },
+      { key: "admissionDate", label: "Admission Date" }, // <--- ADDED THIS LINE!
+      { key: "Payment Status", label: "Payment Status" }
+    );
+
+    return headers;
+  };
+
+  // Function to get the PDF table rows
+  const getPdfTableRows = (students, showSubjectColumn) => {
+    return students.map((student, index) => {
+      const row = {
+        sno: index + 1,
+        Name: student.Name || "N/A",
+        Gender: student.Gender || "N/A",
+      };
+
+      if (showSubjectColumn) {
+        row.Subject = student.Subject || "N/A";
+      }
+
+      row.Year = student.Year || "N/A";
+      row.Stream = student.Stream || "N/A";
+      row.College = student.College || "N/A";
+      row["Group "] = student["Group "] || "N/A"; // Still need bracket notation for "Group "
+      row.Source = student.Source || "N/A";
+      row["Monthly Fee"] = (
+        typeof student["Monthly Fee"] === "number"
+          ? student["Monthly Fee"]
+          : parseFloat(student["Monthly Fee"]) || 0
+      ).toLocaleString("en-IN"); // → "12,000"
+      row["Classes Completed"] = student.classesCompleted || 0; // Using 'classesCompleted' from your data
+
+      // nextClass logic (you don't have nextClass in your shared data, so it will always be N/A)
+      row.nextClass = student.nextClass
+        ? format(parseISO(student.nextClass), "MMM dd, hh:mm a")
+        : "N/A";
+
+      row["Payment Status"] = student["Payment Status"] || "N/A";
+
+      // --- FIX FOR [OBJECT OBJECT] START ---
+      // Handle admissionDate: Convert seconds to a Date object and then format it
+      if (
+        student.admissionDate &&
+        typeof student.admissionDate._seconds === "number"
+      ) {
+        const date = fromUnixTime(student.admissionDate._seconds); // Convert Unix timestamp (seconds) to Date
+        row.admissionDate = format(date, "MMM dd, yyyy hh:mm a"); // Format as desired (added yyyy for year)
+      } else {
+        row.admissionDate = "N/A";
+      }
+
+      return row;
+    });
+  };
+  const headerConfig = getPdfTableHeaders(showSubjectColumn); // [{key,label}, …]
+  const pdfHeaders = headerConfig.map((h) => h.label); // ["S.No.", "Name", …]
+  const pdfRows = getPdfTableRows(
+    sortedFilteredStudents,
+    showSubjectColumn
+  ).map((rowObj) => headerConfig.map((h) => rowObj[h.key]));
 
   return (
     <Box
@@ -368,7 +466,13 @@ useEffect(() => {
       }}
     >
       {/* Header Section */}
-      <Slide direction="down" in={true} mountOnEnter unmountOnExit timeout={500}>
+      <Slide
+        direction="down"
+        in={true}
+        mountOnEnter
+        unmountOnExit
+        timeout={500}
+      >
         <Paper
           elevation={6} // Increased elevation for more depth
           sx={{
@@ -402,6 +506,16 @@ useEffect(() => {
               </Typography>
             </Box>
           </Box>
+          {sortedFilteredStudents.length > 0 && (
+            <PdfDownloadButton
+              title={getPdfTitle()}
+              headers={pdfHeaders} // ← now plain strings
+              rows={pdfRows} // ← now arrays, no [object Object]
+              buttonLabel="Download Students Data (PDF)"
+              filename="Student_Report.pdf"
+              reportDate={new Date()}
+            />
+          )}
           <MuiButton
             variant="contained"
             startIcon={<FaPlus />}
@@ -422,7 +536,13 @@ useEffect(() => {
       </Slide>
 
       {/* Filters Section */}
-      <Slide direction="right" in={true} mountOnEnter unmountOnExit timeout={600}>
+      <Slide
+        direction="right"
+        in={true}
+        mountOnEnter
+        unmountOnExit
+        timeout={600}
+      >
         <Paper elevation={6} sx={{ p: 3, borderRadius: "12px" }}>
           <Box
             sx={{
@@ -444,7 +564,13 @@ useEffect(() => {
                 fontWeight: 600,
               }}
             >
-              <FaSearch style={{ marginRight: "10px", fontSize: "1.8rem", color: "#1976d2" }} />{" "}
+              <FaSearch
+                style={{
+                  marginRight: "10px",
+                  fontSize: "1.8rem",
+                  color: "#1976d2",
+                }}
+              />{" "}
               Filter Students
             </Typography>
           </Box>
@@ -469,16 +595,16 @@ useEffect(() => {
               icon={FaUserCircle}
             />
             {showSubjectColumn && (
- <MuiSelect
-              label="Subject"
-              name="subject"
-              value={filters.subject}
-              onChange={handleFilterChange}
-              options={subjectOptions}
-              icon={FaBookOpen}
-            />
+              <MuiSelect
+                label="Subject"
+                name="subject"
+                value={filters.subject}
+                onChange={handleFilterChange}
+                options={subjectOptions}
+                icon={FaBookOpen}
+              />
             )}
-           
+
             <MuiSelect
               label="Payment Status"
               name="paymentStatus"
@@ -509,13 +635,26 @@ useEffect(() => {
 
       {/* Students List Table */}
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
-        <Paper elevation={6} sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}>
+        <Paper
+          elevation={6}
+          sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
+        >
           {sortedFilteredStudents.length > 0 ? (
             <TableContainer>
               <Table sx={{ minWidth: 1200 }} aria-label="student table">
                 <TableHead>
-                  <TableRow sx={{ backgroundColor: "#e3f2fd" }}> {/* Light blue header */}
-                    <TableCell align="center" sx={{ fontWeight: "bold", color: "#1a237e", fontSize: "1.05rem", padding: "12px 8px" }}>
+                  <TableRow sx={{ backgroundColor: "#e3f2fd" }}>
+                    {" "}
+                    {/* Light blue header */}
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        color: "#1a237e",
+                        fontSize: "1.05rem",
+                        padding: "12px 8px",
+                      }}
+                    >
                       S.No.
                     </TableCell>
                     <TableCell
@@ -530,7 +669,10 @@ useEffect(() => {
                       }}
                     >
                       <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <FaUserCircle style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        <FaUserCircle
+                          style={{ marginRight: 8, color: "#1976d2" }}
+                        />{" "}
+                        {/* Primary blue icon */}
                         Name
                       </Box>
                     </TableCell>
@@ -546,8 +688,17 @@ useEffect(() => {
                         color: "#1a237e",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FaTransgender style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaTransgender
+                          style={{ marginRight: 8, color: "#1976d2" }}
+                        />{" "}
+                        {/* Primary blue icon */}
                         Gender
                       </Box>
                     </TableCell>
@@ -564,8 +715,17 @@ useEffect(() => {
                           color: "#1a237e",
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <FaBookOpen style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaBookOpen
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />{" "}
+                          {/* Primary blue icon */}
                           Subject
                         </Box>
                       </TableCell>
@@ -582,8 +742,17 @@ useEffect(() => {
                         color: "#1a237e",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FaCalendarCheck style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaCalendarCheck
+                          style={{ marginRight: 8, color: "#1976d2" }}
+                        />{" "}
+                        {/* Primary blue icon */}
                         Year
                       </Box>
                     </TableCell>
@@ -599,8 +768,17 @@ useEffect(() => {
                         color: "#1a237e",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FaGraduationCap style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaGraduationCap
+                          style={{ marginRight: 8, color: "#1976d2" }}
+                        />{" "}
+                        {/* Primary blue icon */}
                         Stream
                       </Box>
                     </TableCell>
@@ -616,8 +794,17 @@ useEffect(() => {
                         color: "#1a237e",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FaUniversity style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaUniversity
+                          style={{ marginRight: 8, color: "#1976d2" }}
+                        />{" "}
+                        {/* Primary blue icon */}
                         College
                       </Box>
                     </TableCell>
@@ -633,8 +820,15 @@ useEffect(() => {
                         color: "#1a237e",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FaUsers style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaUsers style={{ marginRight: 8, color: "#1976d2" }} />{" "}
+                        {/* Primary blue icon */}
                         Group
                       </Box>
                     </TableCell>
@@ -650,8 +844,17 @@ useEffect(() => {
                         color: "#1a237e",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FaSearchDollar style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaSearchDollar
+                          style={{ marginRight: 8, color: "#1976d2" }}
+                        />{" "}
+                        {/* Primary blue icon */}
                         Source
                       </Box>
                     </TableCell>
@@ -696,7 +899,10 @@ useEffect(() => {
                         }}
                       >
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <FaDollarSign style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                          <FaDollarSign
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />{" "}
+                          {/* Primary blue icon */}
                           Monthly Fee
                         </Box>
                       </TableSortLabel>
@@ -718,7 +924,9 @@ useEffect(() => {
                     >
                       <TableSortLabel
                         active={orderBy === "classesCompleted"}
-                        direction={orderBy === "classesCompleted" ? order : "asc"}
+                        direction={
+                          orderBy === "classesCompleted" ? order : "asc"
+                        }
                         onClick={() => handleSortRequest("classesCompleted")}
                         IconComponent={
                           orderBy === "classesCompleted"
@@ -744,7 +952,10 @@ useEffect(() => {
                         }}
                       >
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <FaHourglassHalf style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                          <FaHourglassHalf
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />{" "}
+                          {/* Primary blue icon */}
                           Classes Completed
                         </Box>
                       </TableSortLabel>
@@ -761,8 +972,17 @@ useEffect(() => {
                         color: "#1a237e",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FaCalendarCheck style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaCalendarCheck
+                          style={{ marginRight: 8, color: "#1976d2" }}
+                        />{" "}
+                        {/* Primary blue icon */}
                         Next Class
                       </Box>
                     </TableCell>
@@ -778,8 +998,17 @@ useEffect(() => {
                         color: "#1a237e",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FaIdCard style={{ marginRight: 8, color: "#1976d2" }} /> {/* Primary blue icon */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaIdCard
+                          style={{ marginRight: 8, color: "#1976d2" }}
+                        />{" "}
+                        {/* Primary blue icon */}
                         Payment Status
                       </Box>
                     </TableCell>
@@ -790,10 +1019,12 @@ useEffect(() => {
                     <TableRow
                       key={student.id}
                       sx={{
-                        backgroundColor: index % 2 === 0 ? "#FFFFFF" : "#fbfbfb", // Alternating row colors
+                        backgroundColor:
+                          index % 2 === 0 ? "#FFFFFF" : "#fbfbfb", // Alternating row colors
                         "&:hover": { backgroundColor: "#e9f7fe !important" }, // Soft light blue on hover
                         "& > td": {
-                          borderBottom: "1px solid rgba(0, 0, 0, 0.05) !important", // Lighter borders
+                          borderBottom:
+                            "1px solid rgba(0, 0, 0, 0.05) !important", // Lighter borders
                           fontSize: "0.95rem",
                           color: "#424242", // Darker text for content
                         },
@@ -807,7 +1038,11 @@ useEffect(() => {
                       >
                         {index + 1}
                       </TableCell>
-                      <TableCell component="th" scope="row" sx={{ fontSize: "0.9rem" }}>
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        sx={{ fontSize: "0.9rem" }}
+                      >
                         <Link
                           to={`/student/${student.id}`}
                           state={{ studentData: student }}
@@ -820,7 +1055,9 @@ useEffect(() => {
                             fontWeight: 500,
                           }}
                         >
-                          <FaUserGraduate style={{ marginRight: 8, color: "#007bff" }} />
+                          <FaUserGraduate
+                            style={{ marginRight: 8, color: "#007bff" }}
+                          />
                           {student.Name}
                         </Link>
                       </TableCell>
@@ -854,66 +1091,90 @@ useEffect(() => {
                           : parseFloat(student["Monthly Fee"]) || 0
                         ).toLocaleString()}
                       </TableCell>
-                      <TableCell align="center" sx={{ fontSize: "0.9rem", whiteSpace: "nowrap" }}>
+                      <TableCell
+                        align="center"
+                        sx={{ fontSize: "0.9rem", whiteSpace: "nowrap" }}
+                      >
                         <Box
                           sx={{
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "center",
                             gap: 0.5,
-                            pointerEvents: updatingClasses === student.id ? 'none' : 'auto',
+                            pointerEvents:
+                              updatingClasses === student.id ? "none" : "auto",
                             opacity: updatingClasses === student.id ? 0.7 : 1,
                           }}
                         >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
                             <IconButton
-                              color="primary"
                               size="small"
-                              onClick={() => handleClassChange(student.id, student["Classes Completed"] || 0, false)}
-                              disabled={updatingClasses === student.id || (student["Classes Completed"] || 0) <= 0}
+                              onClick={() =>
+                                handleClassChange(student.id, false)
+                              }
                             >
                               <FaMinusCircle fontSize="small" />
                             </IconButton>
                             {updatingClasses === student.id ? (
                               <CircularProgress size={20} color="primary" />
                             ) : (
-                              <Typography variant="body1" component="span" sx={{ fontWeight: 600 }}>
+                              <Typography
+                                variant="body1"
+                                component="span"
+                                sx={{ fontWeight: 600 }}
+                              >
                                 {student["Classes Completed"] || 0}
                               </Typography>
                             )}
                             <IconButton
-                              color="primary"
                               size="small"
-                              onClick={() => handleClassChange(student.id, student["Classes Completed"] || 0, true)}
-                              disabled={updatingClasses === student.id}
+                              onClick={() =>
+                                handleClassChange(student.id, true)
+                              }
                             >
                               <FaPlusCircle fontSize="small" />
                             </IconButton>
                           </Box>
                           {lastUpdatedTimestamps[student.id] && (
                             <Fade in={true} timeout={1000}>
-                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                Last Updated: {format(parseISO(lastUpdatedTimestamps[student.id]), "MMM dd, hh:mm a")}
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontSize: "0.7rem" }}
+                              >
+                                Last Updated:{" "}
+                                {format(
+                                  parseISO(lastUpdatedTimestamps[student.id]),
+                                  "MMM dd, hh:mm a"
+                                )}
                               </Typography>
                             </Fade>
                           )}
-                           {student["Payment Status"] === "Unpaid" && (student["Classes Completed"] || 0) >= 12 && (
-                                <Typography
-                                    variant="caption"
-                                    sx={{
-                                        color: '#ef5350', // Red color for the message
-                                        fontWeight: 'bold',
-                                        mt: 0.5,
-                                        fontSize: '0.75rem',
-                                        animation: 'pulse-red 1.5s infinite alternate', // Subtle animation
-                                        '@keyframes pulse-red': {
-                                            '0%': { opacity: 0.7 },
-                                            '100%': { opacity: 1 },
-                                        },
-                                    }}
-                                >
-                                    Payment Pending!
-                                </Typography>
+                          {student["Payment Status"] === "Unpaid" &&
+                            (student["Classes Completed"] || 0) >= 12 && (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "#ef5350", // Red color for the message
+                                  fontWeight: "bold",
+                                  mt: 0.5,
+                                  fontSize: "0.75rem",
+                                  animation:
+                                    "pulse-red 1.5s infinite alternate", // Subtle animation
+                                  "@keyframes pulse-red": {
+                                    "0%": { opacity: 0.7 },
+                                    "100%": { opacity: 1 },
+                                  },
+                                }}
+                              >
+                                Payment Pending!
+                              </Typography>
                             )}
                         </Box>
                       </TableCell>
@@ -930,13 +1191,15 @@ useEffect(() => {
                           "&:hover": {
                             backgroundColor: "rgba(0, 0, 0, 0.04)",
                           },
-                          pointerEvents: updatingStudent === student.id ? "none" : "auto",
+                          pointerEvents:
+                            updatingStudent === student.id ? "none" : "auto",
                           opacity: updatingStudent === student.id ? 0.7 : 1,
                         }}
                         onClick={() =>
                           handlePaymentStatusToggle(
                             student.id,
-                            student["Payment Status"]
+                            student["Payment Status"],
+                            student.Name // Pass the student's name here
                           )
                         }
                       >
@@ -944,7 +1207,9 @@ useEffect(() => {
                           <CircularProgress size={20} color="primary" />
                         ) : (
                           <span
-                            className={`payment-status-badge ${String(student["Payment Status"] || '').toLowerCase()}`}
+                            className={`payment-status-badge ${String(
+                              student["Payment Status"] || ""
+                            ).toLowerCase()}`}
                             style={{
                               display: "inline-flex",
                               alignItems: "center",

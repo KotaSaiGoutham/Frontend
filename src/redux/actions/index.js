@@ -103,16 +103,13 @@ export const logoutUser = () => {
     type: LOGOUT,
   };
 };
+// In your Redux actions file
+
 export const updateStudentPaymentStatus = (studentId, currentStatus) => {
   const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid"; // Toggle logic
 
-  // Data to send to the backend
+  // Data to send to the backend - only Payment Status
   const updateData = { "Payment Status": newStatus };
-
-  // If changing to Paid, signal backend to calculate paidDate and nextDueDate.
-  if (newStatus === "Paid") {
-    updateData.triggerPaidDateCalculation = true; // New flag for the backend
-  }
 
   return apiRequest({
     url: `/api/data/students/${studentId}`, // Backend endpoint for updating a student
@@ -133,8 +130,7 @@ export const updateStudentPaymentStatus = (studentId, currentStatus) => {
           studentId,
           newStatus,
           message: data.message || "Payment status updated.",
-          paidDate: data.paidDate, // Receive the calculated paidDate from backend
-          nextDueDate: data.nextDueDate, // Receive the calculated nextDueDate from backend
+          // Removed `paidDate` and `nextDueDate` from payload
         },
       });
       // OPTIONAL BUT RECOMMENDED: Re-fetch all students to ensure UI consistency
@@ -556,38 +552,54 @@ export const addTimetableEntry = (timetableData) =>
     authRequired: true,
   });
 
-export const updateClassesCompleted = (studentId, newClassesCompletedValue) =>
-  apiRequest({
-    url: `/api/data/students/${studentId}/classes`,
-    method: "PUT",
-    data: { newClassesCompletedValue }, // The payload for the backend
-    onStart: UPDATE_STUDENT_CLASSES_REQUEST,
-    onSuccess: (data, dispatch) => {
-      console.log("Classes completed updated successfully:", data);
-      dispatch({
-        type: UPDATE_STUDENT_CLASSES_SUCCESS,
-        payload: data, // The updated student object from the backend
-      });
-      // You might want to dispatch fetchStudents() here if your reducer doesn't handle the update
-      // by replacing the specific student, or if you need to ensure the entire list is fresh.
-      // dispatch(fetchStudents());
-    },
-    onFailure: (error, dispatch) => {
-      console.error("Error updating classes completed:", error);
-      const errorMessage =
-        error.error || error.message || "Failed to update classes completed.";
-      // Assuming apiRequest handles general auth errors, but you can add specific logic here if needed
-      if (error.status === 401 || error.status === 403) {
-        // Example: dispatch a global auth error if you have one
-        // dispatch(setAuthError("Authentication failed or session expired. Please log in again."));
-      }
-      dispatch({
-        type: UPDATE_STUDENT_CLASSES_FAILURE,
-        payload: { error: errorMessage },
-      });
-    },
-    authRequired: true, // Assuming class updates require authentication
-  });
+// --------------------------------
+// studentsThunks.js
+// --------------------------------
+export const updateClassesCompleted = (studentId, delta) => async (dispatch) => {
+  console.log("updateClassesCompleted ‑ start", { studentId, delta });
+
+  try {
+    dispatch({ type: UPDATE_STUDENT_CLASSES_REQUEST });
+
+    const resp = await apiRequest({
+      url: `/api/data/students/${studentId}/classes`,
+      method: "POST",
+      data: { delta },
+      authRequired: true,
+    });
+
+    console.log("updateClassesCompleted ‑ raw resp", resp);
+
+    // Axios style => resp.data ; fetch wrapper => resp
+    const updated = resp.data ?? resp;
+
+    dispatch({
+      type: UPDATE_STUDENT_CLASSES_SUCCESS,
+      payload: updated,
+    });
+
+    // OPTIONAL refresh list
+    dispatch(fetchStudents());
+
+    /*  🔥  THIS  IS  THE  CRUCIAL  LINE  🔥
+        Nothing below this return ever runs, so you can’t
+        accidentally overwrite it later.                    */
+    return updated;
+  } catch (err) {
+    console.error("updateClassesCompleted ‑ error", err);
+
+    dispatch({
+      type: UPDATE_STUDENT_CLASSES_FAILURE,
+      payload: err.message || "Failed to update classes completed",
+    });
+
+    throw err;                   // so the caller sees the failure
+  }
+};
+
+
+
+
 export const deleteTimetable = (timetableId) =>
   apiRequest({
     url: `/api/data/timetables/${timetableId}`, // This must match your backend DELETE route

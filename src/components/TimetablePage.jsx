@@ -63,9 +63,13 @@ import {
 } from "../components/customcomponents/MuiCustomFormFields";
 
 import "./TimetablePage.css";
-import { fetchUpcomingClasses, fetchStudents, deleteTimetable } from "../redux/actions"; // Import deleteTimetable
+import {
+  fetchUpcomingClasses,
+  fetchStudents,
+  deleteTimetable,
+} from "../redux/actions"; // Import deleteTimetable
 import { useSelector, useDispatch } from "react-redux";
-
+import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 const TimetablePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -162,7 +166,11 @@ const TimetablePage = () => {
         return `${hours} hr ${remainingMinutes} min`;
       }
     } catch (e) {
-      console.error("Error calculating duration for time string:", timeString, e);
+      console.error(
+        "Error calculating duration for time string:",
+        timeString,
+        e
+      );
       return "N/A";
     }
   };
@@ -278,10 +286,16 @@ const TimetablePage = () => {
 
       if (matchedStudent) {
         let feeToUse = 0;
-        if (typeof matchedStudent.monthlyFee === 'number' && matchedStudent.monthlyFee > 0) {
+        if (
+          typeof matchedStudent.monthlyFee === "number" &&
+          matchedStudent.monthlyFee > 0
+        ) {
           feeToUse = matchedStudent.monthlyFee;
-        } else if (typeof matchedStudent['Monthly Fee'] === 'string' && parseFloat(matchedStudent['Monthly Fee']) > 0) {
-          feeToUse = parseFloat(matchedStudent['Monthly Fee']);
+        } else if (
+          typeof matchedStudent["Monthly Fee"] === "string" &&
+          parseFloat(matchedStudent["Monthly Fee"]) > 0
+        ) {
+          feeToUse = parseFloat(matchedStudent["Monthly Fee"]);
         }
 
         if (feeToUse > 0) {
@@ -341,7 +355,7 @@ const TimetablePage = () => {
   };
 
   const handleConfirmDelete = async () => {
-    console.log("timetableToDelete",timetableToDelete)
+    console.log("timetableToDelete", timetableToDelete);
     if (timetableToDelete && timetableToDelete.id) {
       try {
         await dispatch(deleteTimetable(timetableToDelete.id));
@@ -428,7 +442,64 @@ const TimetablePage = () => {
   }
 
   const showSubjectColumn = user?.AllowAll;
+  const getPdfTableHeaders = () => {
+    const pdfHeaders = [
+      "Student",
+      "Lesson",
+      "Date", // Changed from 'Day' to 'Date' for PDF clarity
+    ];
+    if (showSubjectColumn) {
+      pdfHeaders.push("Faculty");
+      pdfHeaders.push("Subject");
+    }
+    pdfHeaders.push("Time");
+    pdfHeaders.push("Duration");
+    pdfHeaders.push("Fee / Class");
+    return pdfHeaders;
+  };
 
+  const getPdfTableRows = () => {
+    return sortedFilteredTimetables.map((item) => {
+      const row = [
+        item.Student,
+        item.Topic,
+        item.Day, // Use item.Day as date string for now, assuming it's descriptive enough
+      ];
+      if (showSubjectColumn) {
+        row.push(item.Faculty);
+        row.push(item.Subject);
+      }
+      row.push(item.Time);
+      row.push(calculateDuration(item.Time));
+      row.push(
+        item.monthlyFeePerClass !== "N/A"
+          ? String(item.monthlyFeePerClass)
+          : "N/A"
+      );
+      return row;
+    });
+  };
+  const getPdfTitle = () => {
+    if (sortedFilteredTimetables.length === 0) {
+      return "Timetable Report"; // Default if no data
+    }
+
+    // Get unique subjects from the filtered timetable
+    const uniqueSubjects = [
+      ...new Set(sortedFilteredTimetables.map((item) => item.Subject)),
+    ];
+
+    if (uniqueSubjects.length === 1) {
+      const subject = uniqueSubjects[0];
+      if (subject === "Physics") {
+        return "Dulam Timetable";
+      } else if (subject === "Chemistry") {
+        return "Bollam Timetable";
+      }
+    }
+    // Default title if multiple subjects or subject doesn't match specific criteria
+    return "General Timetable Report";
+  };
   return (
     <Box
       sx={{
@@ -441,7 +512,13 @@ const TimetablePage = () => {
       }}
     >
       {/* Header Card with Slide animation */}
-      <Slide direction="down" in={true} mountOnEnter unmountOnExit timeout={500}>
+      <Slide
+        direction="down"
+        in={true}
+        mountOnEnter
+        unmountOnExit
+        timeout={500}
+      >
         <Paper
           elevation={6} // Increased elevation for more depth
           sx={{
@@ -480,6 +557,16 @@ const TimetablePage = () => {
               </Typography>
             </Box>
           </Box>
+          {sortedFilteredTimetables.length > 0 && (
+            <PdfDownloadButton
+              title={getPdfTitle()} // Dynamic title
+              headers={getPdfTableHeaders()}
+              rows={getPdfTableRows()}
+              buttonLabel="Download Timetable (PDF)"
+              filename="Timetable_Report.pdf"
+              reportDate={new Date()}
+            />
+          )}
           <MuiButton
             variant="contained"
             startIcon={<FaPlusCircle />}
@@ -500,8 +587,16 @@ const TimetablePage = () => {
       </Slide>
 
       {/* Filters and Search Section with Slide animation */}
-      <Slide direction="right" in={true} mountOnEnter unmountOnExit timeout={600}>
-        <Paper elevation={6} sx={{ p: 3, borderRadius: "12px" }}> {/* Increased elevation, rounded corners */}
+      <Slide
+        direction="right"
+        in={true}
+        mountOnEnter
+        unmountOnExit
+        timeout={600}
+      >
+        <Paper elevation={6} sx={{ p: 3, borderRadius: "12px" }}>
+          {" "}
+          {/* Increased elevation, rounded corners */}
           <Box
             sx={{
               display: "flex",
@@ -522,13 +617,25 @@ const TimetablePage = () => {
                 fontWeight: 600,
               }}
             >
-              <FaFilter style={{ marginRight: "10px", fontSize: "1.8rem", color: "#1976d2" }} />{" "}
+              <FaFilter
+                style={{
+                  marginRight: "10px",
+                  fontSize: "1.8rem",
+                  color: "#1976d2",
+                }}
+              />{" "}
               Filters
             </Typography>
           </Box>
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
             {/* Search Input */}
-            <Box sx={{ flexGrow: 1, minWidth: { xs: "100%", sm: "200px" }, maxWidth: { xs: "100%", sm: "350px" } }}>
+            <Box
+              sx={{
+                flexGrow: 1,
+                minWidth: { xs: "100%", sm: "200px" },
+                maxWidth: { xs: "100%", sm: "350px" },
+              }}
+            >
               <MuiInput
                 label="Search"
                 icon={FaSearch}
@@ -569,23 +676,39 @@ const TimetablePage = () => {
 
       {/* Timetable Table with Slide animation */}
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
-        <Paper elevation={6} sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}> {/* Increased elevation, rounded corners */}
+        <Paper
+          elevation={6}
+          sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
+        >
+          {" "}
+          {/* Increased elevation, rounded corners */}
           {sortedFilteredTimetables.length > 0 ? (
             <TableContainer>
               <Table sx={{ minWidth: 800 }} aria-label="timetable">
                 <TableHead>
-                  <TableRow sx={{ backgroundColor: "#e3f2fd" }}> {/* Lighter blue background for header row */}
+                  <TableRow sx={{ backgroundColor: "#e3f2fd" }}>
+                    {" "}
+                    {/* Lighter blue background for header row */}
                     <TableCell
                       sx={{
                         color: "#1a237e", // Dark blue for header text
                         fontWeight: "bold",
                         fontSize: "1.05rem",
                         padding: "18px 12px",
-                        textAlign: 'center',
+                        textAlign: "center",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: 'center' }}>
-                        <FaUserGraduate style={{ marginRight: "8px", color: "#1976d2" }} /> Student
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaUserGraduate
+                          style={{ marginRight: "8px", color: "#1976d2" }}
+                        />{" "}
+                        Student
                       </Box>
                     </TableCell>
                     <TableCell
@@ -594,11 +717,20 @@ const TimetablePage = () => {
                         fontWeight: "bold",
                         fontSize: "1.05rem",
                         padding: "18px 12px",
-                        textAlign: 'center',
+                        textAlign: "center",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: 'center' }}>
-                        <FaInfoCircle style={{ marginRight: "8px", color: "#1976d2" }} /> Lesson
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaInfoCircle
+                          style={{ marginRight: "8px", color: "#1976d2" }}
+                        />{" "}
+                        Lesson
                       </Box>
                     </TableCell>
                     <TableCell
@@ -607,11 +739,20 @@ const TimetablePage = () => {
                         fontWeight: "bold",
                         fontSize: "1.05rem",
                         padding: "18px 12px",
-                        textAlign: 'center',
+                        textAlign: "center",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: 'center' }}>
-                        <FaCalendarAlt style={{ marginRight: "8px", color: "#1976d2" }} /> Date
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaCalendarAlt
+                          style={{ marginRight: "8px", color: "#1976d2" }}
+                        />{" "}
+                        Date
                       </Box>
                     </TableCell>
                     {showSubjectColumn && (
@@ -621,11 +762,19 @@ const TimetablePage = () => {
                           fontWeight: "bold",
                           fontSize: "1.05rem",
                           padding: "18px 12px",
-                          textAlign: 'center',
+                          textAlign: "center",
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: 'center' }}>
-                          <FaChalkboardTeacher style={{ marginRight: "8px", color: "#1976d2" }} />{" "}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaChalkboardTeacher
+                            style={{ marginRight: "8px", color: "#1976d2" }}
+                          />{" "}
                           Faculty
                         </Box>
                       </TableCell>
@@ -637,11 +786,20 @@ const TimetablePage = () => {
                           fontWeight: "bold",
                           fontSize: "1.05rem",
                           padding: "18px 12px",
-                          textAlign: 'center',
+                          textAlign: "center",
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: 'center' }}>
-                          <FaBook style={{ marginRight: "8px", color: "#1976d2" }} /> Subject
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaBook
+                            style={{ marginRight: "8px", color: "#1976d2" }}
+                          />{" "}
+                          Subject
                         </Box>
                       </TableCell>
                     )}
@@ -651,11 +809,20 @@ const TimetablePage = () => {
                         fontWeight: "bold",
                         fontSize: "1.05rem",
                         padding: "18px 12px",
-                        textAlign: 'center',
+                        textAlign: "center",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: 'center' }}>
-                        <FaClock style={{ marginRight: "8px", color: "#1976d2" }} /> Time
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaClock
+                          style={{ marginRight: "8px", color: "#1976d2" }}
+                        />{" "}
+                        Time
                       </Box>
                     </TableCell>
                     <TableCell
@@ -664,11 +831,20 @@ const TimetablePage = () => {
                         fontWeight: "bold",
                         fontSize: "1.05rem",
                         padding: "18px 12px",
-                        textAlign: 'center',
+                        textAlign: "center",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: 'center' }}>
-                        <FaHourglassHalf style={{ marginRight: "8px", color: "#1976d2" }} /> Duration
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaHourglassHalf
+                          style={{ marginRight: "8px", color: "#1976d2" }}
+                        />{" "}
+                        Duration
                       </Box>
                     </TableCell>
                     <TableCell
@@ -677,11 +853,20 @@ const TimetablePage = () => {
                         fontWeight: "bold",
                         fontSize: "1.05rem",
                         padding: "18px 12px",
-                        textAlign: 'center',
+                        textAlign: "center",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: 'center' }}>
-                        <MdCurrencyRupee style={{ marginRight: "8px", color: "#1976d2" }} /> Fee / Class
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <MdCurrencyRupee
+                          style={{ marginRight: "8px", color: "#1976d2" }}
+                        />{" "}
+                        Fee / Class
                       </Box>
                     </TableCell>
                     {/* New: Actions Table Header */}
@@ -691,7 +876,7 @@ const TimetablePage = () => {
                         fontWeight: "bold",
                         fontSize: "1.05rem",
                         padding: "18px 12px",
-                        textAlign: 'center',
+                        textAlign: "center",
                       }}
                     >
                       Actions
@@ -703,13 +888,15 @@ const TimetablePage = () => {
                     <TableRow
                       key={item.id || index} // Use item.id if available, otherwise index
                       sx={{
-                        backgroundColor: index % 2 === 0 ? "#FFFFFF" : "#fbfbfb",
+                        backgroundColor:
+                          index % 2 === 0 ? "#FFFFFF" : "#fbfbfb",
                         "&:hover": { backgroundColor: "#e9f7fe !important" }, // Changed hover color to a softer light blue
                         "& > td": {
-                          borderBottom: "1px solid rgba(0, 0, 0, 0.05) !important",
+                          borderBottom:
+                            "1px solid rgba(0, 0, 0, 0.05) !important",
                           fontSize: "0.95rem",
                           color: "#424242",
-                          textAlign: 'center',
+                          textAlign: "center",
                         },
                       }}
                     >
@@ -731,7 +918,13 @@ const TimetablePage = () => {
                       </TableCell>
                       {/* New: Actions Table Cell */}
                       <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 1,
+                            justifyContent: "center",
+                          }}
+                        >
                           {/* <MuiButton
                             variant="outlined"
                             size="small"
@@ -756,12 +949,12 @@ const TimetablePage = () => {
                             color="error" // Use error color for delete button
                             onClick={() => handleDeleteClick(item)}
                             sx={{
-                              borderColor: '#d32f2f',
-                              color: '#d32f2f',
-                              '&:hover': {
-                                backgroundColor: 'rgba(211, 47, 47, 0.04)',
-                                borderColor: '#c62828',
-                                color: '#c62828',
+                              borderColor: "#d32f2f",
+                              color: "#d32f2f",
+                              "&:hover": {
+                                backgroundColor: "rgba(211, 47, 47, 0.04)",
+                                borderColor: "#c62828",
+                                color: "#c62828",
                               },
                             }}
                           >
@@ -786,38 +979,36 @@ const TimetablePage = () => {
       </Slide>
 
       {/* Delete Confirmation Dialog */}
-   <Dialog
-      open={openDeleteConfirm}
-      onClose={handleCloseDeleteConfirm}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-    >
-      <DialogTitle id="alert-dialog-title">
-        {"Confirm Deletion?"}
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText id="alert-dialog-description">
-          Are you sure you want to delete the timetable entry for{" "}
-          <b>{timetableToDelete?.Student}</b> on{" "}
-          <b>{timetableToDelete?.Day}</b> at{" "}
-          <b>{timetableToDelete?.Time}</b>? This action cannot be undone.
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions
-        // Add sx prop to DialogActions to center the content
-        sx={{
-          justifyContent: 'center', // Centers items horizontally
-          gap: 2, // Adds some space between buttons (optional)
-        }}
+      <Dialog
+        open={openDeleteConfirm}
+        onClose={handleCloseDeleteConfirm}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
       >
-        <MuiButton onClick={handleCloseDeleteConfirm} color="primary">
-          Cancel
-        </MuiButton>
-        <MuiButton onClick={handleConfirmDelete} color="error" autoFocus>
-          Delete
-        </MuiButton>
-      </DialogActions>
-    </Dialog>
+        <DialogTitle id="alert-dialog-title">{"Confirm Deletion?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete the timetable entry for{" "}
+            <b>{timetableToDelete?.Student}</b> on{" "}
+            <b>{timetableToDelete?.Day}</b> at <b>{timetableToDelete?.Time}</b>?
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions
+          // Add sx prop to DialogActions to center the content
+          sx={{
+            justifyContent: "center", // Centers items horizontally
+            gap: 2, // Adds some space between buttons (optional)
+          }}
+        >
+          <MuiButton onClick={handleCloseDeleteConfirm} color="primary">
+            Cancel
+          </MuiButton>
+          <MuiButton onClick={handleConfirmDelete} color="error" autoFocus>
+            Delete
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
