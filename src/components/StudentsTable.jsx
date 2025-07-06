@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { format, parseISO, fromUnixTime } from "date-fns";
-import "./StudentsTable.css";
+import { format, parseISO, fromUnixTime, parse, isFuture } from "date-fns";
+import "./StudentsTable.css"; // Ensure this CSS file exists for styling
 // Material-UI Imports
 import {
   Table,
@@ -13,15 +13,15 @@ import {
   Paper,
   Box,
   TableSortLabel,
-  CircularProgress, // <--- Import CircularProgress for loading spinner
-  Snackbar, // <--- Import Snackbar for notifications
-  Alert, // <--- Import Alert for Snackbar content
-  Slide, // Import Slide for entrance animation
-  Fade, // Import Fade for loading/error
+  CircularProgress,
+  Snackbar,
+  Alert, // Original Alert from Material-UI
+  Slide,
+  Fade,
   Typography,
   IconButton,
 } from "@mui/material";
-// Import ALL necessary icons
+// Import ALL necessary icons from react-icons/fa
 import {
   FaSearch,
   FaUserGraduate,
@@ -44,7 +44,9 @@ import {
   FaArrowDown,
   FaMinusCircle,
   FaPlusCircle,
+  FaPhone,
 } from "react-icons/fa";
+// Assuming these are your custom components and mock data
 import {
   MuiButton,
   MuiSelect,
@@ -55,27 +57,47 @@ import {
   paymentStatusOptions,
   subjectOptions,
 } from "../mockdata/Options";
+// Redux actions
 import {
   fetchStudents,
   updateStudentPaymentStatus,
   updateClassesCompleted,
+  fetchUpcomingClasses, // This action should fetch timetables
 } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
+// PDF Download Button component
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
+
+// Custom Alert component for Snackbar, using forwardRef as recommended by Material-UI
+// This allows the Snackbar to correctly pass its ref to the Alert component.
+const MuiAlert = React.forwardRef(function MuiAlert(props, ref) {
+  return <Alert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 const StudentsTable = () => {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
 
+  // Selectors for Redux state
+  const { user } = useSelector((state) => state.auth);
   const {
     students,
     loading: studentsLoading,
     error: studentsError,
-    updatingStudent, // ID of student currently being updated
-    updateError, // Error from update operation
-    updateSuccess, // Success flag for update operation
+    // updateError and updateSuccess are typically handled by the action's success/failure
+    // and then reflected in local state (snackbar)
   } = useSelector((state) => state.students);
-  const [filteredStudents, setFilteredStudents] = useState([]);
+
+  // Correctly access timetables from state.classes
+  const {
+    timetables, // The actual data for upcoming classes
+    loading: classesLoading, // Loading state for timetables
+    error: classesError, // Error state for timetables
+  } = useSelector((state) => state.classes);
+
+  // Local component states
+  const [studentsWithNextClass, setStudentsWithNextClass] = useState([]); // Students augmented with next class info
+  const [filteredStudents, setFilteredStudents] = useState([]); // Students after applying filters
   const [filters, setFilters] = useState({
     studentName: "",
     subject: "",
@@ -83,21 +105,19 @@ const StudentsTable = () => {
     gender: "",
     stream: "",
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [streamOptions, setStreamOptions] = useState([]);
-  const [orderBy, setOrderBy] = useState("");
-  const [order, setOrder] = useState("asc");
+  const [isLoading, setIsLoading] = useState(true); // Combined loading state for initial data fetch
+  const [error, setError] = useState(""); // Combined error message
+  const [streamOptions, setStreamOptions] = useState([]); // Dynamic options for stream filter
+  const [orderBy, setOrderBy] = useState(""); // Column to sort by
+  const [order, setOrder] = useState("asc"); // Sort order ('asc' or 'desc')
+  const [updatingStudent, setUpdatingStudent] = useState(null); // Tracks which student's payment status is updating
+  const [snackbarOpen, setSnackbarOpen] = useState(false); // Controls Snackbar visibility
+  const [snackbarMessage, setSnackbarMessage] = useState(""); // Message for Snackbar
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // Severity for Snackbar ('success', 'error', 'info', 'warning')
+  const [updatingClasses, setUpdatingClasses] = useState(null); // Tracks which student's classes completed is updating
+  const [lastUpdatedTimestamps, setLastUpdatedTimestamps] = useState({}); // For displaying last updated time for classes
 
-  // State for handling payment status updates
-  // const [updatingStudentId, setUpdatingStudentId] = useState(null); // Tracks which student is being updated
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-  const [updatingClasses, setUpdatingClasses] = useState(null); // For classes completed
-  const [lastUpdatedTimestamps, setLastUpdatedTimestamps] = useState({});
-
-  const navigate = useNavigate();
+  // Effect to populate lastUpdatedTimestamps from student data
   useEffect(() => {
     const newTimestamps = {};
     students.forEach((student) => {
@@ -107,33 +127,90 @@ const StudentsTable = () => {
     });
     setLastUpdatedTimestamps(newTimestamps);
   }, [students]);
-  // --- Data Fetching Effect ---
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    // if (!token) {
-    //   console.warn("No authentication token found. Redirecting to login.");
-    //   dispatch(logoutUser()); // Dispatch logout to clear any lingering Redux auth state
-    //   dispatch(setAuthError("No authentication token found. Please log in.")); // Set an error message in Redux
-    //   return; // Stop execution if no token
-    // }
 
-    // This is where you 'take call from middleware'.
-    // Dispatching this action will trigger your apiMiddleware to fetch students.
-    // The middleware will handle setting loading states, handling success/failure,
-    // and updating the 'students' data in your Redux store.
+  // --- Data Fetching Effect ---
+  // Dispatches actions to fetch both students and upcoming classes (timetables) on component mount.
+  useEffect(() => {
     dispatch(fetchStudents());
-  }, [dispatch]); // 'dispatch' is stable, so this effect runs once on component mount.
+    dispatch(fetchUpcomingClasses());
+  }, [dispatch]); // `dispatch` is stable, so this runs once.
+
+  // --- Combine Loading and Error States ---
+  // Updates local `isLoading` and `error` states based on Redux loading/error states.
+  useEffect(() => {
+    setIsLoading(studentsLoading || classesLoading); // True if either students or classes are loading
+    if (studentsError) {
+      setError(studentsError);
+    } else if (classesError) {
+      setError(classesError);
+    } else {
+      setError(""); // Clear error if no errors from Redux
+    }
+  }, [studentsLoading, classesLoading, studentsError, classesError]); // Dependencies ensure this runs when relevant states change
+
+  // --- Effect to augment students with nextClass from timetables ---
+  // This effect runs when `students` or `timetables` data changes.
+  // It matches students with their earliest upcoming class from the timetables.
+  useEffect(() => {
+    // Only proceed if both students and timetables data are available
+    if (!students.length || !timetables.length) {
+      setStudentsWithNextClass(students); // If data is missing, use raw students
+      return;
+    }
+
+    const augmentedStudents = students.map(student => {
+      // Filter timetables to find classes for the current student
+      const studentUpcomingClasses = timetables.filter(
+        // Case-insensitive comparison for student names
+        uc => uc.Student?.toLowerCase() === student.Name?.toLowerCase()
+      );
+
+      let soonestFutureClass = null; // To store the earliest upcoming class Date object
+
+      studentUpcomingClasses.forEach(uc => {
+        const datePart = uc.Day; // e.g., "06/07/2025"
+        // Extract time part (e.g., "11:00 PM" from "11:00 PM to 12:00 AM")
+        const timePart = uc.Time?.split(' ')[0];
+        const ampmPart = uc.Time?.split(' ')[1];
+
+        if (datePart && timePart && ampmPart) {
+          try {
+            // Combine date and time string for parsing
+            const combinedDateTimeString = `${datePart} ${timePart} ${ampmPart}`;
+            // Parse the string into a Date object using the specified format
+            const classDateTime = parse(combinedDateTimeString, 'dd/MM/yyyy hh:mm a', new Date());
+
+            // Check if the parsed class date/time is in the future
+            if (isFuture(classDateTime)) {
+              // If it's the first future class found, or earlier than a previously found one
+              if (!soonestFutureClass || classDateTime < soonestFutureClass) {
+                soonestFutureClass = classDateTime;
+              }
+            }
+          } catch (e) {
+            console.warn(`Error parsing date for student ${student.Name}, class ${uc.Day} ${uc.Time}:`, e);
+          }
+        }
+      });
+
+      return {
+        ...student,
+        nextClass: soonestFutureClass, // Add the earliest upcoming class Date object to the student
+      };
+    });
+
+    setStudentsWithNextClass(augmentedStudents);
+  }, [students, timetables]); // Re-run this effect when `students` or `timetables` change
 
   // --- Filtering Effect ---
+  // Applies filters to the `studentsWithNextClass` array.
   useEffect(() => {
-    // Start with the raw students data
-    let studentsToFilter = [...students]; // Assuming 'students' here is your comprehensive list of all students
+    let studentsToFilter = [...studentsWithNextClass]; // Start with augmented students
 
-    // --- 1. Apply User Permission Filters FIRST ---
+    // 1. Apply User Permission Filters FIRST
     if (user) {
-      // Ensure user object is available
       if (user.AllowAll) {
-        // If AllowAll is true, no subject-based filtering is needed at this stage
+        // If AllowAll is true, no subject-based filtering is needed
       } else if (user.isPhysics) {
         studentsToFilter = studentsToFilter.filter(
           (student) => student.Subject?.trim() === "Physics"
@@ -143,34 +220,25 @@ const StudentsTable = () => {
           (student) => student.Subject?.trim() === "Chemistry"
         );
       } else {
-        // If no specific subject permission and not AllowAll, then show no students by default
-        // unless there's another explicit permission (e.g., student is assigned to a teacher's specific classes)
+        // If no specific subject permission and not AllowAll, show no students by default
         studentsToFilter = [];
         console.warn(
           "User has no specific subject permissions (isPhysics, isChemistry) and not AllowAll. Initial student list will be empty."
         );
       }
     } else {
-      // If user object is not available yet (e.g., still loading),
-      // you might want to show no students or handle it as a loading state
-      studentsToFilter = [];
+      studentsToFilter = []; // If user object is not available yet, show no students
       console.warn("User object not available for permission filtering.");
     }
 
-    // --- 2. Apply other filters on top of the permission-filtered list ---
-
+    // 2. Apply other UI filters on top of the permission-filtered list
     if (filters.studentName) {
       studentsToFilter = studentsToFilter.filter((student) =>
         student.Name?.toLowerCase().includes(filters.studentName.toLowerCase())
       );
     }
 
-    // IMPORTANT: If user.isPhysics or user.isChemistry is true, this 'filters.subject'
-    // condition might become redundant or conflict, depending on how your UI handles it.
-    // If a user *only* sees Physics students, they shouldn't be able to filter by 'Chemistry' subject.
-    // You might want to disable or pre-set the subject filter input based on user permissions.
     if (filters.subject && filters.subject !== "") {
-      // Ensure not empty string
       studentsToFilter = studentsToFilter.filter(
         (student) => student.Subject?.trim() === filters.subject.trim()
       );
@@ -196,9 +264,7 @@ const StudentsTable = () => {
     }
 
     setFilteredStudents(studentsToFilter);
-
-    // Dependencies: Crucially, include 'user' in the dependency array
-  }, [filters, students, user]);
+  }, [filters, studentsWithNextClass, user]); // Dependencies: `studentsWithNextClass` is crucial here
 
   // --- Handle Sort Request ---
   const handleSortRequest = (property) => {
@@ -208,13 +274,15 @@ const StudentsTable = () => {
   };
 
   // --- Memoized Sorted Students Data ---
+  // Uses `useMemo` to optimize sorting, only re-calculating when `filteredStudents`, `orderBy`, or `order` change.
   const sortedFilteredStudents = useMemo(() => {
-    if (!orderBy) return filteredStudents;
+    if (!orderBy) return filteredStudents; // If no sort order, return as is
 
     return [...filteredStudents].sort((a, b) => {
       let aValue;
       let bValue;
 
+      // Custom sorting logic for specific columns
       if (orderBy === "monthlyFee") {
         aValue =
           typeof a["Monthly Fee"] === "number"
@@ -233,9 +301,12 @@ const StudentsTable = () => {
           typeof b["Classes Completed"] === "number"
             ? b["Classes Completed"]
             : parseFloat(b["Classes Completed"]) || 0;
+      } else if (orderBy === "nextClass") {
+        // Sort by the actual Date object. `Infinity` handles null/N/A values, placing them at the end.
+        aValue = a.nextClass ? a.nextClass.getTime() : Infinity;
+        bValue = b.nextClass ? b.nextClass.getTime() : Infinity;
       } else {
-        // For other columns, you might want to implement string comparison or other logic
-        // For now, return 0 if no specific sort logic is defined for the column
+        // Default string or number comparison for other columns
         const valA = a[orderBy];
         const valB = b[orderBy];
 
@@ -245,19 +316,21 @@ const StudentsTable = () => {
         if (typeof valA === "number" && typeof valB === "number") {
           return valA - valB;
         }
-        return 0; // Default: no specific sorting
+        return 0; // No specific sorting logic, maintain original order
       }
 
+      // Apply ascending or descending order
       if (aValue < bValue) {
         return order === "asc" ? -1 : 1;
       }
       if (aValue > bValue) {
         return order === "asc" ? 1 : -1;
       }
-      return 0;
+      return 0; // Values are equal
     });
   }, [filteredStudents, orderBy, order]);
 
+  // Handles changes in filter input fields
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prevFilters) => ({
@@ -266,6 +339,7 @@ const StudentsTable = () => {
     }));
   };
 
+  // Handles closing the Snackbar notification
   const handleCloseSnackbar = (event, reason) => {
     if (reason === "clickaway") {
       return;
@@ -273,106 +347,88 @@ const StudentsTable = () => {
     setSnackbarOpen(false);
   };
 
-  // --- NEW: Handle Payment Status Toggle ---
-  if (students.loading) {
-    return <div className="loading-message">Loading Dashboard...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="error-message">
-        Error: {error}
-        <button onClick={() => window.location.reload()}>
-          Reload Dashboard
-        </button>
-      </div>
-    );
-  }
-  const showSubjectColumn = user?.AllowAll; // It will be true only if user.AllowAll is true
-  // Modified handlePaymentStatusToggle to use Redux action
-  // In your component file (e.g., StudentList.jsx or wherever handlePaymentStatusToggle is defined)
-
+  // --- Handle Payment Status Toggle ---
+  // Dispatches Redux action to update payment status and shows Snackbar notification.
   const handlePaymentStatusToggle = async (
     studentId,
     currentStatus,
     studentName
   ) => {
+    // Determine the new status (Paid -> Unpaid, Unpaid -> Paid)
     const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid";
+
+    setUpdatingStudent(studentId); // Show loading spinner for this student's row
     try {
-      // Dispatch the Redux action to update the payment status
+      // Dispatch the action with the new status
       await dispatch(updateStudentPaymentStatus(studentId, currentStatus));
 
-      // Display success message using the passed studentName
+      // Set Snackbar severity based on the new status for appropriate color
+      setSnackbarSeverity(newStatus === "Paid" ? "success" : "error");
       setSnackbarMessage(
         `Payment status updated to "${newStatus}" for ${studentName}!`
       );
-      setSnackbarSeverity("success");
-      setSnackbarOpen(true);
-
-      // Removed all logic related to `updateTimestampTimeoutRef` and `lastUpdatedClassesAt`
-      // as per your request to simplify.
+      setSnackbarOpen(true); // Show Snackbar
     } catch (err) {
+      // Handle error during update
       setSnackbarMessage(`Failed to update payment status: ${err.message}`);
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
+    } finally {
+      setUpdatingStudent(null); // Hide loading spinner
     }
   };
 
-  // --------------------------------
-  // ClassesColumn.jsx   (or similar)
-  // --------------------------------
-const handleClassChange = async (studentId, increment) => {
-  if (updatingClasses) return;
-  setUpdatingClasses(studentId);
+  // --- Handle Classes Completed Change ---
+  // Dispatches Redux action to increment/decrement classes completed and shows Snackbar.
+  const handleClassChange = async (studentId, increment) => {
+    if (updatingClasses) return; // Prevent multiple updates simultaneously
+    setUpdatingClasses(studentId); // Show loading spinner for this student's classes
 
-  const delta = increment ? 1 : -1;
+    const delta = increment ? 1 : -1; // Determine if incrementing or decrementing
 
-  try {
-    const updatedStudent = await dispatch(
-      updateClassesCompleted(studentId, delta)
-    );
+    try {
+      // Dispatch the action to update classes completed
+      const updatedStudent = await dispatch(
+        updateClassesCompleted(studentId, delta)
+      );
 
-    console.log("🎉  updatedStudent returned", updatedStudent); // <-- will be an object now
+      console.log("🎉 updatedStudent returned", updatedStudent); // Log the updated student object
 
-    setSnackbarMessage(
-      `Classes completed updated to ${updatedStudent.classesCompleted} for ${updatedStudent.Name}!`
-    );
-    setSnackbarSeverity("success");
-    setSnackbarOpen(true);
-  } catch (err) {
-    setSnackbarMessage(`Failed to update classes: ${err.message}`);
-    setSnackbarSeverity("error");
-    setSnackbarOpen(true);
-  } finally {
-    setUpdatingClasses(null);
-  }
-};
+      setSnackbarMessage(
+        `Classes completed updated to ${updatedStudent.classesCompleted} for ${updatedStudent.Name}!`
+      );
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMessage(`Failed to update classes: ${err.message}`);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUpdatingClasses(null); // Hide loading spinner
+    }
+  };
 
-
-
+  // Determines the title for the PDF report based on filtered students and user permissions.
   const getPdfTitle = () => {
     if (sortedFilteredStudents.length === 0) {
-      return "Timetable Report"; // Default if no data
+      return "Timetable Report"; // Default title if no data
     }
 
-    // Get unique subjects from the filtered timetable
     const uniqueSubjects = [
       ...new Set(sortedFilteredStudents.map((item) => item.Subject)),
     ];
-    const name = user?.name;
+    const name = user?.name; // Get user's name if available
 
     if (uniqueSubjects.length === 1) {
       const subject = uniqueSubjects[0];
-      if (subject === "Physics") {
-        return `${name} Students`;
-      } else if (subject === "Chemistry") {
-        return `${name} Students`;
+      if (subject === "Physics" || subject === "Chemistry") {
+        return `${name} Students`; // Specific title for Physics/Chemistry teachers
       }
     }
-    // Default title if multiple subjects or subject doesn't match specific criteria
-    return "Students";
+    return "Students"; // Generic title
   };
-  // Function to get the PDF table headers
+
+  // Defines the headers for the PDF table.
   const getPdfTableHeaders = (showSubjectColumn) => {
     const headers = [
       { key: "sno", label: "S.No." },
@@ -385,22 +441,25 @@ const handleClassChange = async (studentId, increment) => {
     }
 
     headers.push(
+      { key: "ContactNumber", label: "Student No" },
+      { key: "FatherContactNumber", label: "F No" },
+      { key: "MotherContactNumber", label: "M No" },
       { key: "Year", label: "Year" },
       { key: "Stream", label: "Stream" },
       { key: "College", label: "College" },
-      { key: "Group ", label: "Group" }, // Note the space in "Group " key
+      { key: "Group ", label: "Group" }, // Note: space in key matches your data
       { key: "Source", label: "Source" },
       { key: "Monthly Fee", label: "Monthly Fee" },
       { key: "Classes Completed", label: "Classes Completed" },
-      { key: "nextClass", label: "Next Class" },
-      { key: "admissionDate", label: "Admission Date" }, // <--- ADDED THIS LINE!
+      { key: "nextClass", label: "Next Class" }, // Will be formatted date string
+      { key: "admissionDate", label: "Admission Date" },
       { key: "Payment Status", label: "Payment Status" }
     );
 
     return headers;
   };
 
-  // Function to get the PDF table rows
+  // Prepares the rows for the PDF table from the student data.
   const getPdfTableRows = (students, showSubjectColumn) => {
     return students.map((student, index) => {
       const row = {
@@ -413,33 +472,36 @@ const handleClassChange = async (studentId, increment) => {
         row.Subject = student.Subject || "N/A";
       }
 
+      row.ContactNumber = student.ContactNumber || "N/A";
+      row.FatherContactNumber = student.father_contact || "N/A";
+      row.MotherContactNumber = student.mother_contact || "N/A";
+
       row.Year = student.Year || "N/A";
       row.Stream = student.Stream || "N/A";
       row.College = student.College || "N/A";
-      row["Group "] = student["Group "] || "N/A"; // Still need bracket notation for "Group "
+      row["Group "] = student["Group "] || "N/A";
       row.Source = student.Source || "N/A";
       row["Monthly Fee"] = (
         typeof student["Monthly Fee"] === "number"
           ? student["Monthly Fee"]
           : parseFloat(student["Monthly Fee"]) || 0
-      ).toLocaleString("en-IN"); // → "12,000"
-      row["Classes Completed"] = student.classesCompleted || 0; // Using 'classesCompleted' from your data
+      ).toLocaleString("en-IN"); // Format as Indian currency
+      row["Classes Completed"] = student.classesCompleted || 0;
 
-      // nextClass logic (you don't have nextClass in your shared data, so it will always be N/A)
+      // Format the nextClass Date object for display in PDF
       row.nextClass = student.nextClass
-        ? format(parseISO(student.nextClass), "MMM dd, hh:mm a")
+        ? format(student.nextClass, "MMM dd, hh:mm a")
         : "N/A";
 
       row["Payment Status"] = student["Payment Status"] || "N/A";
 
-      // --- FIX FOR [OBJECT OBJECT] START ---
-      // Handle admissionDate: Convert seconds to a Date object and then format it
+      // Handle admissionDate, which might be a Firestore Timestamp object
       if (
         student.admissionDate &&
         typeof student.admissionDate._seconds === "number"
       ) {
-        const date = fromUnixTime(student.admissionDate._seconds); // Convert Unix timestamp (seconds) to Date
-        row.admissionDate = format(date, "MMM dd, yyyy hh:mm a"); // Format as desired (added yyyy for year)
+        const date = fromUnixTime(student.admissionDate._seconds);
+        row.admissionDate = format(date, "MMM dd, hh:mm a");
       } else {
         row.admissionDate = "N/A";
       }
@@ -447,12 +509,51 @@ const handleClassChange = async (studentId, increment) => {
       return row;
     });
   };
-  const headerConfig = getPdfTableHeaders(showSubjectColumn); // [{key,label}, …]
-  const pdfHeaders = headerConfig.map((h) => h.label); // ["S.No.", "Name", …]
+
+  // Determine if the Subject column should be shown based on user permissions
+  const showSubjectColumn = user?.AllowAll;
+  // Prepare headers and rows for the PdfDownloadButton component
+  const headerConfig = getPdfTableHeaders(showSubjectColumn); // Array of {key, label} objects
+  const pdfHeaders = headerConfig.map((h) => h.label); // Array of just labels (strings) for jsPDF-AutoTable
   const pdfRows = getPdfTableRows(
     sortedFilteredStudents,
     showSubjectColumn
-  ).map((rowObj) => headerConfig.map((h) => rowObj[h.key]));
+  ).map((rowObj) => headerConfig.map((h) => rowObj[h.key])); // Map row objects to arrays of values in correct order
+
+  // --- Conditional Rendering for Loading and Error States ---
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <CircularProgress color="primary" size={60} />
+        <Typography variant="h6" color="text.secondary" sx={{ ml: 2 }}>
+          Loading student data...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Fade in={true} timeout={500}>
+        <Box sx={{ textAlign: 'center', p: 4, color: 'error.main' }}>
+          <Typography variant="h5" component="p" sx={{ mb: 2 }}>
+            <FaExclamationCircle style={{ marginRight: '10px' }} />
+            Error: {error}
+          </Typography>
+          <MuiButton
+            variant="contained"
+            color="primary"
+            onClick={() => window.location.reload()} // Allows user to retry fetching data
+          >
+            Reload Dashboard
+          </MuiButton>
+        </Box>
+      </Fade>
+    );
+  }
+
+
+
 
   return (
     <Box
@@ -512,7 +613,7 @@ const handleClassChange = async (studentId, increment) => {
               headers={pdfHeaders} // ← now plain strings
               rows={pdfRows} // ← now arrays, no [object Object]
               buttonLabel="Download Students Data (PDF)"
-              filename="Student_Report.pdf"
+              filename="Student_Data.pdf"
               reportDate={new Date()}
             />
           )}
@@ -858,6 +959,78 @@ const handleClassChange = async (studentId, increment) => {
                         Source
                       </Box>
                     </TableCell>
+                    {/* New Contact Number TableCell */}
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaPhone style={{ marginRight: 8, color: "#1976d2" }} />
+                        Contact No.
+                      </Box>
+                    </TableCell>
+                    {/* New Mother Contact TableCell */}
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaPhone style={{ marginRight: 8, color: "#1976d2" }} />
+                        Mother Contact
+                      </Box>
+                    </TableCell>
+                    {/* New Father Contact TableCell */}
+                    <TableCell
+                      align="center"
+                      sx={{
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        minWidth: 150,
+                        p: 1.5,
+                        textTransform: "uppercase",
+                        fontSize: "0.9rem",
+                        color: "#1a237e",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaPhone style={{ marginRight: 8, color: "#1976d2" }} />
+                        Father Contact
+                      </Box>
+                    </TableCell>
                     <TableCell
                       align="right"
                       sortDirection={orderBy === "monthlyFee" ? order : false}
@@ -1084,6 +1257,18 @@ const handleClassChange = async (studentId, increment) => {
                       <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                         {student.Source || "N/A"}
                       </TableCell>
+                      {/* Display Contact Number */}
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.ContactNumber || ""}
+                      </TableCell>
+                      {/* Display Mother Contact */}
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.mother_contact || ""}
+                      </TableCell>
+                      {/* Display Father Contact */}
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.father_contact || ""}
+                      </TableCell>
                       <TableCell align="right" sx={{ fontSize: "0.9rem" }}>
                         ₹
                         {(typeof student["Monthly Fee"] === "number"
@@ -1179,9 +1364,9 @@ const handleClassChange = async (studentId, increment) => {
                         </Box>
                       </TableCell>
                       <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.nextClass
-                          ? format(parseISO(student.nextClass), "MMM dd, p")
-                          : "N/A"}
+                       {student.nextClass
+                        ? format(student.nextClass, 'MMM dd, hh:mm a')
+                        : 'N/A'}
                       </TableCell>
                       <TableCell
                         align="center"

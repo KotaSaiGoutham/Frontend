@@ -40,7 +40,7 @@ import {
   FaSpinner,
   FaCalendarDay,
   FaHistory,
-  FaWallet
+  FaWallet,
 } from "react-icons/fa";
 import { MuiButton } from "./customcomponents/MuiCustomFormFields";
 // Import the new line graph component
@@ -213,12 +213,12 @@ const StudentPortfolio = () => {
               value={`₹${(studentData["Monthly Fee"] || 0).toLocaleString()}`}
               isHighlighted={true}
             />
-          <DetailItem
-          icon={FaMoneyBillWave}
-          label="Payment Status"
-          value={getPaymentStatusDisplay(studentData["Payment Status"])}
-          isHighlighted={true} // Keep highlighted
-        />
+            <DetailItem
+              icon={FaMoneyBillWave}
+              label="Payment Status"
+              value={getPaymentStatusDisplay(studentData["Payment Status"])}
+              isHighlighted={true} // Keep highlighted
+            />
             <DetailItem
               icon={FaChalkboardTeacher}
               label="Total Classes Attended"
@@ -229,7 +229,7 @@ const StudentPortfolio = () => {
               label="Next Class"
               value={
                 studentData.nextClass
-                  ? format(parseISO(studentData.nextClass), "MMM dd, p")
+                  ? format(studentData.nextClass, "MMM dd, hh:mm a")
                   : "N/A"
               }
             />

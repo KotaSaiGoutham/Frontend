@@ -54,6 +54,7 @@ import {
   UPDATE_TIMETABLE_REQUEST,
   UPDATE_TIMETABLE_SUCCESS,
   UPDATE_TIMETABLE_FAILURE,
+  ADD_STUDENT_CLEAR_STATUS,
 } from "../types";
 
 // --- 2. Import Utility Functions ---
@@ -666,3 +667,7 @@ export const updateTimetableEntry = (timetableData) => async (dispatch) => {
     throw error; // Re-throw to be caught by the component for UI feedback
   }
 };
+// New action creator to clear the add student status
+export const clearAddStudentStatus = () => ({
+  type: ADD_STUDENT_CLEAR_STATUS,
+});

@@ -26,6 +26,12 @@ const theme = createTheme({
     secondary: {
       main: '#dc004e', // Example secondary color
     },
+     success: {
+      main: '#4CAF50', // Green color for success
+    },
+    error: {
+      main: '#F44336', // Red color for error
+    },
   },
 });
 

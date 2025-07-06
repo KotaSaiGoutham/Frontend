@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react"; // Added useEffect for token retrieval example
+import React, { useState, useEffect, useRef } from "react"; // Added useRef
 import { useNavigate } from "react-router-dom";
 import {
   FaUserPlus,
   FaUserCircle,
   FaTransgender,
   FaPhone,
-  FaEnvelope,
   FaBookOpen,
   FaDollarSign,
   FaCreditCard,
@@ -14,11 +13,15 @@ import {
   FaUsers,
   FaSearchDollar,
   FaCalendarAlt,
-  FaLayerGroup,
   FaPlus,
   FaTimesCircle,
   FaCheckCircle,
+  FaExclamationCircle,
 } from "react-icons/fa";
+
+import Snackbar from "@mui/material/Snackbar";
+import MuiAlert from "@mui/material/Alert";
+
 import {
   MuiInput,
   MuiSelect,
@@ -31,19 +34,27 @@ import {
   genderOptions,
   sourceOptions,
 } from "../mockdata/Options";
-import { useDispatch, useSelector } from "react-redux"; // Import Redux hooks
-import { addStudent } from "../redux/actions";
+import { useDispatch, useSelector } from "react-redux";
+import { addStudent, clearAddStudentStatus } from "../redux/actions";
+
+const Alert = React.forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
+
 const AddStudent = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch(); // Get the dispatch function
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
-  // Initial state for the new student form
-  const initialStudentData = {
+  // Using useRef to store initialStudentData so it doesn't cause useEffect re-renders
+  // if it's passed as a dependency, and its reference changes.
+  const initialStudentData = useRef({
     Name: "",
     Gender: "",
     ContactNumber: "",
-    Subject: user.isPhysics ? "Physics": user.isChemistry?"Chemistry":"",
+    MotherContactNumber: "",
+    FatherContactNumber: "",
+    Subject: user.isPhysics ? "Physics" : user.isChemistry ? "Chemistry" : "",
     "Monthly Fee": "",
     "Payment Status": "Unpaid",
     Stream: "",
@@ -51,49 +62,38 @@ const AddStudent = () => {
     "Group ": "",
     Source: "",
     Year: "",
+  });
+
+  const [studentData, setStudentData] = useState(initialStudentData.current);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+  // We no longer directly watch addStudentSuccess/addStudentError here
+  // because we will handle the promise resolution in handleSubmit.
+  // However, we still need `addingStudent` to disable the button.
+  const { addingStudent } = useSelector((state) => state.students);
+
+  // Cleanup only for the snackbar state on unmount
+  useEffect(() => {
+    // This cleanup runs when the component unmounts
+    return () => {
+      setSnackbarOpen(false); // Close snackbar
+      setSnackbarMessage(""); // Clear message
+      // Ensure Redux state is also cleared on unmount
+      dispatch(clearAddStudentStatus());
+    };
+  }, [dispatch]); // Dependency on dispatch to ensure cleanup always has it
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
   };
 
-  const [studentData, setStudentData] = useState(initialStudentData);
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [token, setToken] = useState(null); // State to store the authentication token
-const { 
-        addingStudent, 
-        addStudentSuccess, 
-        addStudentError 
-    } = useSelector(state => state.students); // Assuming 'students' is the key for studentReducer in rootReducer
-useEffect(() => {
-        if (addStudentSuccess) {
-            // Only show alert/message if a successful payload is received
-            console.log("Student added successfully (from Redux state):", addStudentSuccess);
-            alert("1 student added successfully!"); // Use alert or a more sophisticated UI notification
-            setStudentData(initialStudentData); // Clear the form
-
-            // Optionally, clear the success state in Redux after showing the message
-            // This prevents the alert from showing again if the component re-renders
-            // You would need a new action type and case in reducer for this, e.g., CLEAR_ADD_STUDENT_SUCCESS
-            // dispatch({ type: 'CLEAR_ADD_STUDENT_SUCCESS' }); 
-            
-            // If you want to automatically refresh the list of all students after adding one:
-            // dispatch(fetchStudents()); 
-        }
-
-        if (addStudentError) {
-            console.error("Error adding student (from Redux state):", addStudentError);
-            alert(`Error adding student: ${addStudentError}`);
-
-            // Check if the error indicates authentication failure
-            if (addStudentError.includes("Authentication failed") || addStudentError.includes("Session expired")) {
-                // Dispatching SET_AUTH_ERROR again might be redundant if middleware already did it,
-                // but ensures the auth state is correctly marked.
-                navigate('/login'); // Redirect to login on auth failure
-            }
-        }
-    }, [addStudentSuccess, addStudentError, navigate, dispatch]); // Dependencies
-  // Handle input changes
-  // Assuming studentData is your state object, e.g., const [studentData, setStudentData] = useState({});
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setStudentData((prevData) => {
       let newData = { ...prevData, [name]: value };
       if (name === "Stream") {
@@ -108,52 +108,96 @@ useEffect(() => {
       return newData;
     });
   };
+
   const handleDateChange = (name, dateString) => {
     setStudentData((prevData) => ({
       ...prevData,
       [name]: dateString,
     }));
   };
-  // Handle form submission with API call
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // setSuccessMessage(null); // This local state is no longer needed
+    setSnackbarOpen(false); // Close any existing snackbar before new submission
+    setSnackbarMessage("");
+
     console.log("Attempting to add student with data:", studentData);
 
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Authentication required. Please log in.");
+      setSnackbarSeverity("error");
+      setSnackbarMessage("Authentication required. Please log in.");
+      setSnackbarOpen(true);
       dispatch({
-        type: SET_AUTH_ERROR,
+        type: "SET_AUTH_ERROR",
         payload: "Authentication required. Please log in.",
-      }); // Set auth error in Redux
-      navigate("/login"); // Redirect to login if no token
+      });
+      navigate("/login");
       return;
     }
 
-    // --- THE ONLY API CALL YOU NEED HERE IS THE DISPATCH ---
-    // The try-catch block for the API call is now inside the Redux middleware/action.
-    // The .then/.catch of the promise returned by dispatch(addStudent(studentData))
-    // could be used for specific local component logic if needed,
-    // but for general feedback, useEffect watching the store is cleaner.
-    dispatch(addStudent(studentData));
-  };
-  // Options for your select fields
+    try {
+      // Dispatch the action and await its resolution
+      await dispatch(addStudent(studentData));
 
-const showSubjectColumn = user?.AllowAll;
+      // If the dispatch above resolves (i.e., ADD_STUDENT_SUCCESS was dispatched)
+      setSnackbarSeverity("success");
+      setSnackbarMessage("Student added successfully!");
+      setSnackbarOpen(true);
+
+      setStudentData(initialStudentData.current); // Clear the form
+
+      // Wait a bit, then navigate
+      setTimeout(() => {
+        navigate("/students");
+      }, 2500); // Navigate 2.5 seconds after success
+    } catch (error) {
+      // If the dispatch above rejects (i.e., ADD_STUDENT_FAILURE was dispatched)
+      // The error object here will be the payload from the rejected promise in the action.
+      let errorMessage = "An unknown error occurred.";
+      if (typeof error === "string") {
+        errorMessage = error; // If the action rejected with a string message
+      } else if (error && error.message) {
+        errorMessage = error.message; // If the action rejected with an Error object
+      }
+
+      setSnackbarSeverity("error");
+      setSnackbarMessage(errorMessage);
+      setSnackbarOpen(true);
+
+      console.error(
+        "Error during student submission (caught in component):",
+        error
+      );
+
+      // Special handling for authentication errors, as before
+      if (
+        errorMessage.includes("Authentication required") ||
+        errorMessage.includes("Session expired") ||
+        (error && (error.status === 401 || error.status === 403)) // If the error object has status
+      ) {
+        dispatch({
+          type: "SET_AUTH_ERROR", // Ensure this is correctly imported/defined
+          payload: errorMessage,
+        });
+        navigate("/login");
+      }
+    }
+    // We don't need to manually clear addStudentStatus here
+    // because the action already does it on request or success/failure.
+    // The main cleanup is on component unmount in useEffect.
+  };
+
+  const showSubjectColumn = user?.AllowAll;
+
   return (
     <div className="add-student-page-container dashboard-container">
       <div className="dashboard-card add-student-form-card">
-        {successMessage && (
-          <div className="add-student-success-message">
-            <FaCheckCircle /> {successMessage}
-          </div>
-        )}
         <h2>
           <FaUserPlus /> Add New Student
-        </h2>{" "}
+        </h2>
         <form onSubmit={handleSubmit} className="add-student-form">
-          {/* Basic Information */}
+          {/* Personal Details */}
           <div className="add-student-form-section-title">Personal Details</div>
           <div className="add-student-form-grid">
             {/* Student Name */}
@@ -178,16 +222,37 @@ const showSubjectColumn = user?.AllowAll;
               required
             />
 
-            {/* Contact Number */}
+            {/* Student's Contact Number (Now optional) */}
             <MuiInput
-              label="Contact Number"
+              label="Student Contact Number"
               icon={FaPhone}
               name="ContactNumber"
               value={studentData.ContactNumber}
               onChange={handleChange}
               placeholder="e.g., +919876543210"
               type="tel"
-              required
+            />
+
+            {/* Mother's Contact Number (New and optional) */}
+            <MuiInput
+              label="Mother Contact Number"
+              icon={FaPhone}
+              name="MotherContactNumber"
+              value={studentData.MotherContactNumber}
+              onChange={handleChange}
+              placeholder="e.g., +919876543210"
+              type="tel"
+            />
+
+            {/* Father's Contact Number (New and optional) */}
+            <MuiInput
+              label="Father Contact Number"
+              icon={FaPhone}
+              name="FatherContactNumber"
+              value={studentData.FatherContactNumber}
+              onChange={handleChange}
+              placeholder="e.g., +919876543210"
+              type="tel"
             />
           </div>
 
@@ -195,18 +260,17 @@ const showSubjectColumn = user?.AllowAll;
           <div className="add-student-form-section-title">Academic Details</div>
           <div className="add-student-form-grid">
             {/* Primary Subject */}
-          {showSubjectColumn && (
-    <MuiInput
-              label="Primary Subject"
-              icon={FaBookOpen}
-              name="Subject"
-              value={studentData.Subject}
-              onChange={handleChange}
-              placeholder="e.g., Physics, Maths"
-              required
-            />
-          )}
-        
+            {showSubjectColumn && (
+              <MuiInput
+                label="Primary Subject"
+                icon={FaBookOpen}
+                name="Subject"
+                value={studentData.Subject}
+                onChange={handleChange}
+                placeholder="e.g., Physics, Maths"
+                required
+              />
+            )}
 
             {/* Stream */}
             <MuiSelect
@@ -234,7 +298,7 @@ const showSubjectColumn = user?.AllowAll;
             <MuiInput
               label="Group"
               icon={FaUsers}
-              name="Group " // Keep the space if your backend expects it
+              name="Group "
               value={studentData["Group "]}
               onChange={handleChange}
               placeholder="e.g., MPC, BiPC, CEC"
@@ -286,14 +350,19 @@ const showSubjectColumn = user?.AllowAll;
               name="Source"
               value={studentData.Source}
               onChange={handleChange}
+              placeholder="How did they find us?"
               options={sourceOptions}
               required
             />
           </div>
 
           <div className="add-student-button-group">
-            <button type="submit" className="add-student-primary-button">
-              <FaPlus /> Add Student
+            <button
+              type="submit"
+              className="add-student-primary-button"
+              disabled={addingStudent}
+            >
+              <FaPlus /> {addingStudent ? "Adding Student..." : "Add Student"}
             </button>
             <button
               type="button"
@@ -304,10 +373,22 @@ const showSubjectColumn = user?.AllowAll;
             </button>
           </div>
         </form>
-                {/* Displaying feedback directly from Redux state */}
-            {/* You can use conditional rendering for messages based on the Redux state */}
-            {addStudentSuccess && <p className="success-message">Student added successfully!</p>}
-            {addStudentError && <p className="error-message">{addStudentError}</p>}
+        {addingStudent && <p className="info-message">Adding student...</p>}
+
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </div>
     </div>
   );

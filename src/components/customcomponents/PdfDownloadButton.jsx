@@ -70,7 +70,7 @@ export default function PdfDownloadButton({
 
         // Determine if the full company header (logo, company details, main title/subtitle) should be shown
         // This should be shown if it's the first page OR if the report is NOT a 'Student_Report.pdf'
-        const shouldShowFullCompanyHeader = isCurrentPageFirst || filename !== 'Student_Report.pdf';
+const shouldShowFullCompanyHeader = isCurrentPageFirst;
 
         let currentHeaderContentBottomY = yCursor; // Tracks the lowest point of drawn header elements
 

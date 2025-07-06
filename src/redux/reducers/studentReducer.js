@@ -6,18 +6,19 @@ import {
   FETCH_SINGLE_STUDENT_REQUEST,
   FETCH_SINGLE_STUDENT_SUCCESS,
   FETCH_SINGLE_STUDENT_FAILURE,
-  ADD_STUDENT_REQUEST,      // NEW
-  ADD_STUDENT_SUCCESS,      // NEW
-  ADD_STUDENT_FAILURE,      // NEW
-  ADD_WEEKLY_MARKS_REQUEST, // NEW
-  ADD_WEEKLY_MARKS_SUCCESS, // NEW
-  ADD_WEEKLY_MARKS_FAILURE, // NEW
-     UPDATE_STUDENT_PAYMENT_REQUEST, // <-- NEW
-  UPDATE_STUDENT_PAYMENT_SUCCESS, // <-- NEW
-  UPDATE_STUDENT_PAYMENT_FAILURE, // <-- NEW
-   FETCH_WEEKLY_MARKS_REQUEST, // <-- NEW
-  FETCH_WEEKLY_MARKS_SUCCESS, // <-- NEW
-  FETCH_WEEKLY_MARKS_FAILURE, // <-- NEW
+  ADD_STUDENT_REQUEST,
+  ADD_STUDENT_SUCCESS,
+  ADD_STUDENT_FAILURE,
+  ADD_STUDENT_CLEAR_STATUS, // <--- ADD THIS IMPORT
+  ADD_WEEKLY_MARKS_REQUEST,
+  ADD_WEEKLY_MARKS_SUCCESS,
+  ADD_WEEKLY_MARKS_FAILURE,
+  UPDATE_STUDENT_PAYMENT_REQUEST,
+  UPDATE_STUDENT_PAYMENT_SUCCESS,
+  UPDATE_STUDENT_PAYMENT_FAILURE,
+  FETCH_WEEKLY_MARKS_REQUEST,
+  FETCH_WEEKLY_MARKS_SUCCESS,
+  FETCH_WEEKLY_MARKS_FAILURE,
 } from '../types';
 
 const initialState = {
@@ -29,16 +30,21 @@ const initialState = {
   loadingSingleStudent: false, // Loading state for single student
   singleStudentError: null, // Error state for single student
 
-  addingStudent: false,     // NEW: Loading state for adding a student
-  addStudentSuccess: null,  // NEW: Success message/data after adding student
-  addStudentError: null,    // NEW: Error for adding a student
+  addingStudent: false, // NEW: Loading state for adding a student
+  addStudentSuccess: null, // NEW: Success message/data after adding student
+  addStudentError: null, // NEW: Error for adding a student
 
-  addingMarks: false,       // NEW: Loading state for adding marks
-  addMarksSuccess: null,    // NEW: Success message/data after adding marks
-  addMarksError: null,      // NEW: Error for adding marks
-    weeklyMarks: [], // NEW: State to hold fetched weekly marks
+  addingMarks: false, // NEW: Loading state for adding marks
+  addMarksSuccess: null, // NEW: Success message/data after adding marks
+  addMarksError: null, // NEW: Error for adding marks
+  weeklyMarks: [], // NEW: State to hold fetched weekly marks
   loadingWeeklyMarks: false, // NEW: Loading state for fetching weekly marks
   weeklyMarksError: null, // NEW: Error for fetching weekly marks
+
+  // Ensure these are initialized if you use them for payment updates
+  updatingStudent: null,
+  updateError: null,
+  updateSuccess: false,
 };
 
 const studentReducer = (state = initialState, action) => {
@@ -62,7 +68,7 @@ const studentReducer = (state = initialState, action) => {
         ...state,
         loading: false,
         students: [],
-        error: action.payload.error,
+        error: action.payload, // Assuming payload is the error message directly here
       };
 
     // --- Cases for fetching a SINGLE student ---
@@ -85,7 +91,7 @@ const studentReducer = (state = initialState, action) => {
         ...state,
         loadingSingleStudent: false,
         selectedStudentData: null,
-        singleStudentError: action.payload.error,
+        singleStudentError: action.payload, // Assuming payload is the error message directly here
       };
 
     // --- NEW: Cases for adding a student ---
@@ -93,7 +99,7 @@ const studentReducer = (state = initialState, action) => {
       return {
         ...state,
         addingStudent: true,
-        addStudentSuccess: null,
+        addStudentSuccess: null, // Clear previous success/error on new request
         addStudentError: null,
       };
     case ADD_STUDENT_SUCCESS:
@@ -102,7 +108,8 @@ const studentReducer = (state = initialState, action) => {
         addingStudent: false,
         addStudentSuccess: action.payload, // Store success response
         addStudentError: null,
-        // Optionally add the new student to the existing 'students' array if payload contains the full student object
+        // Optionally add the new student to the existing 'students' array
+        // if action.payload is the full student object and you don't re-fetch all students
         // students: [...state.students, action.payload]
       };
     case ADD_STUDENT_FAILURE:
@@ -110,7 +117,13 @@ const studentReducer = (state = initialState, action) => {
         ...state,
         addingStudent: false,
         addStudentSuccess: null,
-        addStudentError: action.payload.error,
+        addStudentError: action.payload, // Assuming payload is the error message directly here
+      };
+    case ADD_STUDENT_CLEAR_STATUS: // <--- ADD THIS NEW CASE
+      return {
+        ...state,
+        addStudentSuccess: null,
+        addStudentError: null,
       };
 
     // --- NEW: Cases for adding weekly marks ---
@@ -135,10 +148,10 @@ const studentReducer = (state = initialState, action) => {
         ...state,
         addingMarks: false,
         addMarksSuccess: null,
-        addMarksError: action.payload.error,
+        addMarksError: action.payload, // Assuming payload is the error message directly here
       };
 
-       case UPDATE_STUDENT_PAYMENT_REQUEST: // <-- NEW: Handle request to update payment status
+    case UPDATE_STUDENT_PAYMENT_REQUEST: // <-- NEW: Handle request to update payment status
       return {
         ...state,
         updatingStudent: action.payload.studentId, // Store the ID of the student being updated
@@ -146,19 +159,21 @@ const studentReducer = (state = initialState, action) => {
         updateSuccess: false,
       };
     case UPDATE_STUDENT_PAYMENT_SUCCESS: // <-- NEW: Handle successful payment status update
-      // The fetchStudents() action is dispatched on success, so FETCH_STUDENTS_SUCCESS
-      // will eventually update the 'students' array. We just need to clear update state here.
       return {
         ...state,
         updatingStudent: null,
         updateSuccess: true,
         updateError: null,
-        // If you don't re-fetch all students, you'd update the array directly here:
-        // students: state.students.map(student =>
-        //   student.id === action.payload.studentId
-        //     ? { ...student, "Payment Status": action.payload.newStatus }
-        //     : student
-        // ),
+        // Assuming your 'students' array might need a direct update here if fetchStudents() isn't always called
+        students: state.students.map(student =>
+          student._id === action.payload.studentId // Use _id if that's your MongoDB ID field
+            ? { ...student, "Payment Status": action.payload.newStatus } // Update payment status directly
+            : student
+        ),
+        // If updating a single student's data that is currently selected:
+        selectedStudentData: state.selectedStudentData && state.selectedStudentData._id === action.payload.studentId
+          ? { ...state.selectedStudentData, "Payment Status": action.payload.newStatus }
+          : state.selectedStudentData,
       };
     case UPDATE_STUDENT_PAYMENT_FAILURE: // <-- NEW: Handle failed payment status update
       return {
@@ -167,7 +182,7 @@ const studentReducer = (state = initialState, action) => {
         updateSuccess: false,
         updateError: action.payload, // Store the specific error message for the update
       };
-       // --- NEW: Cases for fetching weekly marks ---
+    // --- NEW: Cases for fetching weekly marks ---
     case FETCH_WEEKLY_MARKS_REQUEST:
       return {
         ...state,
@@ -187,7 +202,7 @@ const studentReducer = (state = initialState, action) => {
         ...state,
         loadingWeeklyMarks: false,
         weeklyMarks: [],
-        weeklyMarksError: action.payload, // Store the error message
+        weeklyMarksError: action.payload, // Assuming payload is the error message directly here
       };
 
     default:
