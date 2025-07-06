@@ -4,8 +4,7 @@ import { API_REQUEST, LOGOUT } from '../types';
 import { setAuthError } from '../actions'; // Import setAuthError action
 
 // Base URL for your API. Adjust if your backend is on a different domain/port.
-const BASE_API_URL = "http://localhost:5000" || 'https://api.electronacademy.in';
-// const BASE_API_URL =  'https://api.electronacademy.in';
+const BASE_API_URL = import.meta.env.VITE_API_URL;
 
 
 const apiMiddleware = ({ dispatch, getState }) => next => async action => {

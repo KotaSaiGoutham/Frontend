@@ -81,3 +81,99 @@ export const sortAndFilterTimetableData = (data) => {
       return "Invalid Date";
     }
   };
+
+const ALL_PDF_COLUMNS = [
+  // key: Matches the key in your `columnVisibility` state
+  // label: The text that will appear in the PDF header
+  // dataKey: The actual property name in your `student` data object
+  // format: (optional) A function to transform the raw student data into the desired string for PDF
+  // controllable: (optional, default true) If false, this column is always included and not toggleable by checkboxes.
+  { key: "sNo", label: "S.No.", dataKey: null, format: (student, index) => index + 1, controllable: false },
+  { key: "name", label: "Name", dataKey: "Name", controllable: false },
+  { key: "gender", label: "Gender", dataKey: "Gender" },
+  { key: "subject", label: "Subject", dataKey: "Subject" },
+  { key: "contactNumber", label: "Student No", dataKey: "ContactNumber" },
+  { key: "fatherContact", label: "F No", dataKey: "father_contact" },
+  { key: "motherContact", label: "M No", dataKey: "mother_contact" },
+  { key: "year", label: "Year", dataKey: "Year" },
+  { key: "stream", label: "Stream", dataKey: "Stream" },
+  { key: "college", label: "College", dataKey: "College" },
+  { key: "group", label: "Group", dataKey: "Group " }, // Note: space in dataKey matches your data
+  { key: "source", label: "Source", dataKey: "Source" },
+  {
+    key: "monthlyFee",
+    label: "Monthly Fee",
+    dataKey: "Monthly Fee", // Note: space in dataKey
+    format: (student) => (
+      (typeof student["Monthly Fee"] === "number"
+        ? student["Monthly Fee"]
+        : parseFloat(student["Monthly Fee"]) || 0
+      ).toLocaleString("en-IN") // Format as Indian currency
+    ),
+  },
+  { key: "classesCompleted", label: "Classes Completed", dataKey: "Classes Completed" }, // Note: space in dataKey
+  {
+    key: "nextClass",
+    label: "Next Class",
+    dataKey: "nextClass",
+    format: (student) =>
+      student.nextClass && typeof student.nextClass === 'string' // Assuming it's an ISO string from your dummy data
+        ? format(parseISO(student.nextClass), "MMM dd, hh:mm a")
+        : "N/A",
+  },
+  {
+    key: "admissionDate",
+    label: "Admission Date",
+    dataKey: "admissionDate",
+    format: (student) =>
+      student.admissionDate && typeof student.admissionDate._seconds === "number"
+        ? format(fromUnixTime(student.admissionDate._seconds), "MMM dd, hh:mm a")
+        : "N/A",
+  },
+  { key: "paymentStatus", label: "Payment Status", dataKey: "Payment Status" },
+];
+
+// --- 2. Updated getPdfTableHeaders function ---
+// This function now takes the `columnVisibility` state directly.
+export const getPdfTableHeaders = (columnVisibility, showSubjectColumn) => {
+  return ALL_PDF_COLUMNS
+    .filter(col => {
+      // Columns marked as not controllable are always included.
+      // Other columns are included if their visibility is true in the UI state.
+      // The 'subject' column also respects the global 'showSubjectColumn' flag.
+      const isControllableAndVisible = (col.controllable === undefined || col.controllable) && columnVisibility[col.key];
+      const isAlwaysIncluded = col.controllable === false;
+      const isSubjectColumn = col.key === 'subject';
+      
+      return isAlwaysIncluded || (isControllableAndVisible && (!isSubjectColumn || showSubjectColumn));
+    })
+    .map(col => col.label); // Return only the labels for jsPDF-AutoTable headers
+};
+
+// --- 3. Updated getPdfTableRows function ---
+// This function also takes the `columnVisibility` state.
+export const getPdfTableRows = (students, columnVisibility, showSubjectColumn) => {
+  // First, filter the columns that should be included in the PDF based on visibility
+  const filteredColumnsForPdf = ALL_PDF_COLUMNS.filter(col => {
+    const isControllableAndVisible = (col.controllable === undefined || col.controllable) && columnVisibility[col.key];
+    const isAlwaysIncluded = col.controllable === false;
+    const isSubjectColumn = col.key === 'subject';
+
+    return isAlwaysIncluded || (isControllableAndVisible && (!isSubjectColumn || showSubjectColumn));
+  });
+
+  return students.map((student, index) => {
+    // For each student, create an array of values in the correct order
+    return filteredColumnsForPdf.map(col => {
+      if (col.format) {
+        // Use the custom format function if provided
+        return col.format(student, index);
+      } else if (col.dataKey) {
+        // Use the dataKey to access the student property
+        return student[col.dataKey] || "N/A";
+      }
+      // Fallback for cases where dataKey is null (like sNo, which is handled by format)
+      return "N/A";
+    });
+  });
+};

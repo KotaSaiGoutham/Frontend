@@ -20,6 +20,9 @@ import {
   Fade,
   Typography,
   IconButton,
+  FormControlLabel, // <-- Import this
+  Checkbox, // <-- Import this
+  FormGroup, // <-- Import this
 } from "@mui/material";
 // Import ALL necessary icons from react-icons/fa
 import {
@@ -47,6 +50,7 @@ import {
   FaPhone,
 } from "react-icons/fa";
 // Assuming these are your custom components and mock data
+import { getPdfTableHeaders,getPdfTableRows } from "../mockdata/funcation";
 import {
   MuiButton,
   MuiSelect,
@@ -56,6 +60,7 @@ import {
   genderOptions,
   paymentStatusOptions,
   subjectOptions,
+  streamOptions,
 } from "../mockdata/Options";
 // Redux actions
 import {
@@ -75,6 +80,30 @@ const MuiAlert = React.forwardRef(function MuiAlert(props, ref) {
 });
 
 const StudentsTable = () => {
+  const [columnVisibility, setColumnVisibility] = useState({
+    gender: true,
+    subject: true,
+    year: true,
+    stream: true,
+    college: true,
+    group: true,
+    source: true,
+    contactNumber: true,
+    motherContact: true,
+    fatherContact: true,
+    monthlyFee: true,
+    classesCompleted: true,
+    nextClass: true,
+    paymentStatus: true,
+  });
+  // Handler for checkbox changes
+  const handleColumnToggle = (columnName) => (event) => {
+    setColumnVisibility((prevVisibility) => ({
+      ...prevVisibility,
+      [columnName]: event.target.checked,
+    }));
+  };
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -107,7 +136,6 @@ const StudentsTable = () => {
   });
   const [isLoading, setIsLoading] = useState(true); // Combined loading state for initial data fetch
   const [error, setError] = useState(""); // Combined error message
-  const [streamOptions, setStreamOptions] = useState([]); // Dynamic options for stream filter
   const [orderBy, setOrderBy] = useState(""); // Column to sort by
   const [order, setOrder] = useState("asc"); // Sort order ('asc' or 'desc')
   const [updatingStudent, setUpdatingStudent] = useState(null); // Tracks which student's payment status is updating
@@ -158,27 +186,31 @@ const StudentsTable = () => {
       return;
     }
 
-    const augmentedStudents = students.map(student => {
+    const augmentedStudents = students.map((student) => {
       // Filter timetables to find classes for the current student
       const studentUpcomingClasses = timetables.filter(
         // Case-insensitive comparison for student names
-        uc => uc.Student?.toLowerCase() === student.Name?.toLowerCase()
+        (uc) => uc.Student?.toLowerCase() === student.Name?.toLowerCase()
       );
 
       let soonestFutureClass = null; // To store the earliest upcoming class Date object
 
-      studentUpcomingClasses.forEach(uc => {
+      studentUpcomingClasses.forEach((uc) => {
         const datePart = uc.Day; // e.g., "06/07/2025"
         // Extract time part (e.g., "11:00 PM" from "11:00 PM to 12:00 AM")
-        const timePart = uc.Time?.split(' ')[0];
-        const ampmPart = uc.Time?.split(' ')[1];
+        const timePart = uc.Time?.split(" ")[0];
+        const ampmPart = uc.Time?.split(" ")[1];
 
         if (datePart && timePart && ampmPart) {
           try {
             // Combine date and time string for parsing
             const combinedDateTimeString = `${datePart} ${timePart} ${ampmPart}`;
             // Parse the string into a Date object using the specified format
-            const classDateTime = parse(combinedDateTimeString, 'dd/MM/yyyy hh:mm a', new Date());
+            const classDateTime = parse(
+              combinedDateTimeString,
+              "dd/MM/yyyy hh:mm a",
+              new Date()
+            );
 
             // Check if the parsed class date/time is in the future
             if (isFuture(classDateTime)) {
@@ -188,7 +220,10 @@ const StudentsTable = () => {
               }
             }
           } catch (e) {
-            console.warn(`Error parsing date for student ${student.Name}, class ${uc.Day} ${uc.Time}:`, e);
+            console.warn(
+              `Error parsing date for student ${student.Name}, class ${uc.Day} ${uc.Time}:`,
+              e
+            );
           }
         }
       });
@@ -428,102 +463,27 @@ const StudentsTable = () => {
     return "Students"; // Generic title
   };
 
-  // Defines the headers for the PDF table.
-  const getPdfTableHeaders = (showSubjectColumn) => {
-    const headers = [
-      { key: "sno", label: "S.No." },
-      { key: "Name", label: "Name" },
-      { key: "Gender", label: "Gender" },
-    ];
 
-    if (showSubjectColumn) {
-      headers.push({ key: "Subject", label: "Subject" });
-    }
 
-    headers.push(
-      { key: "ContactNumber", label: "Student No" },
-      { key: "FatherContactNumber", label: "F No" },
-      { key: "MotherContactNumber", label: "M No" },
-      { key: "Year", label: "Year" },
-      { key: "Stream", label: "Stream" },
-      { key: "College", label: "College" },
-      { key: "Group ", label: "Group" }, // Note: space in key matches your data
-      { key: "Source", label: "Source" },
-      { key: "Monthly Fee", label: "Monthly Fee" },
-      { key: "Classes Completed", label: "Classes Completed" },
-      { key: "nextClass", label: "Next Class" }, // Will be formatted date string
-      { key: "admissionDate", label: "Admission Date" },
-      { key: "Payment Status", label: "Payment Status" }
-    );
-
-    return headers;
-  };
-
-  // Prepares the rows for the PDF table from the student data.
-  const getPdfTableRows = (students, showSubjectColumn) => {
-    return students.map((student, index) => {
-      const row = {
-        sno: index + 1,
-        Name: student.Name || "N/A",
-        Gender: student.Gender || "N/A",
-      };
-
-      if (showSubjectColumn) {
-        row.Subject = student.Subject || "N/A";
-      }
-
-      row.ContactNumber = student.ContactNumber || "N/A";
-      row.FatherContactNumber = student.father_contact || "N/A";
-      row.MotherContactNumber = student.mother_contact || "N/A";
-
-      row.Year = student.Year || "N/A";
-      row.Stream = student.Stream || "N/A";
-      row.College = student.College || "N/A";
-      row["Group "] = student["Group "] || "N/A";
-      row.Source = student.Source || "N/A";
-      row["Monthly Fee"] = (
-        typeof student["Monthly Fee"] === "number"
-          ? student["Monthly Fee"]
-          : parseFloat(student["Monthly Fee"]) || 0
-      ).toLocaleString("en-IN"); // Format as Indian currency
-      row["Classes Completed"] = student.classesCompleted || 0;
-
-      // Format the nextClass Date object for display in PDF
-      row.nextClass = student.nextClass
-        ? format(student.nextClass, "MMM dd, hh:mm a")
-        : "N/A";
-
-      row["Payment Status"] = student["Payment Status"] || "N/A";
-
-      // Handle admissionDate, which might be a Firestore Timestamp object
-      if (
-        student.admissionDate &&
-        typeof student.admissionDate._seconds === "number"
-      ) {
-        const date = fromUnixTime(student.admissionDate._seconds);
-        row.admissionDate = format(date, "MMM dd, hh:mm a");
-      } else {
-        row.admissionDate = "N/A";
-      }
-
-      return row;
-    });
-  };
 
   // Determine if the Subject column should be shown based on user permissions
   const showSubjectColumn = user?.AllowAll;
   // Prepare headers and rows for the PdfDownloadButton component
-  const headerConfig = getPdfTableHeaders(showSubjectColumn); // Array of {key, label} objects
-  const pdfHeaders = headerConfig.map((h) => h.label); // Array of just labels (strings) for jsPDF-AutoTable
-  const pdfRows = getPdfTableRows(
-    sortedFilteredStudents,
-    showSubjectColumn
-  ).map((rowObj) => headerConfig.map((h) => rowObj[h.key])); // Map row objects to arrays of values in correct order
+// Derive PDF headers and rows based on the current columnVisibility state
+  const pdfHeaders = getPdfTableHeaders(columnVisibility, showSubjectColumn);
+  const pdfRows = getPdfTableRows(sortedFilteredStudents, columnVisibility, showSubjectColumn);
 
   // --- Conditional Rendering for Loading and Error States ---
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "80vh",
+        }}
+      >
         <CircularProgress color="primary" size={60} />
         <Typography variant="h6" color="text.secondary" sx={{ ml: 2 }}>
           Loading student data...
@@ -535,9 +495,9 @@ const StudentsTable = () => {
   if (error) {
     return (
       <Fade in={true} timeout={500}>
-        <Box sx={{ textAlign: 'center', p: 4, color: 'error.main' }}>
+        <Box sx={{ textAlign: "center", p: 4, color: "error.main" }}>
           <Typography variant="h5" component="p" sx={{ mb: 2 }}>
-            <FaExclamationCircle style={{ marginRight: '10px' }} />
+            <FaExclamationCircle style={{ marginRight: "10px" }} />
             Error: {error}
           </Typography>
           <MuiButton
@@ -551,9 +511,6 @@ const StudentsTable = () => {
       </Fade>
     );
   }
-
-
-
 
   return (
     <Box
@@ -733,7 +690,40 @@ const StudentsTable = () => {
           </Box>
         </Paper>
       </Slide>
-
+      <Paper
+        elevation={6}
+        sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
+      >
+        <Box sx={{ mb: 2, display: "flex", flexWrap: "wrap", gap: 2 }}>
+          <Typography variant="h6" sx={{ width: "100%", mb: 1 }}>
+            Show/Hide Columns:
+          </Typography>
+          <FormGroup row>
+            {Object.entries(columnVisibility).map(([key, isVisible]) => (
+              <FormControlLabel
+                key={key}
+                control={
+                  <Checkbox
+                    checked={isVisible}
+                    onChange={handleColumnToggle(key)}
+                    name={key}
+                  />
+                }
+                label={
+                  // Display human-readable names for labels
+                  key === "sNo"
+                    ? "S.No."
+                    : key === "contactNumber"
+                    ? "Contact No."
+                    : key
+                        .replace(/([A-Z])/g, " $1")
+                        .replace(/^./, (str) => str.toUpperCase())
+                }
+              />
+            ))}
+          </FormGroup>
+        </Box>
+      </Paper>
       {/* Students List Table */}
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
         <Paper
@@ -745,8 +735,6 @@ const StudentsTable = () => {
               <Table sx={{ minWidth: 1200 }} aria-label="student table">
                 <TableHead>
                   <TableRow sx={{ backgroundColor: "#e3f2fd" }}>
-                    {" "}
-                    {/* Light blue header */}
                     <TableCell
                       align="center"
                       sx={{
@@ -766,44 +754,44 @@ const StudentsTable = () => {
                         p: 1.5,
                         textTransform: "uppercase",
                         fontSize: "0.9rem",
-                        color: "#1a237e", // Dark blue for header text
+                        color: "#1a237e",
                       }}
                     >
                       <Box sx={{ display: "flex", alignItems: "center" }}>
                         <FaUserCircle
                           style={{ marginRight: 8, color: "#1976d2" }}
                         />{" "}
-                        {/* Primary blue icon */}
                         Name
                       </Box>
                     </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 100,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
+                    {columnVisibility.gender && (
+                      <TableCell
+                        align="center"
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 100,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
                         }}
                       >
-                        <FaTransgender
-                          style={{ marginRight: 8, color: "#1976d2" }}
-                        />{" "}
-                        {/* Primary blue icon */}
-                        Gender
-                      </Box>
-                    </TableCell>
-                    {showSubjectColumn && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaTransgender
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />{" "}
+                          Gender
+                        </Box>
+                      </TableCell>
+                    )}
+                    {columnVisibility.subject && showSubjectColumn && (
                       <TableCell
                         align="center"
                         sx={{
@@ -826,365 +814,290 @@ const StudentsTable = () => {
                           <FaBookOpen
                             style={{ marginRight: 8, color: "#1976d2" }}
                           />{" "}
-                          {/* Primary blue icon */}
                           Subject
                         </Box>
                       </TableCell>
                     )}
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 80,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
+                    {columnVisibility.year && (
+                      <TableCell
+                        align="center"
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 80,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
                         }}
                       >
-                        <FaCalendarCheck
-                          style={{ marginRight: 8, color: "#1976d2" }}
-                        />{" "}
-                        {/* Primary blue icon */}
-                        Year
-                      </Box>
-                    </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 120,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <FaGraduationCap
-                          style={{ marginRight: 8, color: "#1976d2" }}
-                        />{" "}
-                        {/* Primary blue icon */}
-                        Stream
-                      </Box>
-                    </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 150,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <FaUniversity
-                          style={{ marginRight: 8, color: "#1976d2" }}
-                        />{" "}
-                        {/* Primary blue icon */}
-                        College
-                      </Box>
-                    </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 100,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <FaUsers style={{ marginRight: 8, color: "#1976d2" }} />{" "}
-                        {/* Primary blue icon */}
-                        Group
-                      </Box>
-                    </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 100,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <FaSearchDollar
-                          style={{ marginRight: 8, color: "#1976d2" }}
-                        />{" "}
-                        {/* Primary blue icon */}
-                        Source
-                      </Box>
-                    </TableCell>
-                    {/* New Contact Number TableCell */}
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 150,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <FaPhone style={{ marginRight: 8, color: "#1976d2" }} />
-                        Contact No.
-                      </Box>
-                    </TableCell>
-                    {/* New Mother Contact TableCell */}
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 150,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <FaPhone style={{ marginRight: 8, color: "#1976d2" }} />
-                        Mother Contact
-                      </Box>
-                    </TableCell>
-                    {/* New Father Contact TableCell */}
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 150,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <FaPhone style={{ marginRight: 8, color: "#1976d2" }} />
-                        Father Contact
-                      </Box>
-                    </TableCell>
-                    <TableCell
-                      align="right"
-                      sortDirection={orderBy === "monthlyFee" ? order : false}
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 140,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <TableSortLabel
-                        active={orderBy === "monthlyFee"}
-                        direction={orderBy === "monthlyFee" ? order : "asc"}
-                        onClick={() => handleSortRequest("monthlyFee")}
-                        IconComponent={
-                          orderBy === "monthlyFee"
-                            ? order === "asc"
-                              ? FaArrowUp
-                              : FaArrowDown
-                            : undefined
-                        }
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "flex-end",
-                          "& .MuiTableSortLabel-icon": {
-                            marginLeft: "8px",
-                            marginRight: "0px",
-                          },
-                          "& .MuiTableSortLabel-iconDirectionDesc": {
-                            transform: "rotate(0deg)",
-                          },
-                          "& .MuiTableSortLabel-iconDirectionAsc": {
-                            transform: "rotate(180deg)",
-                          },
-                        }}
-                      >
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <FaDollarSign
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaCalendarCheck
                             style={{ marginRight: 8, color: "#1976d2" }}
                           />{" "}
-                          {/* Primary blue icon */}
-                          Monthly Fee
+                          Year
                         </Box>
-                      </TableSortLabel>
-                    </TableCell>
-                    <TableCell
-                      align="right"
-                      sortDirection={
-                        orderBy === "classesCompleted" ? order : false
-                      }
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 160,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <TableSortLabel
-                        active={orderBy === "classesCompleted"}
-                        direction={
-                          orderBy === "classesCompleted" ? order : "asc"
-                        }
-                        onClick={() => handleSortRequest("classesCompleted")}
-                        IconComponent={
-                          orderBy === "classesCompleted"
-                            ? order === "asc"
-                              ? FaArrowUp
-                              : FaArrowDown
-                            : undefined
-                        }
+                      </TableCell>
+                    )}
+                    {columnVisibility.stream && (
+                      <TableCell
+                        align="center"
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "flex-end",
-                          "& .MuiTableSortLabel-icon": {
-                            marginLeft: "8px",
-                            marginRight: "0px",
-                          },
-                          "& .MuiTableSortLabel-iconDirectionDesc": {
-                            transform: "rotate(0deg)",
-                          },
-                          "& .MuiTableSortLabel-iconDirectionAsc": {
-                            transform: "rotate(180deg)",
-                          },
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 120,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <FaHourglassHalf
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaGraduationCap
                             style={{ marginRight: 8, color: "#1976d2" }}
                           />{" "}
-                          {/* Primary blue icon */}
-                          Classes Completed
+                          Stream
                         </Box>
-                      </TableSortLabel>
-                    </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 150,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
+                      </TableCell>
+                    )}
+                    {columnVisibility.college && (
+                      <TableCell
+                        align="center"
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 150,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
                         }}
                       >
-                        <FaCalendarCheck
-                          style={{ marginRight: 8, color: "#1976d2" }}
-                        />{" "}
-                        {/* Primary blue icon */}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaUniversity
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />{" "}
+                          College
+                        </Box>
+                      </TableCell>
+                    )}
+                    {columnVisibility.group && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 100,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaUsers
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />{" "}
+                          Group
+                        </Box>
+                      </TableCell>
+                    )}
+                    {columnVisibility.source && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 100,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaSearchDollar
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />{" "}
+                          Source
+                        </Box>
+                      </TableCell>
+                    )}
+                    {columnVisibility.contactNumber && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 150,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaPhone
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />
+                          Contact No.
+                        </Box>
+                      </TableCell>
+                    )}
+                    {columnVisibility.motherContact && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 150,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaPhone
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />
+                          Mother Contact
+                        </Box>
+                      </TableCell>
+                    )}
+                    {columnVisibility.fatherContact && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 150,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FaPhone
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />
+                          Father Contact
+                        </Box>
+                      </TableCell>
+                    )}
+                    {columnVisibility.monthlyFee && (
+                      <TableCell
+                        align="right"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 120,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        Monthly Fee
+                      </TableCell>
+                    )}
+                    {columnVisibility.classesCompleted && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 160,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        Classes Completed
+                      </TableCell>
+                    )}
+                    {columnVisibility.nextClass && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 120,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
                         Next Class
-                      </Box>
-                    </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 150,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <Box
+                      </TableCell>
+                    )}
+                    {columnVisibility.paymentStatus && (
+                      <TableCell
+                        align="center"
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 150,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
                         }}
                       >
-                        <FaIdCard
-                          style={{ marginRight: 8, color: "#1976d2" }}
-                        />{" "}
-                        {/* Primary blue icon */}
                         Payment Status
-                      </Box>
-                    </TableCell>
+                      </TableCell>
+                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1193,13 +1106,13 @@ const StudentsTable = () => {
                       key={student.id}
                       sx={{
                         backgroundColor:
-                          index % 2 === 0 ? "#FFFFFF" : "#fbfbfb", // Alternating row colors
-                        "&:hover": { backgroundColor: "#e9f7fe !important" }, // Soft light blue on hover
+                          index % 2 === 0 ? "#FFFFFF" : "#fbfbfb",
+                        "&:hover": { backgroundColor: "#e9f7fe !important" },
                         "& > td": {
                           borderBottom:
-                            "1px solid rgba(0, 0, 0, 0.05) !important", // Lighter borders
+                            "1px solid rgba(0, 0, 0, 0.05) !important",
                           fontSize: "0.95rem",
-                          color: "#424242", // Darker text for content
+                          color: "#424242",
                         },
                       }}
                     >
@@ -1234,198 +1147,225 @@ const StudentsTable = () => {
                           {student.Name}
                         </Link>
                       </TableCell>
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.Gender || "N/A"}
-                      </TableCell>
-                      {showSubjectColumn && (
+                      {columnVisibility.gender && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student.Gender || "N/A"}
+                        </TableCell>
+                      )}
+                      {columnVisibility.subject && showSubjectColumn && (
                         <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                           {student.Subject || "N/A"}
                         </TableCell>
                       )}
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.Year || "N/A"}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.Stream || "N/A"}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.College || "N/A"}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student["Group "] || "N/A"}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.Source || "N/A"}
-                      </TableCell>
-                      {/* Display Contact Number */}
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.ContactNumber || ""}
-                      </TableCell>
-                      {/* Display Mother Contact */}
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.mother_contact || ""}
-                      </TableCell>
-                      {/* Display Father Contact */}
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.father_contact || ""}
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontSize: "0.9rem" }}>
-                        ₹
-                        {(typeof student["Monthly Fee"] === "number"
-                          ? student["Monthly Fee"]
-                          : parseFloat(student["Monthly Fee"]) || 0
-                        ).toLocaleString()}
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{ fontSize: "0.9rem", whiteSpace: "nowrap" }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            gap: 0.5,
-                            pointerEvents:
-                              updatingClasses === student.id ? "none" : "auto",
-                            opacity: updatingClasses === student.id ? 0.7 : 1,
-                          }}
+                      {columnVisibility.year && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student.Year || "N/A"}
+                        </TableCell>
+                      )}
+                      {columnVisibility.stream && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student.Stream || "N/A"}
+                        </TableCell>
+                      )}
+                      {columnVisibility.college && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student.College || "N/A"}
+                        </TableCell>
+                      )}
+                      {columnVisibility.group && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student["Group "] || "N/A"}
+                        </TableCell>
+                      )}
+                      {columnVisibility.source && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student.Source || "N/A"}
+                        </TableCell>
+                      )}
+                      {columnVisibility.contactNumber && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student.ContactNumber || ""}
+                        </TableCell>
+                      )}
+                      {columnVisibility.motherContact && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student.mother_contact || ""}
+                        </TableCell>
+                      )}
+                      {columnVisibility.fatherContact && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student.father_contact || ""}
+                        </TableCell>
+                      )}
+                      {columnVisibility.monthlyFee && (
+                        <TableCell align="right" sx={{ fontSize: "0.9rem" }}>
+                          ₹
+                          {(typeof student["Monthly Fee"] === "number"
+                            ? student["Monthly Fee"]
+                            : parseFloat(student["Monthly Fee"]) || 0
+                          ).toLocaleString()}
+                        </TableCell>
+                      )}
+                      {columnVisibility.classesCompleted && (
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.9rem", whiteSpace: "nowrap" }}
                         >
                           <Box
                             sx={{
                               display: "flex",
+                              flexDirection: "column",
                               alignItems: "center",
                               gap: 0.5,
+                              pointerEvents:
+                                updatingClasses === student.id
+                                  ? "none"
+                                  : "auto",
+                              opacity: updatingClasses === student.id ? 0.7 : 1,
                             }}
                           >
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                handleClassChange(student.id, false)
-                              }
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
                             >
-                              <FaMinusCircle fontSize="small" />
-                            </IconButton>
-                            {updatingClasses === student.id ? (
-                              <CircularProgress size={20} color="primary" />
-                            ) : (
-                              <Typography
-                                variant="body1"
-                                component="span"
-                                sx={{ fontWeight: 600 }}
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  handleClassChange(student.id, false)
+                                }
                               >
-                                {student["Classes Completed"] || 0}
-                              </Typography>
+                                <FaMinusCircle fontSize="small" />
+                              </IconButton>
+                              {updatingClasses === student.id ? (
+                                <CircularProgress size={20} color="primary" />
+                              ) : (
+                                <Typography
+                                  variant="body1"
+                                  component="span"
+                                  sx={{ fontWeight: 600 }}
+                                >
+                                  {student["Classes Completed"] || 0}
+                                </Typography>
+                              )}
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  handleClassChange(student.id, true)
+                                }
+                              >
+                                <FaPlusCircle fontSize="small" />
+                              </IconButton>
+                            </Box>
+                            {lastUpdatedTimestamps[student.id] && (
+                              <Fade in={true} timeout={1000}>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ fontSize: "0.7rem" }}
+                                >
+                                  Last Updated:{" "}
+                                  {format(
+                                    parseISO(lastUpdatedTimestamps[student.id]),
+                                    "MMM dd, hh:mm a"
+                                  )}
+                                </Typography>
+                              </Fade>
                             )}
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                handleClassChange(student.id, true)
-                              }
-                            >
-                              <FaPlusCircle fontSize="small" />
-                            </IconButton>
+                            {student["Payment Status"] === "Unpaid" &&
+                              (student["Classes Completed"] || 0) >= 12 && (
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: "#ef5350",
+                                    fontWeight: "bold",
+                                    mt: 0.5,
+                                    fontSize: "0.75rem",
+                                    animation:
+                                      "pulse-red 1.5s infinite alternate",
+                                    "@keyframes pulse-red": {
+                                      "0%": { opacity: 0.7 },
+                                      "100%": { opacity: 1 },
+                                    },
+                                  }}
+                                >
+                                  Payment Pending!
+                                </Typography>
+                              )}
                           </Box>
-                          {lastUpdatedTimestamps[student.id] && (
-                            <Fade in={true} timeout={1000}>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ fontSize: "0.7rem" }}
-                              >
-                                Last Updated:{" "}
-                                {format(
-                                  parseISO(lastUpdatedTimestamps[student.id]),
-                                  "MMM dd, hh:mm a"
-                                )}
-                              </Typography>
-                            </Fade>
+                        </TableCell>
+                      )}
+                      {columnVisibility.nextClass && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {student.nextClass
+                            ? format(student.nextClass, "MMM dd, hh:mm a")
+                            : "N/A"}
+                        </TableCell>
+                      )}
+                      {columnVisibility.paymentStatus && (
+                        <TableCell
+                          align="center"
+                          sx={{
+                            fontSize: "0.9rem",
+                            cursor: "pointer",
+                            "&:hover": {
+                              backgroundColor: "rgba(0, 0, 0, 0.04)",
+                            },
+                            pointerEvents:
+                              updatingStudent === student.id ? "none" : "auto",
+                            opacity: updatingStudent === student.id ? 0.7 : 1,
+                          }}
+                          onClick={() =>
+                            handlePaymentStatusToggle(
+                              student.id,
+                              student["Payment Status"],
+                              student.Name
+                            )
+                          }
+                        >
+                          {updatingStudent === student.id ? (
+                            <CircularProgress size={20} color="primary" />
+                          ) : (
+                            <span
+                              className={`payment-status-badge ${String(
+                                student["Payment Status"] || ""
+                              ).toLowerCase()}`}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                padding: "4px 8px",
+                                borderRadius: "16px",
+                                fontWeight: "bold",
+                                color:
+                                  student["Payment Status"] === "Paid"
+                                    ? "#155724"
+                                    : "#721c24",
+                                backgroundColor:
+                                  student["Payment Status"] === "Paid"
+                                    ? "#d4edda"
+                                    : "#f8d7da",
+                                border: `1px solid ${
+                                  student["Payment Status"] === "Paid"
+                                    ? "#28a745"
+                                    : "#dc3545"
+                                }`,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {student["Payment Status"] === "Paid" ? (
+                                <FaCheckCircle style={{ marginRight: 4 }} />
+                              ) : (
+                                <FaExclamationCircle
+                                  style={{ marginRight: 4 }}
+                                />
+                              )}
+                              {student["Payment Status"]}
+                            </span>
                           )}
-                          {student["Payment Status"] === "Unpaid" &&
-                            (student["Classes Completed"] || 0) >= 12 && (
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: "#ef5350", // Red color for the message
-                                  fontWeight: "bold",
-                                  mt: 0.5,
-                                  fontSize: "0.75rem",
-                                  animation:
-                                    "pulse-red 1.5s infinite alternate", // Subtle animation
-                                  "@keyframes pulse-red": {
-                                    "0%": { opacity: 0.7 },
-                                    "100%": { opacity: 1 },
-                                  },
-                                }}
-                              >
-                                Payment Pending!
-                              </Typography>
-                            )}
-                        </Box>
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                       {student.nextClass
-                        ? format(student.nextClass, 'MMM dd, hh:mm a')
-                        : 'N/A'}
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontSize: "0.9rem",
-                          cursor: "pointer",
-                          "&:hover": {
-                            backgroundColor: "rgba(0, 0, 0, 0.04)",
-                          },
-                          pointerEvents:
-                            updatingStudent === student.id ? "none" : "auto",
-                          opacity: updatingStudent === student.id ? 0.7 : 1,
-                        }}
-                        onClick={() =>
-                          handlePaymentStatusToggle(
-                            student.id,
-                            student["Payment Status"],
-                            student.Name // Pass the student's name here
-                          )
-                        }
-                      >
-                        {updatingStudent === student.id ? (
-                          <CircularProgress size={20} color="primary" />
-                        ) : (
-                          <span
-                            className={`payment-status-badge ${String(
-                              student["Payment Status"] || ""
-                            ).toLowerCase()}`}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              padding: "4px 8px",
-                              borderRadius: "16px",
-                              fontWeight: "bold",
-                              color:
-                                student["Payment Status"] === "Paid"
-                                  ? "#155724"
-                                  : "#721c24",
-                              backgroundColor:
-                                student["Payment Status"] === "Paid"
-                                  ? "#d4edda"
-                                  : "#f8d7da",
-                              border: `1px solid ${
-                                student["Payment Status"] === "Paid"
-                                  ? "#28a745"
-                                  : "#dc3545"
-                              }`,
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {student["Payment Status"] === "Paid" ? (
-                              <FaCheckCircle style={{ marginRight: 4 }} />
-                            ) : (
-                              <FaExclamationCircle style={{ marginRight: 4 }} />
-                            )}
-                            {student["Payment Status"]}
-                          </span>
-                        )}
-                      </TableCell>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

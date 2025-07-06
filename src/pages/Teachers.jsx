@@ -1,5 +1,5 @@
 import React from 'react';
-import './teachers.css'; // Link to your CSS file
+import './Teachers.css'; // Link to your CSS file
 
 const teachersData = [
     {
