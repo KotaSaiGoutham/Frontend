@@ -1,34 +1,72 @@
 /* src/layouts/AuthLayout.css */
 
 .auth-layout-container {
-    display: flex; /* This makes sidebar and content sit side-by-side */
+    display: flex;
     min-height: 100vh;
-    box-sizing: border-box; /* Include padding in element's total width/height */
-    background-color: var(--light-gray-bg);
+    width: 100%; /* Ensure container takes full width */
 }
 
 .auth-layout-content {
-    flex-grow: 1; /* Allows content to take up remaining space */
-    transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out;
-    min-height: calc(100vh - var(--navbar-height)); /* Ensures content fills height below navbar */
-    box-sizing: border-box;
-    overflow-y: auto; /* Allows vertical scrolling within content if needed */
-    overflow-x: hidden; /* Prevents horizontal scroll within content area */
-    
-    /* Default for desktop: Pushes content away from the sidebar */
-    margin-left: 250px;
-    width: calc(100% - 250px);
+    flex-grow: 1;
+    padding: 20px; /* Example padding */
+    transition: margin-left 0.3s ease-in-out; /* Smooth transition for content shift */
+    width: 100%; /* Default to full width */
+    box-sizing: border-box; /* Include padding in width calculation */
 }
 
-/* On mobile, the content takes full width, and the sidebar will overlay */
+/* Styles for when the sidebar is present and open */
+.auth-layout-content.sidebar-open {
+    margin-left: 240px; /* Assuming your sidebar width is 240px */
+    width: calc(100% - 240px); /* Adjust width to account for sidebar */
+}
+
+/* Styles for when the sidebar is present and closed (e.g., on mobile, overlayed) */
+.auth-layout-content.sidebar-closed {
+    margin-left: 0; /* No margin if sidebar is collapsed/hidden behind content */
+    width: 100%; /* Full width when sidebar is not pushing content */
+}
+
+/* Styles for when the sidebar is NOT present (e.g., for students) */
+/* Content will now remain left-aligned for students */
+.auth-layout-content.full-width {
+    margin-left: 0; /* Ensure no margin is applied */
+    width: 100%; /* Occupy full width */
+    /* Removed centering styles for student content */
+    display: block; /* Ensure it behaves like a normal block element */
+    text-align: left; /* Ensure text is left-aligned by default */
+}
+
+/* NEW: Styles for centering content when user is a student (removed centering) */
+/* This class is now essentially the same as .full-width for left-alignment */
+.auth-layout-content.centered-content {
+    margin-left: 0; /* Ensure no sidebar margin */
+    width: 100%; /* Take full available width */
+    /* Removed flex centering properties */
+    display: block;
+    text-align: left;
+}
+
+
+/* Optional: Mobile responsiveness for sidebar overlay */
 @media (max-width: 768px) {
-    .auth-layout-content {
-        margin-left: 0;
-        width: 100%;
+    .auth-layout-container {
+        flex-direction: column; /* Stack sidebar and content */
     }
-    /* If you want a slight overlay effect on content when sidebar is open on mobile */
+
+    /* Sidebar will be positioned absolutely or fixed for overlay */
+    /* .sidebar-component { ... } */
+
     .auth-layout-content.sidebar-open {
-        /* filter: brightness(0.7); */ /* Example: darken content */
-        /* pointer-events: none; */ /* Example: disable clicks on content */
+        margin-left: 0; /* On mobile, content always starts at 0, sidebar overlays */
     }
+}
+
+/* Updated Paper Box Styles */
+.updated-paper-box {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin-bottom: 20px; /* Add some space below the box */
+    border: 1px solid #e0e0e0;
 }

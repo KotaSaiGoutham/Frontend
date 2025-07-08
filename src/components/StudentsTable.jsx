@@ -23,6 +23,8 @@ import {
   FormControlLabel, // <-- Import this
   Checkbox, // <-- Import this
   FormGroup, // <-- Import this
+  Tooltip,
+  Chip,
 } from "@mui/material";
 // Import ALL necessary icons from react-icons/fa
 import {
@@ -50,7 +52,7 @@ import {
   FaPhone,
 } from "react-icons/fa";
 // Assuming these are your custom components and mock data
-import { getPdfTableHeaders,getPdfTableRows } from "../mockdata/funcation";
+import { getPdfTableHeaders, getPdfTableRows } from "../mockdata/funcation";
 import {
   MuiButton,
   MuiSelect,
@@ -72,6 +74,7 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 // PDF Download Button component
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
+import { ClassCounterDisplay } from "../mockdata/funcation";
 
 // Custom Alert component for Snackbar, using forwardRef as recommended by Material-UI
 // This allows the Snackbar to correctly pass its ref to the Alert component.
@@ -81,21 +84,23 @@ const MuiAlert = React.forwardRef(function MuiAlert(props, ref) {
 
 const StudentsTable = () => {
   const [columnVisibility, setColumnVisibility] = useState({
-    gender: true,
-    subject: true,
-    year: true,
-    stream: true,
-    college: true,
-    group: true,
-    source: true,
+    gender: false,
+    subject: false,
+    year: false,
+    stream: false,
+    college: false,
+    group: false,
+    source: false,
     contactNumber: true,
-    motherContact: true,
-    fatherContact: true,
+    motherContact: false,
+    fatherContact: false,
     monthlyFee: true,
     classesCompleted: true,
-    nextClass: true,
+    nextClass: false,
     paymentStatus: true,
   });
+  const [animate, setAnimate] = useState(false);
+
   // Handler for checkbox changes
   const handleColumnToggle = (columnName) => (event) => {
     setColumnVisibility((prevVisibility) => ({
@@ -146,15 +151,15 @@ const StudentsTable = () => {
   const [lastUpdatedTimestamps, setLastUpdatedTimestamps] = useState({}); // For displaying last updated time for classes
 
   // Effect to populate lastUpdatedTimestamps from student data
-  useEffect(() => {
-    const newTimestamps = {};
-    students.forEach((student) => {
-      if (student.lastUpdatedClassesAt) {
-        newTimestamps[student.id] = student.lastUpdatedClassesAt;
-      }
-    });
-    setLastUpdatedTimestamps(newTimestamps);
-  }, [students]);
+  // useEffect(() => {
+  //   const newTimestamps = {};
+  //   students.forEach((student) => {
+  //     if (student.lastUpdatedClassesAt) {
+  //       newTimestamps[student.id] = student.lastUpdatedClassesAt;
+  //     }
+  //   });
+  //   setLastUpdatedTimestamps(newTimestamps);
+  // }, [students]);
 
   // --- Data Fetching Effect ---
   // Dispatches actions to fetch both students and upcoming classes (timetables) on component mount.
@@ -163,8 +168,6 @@ const StudentsTable = () => {
     dispatch(fetchUpcomingClasses());
   }, [dispatch]); // `dispatch` is stable, so this runs once.
 
-  // --- Combine Loading and Error States ---
-  // Updates local `isLoading` and `error` states based on Redux loading/error states.
   useEffect(() => {
     setIsLoading(studentsLoading || classesLoading); // True if either students or classes are loading
     if (studentsError) {
@@ -237,8 +240,6 @@ const StudentsTable = () => {
     setStudentsWithNextClass(augmentedStudents);
   }, [students, timetables]); // Re-run this effect when `students` or `timetables` change
 
-  // --- Filtering Effect ---
-  // Applies filters to the `studentsWithNextClass` array.
   useEffect(() => {
     let studentsToFilter = [...studentsWithNextClass]; // Start with augmented students
 
@@ -266,7 +267,6 @@ const StudentsTable = () => {
       console.warn("User object not available for permission filtering.");
     }
 
-    // 2. Apply other UI filters on top of the permission-filtered list
     if (filters.studentName) {
       studentsToFilter = studentsToFilter.filter((student) =>
         student.Name?.toLowerCase().includes(filters.studentName.toLowerCase())
@@ -308,8 +308,6 @@ const StudentsTable = () => {
     setOrderBy(property);
   };
 
-  // --- Memoized Sorted Students Data ---
-  // Uses `useMemo` to optimize sorting, only re-calculating when `filteredStudents`, `orderBy`, or `order` change.
   const sortedFilteredStudents = useMemo(() => {
     if (!orderBy) return filteredStudents; // If no sort order, return as is
 
@@ -382,29 +380,23 @@ const StudentsTable = () => {
     setSnackbarOpen(false);
   };
 
-  // --- Handle Payment Status Toggle ---
-  // Dispatches Redux action to update payment status and shows Snackbar notification.
   const handlePaymentStatusToggle = async (
     studentId,
     currentStatus,
     studentName
   ) => {
-    // Determine the new status (Paid -> Unpaid, Unpaid -> Paid)
     const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid";
 
     setUpdatingStudent(studentId); // Show loading spinner for this student's row
     try {
-      // Dispatch the action with the new status
       await dispatch(updateStudentPaymentStatus(studentId, currentStatus));
 
-      // Set Snackbar severity based on the new status for appropriate color
       setSnackbarSeverity(newStatus === "Paid" ? "success" : "error");
       setSnackbarMessage(
         `Payment status updated to "${newStatus}" for ${studentName}!`
       );
       setSnackbarOpen(true); // Show Snackbar
     } catch (err) {
-      // Handle error during update
       setSnackbarMessage(`Failed to update payment status: ${err.message}`);
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
@@ -413,8 +405,6 @@ const StudentsTable = () => {
     }
   };
 
-  // --- Handle Classes Completed Change ---
-  // Dispatches Redux action to increment/decrement classes completed and shows Snackbar.
   const handleClassChange = async (studentId, increment) => {
     if (updatingClasses) return; // Prevent multiple updates simultaneously
     setUpdatingClasses(studentId); // Show loading spinner for this student's classes
@@ -426,8 +416,6 @@ const StudentsTable = () => {
       const updatedStudent = await dispatch(
         updateClassesCompleted(studentId, delta)
       );
-
-      console.log("🎉 updatedStudent returned", updatedStudent); // Log the updated student object
 
       setSnackbarMessage(
         `Classes completed updated to ${updatedStudent.classesCompleted} for ${updatedStudent.Name}!`
@@ -443,7 +431,6 @@ const StudentsTable = () => {
     }
   };
 
-  // Determines the title for the PDF report based on filtered students and user permissions.
   const getPdfTitle = () => {
     if (sortedFilteredStudents.length === 0) {
       return "Timetable Report"; // Default title if no data
@@ -463,17 +450,14 @@ const StudentsTable = () => {
     return "Students"; // Generic title
   };
 
-
-
-
-  // Determine if the Subject column should be shown based on user permissions
   const showSubjectColumn = user?.AllowAll;
-  // Prepare headers and rows for the PdfDownloadButton component
-// Derive PDF headers and rows based on the current columnVisibility state
   const pdfHeaders = getPdfTableHeaders(columnVisibility, showSubjectColumn);
-  const pdfRows = getPdfTableRows(sortedFilteredStudents, columnVisibility, showSubjectColumn);
+  const pdfRows = getPdfTableRows(
+    sortedFilteredStudents,
+    columnVisibility,
+    showSubjectColumn
+  );
 
-  // --- Conditional Rendering for Loading and Error States ---
   if (isLoading) {
     return (
       <Box
@@ -731,10 +715,30 @@ const StudentsTable = () => {
           sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
         >
           {sortedFilteredStudents.length > 0 ? (
-            <TableContainer>
+            <TableContainer
+              component={Paper}
+              elevation={3}
+              sx={{
+                borderRadius: 2,
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.08)",
+              }}
+            >
+              {" "}
               <Table sx={{ minWidth: 1200 }} aria-label="student table">
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: "#e3f2fd" }}>
+                <TableHead
+                  sx={{
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 2,
+                    backgroundColor: "#e3f2fd",
+                  }}
+                >
+                  <TableRow
+                    sx={{
+                      borderBottom: "2px solid #1976d2",
+                      backgroundColor: "#f5faff",
+                    }}
+                  >
                     <TableCell
                       align="center"
                       sx={{
@@ -762,6 +766,7 @@ const StudentsTable = () => {
                           style={{ marginRight: 8, color: "#1976d2" }}
                         />{" "}
                         Name
+                        {/* Add sorting icon here */}
                       </Box>
                     </TableCell>
                     {columnVisibility.gender && (
@@ -1105,12 +1110,17 @@ const StudentsTable = () => {
                     <TableRow
                       key={student.id}
                       sx={{
+                        // zebra striping
                         backgroundColor:
                           index % 2 === 0 ? "#FFFFFF" : "#fbfbfb",
-                        "&:hover": { backgroundColor: "#e9f7fe !important" },
+
+                        /* 👇 smooth fade when you hover */
+                        transition: "background-color 0.2s ease-in-out",
+                        "&:hover": { backgroundColor: "#e1f5fe" },
+
+                        // keep your existing cell styles
                         "& > td": {
-                          borderBottom:
-                            "1px solid rgba(0, 0, 0, 0.05) !important",
+                          borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
                           fontSize: "0.95rem",
                           color: "#424242",
                         },
@@ -1129,6 +1139,7 @@ const StudentsTable = () => {
                         scope="row"
                         sx={{ fontSize: "0.9rem" }}
                       >
+                        {/* Consider making the entire row clickable or using a dedicated action button for details */}
                         <Link
                           to={`/student/${student.id}`}
                           state={{ studentData: student }}
@@ -1231,33 +1242,55 @@ const StudentsTable = () => {
                                 gap: 0.5,
                               }}
                             >
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  handleClassChange(student.id, false)
-                                }
-                              >
-                                <FaMinusCircle fontSize="small" />
-                              </IconButton>
-                              {updatingClasses === student.id ? (
-                                <CircularProgress size={20} color="primary" />
-                              ) : (
-                                <Typography
-                                  variant="body1"
-                                  component="span"
-                                  sx={{ fontWeight: 600 }}
+                              <Tooltip title="Decrease classes completed">
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    handleClassChange(student.id, false)
+                                  }
+                                  color="error"
+                                  sx={{
+                                    transition:
+                                      "transform 0.2s ease-in-out, color 0.2s ease-in-out",
+                                    "&:hover": {
+                                      transform: "scale(1.1)",
+                                      color: "error.dark",
+                                    },
+                                    "&:active": {
+                                      transform: "scale(0.9)",
+                                    },
+                                  }}
                                 >
-                                  {student["Classes Completed"] || 0}
-                                </Typography>
-                              )}
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  handleClassChange(student.id, true)
-                                }
-                              >
-                                <FaPlusCircle fontSize="small" />
-                              </IconButton>
+                                  <FaMinusCircle fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+
+                              <ClassCounterDisplay
+                                student={student}
+                                updatingClasses={updatingClasses}
+                              />
+                              <Tooltip title="Increase classes completed">
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    handleClassChange(student.id, true)
+                                  }
+                                  color="success"
+                                  sx={{
+                                    transition:
+                                      "transform 0.2s ease-in-out, color 0.2s ease-in-out",
+                                    "&:hover": {
+                                      transform: "scale(1.1)",
+                                      color: "success.dark",
+                                    },
+                                    "&:active": {
+                                      transform: "scale(0.9)",
+                                    },
+                                  }}
+                                >
+                                  <FaPlusCircle fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
                             </Box>
                             {lastUpdatedTimestamps[student.id] && (
                               <Fade in={true} timeout={1000}>
@@ -1275,7 +1308,7 @@ const StudentsTable = () => {
                               </Fade>
                             )}
                             {student["Payment Status"] === "Unpaid" &&
-                              (student["Classes Completed"] || 0) >= 12 && (
+                              (student.classesCompleted || 0) >= 12 && (
                                 <Typography
                                   variant="caption"
                                   sx={{
@@ -1306,63 +1339,53 @@ const StudentsTable = () => {
                       )}
                       {columnVisibility.paymentStatus && (
                         <TableCell
-                          align="center"
                           sx={{
+                            // existing props
                             fontSize: "0.9rem",
-                            cursor: "pointer",
-                            "&:hover": {
-                              backgroundColor: "rgba(0, 0, 0, 0.04)",
-                            },
                             pointerEvents:
                               updatingStudent === student.id ? "none" : "auto",
                             opacity: updatingStudent === student.id ? 0.7 : 1,
+
+                            /* 👇 added flex‑box centering */
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            // (optional) trim a little padding so the chip looks tight
                           }}
-                          onClick={() =>
-                            handlePaymentStatusToggle(
-                              student.id,
-                              student["Payment Status"],
-                              student.Name
-                            )
-                          }
                         >
                           {updatingStudent === student.id ? (
                             <CircularProgress size={20} color="primary" />
                           ) : (
-                            <span
-                              className={`payment-status-badge ${String(
-                                student["Payment Status"] || ""
-                              ).toLowerCase()}`}
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                padding: "4px 8px",
-                                borderRadius: "16px",
+                            <Chip
+                              label={student["Payment Status"]}
+                              icon={
+                                student["Payment Status"] === "Paid" ? (
+                                  <FaCheckCircle style={{ fontSize: 16 }} />
+                                ) : (
+                                  <FaExclamationCircle
+                                    style={{ fontSize: 16 }}
+                                  />
+                                )
+                              }
+                              color={
+                                student["Payment Status"] === "Paid"
+                                  ? "success"
+                                  : "error"
+                              }
+                              variant="outlined"
+                              onClick={() =>
+                                handlePaymentStatusToggle(
+                                  student.id,
+                                  student["Payment Status"],
+                                  student.Name
+                                )
+                              }
+                              sx={{
+                                cursor: "pointer",
                                 fontWeight: "bold",
-                                color:
-                                  student["Payment Status"] === "Paid"
-                                    ? "#155724"
-                                    : "#721c24",
-                                backgroundColor:
-                                  student["Payment Status"] === "Paid"
-                                    ? "#d4edda"
-                                    : "#f8d7da",
-                                border: `1px solid ${
-                                  student["Payment Status"] === "Paid"
-                                    ? "#28a745"
-                                    : "#dc3545"
-                                }`,
-                                whiteSpace: "nowrap",
+                                "&:hover": { boxShadow: 1 },
                               }}
-                            >
-                              {student["Payment Status"] === "Paid" ? (
-                                <FaCheckCircle style={{ marginRight: 4 }} />
-                              ) : (
-                                <FaExclamationCircle
-                                  style={{ marginRight: 4 }}
-                                />
-                              )}
-                              {student["Payment Status"]}
-                            </span>
+                            />
                           )}
                         </TableCell>
                       )}

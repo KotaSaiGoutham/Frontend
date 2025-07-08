@@ -1,5 +1,7 @@
 import { format, parseISO } from 'date-fns';
-
+import React, { useState, useEffect, useRef } from 'react';
+import { Typography, CircularProgress, Box } from '@mui/material';
+import { keyframes } from '@mui/system'; // Import keyframes from MUI system
 export const sortAndFilterTimetableData = (data) => {
     const now = new Date(); // Current date and time
     const todayFormatted = now.toLocaleDateString('en-GB'); // Format: DD/MM/YYYY
@@ -111,7 +113,7 @@ const ALL_PDF_COLUMNS = [
       ).toLocaleString("en-IN") // Format as Indian currency
     ),
   },
-  { key: "classesCompleted", label: "Classes Completed", dataKey: "Classes Completed" }, // Note: space in dataKey
+  { key: "classesCompleted", label: "Classes Completed", dataKey: "classesCompleted" }, // Note: space in dataKey
   {
     key: "nextClass",
     label: "Next Class",
@@ -177,3 +179,63 @@ export const getPdfTableRows = (students, columnVisibility, showSubjectColumn) =
     });
   });
 };
+
+
+// Define keyframes for the "pop" animation
+const popAnimation = keyframes`
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); } /* Pop out slightly */
+  100% { transform: scale(1); }
+`;
+
+// Define keyframes for a quick color flash
+const colorFlash = keyframes`
+  0% { color: inherit; }
+  25% { color: #4caf50; } /* A vibrant green for increase */
+  100% { color: inherit; }
+`;
+
+
+export function ClassCounterDisplay({ student, updatingClasses }) {
+  // Use a ref to store the previous classesCompleted value
+  const prevClassesCompleted = useRef(student.classesCompleted || 0);
+  // State to trigger the animation
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    // Check if classesCompleted has actually increased and is not currently updating
+    if (!updatingClasses && (student.classesCompleted || 0) > prevClassesCompleted.current) {
+      setAnimate(true);
+      const timer = setTimeout(() => {
+        setAnimate(false); // Reset animation state after it completes
+      }, 500); // Duration of your animation
+      return () => clearTimeout(timer);
+    }
+    // Update the ref for the next render
+    prevClassesCompleted.current = student.classesCompleted || 0;
+  }, [student.classesCompleted, updatingClasses]); // Depend on classesCompleted and updatingClasses
+
+  return (
+    <>
+      {updatingClasses === student.id ? (
+        <CircularProgress size={20} color="primary" />
+      ) : (
+        <Typography
+          variant="body1"
+          component="span"
+          sx={{
+            fontWeight: 600,
+            // Apply animation only when 'animate' state is true
+            animation: animate
+              ? `${popAnimation} 0.3s ease-out, ${colorFlash} 0.5s ease-out`
+              : 'none',
+            display: 'inline-block', // Important for transform to work correctly
+            transformOrigin: 'center center', // Ensure scaling is from the center
+          }}
+        >
+          {student.classesCompleted || 0}
+        </Typography>
+      )}
+    </>
+  );
+}

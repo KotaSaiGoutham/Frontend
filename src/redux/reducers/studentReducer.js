@@ -19,7 +19,8 @@ import {
   FETCH_WEEKLY_MARKS_REQUEST,
   FETCH_WEEKLY_MARKS_SUCCESS,
   FETCH_WEEKLY_MARKS_FAILURE,
-} from '../types';
+  UPDATE_STUDENT_CLASSES_SUCCESS,
+} from "../types";
 
 const initialState = {
   students: [], // For the list of all students
@@ -165,15 +166,20 @@ const studentReducer = (state = initialState, action) => {
         updateSuccess: true,
         updateError: null,
         // Assuming your 'students' array might need a direct update here if fetchStudents() isn't always called
-        students: state.students.map(student =>
+        students: state.students.map((student) =>
           student._id === action.payload.studentId // Use _id if that's your MongoDB ID field
             ? { ...student, "Payment Status": action.payload.newStatus } // Update payment status directly
             : student
         ),
         // If updating a single student's data that is currently selected:
-        selectedStudentData: state.selectedStudentData && state.selectedStudentData._id === action.payload.studentId
-          ? { ...state.selectedStudentData, "Payment Status": action.payload.newStatus }
-          : state.selectedStudentData,
+        selectedStudentData:
+          state.selectedStudentData &&
+          state.selectedStudentData._id === action.payload.studentId
+            ? {
+                ...state.selectedStudentData,
+                "Payment Status": action.payload.newStatus,
+              }
+            : state.selectedStudentData,
       };
     case UPDATE_STUDENT_PAYMENT_FAILURE: // <-- NEW: Handle failed payment status update
       return {
@@ -204,6 +210,17 @@ const studentReducer = (state = initialState, action) => {
         weeklyMarks: [],
         weeklyMarksError: action.payload, // Assuming payload is the error message directly here
       };
+    case UPDATE_STUDENT_CLASSES_SUCCESS: {
+      const updated = action.payload; // { id, classesCompleted, … }
+      if (!updated || !updated.id) return state;
+
+      return {
+        ...state,
+        students: state.students.map((s) =>
+          s.id === updated.id ? { ...s, ...updated } : s
+        ),
+      };
+    }
 
     default:
       return state;

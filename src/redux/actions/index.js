@@ -121,10 +121,6 @@ export const updateStudentPaymentStatus = (studentId, currentStatus) => {
       payload: studentId, // Pass the studentId to track loading for this specific student
     }),
     onSuccess: (data, dispatch) => {
-      console.log(
-        `Student ${studentId} payment status updated successfully:`,
-        data
-      );
       dispatch({
         type: UPDATE_STUDENT_PAYMENT_SUCCESS,
         payload: {
@@ -193,62 +189,91 @@ export const signupUser = ({ name, email, mobile, password }) =>
     authRequired: false, // Signup does not require authentication
   });
 
-export const loginUser = ({ email, password }) =>
+export const loginUser = ({ username, password }) =>
   apiRequest({
-    url: "/api/auth/login", // Correct login endpoint
+    url: "/api/auth/login",
     method: "POST",
-    data: { email, password },
+    data: { username, password },
     onStart: LOGIN_REQUEST,
     onSuccess: (data, dispatch) => {
-      // Backend should return { token, userId, email, etc. }
       if (data.token) {
         localStorage.setItem("token", data.token);
-        localStorage.setItem("userId", data.userId);
-        localStorage.setItem("userEmail", data.email);
+
+        // --- IMPORTANT: Adapt this part based on the ACTUAL backend response ---
+        let userIdToStore = null;
+        let userEmailToStore = null;
+        let userRoleToStore = data.role || 'unknown'; // Get role from response
+        let userNameToStore = null;
+        let isPhysics = false; // Default to false
+        let isChemistry = false; // Default to false
+        let AllowAll = false; // Default to false
+        const userDetailsFromResponse = data.data; // Assuming user details are under 'data'
+
+        if (userRoleToStore === 'student') {
+            userIdToStore = userDetailsFromResponse.ContactNumber; // Or _id if available
+            userEmailToStore = userDetailsFromResponse.ContactNumber; // Or a dedicated email field
+            userNameToStore = userDetailsFromResponse.Name;
+            // isPhysics, isChemistry, AllowAll from student response?
+            // They were null in the JWT from your sample student response.
+            // You need to decide if these flags come directly from the top level (data.isPhysics)
+            // or if they are properties within data.data, or determined by the 'role'
+            // For now, I'll assume they might be at the top level (data.isPhysics) if present,
+            // but if not, they'll remain false from defaults.
+            isPhysics = data.isPhysics || false;
+            isChemistry = data.isChemistry || false;
+            AllowAll = data.AllowAll || false;
+        } else if (userRoleToStore === 'faculty') {
+            // Assuming a faculty response would have different keys, e.g.:
+            userIdToStore = userDetailsFromResponse._id; // Example faculty ID
+            userEmailToStore = userDetailsFromResponse.email;
+            userNameToStore = userDetailsFromResponse.name;
+            isPhysics = data.isPhysics || false; // Assuming these are still at top level or set based on faculty
+            isChemistry = data.isChemistry || false;
+            AllowAll = data.AllowAll || false;
+
+            localStorage.setItem("userRole", userRoleToStore);
+            localStorage.setItem("isPhysics", isPhysics);
+            localStorage.setItem("isChemistry", isChemistry);
+            localStorage.setItem("AllowAll", AllowAll);
+
+        }
+
+        localStorage.setItem("userId", userIdToStore);
+        localStorage.setItem("userEmail", userEmailToStore);
+
+
         dispatch({
           type: LOGIN_SUCCESS,
           payload: {
             token: data.token,
+            // The 'user' object in the payload should match what your reducer expects
             user: {
-              id: data.userId,
-              email: data.email,
-              name: data.name,
-              isPhysics: data.isPhysics,
-              isChemistry: data.isChemistry,
-              AllowAll: data.AllowAll,
-            }, // Assuming backend sends userId and email
+              id: userIdToStore,
+              email: userEmailToStore,
+              name: userNameToStore,
+              role: userRoleToStore, // Include the role
+              isPhysics: isPhysics,
+              isChemistry: isChemistry,
+              AllowAll: AllowAll,
+              // Spread all other student/faculty data for the 'user' object in state
+              ...userDetailsFromResponse
+            },
           },
         });
       } else {
-        // If no token in successful response (unexpected)
         const errorMessage =
           "Login successful, but no token received. Please try again.";
         dispatch({ type: LOGIN_FAILURE, payload: errorMessage });
-        // Reject the promise explicitly if something went wrong in onSuccess for consumers
-        // throw new Error(errorMessage); // This would be caught by apiMiddleware's catch block
       }
     },
     onFailure: (error, dispatch) => {
-      // --- ADD THESE LOGS ---
+      // ... (your existing onFailure logic is good for debugging)
       console.error("Login API error:", error);
-      console.error("Type of error:", typeof error);
-      console.error("Error properties:", Object.keys(error));
-      console.error("Error message property:", error.message);
-      console.error("Error error property:", error.error);
-      console.error("Error status property:", error.status); // If your error object includes HTTP status
-
-      // Determine the best error message for the user
-      // Make sure this logic correctly extracts the message from the 'error' object
       const errorMessage =
         error.message ||
         error.error ||
         "Login failed. Please check your credentials.";
-
-      console.error("Final errorMessage to dispatch:", errorMessage); // What is actually dispatched
-
       dispatch({ type: LOGIN_FAILURE, payload: errorMessage });
-
-      // ... (rest of your onFailure logic)
     },
     authRequired: false,
   });
@@ -362,7 +387,6 @@ export const addStudent = (studentData) =>
     data: studentData, // The student data to send in the request body
     onStart: ADD_STUDENT_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("Student added successfully:", data);
       dispatch({
         type: ADD_STUDENT_SUCCESS,
         payload: data, // The response from the backend (e.g., confirmation message, new student ID)
@@ -395,7 +419,6 @@ export const fetchWeeklyMarks = (studentId) =>
     method: "GET",
     onStart: FETCH_WEEKLY_MARKS_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("Weekly marks fetched successfully:", data);
       dispatch({
         type: FETCH_WEEKLY_MARKS_SUCCESS,
         payload: data, // Assuming data is the array of weekly marks
@@ -429,7 +452,6 @@ export const addWeeklyMarks = (studentId, newMark) =>
     data: newMark, // The marks data to send
     onStart: ADD_WEEKLY_MARKS_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("Marks added successfully:", data);
       dispatch({
         type: ADD_WEEKLY_MARKS_SUCCESS,
         payload: data, // The response from the backend
@@ -493,7 +515,6 @@ export const addEmployee = (employeeData) =>
     data: employeeData, // The employee data to send in the request body
     onStart: ADD_EMPLOYEE_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("Employee added successfully:", data);
       dispatch({
         type: ADD_EMPLOYEE_SUCCESS,
         payload: data,
@@ -526,7 +547,6 @@ export const addTimetableEntry = (timetableData) =>
     data: timetableData, // The payload you constructed in your component
     onStart: ADD_TIMETABLE_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("Timetable entry added successfully:", data);
       dispatch({
         type: ADD_TIMETABLE_SUCCESS,
         payload: data, // The response from the backend
@@ -556,47 +576,35 @@ export const addTimetableEntry = (timetableData) =>
 // --------------------------------
 // studentsThunks.js
 // --------------------------------
-export const updateClassesCompleted = (studentId, delta) => async (dispatch) => {
-  console.log("updateClassesCompleted ‑ start", { studentId, delta });
-
-  try {
-    dispatch({ type: UPDATE_STUDENT_CLASSES_REQUEST });
-
-    const resp = await apiRequest({
-      url: `/api/data/students/${studentId}/classes`,
+export const updateClassesCompleted =
+  (studentId, delta) => async (dispatch) => {
+    // Build the FSA‑style action
+    const apiAction = apiRequest({
+      url: `/api/data/students/${studentId}/classes`,   // drop the extra /api/data if you proxy
       method: "POST",
       data: { delta },
       authRequired: true,
     });
 
-    console.log("updateClassesCompleted ‑ raw resp", resp);
+    // ⬇️ THIS dispatch actually triggers the middleware
+    dispatch(apiAction);
 
-    // Axios style => resp.data ; fetch wrapper => resp
-    const updated = resp.data ?? resp;
+    // Wait for the middleware to resolve the deferred promise it
+    // attached to meta.deferred
+    const updated = await apiAction.promise;   // ✔ server data here
 
     dispatch({
       type: UPDATE_STUDENT_CLASSES_SUCCESS,
       payload: updated,
     });
 
-    // OPTIONAL refresh list
-    dispatch(fetchStudents());
+    // optional refresh
+    // dispatch(fetchStudents());
 
-    /*  🔥  THIS  IS  THE  CRUCIAL  LINE  🔥
-        Nothing below this return ever runs, so you can’t
-        accidentally overwrite it later.                    */
     return updated;
-  } catch (err) {
-    console.error("updateClassesCompleted ‑ error", err);
+  };
 
-    dispatch({
-      type: UPDATE_STUDENT_CLASSES_FAILURE,
-      payload: err.message || "Failed to update classes completed",
-    });
 
-    throw err;                   // so the caller sees the failure
-  }
-};
 
 
 
@@ -607,7 +615,6 @@ export const deleteTimetable = (timetableId) =>
     method: "DELETE",
     onStart: DELETE_TIMETABLE_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("Timetable entry deleted successfully:", data);
       dispatch({
         type: DELETE_TIMETABLE_SUCCESS,
         payload: timetableId, // Send the ID of the deleted item for potential UI updates

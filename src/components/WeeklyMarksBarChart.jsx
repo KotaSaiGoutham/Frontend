@@ -113,7 +113,7 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
   }
 
   const { user } = useSelector((state) => state.auth);
-  const AllowAll = user?.AllowAll || false;
+  const AllowAll = user?.AllowAll || user.role === "student";
   const isPhysics = user?.isPhysics || false;
   const isChemistry = user?.isChemistry || false;
 

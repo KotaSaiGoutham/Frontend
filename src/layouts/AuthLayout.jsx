@@ -1,49 +1,83 @@
-// src/layouts/AuthLayout.jsx
-import React, { useState, useEffect } from 'react'; // Ensure useEffect is imported
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import './AuthLayout.css';
+import { useSelector } from 'react-redux'; // Import useSelector
+import './AuthLayout.css'; // Your existing CSS file
 
 const AuthLayout = () => {
+    // Access auth state directly from Redux store
+    const { user, loading: authLoading, isAuthenticated } = useSelector(state => state.auth);
+
+    // Determine if the current user is a student
+    const isStudent = user && user.role === 'student';
+
     // Initialize sidebar open based on screen width
-    // Set to true by default for desktop (width > 768px)
-    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+    // Sidebar is never open for students in this layout
+    const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+        return !isStudent && window.innerWidth > 768;
+    });
 
     // Function to toggle sidebar (primarily used by mobile button)
     const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
+        // Only allow toggling if it's not a student
+        if (!isStudent) {
+            setIsSidebarOpen(!isSidebarOpen);
+        }
     };
 
     // Effect to handle sidebar state on window resize (for responsive behavior)
     useEffect(() => {
         const handleResize = () => {
-            // On desktop, always keep sidebar open. On mobile, let it close/open by toggle.
+            if (isStudent) {
+                // If it's a student, sidebar is never open, so force false
+                setIsSidebarOpen(false);
+                return;
+            }
+
+            // For non-students:
             if (window.innerWidth > 768) {
+                // On desktop, always keep sidebar open.
                 setIsSidebarOpen(true);
             } else {
-                // If it was open and resized to mobile, close it by default
-                if (isSidebarOpen) { // Only change if it's currently open
-                   setIsSidebarOpen(false);
-                }
+                // On mobile, if it was open and resized to mobile, close it by default
+                setIsSidebarOpen(false); // Default to closed on mobile, user can toggle
             }
         };
 
         window.addEventListener('resize', handleResize);
+
+        // Call once on mount to set initial state based on current user role and window size
+        if (!authLoading) {
+            handleResize();
+        }
+
         return () => {
             window.removeEventListener('resize', handleResize);
         };
-    }, [isSidebarOpen]); // Add isSidebarOpen to dependencies if you want to react to its change here
+    }, [user, authLoading, isStudent]); // Re-run this effect when user, authLoading, or isStudent changes
+
+    // If authentication is still loading, you might want to show a loading spinner
+    if (authLoading) {
+        return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading layout...</div>;
+    }
+
+    // Determine if sidebar should be shown at all
+    const showSidebar = !isStudent; // Sidebar is shown only if NOT a student
+
+    // Determine the content class based on sidebar visibility and student role
+    const contentClass = isStudent
+        ? 'centered-content' // For students, always center content
+        : (showSidebar ? (isSidebarOpen ? 'sidebar-open' : 'sidebar-closed') : 'full-width'); // For others, use existing logic
 
     return (
         <div className="auth-layout-container">
-            {/* Sidebar is always rendered within this layout */}
-            <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+            {/* Conditionally render Sidebar */}
+            {showSidebar && (
+                <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+            )}
 
-            {/* Main content area that adjusts based on sidebar */}
-            {/* On desktop, this will always have margin-left for the sidebar */}
-            {/* On mobile, this will be full width, and the sidebar will overlay */}
-            <div className={`auth-layout-content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-                {/* Outlet renders the specific child route (Dashboard, StudentPortfolio, etc.) */}
+            {/* Main content area */}
+            <div className={`auth-layout-content ${contentClass}`}>
                 <Outlet />
             </div>
         </div>

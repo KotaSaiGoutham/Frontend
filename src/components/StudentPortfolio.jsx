@@ -67,13 +67,13 @@ const StudentPortfolio = () => {
   );
   const [error, setError] = useState(null);
   const [marksError, setMarksError] = useState(null);
-
+console.log("studentData",studentData)
   // Function to fetch Weekly Marks (returns an array)
 
   // Callback to refresh marks after a new one is adde
 
   useEffect(() => {
-    dispatch(fetchWeeklyMarks(studentId)); // Fetch weekly marks
+    dispatch(fetchWeeklyMarks(studentData?.id ||  studentId)); // Fetch weekly marks
   }, []); // Depend on studentId and dispatch
 
   // --- REMOVED: No longer need to derive latestWeeklyMark as we are passing the full array for trend graph ---

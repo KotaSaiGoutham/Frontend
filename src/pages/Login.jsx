@@ -1,72 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import './Signup.css';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import "./Signup.css";
+import { Link, useNavigate } from "react-router-dom";
 
 // Adjust paths as needed
-import Loader from './Loader'; // Assuming components folder
-import Modal from './Modal';   // Assuming components folder
-
-import { FaEye, FaEyeSlash, FaExclamationCircle, FaCheckCircle } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginUser } from '../redux/actions';
+import Loader from "./Loader"; // Assuming components folder
+import Modal from "./Modal"; // Assuming components folder
+import {
+  FaEye,
+  FaEyeSlash,
+  FaExclamationCircle,
+  FaCheckCircle,
+} from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "../redux/actions";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { loading, error, isAuthenticated, user } = useSelector(state => state.auth);
-
+  const { loading, error, isAuthenticated, user } = useSelector(
+    (state) => state.auth
+  ); // Renamed 'email' to 'username' to accept either email or mobile number
+console.log("user",user)
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    username: "", // This will hold either email or mobile number
+    password: "",
   });
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
 
-  // Derived modal content from Redux state for consistency
-  // If `error` is null/empty, it will default to the second part of the OR (e.g., empty string, but for modal use, a fallback is good)
-  const modalStatus = isAuthenticated ? 'success' : 'error'; // Modal status is 'error' if error exists or always 'error' on failure paths
-const modalMessage = isAuthenticated
-  ? 'Login successful! Redirecting...'
-  : (error?.message || error || 'An unknown error occurred. Please try again.');
-  // useEffect to redirect already authenticated users from the login page
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+  const modalStatus = isAuthenticated ? "success" : "error";
+  const modalMessage = isAuthenticated
+    ? "Login successful! Redirecting..."
+    : error?.message || error || "An unknown error occurred. Please try again.";
+
+useEffect(() => {
+  console.log("user",user)
+  if (user) {
+    if (user.role === 'student') {
+      // Assuming `user` contains student id and other data needed
+      navigate(`/student/${user.id}`, {
+        state: { studentData: user },
+      });
+    } else if (user.role === 'admin' || user.role === 'faculty') {
+      navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }
+}, [user, navigate]);
 
-  console.log("Redux Error State:", error); // Add this for direct observation
-  console.log("Is Modal Open?", isModalOpen); // Add this for direct observation
-
-  // useEffect to show modal feedback after login attempt (success or failure)
   useEffect(() => {
-    // Corrected: Check directly if 'error' (the string) exists
-    if (error) { // This will be true if `state.auth.error` contains a string (e.g., "Invalid credentials.")
+    if (error) {
       setModalOpen(true);
-      // No setTimeout here, so the error modal stays open until user closes it.
-      // Or you can add a timer if you prefer it to auto-close.
-      // Example: setTimeout(() => setModalOpen(false), 3000);
-    } else if (isAuthenticated && !loading) { // For successful logins (and not loading anymore)
+    } else if (isAuthenticated && !loading) {
       setModalOpen(true);
       const timer = setTimeout(() => {
         setModalOpen(false);
-      }, 1500); // Close success modal after 1.5 seconds
-      return () => clearTimeout(timer); // Cleanup timer
+      }, 1500);
+      return () => clearTimeout(timer);
     }
-
-    // Cleanup: Close modal if component unmounts or state changes
-    // This return function will run when the component unmounts
-    // or when any of the dependencies in the dependency array change on the *next* render.
-    // Ensure this doesn't prematurely close modals you intend to keep open.
-    // For error modals, you might want the user to click close.
-    // If you add a timeout to the error modal, this cleanup is less critical for keeping it open.
-    return () => {
-      // setModalOpen(false); // Only do this if you want it to close on dependency changes too
-    };
-  }, [error, isAuthenticated, loading]); // Dependencies for this effect are correct
+  }, [error, isAuthenticated, loading]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -77,33 +71,42 @@ const modalMessage = isAuthenticated
     if (errors[name]) {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        [name]: '',
+        [name]: "",
       }));
-    }
-    // Very important: Clear Redux error when user starts typing on input fields after an error
-    if (error) {
-        dispatch({ type: 'SET_AUTH_ERROR', payload: null }); // Assuming SET_AUTH_ERROR clears the error
     }
   };
 
   const togglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
+  }; // Helper function to check if a string is a valid email
+
+  const isValidEmail = (value) => {
+    return /\S+@\S+\.\S+/.test(value);
+  }; // Helper function to check if a string is a valid mobile number (example: 10 digits)
+
+  const isValidMobile = (value) => {
+    // Adjust this regex based on the exact mobile number format you expect (e.g., country codes)
+    return /^[0-9]{10}$/.test(value); // Example: exactly 10 digits
   };
 
   const validateForm = () => {
     let newErrors = {};
     let isValid = true;
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email Address is required';
+    if (!formData.username.trim()) {
+      newErrors.username = "Email address or Mobile number is required";
       isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+    } else if (
+      !isValidEmail(formData.username) &&
+      !isValidMobile(formData.username)
+    ) {
+      newErrors.username =
+        "Please enter a valid email address or 10-digit mobile number";
       isValid = false;
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
       isValid = false;
     }
 
@@ -116,89 +119,112 @@ const modalMessage = isAuthenticated
 
     if (!validateForm()) {
       return;
-    }
+    } // Determine if the input is an email or mobile and pass the appropriate payload to loginUser
+    const loginPayload = {
+      username: formData.username, // This is the key change: directly assign formData.username
+      password: formData.password,
+    };
 
-    // Always clear previous Redux errors before a new login attempt
-    if (error) {
-        dispatch({ type: 'SET_AUTH_ERROR', payload: null }); // Assuming SET_AUTH_ERROR clears the error
-    }
-
-    dispatch(loginUser(formData));
+    dispatch(loginUser(loginPayload));
   };
 
   return (
     <div className="signup-page-container">
-      {/* {loading && <Loader />} */}
+           {" "}
       <div className="signup-card">
-        <h2 className="signup-title">Welcome Back!</h2>
+                <h2 className="signup-title">Welcome Back!</h2>       {" "}
         <p className="signup-subtitle">
-          Log in to continue your learning journey and manage your account.
+                    Log in to continue your learning journey and manage your
+          account.        {" "}
         </p>
-
+               {" "}
         <form onSubmit={handleSubmit} className="signup-form">
+                   {" "}
           <div className="form-group-signup">
-            <label htmlFor="email">Email Address</label>
+                        {/* Changed htmlFor and name to 'username' */}         
+              <label htmlFor="username">Email address or Mobile number</label>
+                       {" "}
             <input
-              type="email"
-              id="email"
-              name="email"
-              placeholder="Enter your email id"
-              value={formData.email}
+              type="text" // Changed type to 'text'
+              id="username"
+              name="username" // Changed name to 'username'
+              placeholder="Enter your email or mobile number"
+              value={formData.username}
               onChange={handleChange}
-              className={errors.email ? 'input-error' : ''}
-              // disabled={loading}
+              className={errors.username ? "input-error" : ""}
             />
-            {errors.email && <span className="error-message-signup">{errors.email}</span>}
+                       {" "}
+            {errors.username && (
+              <span className="error-message-signup">{errors.username}</span>
+            )}
+                     {" "}
           </div>
-
+                   {" "}
           <div className="form-group-signup password-group">
-            <label htmlFor="password">Password</label>
+                        <label htmlFor="password">Password</label>           {" "}
             <div className="input-icon-wrapper">
+                           {" "}
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
                 className="password-toggle-button left"
-                // disabled={loading}
               >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                {showPassword ? <FaEyeSlash /> : <FaEye />}     
+                       {" "}
               </button>
+                           {" "}
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
-                className={`input-with-icon ${errors.password ? 'input-error' : ''}`}
-                // disabled={loading}
+                className={`input-with-icon ${
+                  errors.password ? "input-error" : ""
+                }`}
               />
+                         {" "}
             </div>
-            {errors.password && <span className="error-message-signup">{errors.password}</span>}
+                       {" "}
+            {errors.password && (
+              <span className="error-message-signup">{errors.password}</span>
+            )}
+                     {" "}
           </div>
-
-          <button type="submit" className="signup-button"
-          //  disabled={loading}
-           >
-            {loading ? 'Logging In...' : 'Log In'}
+                   {" "}
+          <button type="submit" className="signup-button">
+                        {loading ? "Logging In..." : "Log In"}         {" "}
           </button>
+                 {" "}
         </form>
-
+               {" "}
         <p className="login-link">
-          Don't have an account? <Link to="/signup">Sign Up</Link>
+                    Don't have an account? <Link to="/signup">Sign Up</Link>   
+             {" "}
         </p>
+               {" "}
         <p className="login-link">
-          <Link to="/forgot-password">Forgot Password?</Link>
+                    <Link to="/forgot-password">Forgot Password?</Link>       {" "}
         </p>
+             {" "}
       </div>
-
+           {" "}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}
-        title={modalStatus === 'success' ? 'Success!' : 'Login Failed!'}
+        title={modalStatus === "success" ? "Success!" : "Login Failed!"}
         message={modalMessage}
         status={modalStatus}
-        icon={modalStatus === 'success' ? <FaCheckCircle /> : <FaExclamationCircle />}
+        icon={
+          modalStatus === "success" ? (
+            <FaCheckCircle />
+          ) : (
+            <FaExclamationCircle />
+          )
+        }
       />
+         {" "}
     </div>
   );
 };
