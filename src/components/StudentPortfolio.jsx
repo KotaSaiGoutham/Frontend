@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react"; // Removed useMemo as latest
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { formatFirebaseDate } from "../mockdata/funcation";
+import { buildChartData } from "../mockdata/funcation";
 import {
   BarChart,
   Bar,
@@ -16,7 +17,7 @@ import {
 import "./StudentPortfolio.css";
 import AddWeeklyMarksModal from "./AddWeeklyMarksForm";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchWeeklyMarks } from "../redux/actions";
+import { fetchWeeklyMarks, fetchPaymentHistory } from "../redux/actions";
 // Icon Imports
 import {
   FaUserCircle,
@@ -41,10 +42,21 @@ import {
   FaCalendarDay,
   FaHistory,
   FaWallet,
+  FaPhone,
+  FaMale,
+  FaFemale,
 } from "react-icons/fa";
 import { MuiButton } from "./customcomponents/MuiCustomFormFields";
 // Import the new line graph component
 import WeeklyMarksTrendGraph from "./WeeklyMarksBarChart"; // <--- NEW IMPORT
+import PaymentHistoryTable from "./PaymentHistoryTable";
+// tiny helper so all phone numbers share one format/click behaviour
+const formatPhone = (num) =>
+  num ? (
+    <a href={`tel:${num}`} className="phone-link">
+      {num.replace(/(\d{5})(\d{5})/, "$1 $2")}
+    </a>
+  ) : null;
 
 const StudentPortfolio = () => {
   const { id: studentId } = useParams();
@@ -67,14 +79,18 @@ const StudentPortfolio = () => {
   );
   const [error, setError] = useState(null);
   const [marksError, setMarksError] = useState(null);
-console.log("studentData",studentData)
+  console.log("studentData", studentData);
   // Function to fetch Weekly Marks (returns an array)
 
   // Callback to refresh marks after a new one is adde
+  useEffect(() => {
+    dispatch(fetchPaymentHistory(studentData?.id || studentId));
+  }, [studentData?.id || studentId]);
 
   useEffect(() => {
-    dispatch(fetchWeeklyMarks(studentData?.id ||  studentId)); // Fetch weekly marks
+    dispatch(fetchWeeklyMarks(studentData?.id || studentId)); // Fetch weekly marks
   }, []); // Depend on studentId and dispatch
+  const payments = useSelector((state) => state.payments.data);
 
   // --- REMOVED: No longer need to derive latestWeeklyMark as we are passing the full array for trend graph ---
   // const latestWeeklyMark = useMemo(() => { ... }, [weeklyMarks]);
@@ -139,13 +155,9 @@ console.log("studentData",studentData)
     );
   }
 
-  // Prepare payments data for Recharts (assuming you're still using Recharts for payments)
-  const formattedPaymentsData =
-    studentData.payments?.map((payment) => ({
-      name: payment.month || "Month",
-      Amount: payment.amount || 0,
-    })) || [];
-  console.log("studentData", studentData);
+  const { user } = useSelector((state) => state.auth);
+  const feeAmount = studentData?.monthlyFee || 0;
+
   return (
     <div className="portfolio-page-container">
       {/* Header Section */}
@@ -154,9 +166,11 @@ console.log("studentData",studentData)
           <FaUserCircle className="header-icon" />
           <h1>{studentData.Name || "Student"}'s Portfolio</h1>
         </div>
-        <button onClick={() => navigate("/students")} className="back-button">
-          <FaArrowLeft /> Back to Students List
-        </button>
+        {user.role === "student" && (
+          <button onClick={() => navigate("/students")} className="back-button">
+            <FaArrowLeft /> Back to Students List
+          </button>
+        )}
       </header>
 
       {/* Main Content Area */}
@@ -167,6 +181,7 @@ console.log("studentData",studentData)
             <FaInfoCircle className="card-icon" /> Personal Details
           </h2>
           <div className="details-grid">
+            {/* --- Basic Info --- */}
             <DetailItem
               icon={FaUserCircle}
               label="Name"
@@ -193,36 +208,68 @@ console.log("studentData",studentData)
               value={studentData.Stream || "N/A"}
             />
             <DetailItem
-              icon={FaUniversity}
-              label="College"
-              value={studentData.College || "N/A"}
-            />
-            <DetailItem
               icon={FaUsers}
               label="Group"
               value={studentData["Group "] || "N/A"}
+            />
+            <DetailItem
+              icon={FaUniversity}
+              label="College"
+              value={studentData.College || "N/A"}
             />
             <DetailItem
               icon={FaSearchDollar}
               label="Source"
               value={studentData.Source || "N/A"}
             />
+
+            {/* --- Contact --- */}
+            <DetailItem
+              icon={FaPhone}
+              label="Student Contact"
+              value={formatPhone(studentData.ContactNumber) || "N/A"}
+            />
+            <DetailItem
+              icon={FaMale}
+              label="Father Contact"
+              value={formatPhone(studentData.father_contact) || "N/A"}
+            />
+            <DetailItem
+              icon={FaFemale}
+              label="Mother Contact"
+              value={formatPhone(studentData.mother_contact) || "N/A"}
+            />
+
+            {/* --- Payment --- */}
             <DetailItem
               icon={FaDollarSign}
               label="Monthly Payment"
-              value={`₹${(studentData["Monthly Fee"] || 0).toLocaleString()}`}
-              isHighlighted={true}
+              value={`₹${(+studentData["Monthly Fee"] || 0).toLocaleString()}`}
+              isHighlighted
             />
             <DetailItem
               icon={FaMoneyBillWave}
               label="Payment Status"
               value={getPaymentStatusDisplay(studentData["Payment Status"])}
-              isHighlighted={true} // Keep highlighted
+              isHighlighted
             />
+            <DetailItem
+              icon={FaHistory}
+              label="Previous Payment Date"
+              value={formatFirebaseDate(studentData.paidDate)}
+            />
+            <DetailItem
+              icon={FaCalendarDay}
+              label="Next Expected Payment Date"
+              value={formatFirebaseDate(studentData.nextDueDate)}
+              isHighlighted={studentData["Payment Status"] === "Unpaid"}
+            />
+
+            {/* --- Class Info --- */}
             <DetailItem
               icon={FaChalkboardTeacher}
               label="Total Classes Attended"
-              value={studentData["Classes Completed"] || "N/A"}
+              value={studentData.classesCompleted || "N/A"}
             />
             <DetailItem
               icon={FaCalendarAlt}
@@ -232,20 +279,6 @@ console.log("studentData",studentData)
                   ? format(studentData.nextClass, "MMM dd, hh:mm a")
                   : "N/A"
               }
-            />
-            <DetailItem
-              icon={FaHistory} // Icon for historical payment date
-              label="Previous Payment Date"
-              value={formatFirebaseDate(studentData.paidDate)}
-              isHighlighted={false} // Adjust as needed
-            />
-
-            {/* New: Next Expected Payment Date (nextDueDate) */}
-            <DetailItem
-              icon={FaCalendarDay} // Icon for future payment date
-              label="Next Expected Payment Date"
-              value={formatFirebaseDate(studentData.nextDueDate)}
-              isHighlighted={studentData["Payment Status"] === "Unpaid"} // Highlight if unpaid
             />
           </div>
         </section>
@@ -288,50 +321,12 @@ console.log("studentData",studentData)
           )}
         </section>
 
-        {/* Payment History Card */}
         <section className="portfolio-card payments-card delay-3">
           <h2>
             <FaDollarSign className="card-icon" /> Payment History
           </h2>
-          {formattedPaymentsData.length > 0 ? (
-            <div className="chart-container">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={formattedPaymentsData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--color-border-light)"
-                  />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fill: "var(--color-text-light)" }}
-                  />
-                  <YAxis
-                    tickFormatter={(value) => `₹${value}`}
-                    tick={{ fill: "var(--color-text-light)" }}
-                  />
-                  <Tooltip
-                    formatter={(value) => [
-                      `₹${value.toLocaleString()}`,
-                      "Amount",
-                    ]}
-                  />
-                  <Legend wrapperStyle={{ paddingTop: "10px" }} />
-                  <Bar
-                    dataKey="Amount"
-                    fill="var(--color-accent-tertiary)"
-                    name="Payment Amount"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="no-data-message">
-              No payment data available for this student.
-            </div>
-          )}
+
+          <PaymentHistoryTable payments={payments} monthlyFee={feeAmount} />
         </section>
       </main>
 

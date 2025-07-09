@@ -20,6 +20,9 @@ import {
   FETCH_WEEKLY_MARKS_SUCCESS,
   FETCH_WEEKLY_MARKS_FAILURE,
   UPDATE_STUDENT_CLASSES_SUCCESS,
+    FETCH_PAYMENTS_REQUEST,
+  FETCH_PAYMENTS_SUCCESS,
+  FETCH_PAYMENTS_FAILURE,
 } from "../types";
 
 const initialState = {
@@ -46,6 +49,7 @@ const initialState = {
   updatingStudent: null,
   updateError: null,
   updateSuccess: false,
+  payments:[]
 };
 
 const studentReducer = (state = initialState, action) => {
@@ -221,7 +225,23 @@ const studentReducer = (state = initialState, action) => {
         ),
       };
     }
+ case FETCH_PAYMENTS_REQUEST:
+      return {
+        ...state,
+                payments: action.payload,  // already formatted by the action creator
+      };
 
+    case FETCH_PAYMENTS_SUCCESS:
+      return {
+        ...state,
+        payments: action.payload,  // already formatted by the action creator
+      };
+
+    case FETCH_PAYMENTS_FAILURE:
+      return {
+        ...state,
+        payments: [],              // clear data so UI shows “no history”
+      };
     default:
       return state;
   }

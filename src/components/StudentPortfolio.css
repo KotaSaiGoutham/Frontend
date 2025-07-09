@@ -263,6 +263,67 @@ body {
     box-shadow: 0 4px 10px rgba(0,0,0,0.08); /* A bit more shadow for highlighted on hover */
 }
 
+/* give phone links a subtle cue */
+.phone-link {
+  text-decoration: none;
+  position: relative;
+}
+.phone-link::after {
+  content: "📞";
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+  opacity: 0.6;
+}
+/* new delays — bump everything by three slots */
+.personal-details-card .detail-item:nth-child(1)  { animation-delay: calc(0.4s + 0.05s); } /* Student contact */
+.personal-details-card .detail-item:nth-child(2)  { animation-delay: calc(0.4s + 0.10s); } /* Father contact */
+.personal-details-card .detail-item:nth-child(3)  { animation-delay: calc(0.4s + 0.15s); } /* Mother contact */
+/* keep adding +0.05s to all subsequent selectors or switch to a keyframes‑based stagger util */
+/* ---------- Group headings ---------- */
+.detail-section h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-text-heading);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: 0.3rem;
+}
+
+/* ---------- Status badge ---------- */
+.status-badge {
+  display: inline-block;
+  padding: 0.15em 0.65em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  color: #fff;
+}
+.status-badge.paid    { background-color: #28a745; }   /* green */
+.status-badge.unpaid  { background-color: #dc3545; }   /* red */
+.status-badge.partial { background-color: #ffc107; color: #212529; } /* amber */
+
+/* ---------- Phone link cue ---------- */
+.phone-link {
+  text-decoration: none;
+  position: relative;
+}
+.phone-link::after {
+  content: "📞";
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+  opacity: 0.6;
+}
+
+/* ---------- Responsive grid (keep your existing .details-grid rules) ---------- */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--spacing-md);
+}
 
 /* Payment Status Badge (for direct use inside DetailItem value) */
 .payment-status-badge {

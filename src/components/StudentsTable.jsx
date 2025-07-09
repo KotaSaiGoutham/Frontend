@@ -118,11 +118,8 @@ const StudentsTable = () => {
     students,
     loading: studentsLoading,
     error: studentsError,
-    // updateError and updateSuccess are typically handled by the action's success/failure
-    // and then reflected in local state (snackbar)
   } = useSelector((state) => state.students);
 
-  // Correctly access timetables from state.classes
   const {
     timetables, // The actual data for upcoming classes
     loading: classesLoading, // Loading state for timetables

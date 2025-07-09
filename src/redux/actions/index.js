@@ -55,8 +55,12 @@ import {
   UPDATE_TIMETABLE_SUCCESS,
   UPDATE_TIMETABLE_FAILURE,
   ADD_STUDENT_CLEAR_STATUS,
+  FETCH_PAYMENTS_REQUEST,
+  FETCH_PAYMENTS_SUCCESS,
+  FETCH_PAYMENTS_FAILURE,
 } from "../types";
-
+import dayjs from "dayjs";                 // ← added
+import { toJsDate } from "../../mockdata/funcation";
 // --- 2. Import Utility Functions ---
 // Removed generateMockTimetableData from here as it's no longer used for fallback by actions
 import { sortAndFilterTimetableData } from "../../mockdata/funcation";
@@ -678,3 +682,60 @@ export const updateTimetableEntry = (timetableData) => async (dispatch) => {
 export const clearAddStudentStatus = () => ({
   type: ADD_STUDENT_CLEAR_STATUS,
 });
+
+export const formatPaymentHistory = (payments = []) =>
+  payments
+    .map((p) => {
+      const dateObj = toJsDate(p.date);
+      if (!dateObj) {
+        console.warn("Skipping payment without valid date:", p);
+        return null;
+      }
+
+      return {
+        name: dayjs(dateObj).format("DD MMM YY"), // X‑axis
+        Paid: p.status === "Paid" ? 1 : 0,
+        Unpaid: p.status === "Unpaid" ? 1 : 0,
+        rawDate: dateObj, // keep if you need to sort later
+      };
+    })
+    .filter(Boolean); // drop nulls
+
+/**
+ * Fetch the payment history for a single student (ascending order).
+ * @param {string} studentId – Firestore document ID of the student
+ */
+export const fetchPaymentHistory = (studentId) =>
+  apiRequest({
+    url: `/api/data/students/${studentId}/payments?order=asc`,
+    method: "GET",
+
+    // ----- lifecycle handlers ---------------------------------------------
+    onStart: FETCH_PAYMENTS_REQUEST,
+
+    onSuccess: (data, dispatch) => {
+      const formatted = formatPaymentHistory(data?.payments || []);
+      dispatch({
+        type: FETCH_PAYMENTS_SUCCESS,
+        payload: formatted,
+      });
+    },
+
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching payment history:", error);
+      dispatch({
+        type: FETCH_PAYMENTS_FAILURE,
+        payload: {
+          error: error?.error || error.message || "Failed to fetch payments",
+        },
+      });
+
+      if (error?.status === 401 || error?.status === 403) {
+        dispatch(
+          setAuthError("Session expired or unauthorized. Please log in again.")
+        );
+      }
+    },
+
+    authRequired: true,
+  });

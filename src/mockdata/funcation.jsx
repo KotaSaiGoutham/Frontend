@@ -112,6 +112,7 @@ const ALL_PDF_COLUMNS = [
         : parseFloat(student["Monthly Fee"]) || 0
       ).toLocaleString("en-IN") // Format as Indian currency
     ),
+
   },
   { key: "classesCompleted", label: "Classes Completed", dataKey: "classesCompleted" }, // Note: space in dataKey
   {
@@ -239,3 +240,31 @@ export function ClassCounterDisplay({ student, updatingClasses }) {
     </>
   );
 }
+// utils/convertFirestoreDate.js
+export const toJsDate = (ts) => {
+  if (!ts) return null;
+
+  // Case 1: Firestore Timestamp instance (has .toDate())
+  if (typeof ts.toDate === "function") return ts.toDate();
+
+  // Case 2: JSON‑serialised Timestamp { _seconds, _nanoseconds }
+  if (typeof ts._seconds === "number")
+    return new Date(ts._seconds * 1000 + Math.round(ts._nanoseconds / 1e6));
+
+  // Case 3: ISO string
+  if (typeof ts === "string" || ts instanceof String) return new Date(ts);
+
+  return null; // unsupported shape
+};
+export const buildChartData = (payments = []) =>
+  payments
+    .filter((p) => p.status === "Paid")          // ← keep ONLY Paid events
+    .map((p) => {
+      const dateObj = toJsDate(p.date);
+      if (!dateObj) return null;
+      return {
+        name: dayjs(dateObj).format("DD MMM YY"), // X‑axis
+        Count: 1,                                 // each bar = 1 payment
+      };
+    })
+    .filter(Boolean);
