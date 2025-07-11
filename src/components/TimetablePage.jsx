@@ -283,7 +283,6 @@ const TimetablePage = () => {
 
       const matchedStudent = studentSubjectFeeMap.get(lookupKey);
       let monthlyFeePerClass = "N/A";
-
       if (matchedStudent) {
         let feeToUse = 0;
         if (

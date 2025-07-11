@@ -27,6 +27,7 @@ import {
   Chip,
 } from "@mui/material";
 // Import ALL necessary icons from react-icons/fa
+import { isRecentPayment } from "../mockdata/funcation";
 import {
   FaSearch,
   FaUserGraduate,
@@ -1107,19 +1108,38 @@ const StudentsTable = () => {
                     <TableRow
                       key={student.id}
                       sx={{
-                        // zebra striping
-                        backgroundColor:
-                          index % 2 === 0 ? "#FFFFFF" : "#fbfbfb",
-
-                        /* 👇 smooth fade when you hover */
+                        backgroundColor: isRecentPayment(student)
+                          ? "#e8f5e9"
+                          : index % 2 === 0
+                          ? "#FFFFFF"
+                          : "#fbfbfb",
                         transition: "background-color 0.2s ease-in-out",
-                        "&:hover": { backgroundColor: "#e1f5fe" },
 
-                        // keep your existing cell styles
+                        // 👇 Add the animation only if student is recently paid
+                        animation: isRecentPayment(student)
+                          ? "highlightFade 2s ease-in-out infinite"
+                          : "none",
+
+                        "&:hover": {
+                          backgroundColor: "#e1f5fe",
+                        },
                         "& > td": {
                           borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
                           fontSize: "0.95rem",
                           color: "#424242",
+                        },
+
+                        // 👇 THIS is where you define @keyframes
+                        "@keyframes highlightFade": {
+                          "0%": {
+                            boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
+                          },
+                          "50%": {
+                            boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
+                          },
+                          "100%": {
+                            boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
+                          },
                         },
                       }}
                     >

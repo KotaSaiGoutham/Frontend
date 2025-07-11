@@ -268,3 +268,16 @@ export const buildChartData = (payments = []) =>
       };
     })
     .filter(Boolean);
+    export const isRecentPayment = (student) => {
+  if (student["Payment Status"] !== "Paid" || !student.paidDate) return false;
+
+  const now = new Date();
+  const paid = new Date(student.paidDate._seconds * 1000); // Convert Firestore timestamp
+  const diffInDays = (now - paid) / (1000 * 60 * 60 * 24);
+
+  return diffInDays <= 3; // paid today or within last 3 days
+};
+  // Capitalize helper
+  export function capitalize(word) {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }
