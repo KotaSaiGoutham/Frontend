@@ -9,7 +9,7 @@ import {
 } from 'react-icons/fa';
 import './TimeLineCard.css'; // Import the CSS file
 
-export const TimeLineCard = ({ events }) => {
+const TimeLineCard = ({ events }) => {
   if (!events || events.length === 0) {
     return (
       <section className="portfolio-card timeline-card delay-0">
@@ -99,3 +99,4 @@ export const TimeLineCard = ({ events }) => {
 
   );
 };
+export default TimeLineCard
