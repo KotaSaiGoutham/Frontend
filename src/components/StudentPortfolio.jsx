@@ -42,6 +42,7 @@ import {
 import { MuiButton } from "./customcomponents/MuiCustomFormFields";
 import WeeklyMarksTrendGraph from "./WeeklyMarksBarChart";
 import PaymentHistoryTable from "./PaymentHistoryTable";
+import { TimeLineCard } from "./TimeLineCard"
 const formatPhone = (num) =>
   num ? (
     <a href={`tel:${num}`} className="phone-link">
@@ -433,7 +434,7 @@ if (weeklyMarks?.length > 0) {
         )}
       </div>
       <div style={{ width: "30%" }}>
-        <TimelineCard events={timelineEvents} />
+        <TimeLineCard events={timelineEvents} />
       </div>
     </div>
   );

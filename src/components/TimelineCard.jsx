@@ -7,9 +7,9 @@ import {
   FaClipboardList,  // For "Marks Added"
   FaInfoCircle      // Default/Generic
 } from 'react-icons/fa';
-import './TimelineCard.css'; // Import the CSS file
+import './TimeLineCard.css'; // Import the CSS file
 
-export const TimelineCard = ({ events }) => {
+export const TimeLineCard = ({ events }) => {
   if (!events || events.length === 0) {
     return (
       <section className="portfolio-card timeline-card delay-0">
