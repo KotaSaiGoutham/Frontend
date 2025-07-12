@@ -1,4 +1,3 @@
-// TimelineCard.jsx
 import React from 'react';
 import {
   FaClock,          // For the card title
