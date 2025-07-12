@@ -576,3 +576,144 @@ body {
 .portfolio-card.marks-card h2 .card-icon {
     /* No specific margin-right here, gap handles it */
 }
+/* TimelineCard.css */
+
+/* --- Keyframe Animations --- */
+@keyframes slideInFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* --- General Card Styling --- */
+.portfolio-card {
+  background-color: #ffffff;
+  border-radius: 12px; /* Slightly more rounded */
+  padding: 30px; /* More generous padding */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08); /* More prominent shadow */
+  margin-bottom: 25px; /* More space below card */
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; /* Modern font stack */
+  overflow: hidden; /* Crucial to prevent animation overflow */
+}
+
+.portfolio-card h2 {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px; /* More space below heading */
+  color: #212529; /* Darker, professional black */
+  font-size: 1.6em; /* Slightly larger heading */
+  font-weight: 700; /* Bolder heading */
+}
+
+.card-icon {
+  margin-right: 12px; /* More space for icon */
+  color: #007bff; /* Consistent primary blue */
+  font-size: 1.5em; /* Larger main icon */
+}
+
+.no-activity {
+  text-align: center;
+  color: #6c757d; /* Muted grey for info text */
+  padding: 20px;
+  font-style: italic;
+  font-size: 0.95em;
+}
+
+/* --- Timeline List Styling --- */
+.timeline-list {
+  position: relative;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-left: 2px solid #e9ecef; /* Lighter, subtle vertical timeline line */
+  margin-left: 25px; /* Adjust for indicator positioning */
+}
+
+/* --- Individual Timeline Item Styling --- */
+.timeline-item {
+  position: relative;
+  margin-bottom: 30px; /* More space between items */
+  padding: 10px 15px; /* Add some padding for visual separation within the item */
+  padding-left: 45px; /* Extra padding for content, accounting for indicator */
+  background-color: transparent; /* Default background */
+  border-radius: 8px; /* Slightly rounded corners for items */
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions for hover */
+  opacity: 0; /* Start invisible for entry animation */
+
+  /* Animation application for entry */
+  animation: slideInFadeIn 0.6s ease-out forwards; /* Slightly longer, smoother animation */
+  /* animation-delay is set inline in JSX for staggering */
+}
+
+/* --- Hover Effect for Timeline Item --- */
+.timeline-item:hover {
+  background-color: #f0f8ff; /* A very light blue on hover */
+  transform: translateX(8px); /* More noticeable slide right on hover */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* More prominent shadow on hover */
+  cursor: pointer; /* Indicate interactivity */
+}
+
+/* --- Timeline Indicator (Tick Mark) --- */
+.timeline-indicator {
+  position: absolute;
+  left: -18px; /* Position to align with the timeline line */
+  top: 12px; /* Vertically center with timestamp/text */
+  width: 32px; /* Larger indicator */
+  height: 32px; /* Larger indicator */
+  /* Background color is set dynamically in JSX */
+  border: 4px solid #ffffff; /* Thicker white border */
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px #e9ecef; /* Match line color for outer ring */
+  z-index: 1; /* Ensure it's above the line */
+
+  display: flex; /* To center the icon */
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for indicator on item hover */
+}
+
+/* --- Indicator animation on timeline-item hover --- */
+.timeline-item:hover .timeline-indicator {
+    transform: scale(1.15); /* Make indicator slightly larger on hover */
+    box-shadow: 0 0 0 4px #d0d0d0; /* Intensify indicator shadow */
+}
+
+/* --- Event Icon inside Indicator --- */
+.timeline-event-icon {
+  font-size: 1.1em; /* Larger icon within the circle */
+  color: #ffffff; /* White icon color for contrast against colored background */
+}
+
+/* --- Timeline Content Styling --- */
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.timeline-time {
+  display: block;
+  font-size: 0.95em; /* Slightly larger timestamp */
+  color: #6c757d; /* Muted grey for timestamp */
+  margin-bottom: 4px; /* More space below timestamp */
+  font-weight: 500; /* Medium weight */
+}
+
+.timeline-text {
+  font-size: 1.05em; /* Slightly larger main text */
+  color: #343a40; /* Darker text for main description */
+  line-height: 1.5; /* Improved readability */
+  font-weight: 600; /* Semi-bold for event label */
+   white-space: pre-line;
+}
+
+/* Optional: Emphasize text on hover */
+.timeline-item:hover .timeline-time,
+.timeline-item:hover .timeline-text {
+    color: #212529; /* Darken text slightly on hover for emphasis */
+}
