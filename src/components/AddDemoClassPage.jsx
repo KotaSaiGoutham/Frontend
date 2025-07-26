@@ -50,7 +50,6 @@ const AddDemoClassPage = () => {
     error: addError,
     addSuccess,
   } = useSelector((state) => state.demoClasses);
-  console.log("addSuccess",addSuccess)
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");

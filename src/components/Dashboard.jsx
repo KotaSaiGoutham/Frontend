@@ -35,7 +35,6 @@ const WEATHER_API_URL = `https://api.openweathermap.org/data/2.5/weather?lat=${H
 const Dashboard = () => {
   const dispatch  = useDispatch()
     const { user } = useSelector(state => state.auth);
-    console.log("user",user)
 
   const [userName, setUserName] = useState("Goutham");
   const [greetingInfo, setGreetingInfo] = useState({
@@ -57,7 +56,6 @@ const Dashboard = () => {
     studentDemographics: {},
     paymentStatus: {},
   });
-  console.log("timetables", timetables);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -172,8 +170,7 @@ let filteredStudents = [];
       console.warn("User has no specific subject permissions for timetables. Displaying no classes.");
     }
   }
-  console.log("filteredTimetables",filteredTimetables)
-    console.log("filteredStudents",filteredStudents)
+
 
   // Calculate dashboard metrics from state (which is populated by API or mock fallback)
   const totalStudents = filteredStudents.length

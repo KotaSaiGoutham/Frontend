@@ -12,7 +12,6 @@ import {
   TableRow,
   Paper,
   Box,
-  TableSortLabel,
   CircularProgress,
   Snackbar,
   Alert, // Original Alert from Material-UI
@@ -25,6 +24,7 @@ import {
   FormGroup, // <-- Import this
   Tooltip,
   Chip,
+  TableSortLabel
 } from "@mui/material";
 // Import ALL necessary icons from react-icons/fa
 import { isRecentPayment } from "../mockdata/funcation";
@@ -51,6 +51,8 @@ import {
   FaMinusCircle,
   FaPlusCircle,
   FaPhone,
+    FaMoneyBillWave, // Icon for Monthly Fee
+  FaClipboardList, // Icon for Classes Completed
 } from "react-icons/fa";
 // Assuming these are your custom components and mock data
 import { getPdfTableHeaders, getPdfTableRows } from "../mockdata/funcation";
@@ -294,27 +296,35 @@ const StudentsTable = () => {
       studentsToFilter = studentsToFilter.filter(
         (student) => student.Stream?.trim() === filters.stream.trim()
       );
-    }
+    }const finalSortedStudents = studentsToFilter.sort((a, b) => {
+    const aClasses = typeof a.classesCompleted === "number" ? a.classesCompleted : parseFloat(a.classesCompleted) || 0;
+    const bClasses = typeof b.classesCompleted === "number" ? b.classesCompleted : parseFloat(b.classesCompleted) || 0;
 
-    setFilteredStudents(studentsToFilter);
+    // For Descending order (highest classesCompleted first)
+    return bClasses - aClasses;
+
+    // For Ascending order (lowest classesCompleted first)
+    // return aClasses - bClasses;
+  });
+
+  setFilteredStudents(finalSortedStudents); // Set the sorted list
+
   }, [filters, studentsWithNextClass, user]); // Dependencies: `studentsWithNextClass` is crucial here
 
-  // --- Handle Sort Request ---
-  const handleSortRequest = (property) => {
-    const isAsc = orderBy === property && order === "asc";
-    setOrder(isAsc ? "desc" : "asc");
-    setOrderBy(property);
-  };
 
-  const sortedFilteredStudents = useMemo(() => {
-    if (!orderBy) return filteredStudents; // If no sort order, return as is
+
+ const sortedFilteredStudents = useMemo(() => {
+    if (!orderBy) return filteredStudents;
 
     return [...filteredStudents].sort((a, b) => {
       let aValue;
       let bValue;
 
-      // Custom sorting logic for specific columns
-      if (orderBy === "monthlyFee") {
+      if (orderBy === "Name") { // Sort by Name
+        aValue = a.Name?.toLowerCase() || "";
+        bValue = b.Name?.toLowerCase() || "";
+        return order === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      } else if (orderBy === "monthlyFee") {
         aValue =
           typeof a["Monthly Fee"] === "number"
             ? a["Monthly Fee"]
@@ -323,21 +333,19 @@ const StudentsTable = () => {
           typeof b["Monthly Fee"] === "number"
             ? b["Monthly Fee"]
             : parseFloat(b["Monthly Fee"]) || 0;
-      } else if (orderBy === "classesCompleted") {
-        aValue =
-          typeof a["Classes Completed"] === "number"
-            ? a["Classes Completed"]
-            : parseFloat(a["Classes Completed"]) || 0;
-        bValue =
-          typeof b["Classes Completed"] === "number"
-            ? b["Classes Completed"]
-            : parseFloat(b["Classes Completed"]) || 0;
-      } else if (orderBy === "nextClass") {
-        // Sort by the actual Date object. `Infinity` handles null/N/A values, placing them at the end.
+      } else if (orderBy === "classesCompleted") { // This part is correct, matching the field name
+  aValue =
+    typeof a.classesCompleted === "number" // Access directly using dot notation or a['classesCompleted']
+      ? a.classesCompleted
+      : parseFloat(a.classesCompleted) || 0;
+  bValue =
+    typeof b.classesCompleted === "number" // Access directly using dot notation or b['classesCompleted']
+      ? b.classesCompleted
+      : parseFloat(b.classesCompleted) || 0;
+}else if (orderBy === "nextClass") {
         aValue = a.nextClass ? a.nextClass.getTime() : Infinity;
         bValue = b.nextClass ? b.nextClass.getTime() : Infinity;
       } else {
-        // Default string or number comparison for other columns
         const valA = a[orderBy];
         const valB = b[orderBy];
 
@@ -347,19 +355,19 @@ const StudentsTable = () => {
         if (typeof valA === "number" && typeof valB === "number") {
           return valA - valB;
         }
-        return 0; // No specific sorting logic, maintain original order
+        return 0;
       }
 
-      // Apply ascending or descending order
       if (aValue < bValue) {
         return order === "asc" ? -1 : 1;
       }
       if (aValue > bValue) {
         return order === "asc" ? 1 : -1;
       }
-      return 0; // Values are equal
+      return 0;
     });
   }, [filteredStudents, orderBy, order]);
+
 
   // Handles changes in filter input fields
   const handleFilterChange = (e) => {
@@ -402,7 +410,11 @@ const StudentsTable = () => {
       setUpdatingStudent(null); // Hide loading spinner
     }
   };
-
+  const handleSortRequest = (property) => {
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
   const handleClassChange = async (studentId, increment) => {
     if (updatingClasses) return; // Prevent multiple updates simultaneously
     setUpdatingClasses(studentId); // Show loading spinner for this student's classes
@@ -493,7 +505,6 @@ const StudentsTable = () => {
       </Fade>
     );
   }
-
   return (
     <Box
       sx={{
@@ -759,13 +770,18 @@ const StudentsTable = () => {
                         color: "#1a237e",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <FaUserCircle
-                          style={{ marginRight: 8, color: "#1976d2" }}
-                        />{" "}
-                        Name
-                        {/* Add sorting icon here */}
-                      </Box>
+                      <TableSortLabel
+                        active={orderBy === "Name"}
+                        direction={orderBy === "Name" ? order : "asc"}
+                        onClick={() => handleSortRequest("Name")}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <FaUserCircle
+                            style={{ marginRight: 8, color: "#1976d2" }}
+                          />{" "}
+                          Name
+                        </Box>
+                      </TableSortLabel>
                     </TableCell>
                     {columnVisibility.gender && (
                       <TableCell
@@ -1038,7 +1054,7 @@ const StudentsTable = () => {
                       </TableCell>
                     )}
                     {columnVisibility.monthlyFee && (
-                      <TableCell
+                       <TableCell
                         align="right"
                         sx={{
                           fontWeight: "bold",
@@ -1050,7 +1066,13 @@ const StudentsTable = () => {
                           color: "#1a237e",
                         }}
                       >
-                        Monthly Fee
+                        <TableSortLabel
+                          active={orderBy === "monthlyFee"}
+                          direction={orderBy === "monthlyFee" ? order : "asc"}
+                          onClick={() => handleSortRequest("monthlyFee")}
+                        >
+                          Monthly Fee
+                        </TableSortLabel>
                       </TableCell>
                     )}
                     {columnVisibility.classesCompleted && (
@@ -1066,7 +1088,13 @@ const StudentsTable = () => {
                           color: "#1a237e",
                         }}
                       >
-                        Classes Completed
+                        <TableSortLabel
+                          active={orderBy === "classesCompleted"}
+                          direction={orderBy === "classesCompleted" ? order : "asc"}
+                          onClick={() => handleSortRequest("classesCompleted")}
+                        >
+                          Classes Completed
+                        </TableSortLabel>
                       </TableCell>
                     )}
                     {columnVisibility.nextClass && (

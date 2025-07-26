@@ -74,7 +74,6 @@ const StudentPortfolio = () => {
   );
   const [error, setError] = useState(null);
   const [marksError, setMarksError] = useState(null);
-  console.log("studentData", studentData);
 
   useEffect(() => {
     dispatch(fetchPaymentHistory(studentData?.id || studentId));
@@ -388,7 +387,6 @@ if (weeklyMarks?.length > 0) {
                 variant="contained"
                 color="primary"
                 onClick={() => {
-                  console.log("Add Marks Button Clicked!");
                   setShowAddMarksModal(true);
                 }}
                 startIcon={<FaPlus />}
@@ -428,7 +426,6 @@ if (weeklyMarks?.length > 0) {
           <AddWeeklyMarksModal
             studentId={studentId}
             onClose={() => {
-              console.log("Closing Add Marks Modal");
               setShowAddMarksModal(false);
             }}
             programType={studentData.Stream}

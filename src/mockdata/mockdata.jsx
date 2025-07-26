@@ -240,7 +240,6 @@ export const getUniqueQuote = (currentShownIndices) => {
 
   // If all quotes have been shown in the current cycle, reset the shown indices
   if (availableIndices.length === 0) {
-    console.log("All quotes shown in this cycle. Resetting for a new cycle.");
     updatedShownIndices = []; // Clear the list to start over
     availableIndices = motivationalQuotes.map((_, index) => index); // All quotes are now available again
   }

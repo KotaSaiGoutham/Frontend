@@ -15,7 +15,7 @@
 
 /* Styles for when the sidebar is present and open */
 .auth-layout-content.sidebar-open {
-    margin-left: 240px; /* Assuming your sidebar width is 240px */
+    margin-left: 210px; /* Assuming your sidebar width is 240px */
     width: calc(100% - 240px); /* Adjust width to account for sidebar */
 }
 

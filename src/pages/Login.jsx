@@ -21,7 +21,6 @@ const LoginPage = () => {
   const { loading, error, isAuthenticated, user } = useSelector(
     (state) => state.auth
   ); // Renamed 'email' to 'username' to accept either email or mobile number
-console.log("user",user)
   const [formData, setFormData] = useState({
     username: "", // This will hold either email or mobile number
     password: "",
@@ -37,7 +36,6 @@ console.log("user",user)
     : error?.message || error || "An unknown error occurred. Please try again.";
 
 useEffect(() => {
-  console.log("user",user)
   if (user) {
     if (user.role === 'student') {
       // Assuming `user` contains student id and other data needed

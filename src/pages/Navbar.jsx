@@ -40,9 +40,6 @@ const Navbar = () => {
     const isAuthRelatedPublicPage = AUTH_RELATED_PUBLIC_PAGES.includes(location.pathname);
 
     if (isAuthenticated && !isCurrentPathProtected && !isAuthRelatedPublicPage) {
-      console.log(
-        `Authenticated user navigated to a non-protected, non-auth public path: ${location.pathname}. Clearing authentication.`
-      );
       dispatch(logoutUser());
     }
   }, [location.pathname, isAuthenticated, dispatch]);

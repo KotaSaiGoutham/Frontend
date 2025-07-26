@@ -99,11 +99,6 @@ const FlashBanner = () => {
       },
     ],
   };
-
-  console.log("Current View (isMobileView):", isMobileView);
-  console.log("Banners selected for display:", bannersToDisplay);
-  console.log("Number of banners to display:", bannersToDisplay.length);
-
   return (
     <section className="flash-banner">
       {bannersToDisplay.length > 0 ? (

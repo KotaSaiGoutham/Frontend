@@ -57,7 +57,6 @@ const PrivateRoute = ({ children }) => {
 // For dynamic routes like "/student/:id", we'll check if the path starts with "/student/
 function App() {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get auth status from Redux
-  console.log("isAuthenticated",isAuthenticated)
 
 
   return (

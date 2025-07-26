@@ -47,7 +47,6 @@ const AddStudent = () => {
   const { user } = useSelector((state) => state.auth);
   const { state } = useLocation();
   const passedStudentData = state?.studentData;
-  console.log("passedStudentData",passedStudentData)
 
   // Using useRef to store initialStudentData so it doesn't cause useEffect re-renders
   // if it's passed as a dependency, and its reference changes.
@@ -102,7 +101,6 @@ const AddStudent = () => {
     setStudentData(mappedData);
   }
 }, [passedStudentData, user]);
-console.log("studentdata",studentData)
 
   // Cleanup only for the snackbar state on unmount
   useEffect(() => {
@@ -150,9 +148,6 @@ console.log("studentdata",studentData)
     e.preventDefault();
     setSnackbarOpen(false); // Close any existing snackbar before new submission
     setSnackbarMessage("");
-
-    console.log("Attempting to add student with data:", studentData);
-
     const token = localStorage.getItem("token");
     if (!token) {
       setSnackbarSeverity("error");

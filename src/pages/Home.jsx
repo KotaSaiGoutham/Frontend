@@ -107,7 +107,6 @@ const faqs = [
       "We provide monthly progress reports and conduct regular mock tests to ensure you're on the right track.",
   },
 ];
-console.log("faqs", faqs);
 const facultyList = [
   {
     name: "Karunakar Reddy Bollam",

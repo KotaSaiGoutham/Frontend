@@ -103,8 +103,6 @@ const AddWeeklyMarksModal = ({
   };
 
   const handleSubmit = async () => {
-    console.log("handleSubmit triggered!");
-
     setLoading(true);
     setError(null); // Clear any previous errors at the start of submission attempt
     setSuccess(false);

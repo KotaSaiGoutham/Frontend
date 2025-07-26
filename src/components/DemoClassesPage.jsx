@@ -197,8 +197,7 @@ const DemoClassesPage = () => {
         </Paper>
       </Slide>
 
-      {/* Filters Section */}
-      <Slide
+      {/* <Slide
         direction="right"
         in={true}
         mountOnEnter
@@ -256,7 +255,6 @@ const DemoClassesPage = () => {
               placeholder="Search by student name..."
               icon={FaUserCircle}
             />
-            {/* Using existing MuiSelect for filters */}
             <MuiSelect
               label="Course"
               name="course"
@@ -265,7 +263,6 @@ const DemoClassesPage = () => {
               options={streamOptions}
               icon={FaChalkboardTeacher}
             />
-            {/* Using existing MuiSelect for filters */}
             <MuiSelect
               label="Status"
               name="status"
@@ -274,7 +271,6 @@ const DemoClassesPage = () => {
               options={statusOptions}
               icon={FaCalendarCheck}
             />
-            {/* Using existing MuiSelect for filters */}
             <MuiSelect
               label="Year"
               name="year"
@@ -293,9 +289,8 @@ const DemoClassesPage = () => {
             />
           </Box>
         </Paper>
-      </Slide>
+      </Slide> */}
 
-      {/* Show/Hide Columns Section */}
       <Paper
         elevation={6}
         sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}

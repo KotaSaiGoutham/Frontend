@@ -900,7 +900,6 @@ export const fetchAutoTimetablesForToday = () => apiRequest({
   method: "GET",
   onStart: FETCH_AUTOTIMETABLES_REQUEST,
   onSuccess: (data, dispatch) => {
-    console.log("data",data)
     dispatch({
       type: FETCH_AUTOTIMETABLES_SUCCESS,
       payload: data, // Should be an array of auto-timetables for the day
