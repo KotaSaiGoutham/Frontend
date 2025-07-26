@@ -3,7 +3,7 @@
 /* Define CSS Variables for consistent theming (ensure these are also in your global CSS) */
 :root {
     --navbar-height: 100px; /* IMPORTANT: This MUST accurately match your Navbar's height from global CSS */
-    --sidebar-width: 250px;
+    --sidebar-width: 220px;
 
     /* Your Provided Color Palette */
     --dark-indigo: #292551;

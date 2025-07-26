@@ -132,3 +132,9 @@ body {
     transform: scale(1);
   }
 }
+@keyframes runningPulseBackground {
+  0% { background-color: #e3f2fd; }
+  50% { background-color: #90caf9; }
+  100% { background-color: #e3f2fd; }
+}
+

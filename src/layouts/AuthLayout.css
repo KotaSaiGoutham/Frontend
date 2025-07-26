@@ -8,7 +8,6 @@
 
 .auth-layout-content {
     flex-grow: 1;
-    padding: 20px; /* Example padding */
     transition: margin-left 0.3s ease-in-out; /* Smooth transition for content shift */
     width: 100%; /* Default to full width */
     box-sizing: border-box; /* Include padding in width calculation */

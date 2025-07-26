@@ -23,7 +23,7 @@ body{
     --navbar-height: 4rem; /* Match this with your Navbar's actual height */
     
     /* New Sidebar-specific variables (copy from Sidebar.css if not already here) */
-    --sidebar-width: 250px;
+    --sidebar-width: 220px;
     --sidebar-bg: #282c34;
     --sidebar-text: #ABB2BF;
     --sidebar-active-bg: #4E5664;
