@@ -6,14 +6,16 @@ import studentReducer from "./reducers/studentReducer";
 import employeeReducer from "./reducers/employeeReducer";
 import authReducer from "./reducers/authReducer";
 import paymentsReducer from "./reducers/paymentReducer";
+import demoClassReducer from "./reducers/demoClassReducer";
+import autoTimetablesReducer from "./reducers/autoTimetablesReducer";
 const rootReducer = combineReducers({
   auth: authReducer, // <-- Ensure your authReducer is assigned to the 'auth' key
   classes: classReducer,
   students: studentReducer,
-  employees: employeeReducer, 
-    payments: paymentsReducer,   // ← new slice
-
-  // Add any other reducers here as you create them
+  employees: employeeReducer,
+  payments: paymentsReducer, // ← new slice
+  demoClasses: demoClassReducer, // <--- This key MUST be 'demoClasses'
+  autoTimetables: autoTimetablesReducer, // <--- This key MUST be 'demoClasses'
 });
 
 export default rootReducer;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"; // Added useRef
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   FaUserPlus,
   FaUserCircle,
@@ -45,6 +45,9 @@ const AddStudent = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const { state } = useLocation();
+  const passedStudentData = state?.studentData;
+  console.log("passedStudentData",passedStudentData)
 
   // Using useRef to store initialStudentData so it doesn't cause useEffect re-renders
   // if it's passed as a dependency, and its reference changes.
@@ -73,6 +76,33 @@ const AddStudent = () => {
   // because we will handle the promise resolution in handleSubmit.
   // However, we still need `addingStudent` to disable the button.
   const { addingStudent } = useSelector((state) => state.students);
+  const isEditMode = !!studentData.id;
+
+  useEffect(() => {
+  if (passedStudentData) {
+    const mappedData = {
+      id: passedStudentData.id,
+      Name: passedStudentData.studentName || "",
+      ContactNumber: passedStudentData.contactNo || "",
+      Gender: passedStudentData.gender || "",
+      Stream: passedStudentData.course || "",
+      College: passedStudentData.collegeName || "",
+      Source: passedStudentData.source || "",
+      Year: passedStudentData.year || "",
+      "Monthly Fee": "", // fill this if available
+      "Payment Status": "Unpaid", // or map from passedStudentData
+      "Group ": passedStudentData.course === "JEE" ? "MPC" :
+                passedStudentData.course === "NEET" ? "BiPC" : "",
+      MotherContactNumber: "",
+      FatherContactNumber: "",
+    Subject: user.isPhysics ? "Physics" : user.isChemistry ? "Chemistry" : "",
+    };
+
+    initialStudentData.current = mappedData;
+    setStudentData(mappedData);
+  }
+}, [passedStudentData, user]);
+console.log("studentdata",studentData)
 
   // Cleanup only for the snackbar state on unmount
   useEffect(() => {
@@ -193,9 +223,11 @@ const AddStudent = () => {
   return (
     <div className="add-student-page-container dashboard-container">
       <div className="dashboard-card add-student-form-card">
-        <h2>
-          <FaUserPlus /> Add New Student
+        <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <FaUserPlus />
+          {isEditMode ? "Edit Student" : "Add New Student"}
         </h2>
+
         <form onSubmit={handleSubmit} className="add-student-form">
           {/* Personal Details */}
           <div className="add-student-form-section-title">Personal Details</div>

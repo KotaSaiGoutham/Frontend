@@ -2,7 +2,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 // Import all necessary icons for the sidebar options
-import { FaChartLine, FaBars, FaTimes, FaUsers, FaCalendarAlt, FaMoneyBillAlt,FaHome } from 'react-icons/fa';
+import { FaChalkboardTeacher, FaBars, FaTimes, FaUsers, FaCalendarAlt, FaMoneyBillAlt,FaHome } from 'react-icons/fa';
 import './Sidebar.css';
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
@@ -12,6 +12,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     const navItems = [
                 { name: 'Dashboard', path: '/dashboard', icon: <FaHome /> },
         { name: 'Students', path: '/students', icon: <FaUsers /> },
+    { name: 'Demo Class', path: '/demo-classes', icon: <FaChalkboardTeacher /> }, 
+
         { name: 'Timetable', path: '/timetable', icon: <FaCalendarAlt /> },
         { name: 'Employees', path: '/employees', icon: <FaMoneyBillAlt /> },
     ];

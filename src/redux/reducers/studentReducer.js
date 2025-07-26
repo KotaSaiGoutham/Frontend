@@ -23,6 +23,12 @@ import {
     FETCH_PAYMENTS_REQUEST,
   FETCH_PAYMENTS_SUCCESS,
   FETCH_PAYMENTS_FAILURE,
+   FETCH_DEMO_CLASSES_REQUEST,
+  FETCH_DEMO_CLASSES_SUCCESS,
+  FETCH_DEMO_CLASSES_FAILURE,
+  ADD_DEMO_CLASS_REQUEST,
+  ADD_DEMO_CLASS_SUCCESS,
+  ADD_DEMO_CLASS_FAILURE,
 } from "../types";
 
 const initialState = {
@@ -49,7 +55,10 @@ const initialState = {
   updatingStudent: null,
   updateError: null,
   updateSuccess: false,
-  payments:[]
+  payments:[],
+   demoClasses: [], // Array to hold the fetched demo class objects
+  loading: false,  // Boolean to indicate if data is being fetched
+  error: null,     // Null or a string to hold any error messages
 };
 
 const studentReducer = (state = initialState, action) => {
@@ -241,6 +250,37 @@ const studentReducer = (state = initialState, action) => {
       return {
         ...state,
         payments: [],              // clear data so UI shows “no history”
+      };
+       case FETCH_DEMO_CLASSES_REQUEST:
+    case ADD_DEMO_CLASS_REQUEST: // Assuming you want loading state for adding too
+      return {
+        ...state,
+        loading: true,
+        error: null, // Clear any previous errors on new request
+      };
+
+    case FETCH_DEMO_CLASSES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        error: null,
+        demoClasses: action.payload, // Update demoClasses with the fetched data
+      };
+
+    case ADD_DEMO_CLASS_SUCCESS:
+         return {
+           ...state,
+           loading: false,
+           error: null,
+           demoClasses: [...state.demoClasses, action.payload],
+         };
+
+    case FETCH_DEMO_CLASSES_FAILURE:
+    case ADD_DEMO_CLASS_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload.error, // Set the error message
       };
     default:
       return state;

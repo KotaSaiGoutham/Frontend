@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   FaCalendarPlus,
@@ -24,6 +24,7 @@ import {
   setMinutes,
   setSeconds,
   setMilliseconds,
+  parse,
 } from "date-fns";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -39,6 +40,7 @@ import {
   fetchStudents,
   fetchEmployees,
   addTimetableEntry,
+  updateTimetableEntry,
 } from "../redux/actions/index";
 // Define all possible subjects
 const allSubjects = [
@@ -51,6 +53,19 @@ const allSubjects = [
   "History",
   "Computer Science",
 ];
+const convertToDateFormat = (ddmmyyyy) => {
+  const [dd, mm, yyyy] = ddmmyyyy.split("/");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const parseTime = (timeStr, dateStr) => {
+  const parsed = parse(
+    `${dateStr} ${timeStr}`,
+    "yyyy-MM-dd hh:mm a",
+    new Date()
+  );
+  return isValid(parsed) ? parsed : null;
+};
 
 // Define faculty-specific roles for filtering (these are the 'subjects' they teach)
 const facultySubjectRoles = allSubjects;
@@ -58,7 +73,8 @@ const facultySubjectRoles = allSubjects;
 const AddTimetablePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
+  const location = useLocation();
+  const timetableToEdit = location.state?.timetableToEdit || null;
   // Get data and loading states from Redux
   const { user, loading: userLoading } = useSelector((state) => state.auth);
   const {
@@ -75,21 +91,46 @@ const AddTimetablePage = () => {
   // Combined loading state for the form itself
   const isLoadingInitialData =
     userLoading || employeesLoading || studentsLoading;
+  const findEmployeeIdByName = (name) => {
+    const match = employees.find((emp) => emp.name === name);
+    return match ? String(match.id) : "";
+  };
 
-  const [formData, setFormData] = useState({
-    date: format(new Date(), "yyyy-MM-dd"),
-    facultyId: "",
-    fromTime: null,
-    toTime: null,
-    subject: "",
-    topic: "",
-    student: "",
+  const findStudentIdByName = (name) => {
+    const match = students.find((stu) => stu.Name === name);
+    return match ? String(match.id) : "";
+  };
+
+  const [formData, setFormData] = useState(() => {
+    if (timetableToEdit) {
+      const [fromTimeStr, toTimeStr] = timetableToEdit.Time.split(" to ");
+      const formattedDate = convertToDateFormat(timetableToEdit.Day); // "25/07/2025" → "2025-07-25"
+
+      return {
+        date: formattedDate,
+        facultyId: findEmployeeIdByName(timetableToEdit.Faculty),
+        fromTime: parseTime(fromTimeStr, formattedDate), // returns Date object
+        toTime: parseTime(toTimeStr, formattedDate), // returns Date object
+        subject: timetableToEdit.Subject || "",
+        topic: timetableToEdit.Topic || "",
+        student: findStudentIdByName(timetableToEdit.Student),
+      };
+    }
+
+    return {
+      date: format(new Date(), "yyyy-MM-dd"),
+      facultyId: "",
+      fromTime: null,
+      toTime: null,
+      subject: "",
+      topic: "",
+      student: "",
+    };
   });
 
   const [submitMessage, setSubmitMessage] = useState({ type: "", message: "" });
   const [formError, setFormError] = useState("");
-    const [showSuccessAnimation, setShowSuccessAnimation] = useState(false); // New state for animation
-
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false); // New state for animation
 
   // State for Select options and disability based on user roles
   const [computedFacultyOptions, setComputedFacultyOptions] = useState([]);
@@ -104,32 +145,32 @@ const AddTimetablePage = () => {
   // UseMemo for filtered topics (depends on formData.subject)
   const filteredTopicOptions = useMemo(() => {
     if (!formData.subject) {
-        return [{ value: "", label: "Select Topic" }];
+      return [{ value: "", label: "Select Topic" }];
     }
 
     const filtered = topicOptions.filter(
-        (topicObj) => topicObj.subject === formData.subject
+      (topicObj) => topicObj.subject === formData.subject
     );
 
     // Sort the filtered topics alphabetically by their 'topic' property
     const sortedFiltered = [...filtered].sort((a, b) => {
-        return a.topic.localeCompare(b.topic);
+      return a.topic.localeCompare(b.topic);
     });
 
     const options = sortedFiltered.map((topicObj) => ({
-        value: topicObj.topic,
-        label: topicObj.topic,
+      value: topicObj.topic,
+      label: topicObj.topic,
     }));
 
     // Handle initial "Select Topic" or "No Topics Available"
     if (options.length > 0 && !options.some((opt) => opt.value === "")) {
-        options.unshift({ value: "", label: "Select Topic" });
+      options.unshift({ value: "", label: "Select Topic" });
     } else if (options.length === 0) {
-        return [{ value: "", label: "No Topics Available" }];
+      return [{ value: "", label: "No Topics Available" }];
     }
 
     return options;
-}, [formData.subject, topicOptions]); // Add topicOptions to dependency array if it can change
+  }, [formData.subject, topicOptions]); // Add topicOptions to dependency array if it can change
 
   // useEffect for resetting topic if subject changes and current topic is invalid
   useEffect(() => {
@@ -268,11 +309,11 @@ const AddTimetablePage = () => {
     } else {
       filteredByRoleStudents = students;
     }
-   const sortedStudents = [...filteredByRoleStudents].sort((a, b) => {
-        // Ensure 'Name' exists and is a string for comparison
-        const nameA = a.Name ? String(a.Name).toUpperCase() : '';
-        const nameB = b.Name ? String(b.Name).toUpperCase() : '';
-        return nameA.localeCompare(nameB);
+    const sortedStudents = [...filteredByRoleStudents].sort((a, b) => {
+      // Ensure 'Name' exists and is a string for comparison
+      const nameA = a.Name ? String(a.Name).toUpperCase() : "";
+      const nameB = b.Name ? String(b.Name).toUpperCase() : "";
+      return nameA.localeCompare(nameB);
     });
     let options = sortedStudents.map((stu) => ({
       value: String(stu.id),
@@ -449,12 +490,12 @@ const AddTimetablePage = () => {
         0
       );
 
-      if (
-        selectedFromTimeComparable.getTime() < currentTimeComparable.getTime()
-      ) {
-        setFormError("For today's date, 'Time From' must be in the future.");
-        return false;
-      }
+      // if (
+      //   selectedFromTimeComparable.getTime() < currentTimeComparable.getTime()
+      // ) {
+      //   setFormError("For today's date, 'Time From' must be in the future.");
+      //   return false;
+      // }
     }
 
     setFormError("");
@@ -504,16 +545,20 @@ const AddTimetablePage = () => {
       Student: studentName,
     };
 
-    console.log("Payload being sent:", payload);
-
     try {
-      await dispatch(addTimetableEntry(payload));
+      if (timetableToEdit) {
+        await dispatch(
+          updateTimetableEntry({ ...payload, id: timetableToEdit.id })
+        );
+      } else {
+        await dispatch(addTimetableEntry(payload));
+      }
 
       setSubmitMessage({
         type: "success",
         message: "Timetable entry added successfully!",
       });
-              setShowSuccessAnimation(true); // Trigger animation on success (even simulated)
+      setShowSuccessAnimation(true); // Trigger animation on success (even simulated)
 
       setFormData((prev) => ({
         ...prev,
@@ -532,8 +577,7 @@ const AddTimetablePage = () => {
       }, 1500); // This delay is for the message and redirection
     } catch (err) {
       console.error("Error during dispatch of addTimetableEntry:", err);
-            setShowSuccessAnimation(false); // Ensure animation is off for errors
-
+      setShowSuccessAnimation(false); // Ensure animation is off for errors
     }
   };
 
@@ -563,6 +607,7 @@ const AddTimetablePage = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <div className="ats-page-container">
+        {!timetableToEdit &&(
         <div className="ats-header-card">
           <button
             onClick={() => navigate("/timetable")}
@@ -578,9 +623,12 @@ const AddTimetablePage = () => {
             Fill in the details for the new class.
           </p>
         </div>
+        )}
         <div className="ats-form-card">
           <form onSubmit={handleSubmit} className="ats-form">
-            <h3>Schedule New Class</h3>
+            <h3 style={{ paddingBottom: 20 }}>
+              {!!timetableToEdit ? "Edit Class" : "Schedule New Class"}
+            </h3>
             {formError && (
               <div className="ats-form-error">
                 <FaExclamationCircle /> {formError}
@@ -695,7 +743,7 @@ const AddTimetablePage = () => {
 
             <div className="add-student-button-group">
               <button type="submit" className="add-student-primary-button">
-                <FaSave /> {"Schedule Class"}
+                <FaSave />  {!!timetableToEdit ? "Update Class":"Schedule Class"}
               </button>
               <button
                 type="button"
@@ -707,18 +755,18 @@ const AddTimetablePage = () => {
             </div>
           </form>
         </div>
-          {submitMessage.message && (
-              <div
-                className={`ats-submit-message ${
-                  submitMessage.type === "success"
-                    ? "ats-submit-success"
-                    : "ats-submit-error"
-                } ${showSuccessAnimation ? 'ats-success-animate' : ''}`} 
-              >
-                {submitMessage.type === "error" && <FaExclamationCircle />}{" "}
-                {submitMessage.message}
-              </div>
-            )}
+        {submitMessage.message && (
+          <div
+            className={`ats-submit-message ${
+              submitMessage.type === "success"
+                ? "ats-submit-success"
+                : "ats-submit-error"
+            } ${showSuccessAnimation ? "ats-success-animate" : ""}`}
+          >
+            {submitMessage.type === "error" && <FaExclamationCircle />}{" "}
+            {submitMessage.message}
+          </div>
+        )}
       </div>
     </LocalizationProvider>
   );

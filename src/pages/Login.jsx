@@ -50,17 +50,17 @@ useEffect(() => {
   }
 }, [user, navigate]);
 
-  useEffect(() => {
-    if (error) {
-      setModalOpen(true);
-    } else if (isAuthenticated && !loading) {
-      setModalOpen(true);
-      const timer = setTimeout(() => {
-        setModalOpen(false);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [error, isAuthenticated, loading]);
+  // useEffect(() => {
+  //   if (error) {
+  //     setModalOpen(true);
+  //   } else if (isAuthenticated && !loading) {
+  //     setModalOpen(true);
+  //     const timer = setTimeout(() => {
+  //       setModalOpen(false);
+  //     }, 1500);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [error, isAuthenticated, loading]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

@@ -38,11 +38,10 @@ import AddStudent from "./components/AddStudent";
 import AddEmployeePage from "./components/AddEmployeePage";
 import StudentsTable from "./components/StudentsTable";
 import AddTimetablePage from "./components/AddTimetablePage";
-
+import DemoClassesPage from "./components/DemoClassesPage";
 // Layout for authenticated routes
 import AuthLayout from "./layouts/AuthLayout";
-
-// MUI Theme Provider
+import AddDemoClassPage from "./components/AddDemoClassPage";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./components/customcomponents/theme";
 
@@ -93,6 +92,9 @@ function App() {
               {/* Individual protected routes inside the AuthLayout */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/students" element={<StudentsTable />} />
+              <Route path="/demo-classes" element={<DemoClassesPage />} /> 
+                            <Route path="/add-demo-class" element={<AddDemoClassPage />} /> {/* NEW ROUTE */}
+
               <Route path="/student/:id" element={<StudentPortfolio />} />
               <Route path="/timetable" element={<TimetablePage />} />
               <Route path="/employees" element={<Employees />} />

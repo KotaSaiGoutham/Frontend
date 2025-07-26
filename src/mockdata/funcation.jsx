@@ -1,4 +1,15 @@
-import { format, parseISO } from 'date-fns';
+import {
+  format,
+  parse,
+  isValid,
+  parseISO,
+  startOfDay,
+  addDays,
+  isWithinInterval,
+  isSameDay,
+  isAfter, 
+  isBefore,
+} from "date-fns";
 import React, { useState, useEffect, useRef } from 'react';
 import { Typography, CircularProgress, Box } from '@mui/material';
 import { keyframes } from '@mui/system'; // Import keyframes from MUI system
@@ -281,3 +292,75 @@ export const buildChartData = (payments = []) =>
   export function capitalize(word) {
     return word.charAt(0).toUpperCase() + word.slice(1);
   }
+  // Helper function to determine the status of a timetable row
+export const getTimetableRowStatus = (item, now) => {
+  const classDate = parse(item.Day, "dd/MM/yyyy", new Date());
+  const [startTimeStr, endTimeStr] = item.Time.split(" to ");
+
+  const classStartTime = parse(startTimeStr, "hh:mm a", classDate);
+  let classEndTime = parse(endTimeStr, "hh:mm a", classDate);
+
+  // Adjust end time for overnight classes (e.g., 10 PM to 2 AM)
+  if (isValid(classStartTime) && isValid(classEndTime) && isBefore(classEndTime, classStartTime)) {
+    classEndTime = addDays(classEndTime, 1);
+  }
+
+  // Check if it's the current day
+  const isToday = isValid(classDate) && isSameDay(classDate, now);
+
+  if (isToday) {
+    if (isValid(classStartTime) && isValid(classEndTime)) {
+      if (isWithinInterval(now, { start: classStartTime, end: classEndTime })) {
+        return "running"; // Class is currently ongoing
+      } else if (isBefore(classEndTime, now)) {
+        return "pastToday"; // Class ended earlier today
+      } else if (isAfter(classStartTime, now)) {
+        return "futureToday"; // Class is later today
+      }
+    }
+  } else if (isValid(classDate) && isBefore(classDate, startOfDay(now))) {
+    return "pastDay"; // Class was on a previous day
+  }
+
+  return "future"; // Class is on a future day or unrecognized state
+};
+// Helper function to safely get a Date object from various formats in a timetable item
+export const getDateFromTimetableItem = (item) => {
+    // 1. Prioritize `dateTimeISO` as it's meant to be a direct ISO string
+    if (item.dateTimeISO && typeof item.dateTimeISO === 'string') {
+        const date = new Date(item.dateTimeISO);
+        if (isValid(date)) return date;
+    }
+
+    // 2. Check `classDateTime` field (can be ISO string, raw Timestamp object, or even a JS Date if pre-processed)
+    if (item.classDateTime) {
+        // If it's already a JavaScript Date object (unlikely directly from API, but possible)
+        if (item.classDateTime instanceof Date) {
+            if (isValid(item.classDateTime)) return item.classDateTime;
+        }
+        // If it's an ISO string (expected from backend after our suggested fix)
+        if (typeof item.classDateTime === 'string') {
+            const date = new Date(item.classDateTime);
+            if (isValid(date)) return date;
+        }
+        // If it's the raw Firestore Timestamp object { _seconds, _nanoseconds }
+        // This is a fallback to handle if your backend isn't converting it correctly.
+        if (typeof item.classDateTime === 'object' && item.classDateTime._seconds !== undefined) {
+            const date = new Date(item.classDateTime._seconds * 1000); // Convert seconds to milliseconds
+            if (isValid(date)) return date;
+        }
+    }
+
+    // 3. Fallback: Reconstruct from 'Day' and 'Time' strings (used for manual timetables)
+    if (item.Day && item.Time) {
+        const timeStartPart = item.Time.split(" to ")[0];
+        // Ensure you have date-fns `parse` and `format` imported for this
+        const combinedDateTimeStr = `${item.Day} ${timeStartPart}`;
+        const parsedDate = parse(combinedDateTimeStr, "dd/MM/yyyy hh:mm a", new Date());
+        if (isValid(parsedDate)) return parsedDate;
+    }
+
+    // If all else fails, return a default/invalid date or throw an error
+    console.warn("Could not determine valid date for timetable item:", item);
+    return new Date(0); // Return epoch date to allow .getTime() without error
+};

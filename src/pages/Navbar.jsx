@@ -13,6 +13,8 @@ const PROTECTED_BASE_PATHS = [
   "/add-student",
   "/add-employee",
   "/add-timetable",
+  "/demo-classes",
+  "/add-demo-class"
 ];
 
 const Navbar = () => {

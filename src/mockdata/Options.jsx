@@ -4,7 +4,12 @@ export const subjectOptions = [
   { value: "Maths", label: "Maths" },
   { value: "Biology", label: "Biology" },
 ];
-
+ export const statusOptions = [
+    { value: "Pending", label: "Pending" },
+    { value: "Success", label: "Success" }, // Corrected typo here from "Succes" to "Success"
+    { value: "Failed", label: "Failed" },
+    { value: "Rescheduled", label: "Rescheduled" },
+  ];
 export const paymentStatusOptions = [
   { value: "Paid", label: "Paid" },
   { value: "Unpaid", label: "Unpaid" },
@@ -20,12 +25,14 @@ export const streamOptions = [
   { value: "NEET", label: "NEET" },
   { value: "CBSE", label: "CBSE" },
   { value: "Foundation", label: "Foundation" },
+  { value: "AP PHY", label: "AP PHY" },
   { value: "Other", label: "Other" },
 ];
 
 export const sourceOptions = [
   { value: "Urban Pro", label: "Urban Pro" },
   { value: "Reference", label: "Reference" },
+  { value: "Mediator", label: "Mediator" },
   { value: "Other", label: "Other" },
 ];
 export const topicOptions = [
@@ -279,4 +286,20 @@ export const topicOptions = [
     year: "2nd Year",
   },
 ];
+export const yearOptions = [
+  { value: "12th Class", label: "12th Class" },
+  { value: "11th Class", label: "11th Class" },
+  { value: "10th Class", label: "10th Class" },
+  { value: "9th Year", label: "9th Year" },
+  { value: "8th Year", label: "8th Year" },
+  { value: "7th Year", label: "7th Year" },
+  { value: "6th Year", label: "6th Year" },
+  { value: "5th Year", label: "5th Year" },
+  { value: "4th Year", label: "4th Year" },
+  { value: "3rd Year", label: "3rd Year" },
+  { value: "2nd Year", label: "2nd Year" },
+  { value: "1st Year", label: "1st Year" },
+];
+
+
 export const validRoles = ["Physics", "Chemistry", "Biology", "Zoology", "Maths"];
