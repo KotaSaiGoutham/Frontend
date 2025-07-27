@@ -539,7 +539,7 @@ const TimetablePage = () => {
   // TimetablePage.jsx
 
   // This handles initial GET requests, preventing them from doubling in StrictMode.
-  useDidMountEffect(() => {
+  useEffect(() => {
     dispatch(fetchUpcomingClasses());
     dispatch(fetchStudents());
     if (user && user.id) {
@@ -554,7 +554,7 @@ const TimetablePage = () => {
   // --- EFFECT 2: Trigger Generation Logic (Apply useDidMountEffect here for write operation) ---
   // This ensures `generateTimetablesForStudents()` is only called ONCE on initial mount
   // even in StrictMode's double-render phase.
-  useDidMountEffect(() => {
+  useEffect(() => {
     // 1. Pre-checks (user logged in, basic data loaded)
     if (
       !user ||
