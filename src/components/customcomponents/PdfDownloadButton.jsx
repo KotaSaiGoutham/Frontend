@@ -43,6 +43,9 @@ export default function PdfDownloadButton({
   companyContact = 'electronacademy.2019@gmail.com | +91 8341482438',
   studentData = null,
   charts = [],
+  disabled,
+  totalHours = null, // Expecting a number
+  totalFee = null,   // Expecting a number
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -162,11 +165,32 @@ const shouldShowFullCompanyHeader = isCurrentPageFirst;
 
       /* -------------------------------------------------- TABLE */
       const tableStartY = headerBottomY + 15; // 15pt padding below the horizontal rule
-      const bodyRows = summaryRow ? [summaryRow, ...rows] : rows;
+      const bodyRows = [...rows]; // keep body normal
+const footerRow = headers.map((_, colIndex) => {
+  if (colIndex === 3) return 'Total:';
+  if (colIndex === 4 && typeof totalHours === 'number') {
+    return `${parseFloat(totalHours).toFixed(2)} hrs`;
+  }
+  if (colIndex === 5 && typeof totalFee === 'number') {
+    return `Rs. ${parseFloat(totalFee).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  }
+  return '';
+});
+
+
+
 
       autoTable(doc, {
         head: [headers],
         body: bodyRows,
+          foot: [footerRow], // 👈 add footer here
+          footStyles: {
+    textColor: [255, 255, 255],
+       fillColor: [25, 118, 210],
+    fontStyle: 'bold',
+    fontSize: 10,
+    halign: 'center',
+  },
         startY: tableStartY,
         theme: 'striped',
         margin: { left: margin, right: margin },
@@ -289,7 +313,7 @@ const shouldShowFullCompanyHeader = isCurrentPageFirst;
   };
 
   return (
-    <MuiButton onClick={handleClick} disabled={isGenerating} {...buttonProps}>
+    <MuiButton onClick={handleClick} disabled={isGenerating || disabled} {...buttonProps}>
       {isGenerating ? 'Generating PDF…' : buttonLabel}
     </MuiButton>
   );
@@ -315,4 +339,7 @@ PdfDownloadButton.propTypes = {
       chartOptions: PropTypes.object.isRequired,
     }),
   ),
+   disabled: PropTypes.bool,
+  totalHours: PropTypes.number, // NEW PROP TYPE
+  totalFee: PropTypes.number,   // NEW PROP TYPE
 };

@@ -364,3 +364,10 @@ export const getDateFromTimetableItem = (item) => {
     console.warn("Could not determine valid date for timetable item:", item);
     return new Date(0); // Return epoch date to allow .getTime() without error
 };
+export  const getTodayDateForFilename = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };

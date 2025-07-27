@@ -791,7 +791,7 @@ export const addDemoClass = (demoClassData) =>
       });
       alert(`Failed to add demo class: ${errorMessage}`);
     },
-    authRequired:false, // Crucial as your backend routes are protected
+    authRequired:true, // Crucial as your backend routes are protected
   });
 
 // Action to Fetch Demo Classes
@@ -979,46 +979,3 @@ export const deleteAutoTimetable = (timetableId) => apiRequest({
   },
   authRequired: true,
 });
-export const updateAutoTimetableTopic = (itemId, newTopicName, newTopicId) => async (dispatch, getState) => {
-    dispatch({ type: UPDATE_AUTO_TIMETABLE_TOPIC_REQUEST });
-    try {
-        const token = getState().auth.token; // Assuming you store the token in Redux state
-        if (!token) {
-            throw new Error("Authentication token not found.");
-        }
-
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/data/autoTimetables/${itemId}/topic`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                topic: newTopicName,
-                topicId: newTopicId // Send the ID if available
-            }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Failed to update topic for item ${itemId}`);
-        }
-
-        const updatedItem = await response.json(); // Backend should return the updated item or confirmation
-
-        dispatch({
-            type: UPDATE_AUTO_TIMETABLE_TOPIC_SUCCESS,
-            payload: { itemId, updatedData: { Topic: newTopicName, topicId: newTopicId } }, // Send updated data to reducer
-        });
-        // Optionally, return updatedItem if you need it in the component
-        return updatedItem;
-
-    } catch (error) {
-        console.error("Error updating auto-timetable topic:", error);
-        dispatch({
-            type: UPDATE_AUTO_TIMETABLE_TOPIC_FAILURE,
-            payload: error.message,
-        });
-        throw error; // Re-throw to allow component to catch
-    }
-};
