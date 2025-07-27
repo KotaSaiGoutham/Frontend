@@ -97,6 +97,7 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 import { getDateFromTimetableItem } from "../mockdata/funcation";
+import ExcelDownloadButton from "./customcomponents/ExcelDownloadButton";
 const TimetablePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -1094,6 +1095,14 @@ const TimetablePage = () => {
         )
         .join(", ")}`
     : "Click to download your complete timetable for today in PDF format.";
+        const subject = user?.isPhysics ? 'Physics' : 'Chemistry';
+        const now = new Date();
+const current = {
+  month: now.toLocaleString('default', { month: 'long' }), // e.g., "July"
+  year: now.getFullYear() // e.g., 2025
+};
+    const Exceltitle = `Electron Academy ${subject} class details ${current?.month} ${current?.year}`;
+
   return (
     <Box
       sx={{
@@ -1203,6 +1212,13 @@ const TimetablePage = () => {
               </span>
             </Tooltip>
           )}
+          <ExcelDownloadButton 
+                 data={students} // Pass your array of student objects here
+            filename="Electron_Academy_Student_Report.xlsx"
+            buttonLabel="Download Student Report (Excel)"
+            buttonProps={{ variant: 'contained', color: 'success' }} // Example MUI button props
+            excelReportTitle={Exceltitle}
+          />
 
           {/* Display a clear red warning message below the button if topics are missing */}
           {hasMissingTopics && (
