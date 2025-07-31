@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react"; // Added useRef
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   FaUserPlus,
@@ -15,24 +15,22 @@ import {
   FaCalendarAlt,
   FaPlus,
   FaTimesCircle,
-  FaCheckCircle,
-  FaExclamationCircle,
+  FaClock,
+  FaTrash,
 } from "react-icons/fa";
 
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
+import { CSSTransition, TransitionGroup } from "react-transition-group"; // Import for animations
 
-import {
-  MuiInput,
-  MuiSelect,
-  MuiDatePicker,
-} from "./customcomponents/MuiCustomFormFields";
+import { MuiInput, MuiSelect } from "./customcomponents/MuiCustomFormFields";
 import "./AddStudent.css";
 import {
   streamOptions,
   paymentStatusOptions,
   genderOptions,
   sourceOptions,
+  dayOptions,
 } from "../mockdata/Options";
 import { useDispatch, useSelector } from "react-redux";
 import { addStudent, clearAddStudentStatus } from "../redux/actions";
@@ -48,8 +46,6 @@ const AddStudent = () => {
   const { state } = useLocation();
   const passedStudentData = state?.studentData;
 
-  // Using useRef to store initialStudentData so it doesn't cause useEffect re-renders
-  // if it's passed as a dependency, and its reference changes.
   const initialStudentData = useRef({
     Name: "",
     Gender: "",
@@ -64,6 +60,8 @@ const AddStudent = () => {
     "Group ": "",
     Source: "",
     Year: "",
+    classDateandTime: [],
+    isActive: true,
   });
 
   const [studentData, setStudentData] = useState(initialStudentData.current);
@@ -71,47 +69,58 @@ const AddStudent = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
-  // We no longer directly watch addStudentSuccess/addStudentError here
-  // because we will handle the promise resolution in handleSubmit.
-  // However, we still need `addingStudent` to disable the button.
+  const [newTimeSlotDay, setNewTimeSlotDay] = useState("");
+  const [newTimeSlotTime, setNewTimeSlotTime] = useState("");
+  const [timeSlotError, setTimeSlotError] = useState("");
+
   const { addingStudent } = useSelector((state) => state.students);
   const isEditMode = !!studentData.id;
 
   useEffect(() => {
-  if (passedStudentData) {
-    const mappedData = {
-      id: passedStudentData.id,
-      Name: passedStudentData.studentName || "",
-      ContactNumber: passedStudentData.contactNo || "",
-      Gender: passedStudentData.gender || "",
-      Stream: passedStudentData.course || "",
-      College: passedStudentData.collegeName || "",
-      Source: passedStudentData.source || "",
-      Year: passedStudentData.year || "",
-      "Monthly Fee": "", // fill this if available
-      "Payment Status": "Unpaid", // or map from passedStudentData
-      "Group ": passedStudentData.course === "JEE" ? "MPC" :
-                passedStudentData.course === "NEET" ? "BiPC" : "",
-      MotherContactNumber: "",
-      FatherContactNumber: "",
-    Subject: user.isPhysics ? "Physics" : user.isChemistry ? "Chemistry" : "",
-    };
+    if (passedStudentData) {
+      const mappedData = {
+        id: passedStudentData.id,
+        Name: passedStudentData.studentName || "",
+        ContactNumber: passedStudentData.contactNo || "",
+        Gender: passedStudentData.gender || "",
+        Stream: passedStudentData.course || "",
+        College: passedStudentData.collegeName || "",
+        Source: passedStudentData.source || "",
+        Year: passedStudentData.year || "",
+        "Monthly Fee": passedStudentData.monthlyFee || "",
+        "Payment Status": passedStudentData.paymentStatus || "Unpaid",
+        "Group ":
+          passedStudentData.course === "JEE"
+            ? "MPC"
+            : passedStudentData.course === "NEET"
+            ? "BIPC"
+            : "",
+        MotherContactNumber: passedStudentData.MotherContactNumber || "",
+        FatherContactNumber: passedStudentData.FatherContactNumber || "",
+        Subject: user.isPhysics
+          ? "Physics"
+          : user.isChemistry
+          ? "Chemistry"
+          : "",
+        classDateandTime: passedStudentData.classDateandTime || [],
+        isActive:
+          passedStudentData.isActive !== undefined
+            ? passedStudentData.isActive
+            : true,
+      };
 
-    initialStudentData.current = mappedData;
-    setStudentData(mappedData);
-  }
-}, [passedStudentData, user]);
+      initialStudentData.current = mappedData;
+      setStudentData(mappedData);
+    }
+  }, [passedStudentData, user]);
 
-  // Cleanup only for the snackbar state on unmount
   useEffect(() => {
-    // This cleanup runs when the component unmounts
     return () => {
-      setSnackbarOpen(false); // Close snackbar
-      setSnackbarMessage(""); // Clear message
-      // Ensure Redux state is also cleared on unmount
+      setSnackbarOpen(false);
+      setSnackbarMessage("");
       dispatch(clearAddStudentStatus());
     };
-  }, [dispatch]); // Dependency on dispatch to ensure cleanup always has it
+  }, [dispatch]);
 
   const handleSnackbarClose = (event, reason) => {
     if (reason === "clickaway") {
@@ -127,8 +136,8 @@ const AddStudent = () => {
       if (name === "Stream") {
         if (value === "JEE") {
           newData["Group "] = "MPC";
-        } else if (value === "") {
-          newData["Group "] = "BiPC";
+        } else if (value === "NEET") {
+          newData["Group "] = "BIPC";
         } else {
           newData["Group "] = "";
         }
@@ -137,17 +146,79 @@ const AddStudent = () => {
     });
   };
 
-  const handleDateChange = (name, dateString) => {
+  const handleAddTimeSlot = () => {
+    try {
+      if (!newTimeSlotDay || !newTimeSlotTime) {
+        setTimeSlotError("Please select both day and time.");
+        return;
+      }
+      const timeRegex = /^(0?[1-9]|1[0-2]):([0-5]\d)(am|pm)$/i;
+      if (!timeRegex.test(newTimeSlotTime)) {
+        setTimeSlotError(
+          "Please enter time in HH:MMam/pm format (e.g., 04:00pm)."
+        );
+        return;
+      }
+
+      const newSlot = `${newTimeSlotDay}-${newTimeSlotTime.toLowerCase()}`;
+      if (studentData.classDateandTime.includes(newSlot)) {
+        setTimeSlotError("This time slot already exists.");
+        return;
+      }
+
+      setStudentData((prevData) => ({
+        ...prevData,
+        classDateandTime: [...prevData.classDateandTime, newSlot],
+      }));
+
+      setNewTimeSlotDay("");
+      setNewTimeSlotTime("");
+      setTimeSlotError("");
+    } catch (err) {
+      console.error("Error adding time slot:", err);
+      alert("Error adding time slot: " + err.message);
+    }
+  };
+
+  const handleRemoveTimeSlot = (slotToRemove) => {
     setStudentData((prevData) => ({
       ...prevData,
-      [name]: dateString,
+      classDateandTime: prevData.classDateandTime.filter(
+        (slot) => slot !== slotToRemove
+      ),
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSnackbarOpen(false); // Close any existing snackbar before new submission
+    setSnackbarOpen(false);
     setSnackbarMessage("");
+
+    // Validation for Name, Gender, College, Stream, Monthly Fee, Source
+    if (
+      !studentData.Name ||
+      !studentData.Gender ||
+      !studentData.College ||
+      !studentData.Stream ||
+      !studentData["Monthly Fee"] ||
+      !studentData.Source
+    ) {
+      setSnackbarSeverity("error");
+      setSnackbarMessage(
+        "Please fill in all required fields (Name, Gender, College/School, Stream, Monthly Fee, Source)."
+      );
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Validation for time slots - at least one required for new student
+    if (!isEditMode && studentData.classDateandTime.length === 0) {
+      setSnackbarSeverity("error");
+      setSnackbarMessage("Please add at least one class time slot.");
+      setSnackbarOpen(true);
+      return;
+    }
+
     const token = localStorage.getItem("token");
     if (!token) {
       setSnackbarSeverity("error");
@@ -162,28 +233,28 @@ const AddStudent = () => {
     }
 
     try {
-      // Dispatch the action and await its resolution
-      await dispatch(addStudent(studentData));
+      const dataToSubmit = { ...studentData, isActive: true };
 
-      // If the dispatch above resolves (i.e., ADD_STUDENT_SUCCESS was dispatched)
+      // Dispatch the addStudent action, which now returns a Promise
+      await dispatch(addStudent(dataToSubmit));
+
       setSnackbarSeverity("success");
       setSnackbarMessage("Student added successfully!");
       setSnackbarOpen(true);
 
-      setStudentData(initialStudentData.current); // Clear the form
+      setStudentData(initialStudentData.current);
+      setNewTimeSlotDay("");
+      setNewTimeSlotTime("");
 
-      // Wait a bit, then navigate
       setTimeout(() => {
         navigate("/students");
-      }, 2500); // Navigate 2.5 seconds after success
+      }, 2500);
     } catch (error) {
-      // If the dispatch above rejects (i.e., ADD_STUDENT_FAILURE was dispatched)
-      // The error object here will be the payload from the rejected promise in the action.
       let errorMessage = "An unknown error occurred.";
       if (typeof error === "string") {
-        errorMessage = error; // If the action rejected with a string message
+        errorMessage = error;
       } else if (error && error.message) {
-        errorMessage = error.message; // If the action rejected with an Error object
+        errorMessage = error.message;
       }
 
       setSnackbarSeverity("error");
@@ -195,25 +266,28 @@ const AddStudent = () => {
         error
       );
 
-      // Special handling for authentication errors, as before
       if (
         errorMessage.includes("Authentication required") ||
         errorMessage.includes("Session expired") ||
-        (error && (error.status === 401 || error.status === 403)) // If the error object has status
+        (error && (error.status === 401 || error.status === 403))
       ) {
         dispatch({
-          type: "SET_AUTH_ERROR", // Ensure this is correctly imported/defined
+          type: "SET_AUTH_ERROR",
           payload: errorMessage,
         });
         navigate("/login");
       }
     }
-    // We don't need to manually clear addStudentStatus here
-    // because the action already does it on request or success/failure.
-    // The main cleanup is on component unmount in useEffect.
   };
-
+  console.log("studentData.classDateandTime", studentData);
   const showSubjectColumn = user?.AllowAll;
+  const timeSlotRefs = useRef({});
+  studentData.classDateandTime.forEach((slot, index) => {
+    const key = `${slot}-${index}`;
+    if (!timeSlotRefs.current[key]) {
+      timeSlotRefs.current[key] = React.createRef();
+    }
+  });
 
   return (
     <div className="add-student-page-container dashboard-container">
@@ -227,7 +301,6 @@ const AddStudent = () => {
           {/* Personal Details */}
           <div className="add-student-form-section-title">Personal Details</div>
           <div className="add-student-form-grid">
-            {/* Student Name */}
             <MuiInput
               label="Student Name"
               icon={FaUserCircle}
@@ -237,8 +310,6 @@ const AddStudent = () => {
               placeholder="Enter student's full name"
               required
             />
-
-            {/* Gender */}
             <MuiSelect
               label="Gender"
               icon={FaTransgender}
@@ -248,8 +319,6 @@ const AddStudent = () => {
               options={genderOptions}
               required
             />
-
-            {/* Student's Contact Number (Now optional) */}
             <MuiInput
               label="Student Contact Number"
               icon={FaPhone}
@@ -259,8 +328,6 @@ const AddStudent = () => {
               placeholder="e.g., +919876543210"
               type="tel"
             />
-
-            {/* Mother's Contact Number (New and optional) */}
             <MuiInput
               label="Mother Contact Number"
               icon={FaPhone}
@@ -270,8 +337,6 @@ const AddStudent = () => {
               placeholder="e.g., +919876543210"
               type="tel"
             />
-
-            {/* Father's Contact Number (New and optional) */}
             <MuiInput
               label="Father Contact Number"
               icon={FaPhone}
@@ -286,7 +351,6 @@ const AddStudent = () => {
           {/* Academic Information */}
           <div className="add-student-form-section-title">Academic Details</div>
           <div className="add-student-form-grid">
-            {/* Primary Subject */}
             {showSubjectColumn && (
               <MuiInput
                 label="Primary Subject"
@@ -298,8 +362,6 @@ const AddStudent = () => {
                 required
               />
             )}
-
-            {/* Stream */}
             <MuiSelect
               label="Stream"
               icon={FaGraduationCap}
@@ -309,8 +371,6 @@ const AddStudent = () => {
               options={streamOptions}
               required
             />
-
-            {/* College/School */}
             <MuiInput
               label="College/School"
               icon={FaUniversity}
@@ -320,8 +380,6 @@ const AddStudent = () => {
               placeholder="Enter college/school name"
               required
             />
-
-            {/* Group */}
             <MuiInput
               label="Group"
               icon={FaUsers}
@@ -330,8 +388,6 @@ const AddStudent = () => {
               onChange={handleChange}
               placeholder="e.g., MPC, BiPC, CEC"
             />
-
-            {/* Year */}
             <MuiInput
               label="Year"
               icon={FaCalendarAlt}
@@ -347,7 +403,6 @@ const AddStudent = () => {
             Financial Details
           </div>
           <div className="add-student-form-grid">
-            {/* Monthly Fee */}
             <MuiInput
               label="Monthly Fee (₹)"
               icon={FaDollarSign}
@@ -358,8 +413,6 @@ const AddStudent = () => {
               type="number"
               required
             />
-
-            {/* Payment Status */}
             <MuiSelect
               label="Payment Status"
               icon={FaCreditCard}
@@ -369,8 +422,6 @@ const AddStudent = () => {
               options={paymentStatusOptions}
               required
             />
-
-            {/* Source */}
             <MuiSelect
               label="Source"
               icon={FaSearchDollar}
@@ -382,6 +433,83 @@ const AddStudent = () => {
               required
             />
           </div>
+
+          {/* Time Slot Section */}
+           <div className="add-student-form-section-title">
+            Classes Schedule
+          </div>
+          <div className="add-student-form-grid time-slot-inputs">
+            <MuiSelect
+              label="Day"
+              icon={FaCalendarAlt}
+              name="newTimeSlotDay"
+              value={newTimeSlotDay}
+              onChange={(e) => setNewTimeSlotDay(e.target.value)}
+              options={dayOptions}
+            />
+            <MuiInput
+              label="Time (HH:MMam/pm)"
+              icon={FaClock}
+              name="newTimeSlotTime"
+              value={newTimeSlotTime}
+              onChange={(e) => setNewTimeSlotTime(e.target.value)}
+              placeholder="e.g., 04:00pm"
+            />
+            <div className="add-time-slot-button-container">
+              <button
+                type="button"
+                className="add-student-primary-button"
+                onClick={handleAddTimeSlot}
+              >
+                <FaPlus /> Add Slot
+              </button>
+            </div>
+            {timeSlotError && (
+              <p
+                className="error-message-timeslot"
+                style={{ gridColumn: "1 / -1" }}
+              >
+                {timeSlotError}
+              </p>
+            )}
+          </div>
+
+          <div className="current-time-slots-wrapper">
+  {studentData.classDateandTime.length > 0 ? (
+    <>
+      <p className="current-slots-heading">Current Scheduled Slots:</p>
+      <TransitionGroup component="ul" className="time-slot-list">
+        {studentData.classDateandTime.map((slot, index) => {
+          const key = `${slot}-${index}`;
+          const nodeRef = timeSlotRefs.current[key];
+
+          return (
+            <CSSTransition
+              key={key}
+              nodeRef={nodeRef}
+              timeout={300}
+              classNames="time-slot-item-anim"
+            >
+              <li ref={nodeRef} className="time-slot-item">
+                <span>{slot}</span>
+                <FaTrash
+                  className="delete-time-slot-icon"
+                  onClick={() => handleRemoveTimeSlot(slot)}
+                  title="Remove time slot"
+                />
+              </li>
+            </CSSTransition>
+          );
+        })}
+      </TransitionGroup>
+    </>
+  ) : (
+    <p className="info-message no-slots-message">
+      No class slots added yet. Click "Add Slot" to schedule classes.
+    </p>
+  )}
+</div>
+
 
           <div className="add-student-button-group">
             <button

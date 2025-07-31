@@ -303,3 +303,13 @@ export const yearOptions = [
 
 
 export const validRoles = ["Physics", "Chemistry", "Biology", "Zoology", "Maths"];
+export const dayOptions = [
+  { value: "", label: "Select Day" }, 
+  { value: "Monday", label: "Monday" },
+  { value: "Tuesday", label: "Tuesday" },
+  { value: "Wednesday", label: "Wednesday" },
+  { value: "Thursday", label: "Thursday" },
+  { value: "Friday", label: "Friday" },
+  { value: "Saturday", label: "Saturday" },
+  { value: "Sunday", label: "Sunday" },
+];

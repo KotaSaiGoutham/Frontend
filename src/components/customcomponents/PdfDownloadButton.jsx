@@ -17,6 +17,7 @@ import {
   Title as ChartTitle,
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 
 ChartJS.register(
   CategoryScale,
@@ -313,8 +314,39 @@ const footerRow = headers.map((_, colIndex) => {
   };
 
   return (
-    <MuiButton onClick={handleClick} disabled={isGenerating || disabled} {...buttonProps}>
-      {isGenerating ? 'Generating PDF…' : buttonLabel}
+     <MuiButton
+     onClick={handleClick} disabled={isGenerating || disabled} {...buttonProps}
+      startIcon={<CloudDownloadIcon />}
+      sx={{
+        background: isGenerating
+          ? "linear-gradient(45deg, #A8A8A8 30%, #C0C0C0 90%)"
+          : "linear-gradient(45deg, #1976D2 30%, #2196F3 90%)",
+        borderRadius: 8,
+        border: 0,
+        color: "white",
+        height: 48,
+        padding: "0 30px",
+        boxShadow: "0 3px 5px 2px rgba(33, 203, 243, .3)",
+        fontWeight: "bold",
+        textTransform: "uppercase",
+        transition: "all 0.3s ease-in-out",
+        "&:hover": {
+          transform: "translateY(-2px) scale(1.02)",
+          boxShadow: "0 5px 10px 3px rgba(33, 203, 243, .5)",
+          background: "linear-gradient(45deg, #2196F3 30%, #1976D2 90%)",
+        },
+        "&:active": {
+          transform: "translateY(1px) scale(0.98)",
+          boxShadow: "0 2px 3px 1px rgba(33, 203, 243, .2)",
+        },
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        ...buttonProps.sx,
+      }}
+      {...buttonProps}
+    >
+      {isGenerating ? "Generating Excel…" : buttonLabel}
     </MuiButton>
   );
 }

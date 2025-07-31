@@ -14,7 +14,7 @@ const persistConfig = {
   storage,    // Which storage to use (localStorage is 'storage', sessionStorage is 'storageSession')
   // Specify which parts of your Redux state you want to persist.
   // It's generally better to whitelist (only save these) than blacklist (save all except these).
-  whitelist: ['auth', 'students', 'employees', 'classes'], // These are the reducers whose states will be saved
+  whitelist: ['auth', 'classes'], // These are the reducers whose states will be saved
   // If you wanted to exclude parts of a specific reducer's state:
   // For example, if your 'auth' reducer has 'loading' and 'error' properties you don't want to save:
   // auth: {

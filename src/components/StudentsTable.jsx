@@ -24,7 +24,13 @@ import {
   FormGroup, // <-- Import this
   Tooltip,
   Chip,
-  TableSortLabel
+  TableSortLabel,
+  Dialog,
+  DialogTitle,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  Badge
 } from "@mui/material";
 // Import ALL necessary icons from react-icons/fa
 import { isRecentPayment } from "../mockdata/funcation";
@@ -51,8 +57,11 @@ import {
   FaMinusCircle,
   FaPlusCircle,
   FaPhone,
-    FaMoneyBillWave, // Icon for Monthly Fee
+  FaMoneyBillWave, // Icon for Monthly Fee
   FaClipboardList, // Icon for Classes Completed
+  FaUserCheck,
+  FaUserTimes,
+  FaEllipsisV,
 } from "react-icons/fa";
 // Assuming these are your custom components and mock data
 import { getPdfTableHeaders, getPdfTableRows } from "../mockdata/funcation";
@@ -70,9 +79,10 @@ import {
 // Redux actions
 import {
   fetchStudents,
-  updateStudentPaymentStatus,
+  updateStudentField,
   updateClassesCompleted,
   fetchUpcomingClasses, // This action should fetch timetables
+  toggleStudentActiveStatus,
 } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
 // PDF Download Button component
@@ -101,6 +111,8 @@ const StudentsTable = () => {
     classesCompleted: true,
     nextClass: false,
     paymentStatus: true,
+    status: true, // New column for Active/Inactive status
+    actions: true, // For action buttons
   });
   const [animate, setAnimate] = useState(false);
 
@@ -128,7 +140,9 @@ const StudentsTable = () => {
     loading: classesLoading, // Loading state for timetables
     error: classesError, // Error state for timetables
   } = useSelector((state) => state.classes);
-
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [studentToUpdate, setStudentToUpdate] = useState(null);
+  const [newStatus, setNewStatus] = useState(null);
   // Local component states
   const [studentsWithNextClass, setStudentsWithNextClass] = useState([]); // Students augmented with next class info
   const [filteredStudents, setFilteredStudents] = useState([]); // Students after applying filters
@@ -296,78 +310,199 @@ const StudentsTable = () => {
       studentsToFilter = studentsToFilter.filter(
         (student) => student.Stream?.trim() === filters.stream.trim()
       );
-    }const finalSortedStudents = studentsToFilter.sort((a, b) => {
-    const aClasses = typeof a.classesCompleted === "number" ? a.classesCompleted : parseFloat(a.classesCompleted) || 0;
-    const bClasses = typeof b.classesCompleted === "number" ? b.classesCompleted : parseFloat(b.classesCompleted) || 0;
+    }
+    const finalSortedStudents = studentsToFilter.sort((a, b) => {
+      const aClasses =
+        typeof a.classesCompleted === "number"
+          ? a.classesCompleted
+          : parseFloat(a.classesCompleted) || 0;
+      const bClasses =
+        typeof b.classesCompleted === "number"
+          ? b.classesCompleted
+          : parseFloat(b.classesCompleted) || 0;
 
-    // For Descending order (highest classesCompleted first)
-    return bClasses - aClasses;
+      // For Descending order (highest classesCompleted first)
+      return bClasses - aClasses;
 
-    // For Ascending order (lowest classesCompleted first)
-    // return aClasses - bClasses;
-  });
+      // For Ascending order (lowest classesCompleted first)
+      // return aClasses - bClasses;
+    });
 
-  setFilteredStudents(finalSortedStudents); // Set the sorted list
-
+    setFilteredStudents(finalSortedStudents); // Set the sorted list
   }, [filters, studentsWithNextClass, user]); // Dependencies: `studentsWithNextClass` is crucial here
+  const handleIsActiveToggle = async (
+    studentId,
+    currentIsActive,
+    studentName
+  ) => {
+    setUpdatingStudent(studentId);
+    try {
+      // Dispatch the specific toggleStudentActiveStatus action
+      await dispatch(toggleStudentActiveStatus(studentId, currentIsActive));
+      const newStatusText = !currentIsActive ? "Active" : "Inactive";
+      setSnackbarSeverity("success");
+      setSnackbarMessage(`${studentName} is now ${newStatusText}.`);
+      setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMessage(
+        `Failed to update active status for ${studentName}: ${err.message}`
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUpdatingStudent(null);
+    }
+  };
 
+  const handleCloseConfirmDialog = () => {
+    setConfirmDialogOpen(false);
+    setStudentToUpdate(null);
+    setNewStatus(null);
+  };
 
+  const handleConfirmStatusChange = async () => {
+    if (studentToUpdate && newStatus !== null) {
+      await handleIsActiveToggle(
+        studentToUpdate.id,
+        !newStatus,
+        studentToUpdate.name
+      );
+    }
+    setConfirmDialogOpen(false);
+    setStudentToUpdate(null);
+    setNewStatus(null);
+  };
+  console.log("studentToUpdate", studentToUpdate);
+  // Function to handle opening the confirmation dialog
+  // This is now the entry point when the user clicks the Chip.
+  const handleToggleStatusClick = (studentId, currentStatus, studentName) => {
+    setStudentToUpdate({ id: studentId, name: studentName }); // Ensure 'name' is correct case here
+    setNewStatus(!currentStatus); // If currently active, new status is inactive; if inactive, new status is active
+    setConfirmDialogOpen(true);
+  };
+  const sortedFilteredStudents = useMemo(() => {
+    // Create a mutable copy of filteredStudents to sort
+    let studentsToSort = [...filteredStudents];
 
- const sortedFilteredStudents = useMemo(() => {
-    if (!orderBy) return filteredStudents;
+    studentsToSort.sort((a, b) => {
+      // --- Primary Sort: Inactive students move to the bottom ---
+      // If 'a' is active and 'b' is inactive, 'a' comes first (-1)
+      if (a.isActive && !b.isActive) {
+        return -1;
+      }
+      // If 'a' is inactive and 'b' is active, 'a' comes after 'b' (1)
+      if (!a.isActive && b.isActive) {
+        return 1;
+      }
 
-    return [...filteredStudents].sort((a, b) => {
+      // --- Secondary Sort: Apply user's selected orderBy and order only if primary sort is equal ---
+      // (i.e., both are active OR both are inactive)
+
+      if (!orderBy) {
+        return 0; // If no orderBy selected, maintain original relative order within status groups
+      }
+
       let aValue;
       let bValue;
 
-      if (orderBy === "Name") { // Sort by Name
-        aValue = a.Name?.toLowerCase() || "";
-        bValue = b.Name?.toLowerCase() || "";
-        return order === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-      } else if (orderBy === "monthlyFee") {
-        aValue =
-          typeof a["Monthly Fee"] === "number"
-            ? a["Monthly Fee"]
-            : parseFloat(a["Monthly Fee"]) || 0;
-        bValue =
-          typeof b["Monthly Fee"] === "number"
-            ? b["Monthly Fee"]
-            : parseFloat(b["Monthly Fee"]) || 0;
-      } else if (orderBy === "classesCompleted") { // This part is correct, matching the field name
-  aValue =
-    typeof a.classesCompleted === "number" // Access directly using dot notation or a['classesCompleted']
-      ? a.classesCompleted
-      : parseFloat(a.classesCompleted) || 0;
-  bValue =
-    typeof b.classesCompleted === "number" // Access directly using dot notation or b['classesCompleted']
-      ? b.classesCompleted
-      : parseFloat(b.classesCompleted) || 0;
-}else if (orderBy === "nextClass") {
-        aValue = a.nextClass ? a.nextClass.getTime() : Infinity;
-        bValue = b.nextClass ? b.nextClass.getTime() : Infinity;
-      } else {
-        const valA = a[orderBy];
-        const valB = b[orderBy];
+      switch (orderBy) {
+        case "Name":
+          aValue = a.Name?.toLowerCase() || "";
+          bValue = b.Name?.toLowerCase() || "";
+          return order === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
 
-        if (typeof valA === "string" && typeof valB === "string") {
-          return valA.localeCompare(valB);
-        }
-        if (typeof valA === "number" && typeof valB === "number") {
-          return valA - valB;
-        }
-        return 0;
+        case "monthlyFee":
+          aValue =
+            typeof a["Monthly Fee"] === "number"
+              ? a["Monthly Fee"]
+              : parseFloat(a["Monthly Fee"]) || 0;
+          bValue =
+            typeof b["Monthly Fee"] === "number"
+              ? b["Monthly Fee"]
+              : parseFloat(b["Monthly Fee"]) || 0;
+          break; // Use break for switch cases
+
+        case "classesCompleted":
+          aValue =
+            typeof a.classesCompleted === "number"
+              ? a.classesCompleted
+              : parseFloat(a.classesCompleted) || 0;
+          bValue =
+            typeof b.classesCompleted === "number"
+              ? b.classesCompleted
+              : parseFloat(b.classesCompleted) || 0;
+          break;
+
+        case "nextClass":
+          // Helper to get time value, handling Firestore Timestamps
+          const getTimestampValue = (timestamp) => {
+            if (!timestamp) return Infinity; // Puts null/undefined dates at the very end
+            if (
+              timestamp._seconds !== undefined &&
+              timestamp._nanoseconds !== undefined
+            ) {
+              // It's a Firestore Timestamp object
+              return new Date(
+                timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000
+              ).getTime();
+            }
+            // Assume it's already a Date object or something directly usable by new Date()
+            return new Date(timestamp).getTime();
+          };
+          aValue = getTimestampValue(a.nextClass);
+          bValue = getTimestampValue(b.nextClass);
+          break;
+
+        case "paymentStatus":
+          // Custom sort order for Payment Status (e.g., Paid before Unpaid)
+          const statusOrder = { Paid: 1, Unpaid: 2 };
+          aValue = statusOrder[a["Payment Status"]] || Infinity;
+          bValue = statusOrder[b["Payment Status"]] || Infinity;
+          break;
+
+        // Add other specific cases for numerical or custom sorting here if needed
+        // For general string properties (like Gender, Subject, Year, etc.)
+        case "Gender":
+        case "Subject":
+        case "Year":
+        case "Stream":
+        case "College":
+        case "Group ": // Note the space in "Group "
+        case "Source":
+          aValue = (a[orderBy] || "").toLowerCase();
+          bValue = (b[orderBy] || "").toLowerCase();
+          return order === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+
+        default:
+          // Fallback for any other column, assumes simple comparison (strings or numbers)
+          const valA = a[orderBy];
+          const valB = b[orderBy];
+
+          if (typeof valA === "string" && typeof valB === "string") {
+            return valA.localeCompare(valB);
+          }
+          if (typeof valA === "number" && typeof valB === "number") {
+            return valA - valB;
+          }
+          return 0; // If types are mixed or uncomparable, maintain relative order
       }
 
+      // Apply the ascending/descending order for numerical/date comparisons from switch cases
       if (aValue < bValue) {
         return order === "asc" ? -1 : 1;
       }
       if (aValue > bValue) {
         return order === "asc" ? 1 : -1;
       }
-      return 0;
+      return 0; // Values are equal for the secondary sort
     });
-  }, [filteredStudents, orderBy, order]);
 
+    return studentsToSort;
+  }, [filteredStudents, orderBy, order]); // Dependencies: Re-run when these change
 
   // Handles changes in filter input fields
   const handleFilterChange = (e) => {
@@ -392,22 +527,24 @@ const StudentsTable = () => {
     studentName
   ) => {
     const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid";
-
-    setUpdatingStudent(studentId); // Show loading spinner for this student's row
+    setUpdatingStudent(studentId);
     try {
-      await dispatch(updateStudentPaymentStatus(studentId, currentStatus));
-
+      await dispatch(
+        updateStudentField(studentId, "Payment Status", newStatus)
+      ); // Use generic action
       setSnackbarSeverity(newStatus === "Paid" ? "success" : "error");
       setSnackbarMessage(
         `Payment status updated to "${newStatus}" for ${studentName}!`
       );
-      setSnackbarOpen(true); // Show Snackbar
+      setSnackbarOpen(true);
     } catch (err) {
-      setSnackbarMessage(`Failed to update payment status: ${err.message}`);
+      setSnackbarMessage(
+        `Failed to update payment status for ${studentName}: ${err.message}`
+      );
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     } finally {
-      setUpdatingStudent(null); // Hide loading spinner
+      setUpdatingStudent(null);
     }
   };
   const handleSortRequest = (property) => {
@@ -1054,7 +1191,7 @@ const StudentsTable = () => {
                       </TableCell>
                     )}
                     {columnVisibility.monthlyFee && (
-                       <TableCell
+                      <TableCell
                         align="right"
                         sx={{
                           fontWeight: "bold",
@@ -1090,7 +1227,9 @@ const StudentsTable = () => {
                       >
                         <TableSortLabel
                           active={orderBy === "classesCompleted"}
-                          direction={orderBy === "classesCompleted" ? order : "asc"}
+                          direction={
+                            orderBy === "classesCompleted" ? order : "asc"
+                          }
                           onClick={() => handleSortRequest("classesCompleted")}
                         >
                           Classes Completed
@@ -1129,48 +1268,84 @@ const StudentsTable = () => {
                         Payment Status
                       </TableCell>
                     )}
+                    {columnVisibility.status && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 150,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        Status
+                      </TableCell>
+                    )}{" "}
+                    {/* New Header */}
+                    {columnVisibility.actions && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 150,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        Actions
+                      </TableCell>
+                    )}{" "}
+                    {/* For Edit/Delete */}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {sortedFilteredStudents.map((student, index) => (
-                    <TableRow
-                      key={student.id}
-                      sx={{
-                        backgroundColor: isRecentPayment(student)
-                          ? "#e8f5e9"
-                          : index % 2 === 0
-                          ? "#FFFFFF"
-                          : "#fbfbfb",
-                        transition: "background-color 0.2s ease-in-out",
+                 <TableRow
+  key={student.id}
+  sx={{
+    // Existing styles for recent payments and alternating rows
+    backgroundColor: isRecentPayment(student)
+      ? "#e8f5e9"
+      : student.isActive // New condition for inactive status
+      ? (index % 2 === 0 ? "#FFFFFF" : "#fbfbfb")
+      : "#ffebee", // Light red for inactive rows (Material Design error.light)
+    transition: "background-color 0.2s ease-in-out",
 
-                        // 👇 Add the animation only if student is recently paid
-                        animation: isRecentPayment(student)
-                          ? "highlightFade 2s ease-in-out infinite"
-                          : "none",
+    // 👇 Add the animation only if student is recently paid
+    animation: isRecentPayment(student)
+      ? "highlightFade 2s ease-in-out infinite"
+      : "none",
 
-                        "&:hover": {
-                          backgroundColor: "#e1f5fe",
-                        },
-                        "& > td": {
-                          borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
-                          fontSize: "0.95rem",
-                          color: "#424242",
-                        },
+    "&:hover": {
+      // Prioritize hover color over inactive color if both apply
+      backgroundColor: student.isActive ? "#e1f5fe" : "#ffcdd2", // Slightly darker red on hover for inactive
+    },
+    "& > td": {
+      borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
+      fontSize: "0.95rem",
+      color: student.isActive ? "#424242" : "#D32F2F", // Make text red for inactive rows
+    },
 
-                        // 👇 THIS is where you define @keyframes
-                        "@keyframes highlightFade": {
-                          "0%": {
-                            boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
-                          },
-                          "50%": {
-                            boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
-                          },
-                          "100%": {
-                            boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
-                          },
-                        },
-                      }}
-                    >
+    // 👇 THIS is where you define @keyframes
+    "@keyframes highlightFade": {
+      "0%": {
+        boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
+      },
+      "50%": {
+        boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
+      },
+      "100%": {
+        boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
+      },
+    },
+  }}
+>
                       <TableCell
                         component="th"
                         scope="row"
@@ -1434,6 +1609,54 @@ const StudentsTable = () => {
                           )}
                         </TableCell>
                       )}
+{columnVisibility.status && (
+  <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+    <Box
+      onClick={() =>
+        handleToggleStatusClick(
+          student.id,
+          student.isActive,
+          student.Name
+        )
+      }
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 0.8, // Space between icon and text
+        cursor: "pointer",
+        padding: '6px 10px',
+        borderRadius: '20px',
+        border: `1px solid ${student.isActive ? '#4CAF50' : '#F44336'}`,
+        backgroundColor: student.isActive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)', // Light background tint
+        "&:hover": { boxShadow: 1 },
+      }}
+    >
+      {student.isActive ? (
+        <FaUserCheck style={{ color: '#4CAF50' }} />
+      ) : (
+        <FaUserTimes style={{ color: '#F44336' }} />
+      )}
+      <Typography variant="body2" sx={{ fontWeight: 'bold', color: student.isActive ? '#4CAF50' : '#F44336' }}>
+        {student.isActive ? "Active" : "Inactive"}
+      </Typography>
+    </Box>
+  </TableCell>
+)}
+                      {/* --- ACTIONS COLUMN (e.g., Edit/Delete) --- */}
+                      {columnVisibility.actions && (
+                        <TableCell align="center">
+                          {/* Add your Edit/Delete/More Actions buttons here */}
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              console.log("Edit student", student.id)
+                            }
+                          >
+                            <FaEllipsisV fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -1460,11 +1683,50 @@ const StudentsTable = () => {
         <Alert
           onClose={handleCloseSnackbar}
           severity={snackbarSeverity}
-          sx={{ width: "100%" }}
+          sx={{
+            width: "100%",
+            backgroundColor:
+              snackbarSeverity === "success"
+                ? snackbarMessage.includes("Inactive")
+                  ? "#d32f2f"
+                  : "#2e7d32" // Red for Inactive, Green for Active
+                : undefined,
+            color: "#fff",
+          }}
         >
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={handleCloseConfirmDialog}
+        aria-labelledby="confirm-status-dialog-title"
+        aria-describedby="confirm-status-dialog-description"
+      >
+        <DialogTitle id="confirm-status-dialog-title">
+          {newStatus ? "Activate Student" : "Deactivate Student"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-status-dialog-description">
+            Are you sure you want to {newStatus ? "activate" : "deactivate"}{" "}
+            student <strong>{studentToUpdate?.name}</strong>? This will mark
+            them as {newStatus ? "active" : "inactive"}.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={handleCloseConfirmDialog} color="primary">
+            Cancel
+          </MuiButton>
+          <MuiButton
+            onClick={handleConfirmStatusChange}
+            color={newStatus ? "success" : "error"}
+            variant="contained"
+            autoFocus
+          >
+            Confirm {newStatus ? "Activation" : "Deactivation"}
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

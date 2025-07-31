@@ -59,7 +59,7 @@
   background-color: #ffffff;
   border-radius: 15px;
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
-  padding: 40px;
+  padding: 15px;
   max-width: 550px;
   width: 100%;
   text-align: center;
@@ -412,4 +412,15 @@
     font-size: 0.85rem;
     margin-top: 20px;
   }
+}
+
+/* src/components/Signup.css */
+
+.spinner-icon {
+  animation: spin 1s linear infinite; /* Apply the same spin animation */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

@@ -10,6 +10,7 @@ import {
   FaEyeSlash,
   FaExclamationCircle,
   FaCheckCircle,
+  FaSpinner
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../redux/actions";
@@ -49,6 +50,8 @@ useEffect(() => {
 }, [user, navigate]);
 
   // useEffect(() => {
+  //       console.log("LoginPage - isAuthenticated:", isAuthenticated, "error:", error, "loading:", loading, "user:", user);
+
   //   if (error) {
   //     setModalOpen(true);
   //   } else if (isAuthenticated && !loading) {
@@ -159,7 +162,7 @@ useEffect(() => {
           </div>
                    {" "}
           <div className="form-group-signup password-group">
-                        <label htmlFor="password">Password</label>           {" "}
+              <label htmlFor="username">Password</label>
             <div className="input-icon-wrapper">
                            {" "}
               <button
@@ -191,9 +194,16 @@ useEffect(() => {
                      {" "}
           </div>
                    {" "}
-          <button type="submit" className="signup-button">
-                        {loading ? "Logging In..." : "Log In"}         {" "}
-          </button>
+      <button type="submit" className="signup-button" disabled={loading}> {/* Add disabled prop */}
+  {loading ? (
+    <>
+      <FaSpinner className="spinner-icon" /> {/* The spinner icon */}
+      <span style={{ marginLeft: '8px' }}>Logging In...</span> {/* Optional text */}
+    </>
+  ) : (
+    "Log In"
+  )}
+</button>
                  {" "}
         </form>
                {" "}

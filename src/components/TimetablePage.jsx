@@ -1122,129 +1122,133 @@ const current = {
       )}
       {/* Header Card */}
       <Slide
-        direction="down"
-        in={true}
-        mountOnEnter
-        unmountOnExit
-        timeout={500}
+      direction="down"
+      in={true}
+      mountOnEnter
+      unmountOnExit
+      timeout={500}
+    >
+      <Paper
+        elevation={6}
+        sx={{
+          p: 3,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
+          flexWrap: "wrap",
+          gap: 2, // Gap between main sections (icon/text and buttons)
+          borderRadius: "12px",
+          // Removed minHeight here to allow content to dictate height
+        }}
       >
-        <Paper
-          elevation={6}
+        {/* Left Section: Icon and Title/Subtitle */}
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <FaCalendarAlt
+            style={{
+              marginRight: "15px",
+              fontSize: "2.5rem",
+              color: "#1976d2",
+            }}
+          />
+          <Box>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
+            >
+              Timetable
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              View and manage your scheduled classes. Today is{" "}
+              <span className="current-date">
+                {format(new Date(), "EEEE, MMMM dd,yyyy")}
+              </span>
+              .
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Right Section: Buttons and Warning */}
+        <Box
           sx={{
-            p: 3,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
-            flexWrap: "wrap",
-            gap: 2,
-            borderRadius: "12px",
+            flexDirection: { xs: "column", sm: "row" }, // Stack on small screens, row on larger
+            alignItems: { xs: "flex-start", sm: "center" }, // Align items at start/center
+            flexWrap: "wrap", // Allow buttons to wrap
+            gap: 2, // Gap between the buttons
+            ml: { xs: 0, sm: 2 }, // Add left margin on larger screens if needed
+            mt: { xs: 2, sm: 0 }, // Add top margin on small screens if wrapping
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <FaCalendarAlt
-              style={{
-                marginRight: "15px",
-                fontSize: "2.5rem",
-                color: "#1976d2",
-              }}
-            />
-            <Box>
-              <Typography
-                variant="h4"
-                component="h1"
-                sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
-              >
-                Timetable
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                View and manage your scheduled classes. Today is{" "}
-                <span className="current-date">
-                  {format(new Date(), "EEEE, MMMM dd,yyyy")}
-                </span>
-                .
-              </Typography>
-            </Box>
-          </Box>
           {combinedAndFilteredTimetables.length > 0 && (
             <Tooltip
               title={tooltipMessage}
-              placement="top" // Or "bottom", "right", "left" as desired
-              // Add custom styles using the `sx` prop for the tooltip's paper element
+              placement="top"
               slotProps={{
                 popper: {
                   sx: {
                     "& .MuiTooltip-tooltip": {
-                      backgroundColor: hasMissingTopics ? "#d32f2f" : "#333", // Red for warnings, dark grey otherwise
+                      backgroundColor: hasMissingTopics ? "#d32f2f" : "#333",
                       color: "white",
                       fontSize: "0.9rem",
                       padding: "10px 15px",
                       borderRadius: "6px",
-                      boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)", // Soft shadow
-                      maxWidth: "350px", // Wider tooltip for more text
+                      boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+                      maxWidth: "350px",
                       textAlign: "left",
                       lineHeight: "1.4",
-                      fontWeight: hasMissingTopics ? "bold" : "normal", // Bold text for warnings
+                      fontWeight: hasMissingTopics ? "bold" : "normal",
                     },
-                    // You can also style the arrow if needed
                     "& .MuiTooltip-arrow": {
-                      color: hasMissingTopics ? "#d32f2f" : "#333", // Arrow color matches tooltip background
+                      color: hasMissingTopics ? "#d32f2f" : "#333",
                     },
                   },
                 },
               }}
-              arrow // Enable an arrow on the tooltip
+              arrow
             >
-              <span>
-                {" "}
-                {/* Tooltip needs a child element to attach to */}
-                <PdfDownloadButton
-                  title={getPdfTitle()} // Dynamic title (ensure this function is defined)
-                  headers={getPdfTableHeaders()} // Ensure this function is defined
-                  rows={getPdfTableRows()} // Ensure this function is defined
-                  buttonLabel="Download Timetable (PDF)"
-                  filename={`Timetable_Report_${getTodayDateForFilename()}.pdf`} // Dynamic filename with date
-                  reportDate={new Date()}
-                  disabled={hasMissingTopics} // Disable the button if topics are missing
-                  totalHours={sumHours}
-              totalFee={sumFee}
-                />
-              </span>
+              <PdfDownloadButton
+                title={getPdfTitle()}
+                headers={getPdfTableHeaders()}
+                rows={getPdfTableRows()}
+                buttonLabel="Download Timetable (PDF)"
+                filename={`Timetable_Report_${getTodayDateForFilename()}.pdf`}
+                reportDate={new Date()}
+                disabled={hasMissingTopics}
+                totalHours={sumHours}
+                totalFee={sumFee}
+              />
             </Tooltip>
           )}
-          <ExcelDownloadButton 
-                 data={students} // Pass your array of student objects here
+
+          <ExcelDownloadButton
+            data={students}
             filename="Electron_Academy_Student_Report.xlsx"
-            buttonLabel="Download Student Report (Excel)"
-            buttonProps={{ variant: 'contained', color: 'success' }} // Example MUI button props
+            buttonLabel="Download Weekly timtable with all sections"
+            buttonProps={{ variant: 'contained', color: 'success' }}
             excelReportTitle={Exceltitle}
           />
 
-          {/* Display a clear red warning message below the button if topics are missing */}
-          {hasMissingTopics && (
-            <p style={{ color: "red", marginTop: "10px", fontWeight: "bold" }}>
-              **Action Required:** Some timetable entries are missing a 'Topic'.
-              Please update these entries before downloading the PDF.
-            </p>
-          )}
           <MuiButton
             variant="contained"
             startIcon={<FaPlusCircle />}
             onClick={handleAddTimetableClick}
             sx={{
-              bgcolor: "#1976d2", // Changed to primary blue
-              "&:hover": { bgcolor: "#1565c0" }, // Darker blue on hover
+              bgcolor: "#1976d2",
+              "&:hover": { bgcolor: "#1565c0" },
               borderRadius: "8px",
               px: 3,
               py: 1.2,
-              minWidth: "180px",
-              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Subtle shadow
+              minWidth: "180px", // Ensure minimum width for the button
+              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
             }}
           >
             Add Timetable
           </MuiButton>
-        </Paper>
-      </Slide>
+        </Box>
+      </Paper>
+    </Slide>
 
       {/* Filters and Search Section with Slide animation */}
       <Slide

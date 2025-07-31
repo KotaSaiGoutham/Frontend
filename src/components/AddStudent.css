@@ -262,3 +262,135 @@
     transform: translateY(0) scale(1);
   }
 }
+/* Specific styles for Time Slot Section */
+.time-slot-section-title {
+  color: #007bff; /* A different color for this section */
+  border-bottom-color: #a7d9ff;
+}
+
+.time-slot-inputs {
+  margin-bottom: 15px; /* Adjust spacing below inputs */
+}
+
+.add-time-slot-button-container {
+  grid-column: span 1;
+  display: flex;
+  align-items: flex-end; /* Aligns the button with the bottom of input fields */
+}
+
+.add-slot-btn {
+  width: 100%; /* Make button fill its column */
+  padding: 10px 15px;
+  font-size: 0.95rem;
+  min-width: unset; /* Override any min-width from general buttons */
+}
+
+.error-message-timeslot {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 5px;
+  text-align: left;
+  grid-column: 1 / -1; /* Make error span full width */
+  padding-left: 5px; /* Small padding */
+}
+
+.current-time-slots-wrapper {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #cce5ff; /* Light blue border */
+  border-radius: 12px;
+  background-color: #e6f7ff; /* Lighter blue background */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+  overflow: hidden; /* Important for animations */
+}
+
+.current-slots-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0056b3; /* Darker blue for heading */
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.current-slots-heading::before {
+  content: '✓'; /* Or any other icon/symbol */
+  color: #28a745; /* Green checkmark */
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.time-slot-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap; /* Allow slots to wrap to next line */
+  gap: 10px; /* Space between items */
+}
+
+.time-slot-item {
+  background-color: #ffffff; /* White background for each slot */
+  border: 1px solid #b3d9ff; /* Light blue border */
+  border-radius: 8px;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  color: #333;
+  min-width: 150px; /* Ensure a minimum width */
+  flex-grow: 1; /* Allow items to grow */
+  transition: all 0.3s ease-in-out; /* Smooth transitions for hover/focus */
+}
+
+.time-slot-item span {
+  flex-grow: 1;
+  text-align: center;
+}
+
+.delete-time-slot-icon {
+  color: #dc3545;
+  cursor: pointer;
+  margin-left: 15px;
+  font-size: 1.1rem;
+  transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.delete-time-slot-icon:hover {
+  color: #c82333;
+  transform: scale(1.1);
+}
+
+.info-message.no-slots-message {
+  text-align: center;
+  color: #0056b3;
+  font-style: italic;
+  padding: 10px;
+  border: 1px dashed #a7d9ff;
+  border-radius: 8px;
+  background-color: #f0f8ff;
+}
+
+
+/* Animations for CSSTransition */
+.time-slot-item-anim-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.time-slot-item-anim-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
+}
+.time-slot-item-anim-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.time-slot-item-anim-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
+}
+
+
