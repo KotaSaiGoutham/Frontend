@@ -371,3 +371,77 @@ export  const getTodayDateForFilename = () => {
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+    export const getGreetingInfo = () => {
+      const hour = new Date().getHours();
+      let text, className, imageUrl;
+  
+      if (hour >= 5 && hour < 12) {
+        text = "Morning";
+        className = "morning";
+        // Bright, minimalist study space with good light
+        imageUrl = "https://images.unsplash.com/photo-1549725838-8c1143c72b53?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+      } else if (hour >= 12 && hour < 18) {
+        text = "Afternoon";
+        className = "afternoon";
+        // Empty, clean, naturally lit classroom
+        imageUrl = "https://images.unsplash.com/photo-1498243691581-b145c3f54bfb?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB4MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+      } else { // 18 (6 PM) onwards to 4 AM
+        text = "Evening";
+        className = "evening";
+        // Modern office/study with ambient lighting, still bright, glowing screen
+        imageUrl = "https://images.unsplash.com/photo-1454165205744-bdc3fd1d49db?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+      }
+      return { text, className, imageUrl };
+    };
+     export const getQuickChartUrl = (chartType, data) => {
+        let chartConfig = {};
+        if (chartType === "line") {
+          chartConfig = {
+            type: "line",
+            data: {
+              labels: data.labels,
+              datasets: [
+                {
+                  label: data.label,
+                  data: data.data,
+                  borderColor: "rgb(74,144,226)",
+                  fill: false,
+                },
+              ],
+            },
+          };
+        } else if (chartType === "pie" || chartType === "doughnut") {
+          chartConfig = {
+            type: chartType,
+            data: {
+              labels: data.labels,
+              datasets: [
+                {
+                  data: data.data,
+                  backgroundColor: data.backgroundColors,
+                },
+              ],
+            },
+            options: {
+              plugins: {
+                datalabels: {
+                  color: "#fff",
+                  formatter: (value, ctx) => {
+                    let sum = 0;
+                    let dataArr = ctx.chart.data.datasets[0].data;
+                    dataArr.map((data) => {
+                      sum += data;
+                    });
+                    let percentage = ((value * 100) / sum).toFixed(0) + "%";
+                    return percentage;
+                  },
+                },
+              },
+            },
+          };
+        }
+        return `https://quickchart.io/chart?c=${encodeURIComponent(
+          JSON.stringify(chartConfig)
+        )}&f=png&bkg=transparent`;
+      };

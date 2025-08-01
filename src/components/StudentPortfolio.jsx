@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react"; // Removed useMemo as latestWeeklyMark is no longer needed
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
-import { formatFirebaseDate, capitalize } from "../mockdata/funcation";
+import { formatFirebaseDate, capitalize } from "../mockdata/function";
 import "./StudentPortfolio.css";
 import AddWeeklyMarksModal from "./AddWeeklyMarksForm";
 import { useDispatch, useSelector } from "react-redux";

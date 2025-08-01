@@ -91,10 +91,10 @@ import {
   UPDATE_STUDENT_FIELD_FAILURE 
 } from "../types";
 import dayjs from "dayjs";                 // ← added
-import { toJsDate } from "../../mockdata/funcation";
+import { toJsDate } from "../../mockdata/function";
 // --- 2. Import Utility Functions ---
 // Removed generateMockTimetableData from here as it's no longer used for fallback by actions
-import { sortAndFilterTimetableData } from "../../mockdata/funcation";
+import { sortAndFilterTimetableData } from "../../mockdata/function";
 // Removed mockStudentsData/mockEmployeesData imports here as they are not for action fallbacks
 import {
   generateMockTestScores,

@@ -33,7 +33,7 @@ import {
   Badge
 } from "@mui/material";
 // Import ALL necessary icons from react-icons/fa
-import { isRecentPayment } from "../mockdata/funcation";
+import { isRecentPayment } from "../mockdata/function";
 import {
   FaSearch,
   FaUserGraduate,
@@ -64,7 +64,7 @@ import {
   FaEllipsisV,
 } from "react-icons/fa";
 // Assuming these are your custom components and mock data
-import { getPdfTableHeaders, getPdfTableRows } from "../mockdata/funcation";
+import { getPdfTableHeaders, getPdfTableRows } from "../mockdata/function";
 import {
   MuiButton,
   MuiSelect,
@@ -87,7 +87,7 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 // PDF Download Button component
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
-import { ClassCounterDisplay } from "../mockdata/funcation";
+import { ClassCounterDisplay } from "../mockdata/function";
 
 // Custom Alert component for Snackbar, using forwardRef as recommended by Material-UI
 // This allows the Snackbar to correctly pass its ref to the Alert component.
