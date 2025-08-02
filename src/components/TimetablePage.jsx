@@ -158,7 +158,10 @@ const TimetablePage = () => {
       };
     }, [user]);
 
-  const availableTopicOptions = useMemo(() => topicOptions, []);
+const availableTopicOptions = useMemo(() => {
+  return [...topicOptions].sort((a, b) => a.topic.localeCompare(b.topic));
+}, []);
+
 
   useEffect(() => {
     dispatch(fetchUpcomingClasses());

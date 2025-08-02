@@ -50,6 +50,7 @@ const AddDemoClassPage = () => {
     error: addError,
     addSuccess,
   } = useSelector((state) => state.demoClasses);
+  const { user } = useSelector((state) => state.auth);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -125,6 +126,7 @@ const AddDemoClassPage = () => {
     const dataToSend = {
       ...formData,
       demoTime: formattedDemoTime,
+      Subject: user.isPhysics ? "Physics" : user.isChemistry ? "Chemistry" : "",
     };
 
     dispatch(addDemoClass(dataToSend));

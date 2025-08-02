@@ -445,3 +445,35 @@ export  const getTodayDateForFilename = () => {
           JSON.stringify(chartConfig)
         )}&f=png&bkg=transparent`;
       };
+   export const getRecentStudentActivity = (students) => {
+  const activeStudents = students?.filter(student => student.lastUpdatedClassesAt);
+  
+  if (!activeStudents) return [];
+
+  // Sort students by the most recent class date
+  const sortedStudents = activeStudents.sort((a, b) => {
+    // Convert timestamps to Date objects for comparison
+    const dateA = new Date(a.lastUpdatedClassesAt._seconds * 1000);
+    const dateB = new Date(b.lastUpdatedClassesAt._seconds * 1000);
+    return dateB - dateA;
+  });
+
+  // Map over the sorted students to format the timestamp
+  return sortedStudents.map(student => ({
+    ...student,
+    // Format the timestamp into a readable string here
+    lastUpdatedClassesAt: new Date(student.lastUpdatedClassesAt._seconds * 1000).toLocaleString()
+  }));
+};
+      
+      // Logic to get recent employee activity
+      export const getRecentEmployeeActivity = (employees) => {
+        if (!employees) return [];
+        
+        // Sort employees by creation date or last paid date to show recent entries/updates
+        return employees.sort((a, b) => {
+          const dateA = new Date(a.createdAt);
+          const dateB = new Date(b.createdAt);
+          return dateB - dateA; // Sort in descending order
+        });
+      };
