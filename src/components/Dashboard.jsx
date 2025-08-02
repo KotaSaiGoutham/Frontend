@@ -661,7 +661,7 @@ return (
       open={snackbarOpen}
       autoHideDuration={6000}
       onClose={handleSnackbarClose}
-      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      anchorOrigin={{ vertical: "top", horizontal: "right" }}
     >
       <MuiAlert
         onClose={handleSnackbarClose}

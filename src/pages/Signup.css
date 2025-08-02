@@ -43,17 +43,25 @@
   font-size: 18px;
 }
 
-/* Base Styles */
 .signup-page-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 30vh;
-  background: linear-gradient(135deg, var(--dark-indigo) 0%, var(--slate-gray) 100%);
-  padding: 20px;
-  
+  align-items: flex-start;       /* << aligns card to top */
+  min-height: 100vh;
+  padding: 25px;  /* Top padding pushes it slightly down */
   box-sizing: border-box;
+
+  background-image: 
+    url('/login-bg-pattern.png'),  /* Replace with actual path */
+linear-gradient(135deg, #3e0e40, #b04179);
+
+  background-repeat: repeat;
+  background-size: 450px, cover;  /* << Make icons smaller and repeat more */
+  background-blend-mode: soft-light;
+  color: white; 
 }
+
+
 
 .signup-card {
   background-color: #ffffff;
