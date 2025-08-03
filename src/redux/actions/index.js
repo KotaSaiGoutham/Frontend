@@ -88,7 +88,13 @@ import {
   UPDATE_AUTO_TIMETABLE_TOPIC_FAILURE,
   UPDATE_STUDENT_FIELD_REQUEST,
   UPDATE_STUDENT_FIELD_SUCCESS,
-  UPDATE_STUDENT_FIELD_FAILURE 
+  UPDATE_STUDENT_FIELD_FAILURE,
+    UPDATE_STUDENT_REQUEST,
+  UPDATE_STUDENT_SUCCESS,
+  UPDATE_STUDENT_FAILURE,
+   DELETE_STUDENT_REQUEST,
+  DELETE_STUDENT_SUCCESS,
+  DELETE_STUDENT_FAILURE,
 } from "../types";
 import dayjs from "dayjs";                 // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -446,6 +452,64 @@ export const addStudent = (studentData) =>
       }
       dispatch({
         type: ADD_STUDENT_FAILURE,
+        payload: { error: errorMessage },
+      });
+    },
+    authRequired: true,
+  });
+  export const updateStudent = (studentId, studentData) =>
+  apiRequest({
+    url: `/api/data/updateStudent/${studentId}`, // Note the studentId in the URL
+    method: "PUT", // Or "PATCH", depending on your API
+    data: studentData,
+    onStart: UPDATE_STUDENT_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_STUDENT_SUCCESS,
+        payload: data,
+      });
+      // You can either refetch all students or update the student list locally.
+      // Refetching is simpler but less performant for large lists.
+      dispatch(fetchStudents());
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error updating student:", error);
+      const errorMessage = error.error || error.message || "Failed to update student";
+      if (error.status === 401 || error.status === 403) {
+        dispatch(
+          setAuthError("Authentication failed or session expired. Please log in again.")
+        );
+      }
+      dispatch({
+        type: UPDATE_STUDENT_FAILURE,
+        payload: { error: errorMessage },
+      });
+    },
+    authRequired: true,
+  });
+  export const deleteStudent = (studentId) =>
+  apiRequest({
+    url: `/api/data/deleteStudent/${studentId}`,
+    method: "DELETE",
+    onStart: DELETE_STUDENT_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: DELETE_STUDENT_SUCCESS,
+        payload: data,
+      });
+      // Refresh the student list after a successful delete
+      dispatch(fetchStudents());
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error deleting student:", error);
+      const errorMessage = error.error || error.message || "Failed to delete student";
+      if (error.status === 401 || error.status === 403) {
+        dispatch(
+          setAuthError("Authentication failed or session expired. Please log in again.")
+        );
+      }
+      dispatch({
+        type: DELETE_STUDENT_FAILURE,
         payload: { error: errorMessage },
       });
     },

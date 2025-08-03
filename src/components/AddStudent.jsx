@@ -33,7 +33,7 @@ import {
   dayOptions,
 } from "../mockdata/Options";
 import { useDispatch, useSelector } from "react-redux";
-import { addStudent, clearAddStudentStatus } from "../redux/actions";
+import { addStudent, clearAddStudentStatus,updateStudent } from "../redux/actions"; // Import updateStudent action
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -45,6 +45,7 @@ const AddStudent = () => {
   const { user } = useSelector((state) => state.auth);
   const { state } = useLocation();
   const passedStudentData = state?.studentData;
+  console.log("state",state)
 
   const initialStudentData = useRef({
     Name: "",
@@ -77,42 +78,35 @@ const AddStudent = () => {
   const isEditMode = !!studentData.id;
 
   useEffect(() => {
-    if (passedStudentData) {
-      const mappedData = {
-        id: passedStudentData.id,
-        Name: passedStudentData.studentName || "",
-        ContactNumber: passedStudentData.contactNo || "",
-        Gender: passedStudentData.gender || "",
-        Stream: passedStudentData.course || "",
-        College: passedStudentData.collegeName || "",
-        Source: passedStudentData.source || "",
-        Year: passedStudentData.year || "",
-        "Monthly Fee": passedStudentData.monthlyFee || "",
-        "Payment Status": passedStudentData.paymentStatus || "Unpaid",
-        "Group ":
-          passedStudentData.course === "JEE"
-            ? "MPC"
-            : passedStudentData.course === "NEET"
-            ? "BIPC"
-            : "",
-        MotherContactNumber: passedStudentData.MotherContactNumber || "",
-        FatherContactNumber: passedStudentData.FatherContactNumber || "",
-        Subject: user.isPhysics
-          ? "Physics"
-          : user.isChemistry
-          ? "Chemistry"
-          : "",
-        classDateandTime: passedStudentData.classDateandTime || [],
-        isActive:
-          passedStudentData.isActive !== undefined
-            ? passedStudentData.isActive
-            : true,
-      };
+  if (passedStudentData) {
+    const mappedData = {
+      id: passedStudentData.id || "",
+      Name: passedStudentData.Name || "",
+      Gender: passedStudentData.Gender || "",
+      ContactNumber: passedStudentData.ContactNumber || "",
+      MotherContactNumber: passedStudentData.MotherContactNumber || "",
+      FatherContactNumber: passedStudentData.FatherContactNumber || "",
+      // This ensures the Subject from the student data is used,
+      // but falls back to user permissions if it's not present.
+      Subject: passedStudentData.Subject || (user.isPhysics ? "Physics" : user.isChemistry ? "Chemistry" : ""),
+      "Monthly Fee": passedStudentData["Monthly Fee"] || "",
+      "Payment Status": passedStudentData["Payment Status"] || "Unpaid",
+      Stream: passedStudentData.Stream || "",
+      College: passedStudentData.College || "",
+      "Group ": passedStudentData["Group "] || "",
+      Source: passedStudentData.Source || "",
+      Year: passedStudentData.Year || "",
+      classDateandTime: passedStudentData.classDateandTime || [],
+      isActive:
+        passedStudentData.isActive !== undefined
+          ? passedStudentData.isActive
+          : true,
+    };
 
-      initialStudentData.current = mappedData;
-      setStudentData(mappedData);
-    }
-  }, [passedStudentData, user]);
+    initialStudentData.current = mappedData;
+    setStudentData(mappedData);
+  }
+}, [passedStudentData, user]);
 
   useEffect(() => {
     return () => {
@@ -194,7 +188,7 @@ const AddStudent = () => {
     setSnackbarOpen(false);
     setSnackbarMessage("");
 
-    // Validation for Name, Gender, College, Stream, Monthly Fee, Source
+    // Validation for required fields
     if (
       !studentData.Name ||
       !studentData.Gender ||
@@ -233,15 +227,20 @@ const AddStudent = () => {
     }
 
     try {
-      const dataToSubmit = { ...studentData, isActive: true };
-
-      // Dispatch the addStudent action, which now returns a Promise
-      await dispatch(addStudent(dataToSubmit));
-
-      setSnackbarSeverity("success");
-      setSnackbarMessage("Student added successfully!");
+      if (isEditMode) {
+        // Dispatch the updateStudent action
+        await dispatch(updateStudent(studentData.id, studentData));
+        setSnackbarSeverity("success");
+        setSnackbarMessage("Student updated successfully!");
+      } else {
+        const dataToSubmit = { ...studentData, isActive: true };
+        await dispatch(addStudent(dataToSubmit));
+        setSnackbarSeverity("success");
+        setSnackbarMessage("Student added successfully!");
+      }
       setSnackbarOpen(true);
 
+      // Clear the form after a successful submission
       setStudentData(initialStudentData.current);
       setNewTimeSlotDay("");
       setNewTimeSlotTime("");
@@ -250,6 +249,7 @@ const AddStudent = () => {
         navigate("/students");
       }, 2500);
     } catch (error) {
+      // Error handling remains the same
       let errorMessage = "An unknown error occurred.";
       if (typeof error === "string") {
         errorMessage = error;
@@ -279,7 +279,7 @@ const AddStudent = () => {
       }
     }
   };
-  console.log("studentData.classDateandTime", studentData);
+
   const showSubjectColumn = user?.AllowAll;
   const timeSlotRefs = useRef({});
   studentData.classDateandTime.forEach((slot, index) => {
@@ -435,7 +435,7 @@ const AddStudent = () => {
           </div>
 
           {/* Time Slot Section */}
-           <div className="add-student-form-section-title">
+          <div className="add-student-form-section-title">
             Classes Schedule
           </div>
           <div className="add-student-form-grid time-slot-inputs">
@@ -475,41 +475,40 @@ const AddStudent = () => {
           </div>
 
           <div className="current-time-slots-wrapper">
-  {studentData.classDateandTime.length > 0 ? (
-    <>
-      <p className="current-slots-heading">Current Scheduled Slots:</p>
-      <TransitionGroup component="ul" className="time-slot-list">
-        {studentData.classDateandTime.map((slot, index) => {
-          const key = `${slot}-${index}`;
-          const nodeRef = timeSlotRefs.current[key];
+            {studentData.classDateandTime.length > 0 ? (
+              <>
+                <p className="current-slots-heading">Current Scheduled Slots:</p>
+                <TransitionGroup component="ul" className="time-slot-list">
+                  {studentData.classDateandTime.map((slot, index) => {
+                    const key = `${slot}-${index}`;
+                    const nodeRef = timeSlotRefs.current[key];
 
-          return (
-            <CSSTransition
-              key={key}
-              nodeRef={nodeRef}
-              timeout={300}
-              classNames="time-slot-item-anim"
-            >
-              <li ref={nodeRef} className="time-slot-item">
-                <span>{slot}</span>
-                <FaTrash
-                  className="delete-time-slot-icon"
-                  onClick={() => handleRemoveTimeSlot(slot)}
-                  title="Remove time slot"
-                />
-              </li>
-            </CSSTransition>
-          );
-        })}
-      </TransitionGroup>
-    </>
-  ) : (
-    <p className="info-message no-slots-message">
-      No class slots added yet. Click "Add Slot" to schedule classes.
-    </p>
-  )}
-</div>
-
+                    return (
+                      <CSSTransition
+                        key={key}
+                        nodeRef={nodeRef}
+                        timeout={300}
+                        classNames="time-slot-item-anim"
+                      >
+                        <li ref={nodeRef} className="time-slot-item">
+                          <span>{slot}</span>
+                          <FaTrash
+                            className="delete-time-slot-icon"
+                            onClick={() => handleRemoveTimeSlot(slot)}
+                            title="Remove time slot"
+                          />
+                        </li>
+                      </CSSTransition>
+                    );
+                  })}
+                </TransitionGroup>
+              </>
+            ) : (
+              <p className="info-message no-slots-message">
+                No class slots added yet. Click "Add Slot" to schedule classes.
+              </p>
+            )}
+          </div>
 
           <div className="add-student-button-group">
             <button
@@ -517,7 +516,7 @@ const AddStudent = () => {
               className="add-student-primary-button"
               disabled={addingStudent}
             >
-              <FaPlus /> {addingStudent ? "Adding Student..." : "Add Student"}
+              <FaPlus /> {addingStudent ? "Adding Student..." : isEditMode ? "Update Student" : "Add Student"}
             </button>
             <button
               type="button"

@@ -30,7 +30,12 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  Badge
+  Badge,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Button,
 } from "@mui/material";
 // Import ALL necessary icons from react-icons/fa
 import { isRecentPayment } from "../mockdata/function";
@@ -62,6 +67,8 @@ import {
   FaUserCheck,
   FaUserTimes,
   FaEllipsisV,
+  FaEdit,
+  FaTrashAlt,
 } from "react-icons/fa";
 // Assuming these are your custom components and mock data
 import { getPdfTableHeaders, getPdfTableRows } from "../mockdata/function";
@@ -83,6 +90,7 @@ import {
   updateClassesCompleted,
   fetchUpcomingClasses, // This action should fetch timetables
   toggleStudentActiveStatus,
+  deleteStudent,
 } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
 // PDF Download Button component
@@ -163,7 +171,59 @@ const StudentsTable = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // Severity for Snackbar ('success', 'error', 'info', 'warning')
   const [updatingClasses, setUpdatingClasses] = useState(null); // Tracks which student's classes completed is updating
   const [lastUpdatedTimestamps, setLastUpdatedTimestamps] = useState({}); // For displaying last updated time for classes
+  // Inside your component function
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState(null);
+  const open = Boolean(anchorEl);
 
+  const handleClick = (event, student) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedStudent(student);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    setSelectedStudent(null);
+  };
+  // Dialog handlers
+  const handleDeleteClick = (student) => {
+    console.log("student,student", student);
+    setStudentToDelete(student);
+    setOpenDeleteDialog(true);
+  };
+  const handleConfirmDelete = async () => {
+    console.log("studentToDelete", studentToDelete);
+    if (studentToDelete) {
+      try {
+        // Dispatch the Redux action to delete the student
+        await dispatch(deleteStudent(studentToDelete.id));
+
+        // Show a success message
+        setSnackbarSeverity("success");
+        setSnackbarMessage(`Successfully deleted ${studentToDelete.Name}.`);
+        setSnackbarOpen(true);
+      } catch (error) {
+        // Handle any errors that occurred during the API call
+        console.error("Failed to delete student:", error);
+        setSnackbarSeverity("error");
+        setSnackbarMessage(
+          `Failed to delete ${studentToDelete.Name}. Please try again.`
+        );
+        setSnackbarOpen(true);
+      } finally {
+        // Always close the dialog and clear the state, regardless of success or failure
+        setOpenDeleteDialog(false);
+        setStudentToDelete(null);
+      }
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setOpenDeleteDialog(false);
+    setSelectedStudent(null);
+  };
   // Effect to populate lastUpdatedTimestamps from student data
   // useEffect(() => {
   //   const newTimestamps = {};
@@ -372,9 +432,6 @@ const StudentsTable = () => {
     setStudentToUpdate(null);
     setNewStatus(null);
   };
-  console.log("studentToUpdate", studentToUpdate);
-  // Function to handle opening the confirmation dialog
-  // This is now the entry point when the user clicks the Chip.
   const handleToggleStatusClick = (studentId, currentStatus, studentName) => {
     setStudentToUpdate({ id: studentId, name: studentName }); // Ensure 'name' is correct case here
     setNewStatus(!currentStatus); // If currently active, new status is inactive; if inactive, new status is active
@@ -1306,46 +1363,50 @@ const StudentsTable = () => {
                 </TableHead>
                 <TableBody>
                   {sortedFilteredStudents.map((student, index) => (
-                 <TableRow
-  key={student.id}
-  sx={{
-    // Existing styles for recent payments and alternating rows
-    backgroundColor: isRecentPayment(student)
-      ? "#e8f5e9"
-      : student.isActive // New condition for inactive status
-      ? (index % 2 === 0 ? "#FFFFFF" : "#fbfbfb")
-      : "#ffebee", // Light red for inactive rows (Material Design error.light)
-    transition: "background-color 0.2s ease-in-out",
+                    <TableRow
+                      key={student.id}
+                      sx={{
+                        // Existing styles for recent payments and alternating rows
+                        backgroundColor: isRecentPayment(student)
+                          ? "#e8f5e9"
+                          : student.isActive // New condition for inactive status
+                          ? index % 2 === 0
+                            ? "#FFFFFF"
+                            : "#fbfbfb"
+                          : "#ffebee", // Light red for inactive rows (Material Design error.light)
+                        transition: "background-color 0.2s ease-in-out",
 
-    // 👇 Add the animation only if student is recently paid
-    animation: isRecentPayment(student)
-      ? "highlightFade 2s ease-in-out infinite"
-      : "none",
+                        // 👇 Add the animation only if student is recently paid
+                        animation: isRecentPayment(student)
+                          ? "highlightFade 2s ease-in-out infinite"
+                          : "none",
 
-    "&:hover": {
-      // Prioritize hover color over inactive color if both apply
-      backgroundColor: student.isActive ? "#e1f5fe" : "#ffcdd2", // Slightly darker red on hover for inactive
-    },
-    "& > td": {
-      borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
-      fontSize: "0.95rem",
-      color: student.isActive ? "#424242" : "#D32F2F", // Make text red for inactive rows
-    },
+                        "&:hover": {
+                          // Prioritize hover color over inactive color if both apply
+                          backgroundColor: student.isActive
+                            ? "#e1f5fe"
+                            : "#ffcdd2", // Slightly darker red on hover for inactive
+                        },
+                        "& > td": {
+                          borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
+                          fontSize: "0.95rem",
+                          color: student.isActive ? "#424242" : "#D32F2F", // Make text red for inactive rows
+                        },
 
-    // 👇 THIS is where you define @keyframes
-    "@keyframes highlightFade": {
-      "0%": {
-        boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
-      },
-      "50%": {
-        boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
-      },
-      "100%": {
-        boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
-      },
-    },
-  }}
->
+                        // 👇 THIS is where you define @keyframes
+                        "@keyframes highlightFade": {
+                          "0%": {
+                            boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
+                          },
+                          "50%": {
+                            boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
+                          },
+                          "100%": {
+                            boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
+                          },
+                        },
+                      }}
+                    >
                       <TableCell
                         component="th"
                         scope="row"
@@ -1609,52 +1670,125 @@ const StudentsTable = () => {
                           )}
                         </TableCell>
                       )}
-{columnVisibility.status && (
-  <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-    <Box
-      onClick={() =>
-        handleToggleStatusClick(
-          student.id,
-          student.isActive,
-          student.Name
-        )
-      }
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 0.8, // Space between icon and text
-        cursor: "pointer",
-        padding: '6px 10px',
-        borderRadius: '20px',
-        border: `1px solid ${student.isActive ? '#4CAF50' : '#F44336'}`,
-        backgroundColor: student.isActive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)', // Light background tint
-        "&:hover": { boxShadow: 1 },
-      }}
-    >
-      {student.isActive ? (
-        <FaUserCheck style={{ color: '#4CAF50' }} />
-      ) : (
-        <FaUserTimes style={{ color: '#F44336' }} />
-      )}
-      <Typography variant="body2" sx={{ fontWeight: 'bold', color: student.isActive ? '#4CAF50' : '#F44336' }}>
-        {student.isActive ? "Active" : "Inactive"}
-      </Typography>
-    </Box>
-  </TableCell>
-)}
-                      {/* --- ACTIONS COLUMN (e.g., Edit/Delete) --- */}
+                      {columnVisibility.status && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          <Box
+                            onClick={() =>
+                              handleToggleStatusClick(
+                                student.id,
+                                student.isActive,
+                                student.Name
+                              )
+                            }
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 0.8, // Space between icon and text
+                              cursor: "pointer",
+                              padding: "6px 10px",
+                              borderRadius: "20px",
+                              border: `1px solid ${
+                                student.isActive ? "#4CAF50" : "#F44336"
+                              }`,
+                              backgroundColor: student.isActive
+                                ? "rgba(76, 175, 80, 0.1)"
+                                : "rgba(244, 67, 54, 0.1)", // Light background tint
+                              "&:hover": { boxShadow: 1 },
+                            }}
+                          >
+                            {student.isActive ? (
+                              <FaUserCheck style={{ color: "#4CAF50" }} />
+                            ) : (
+                              <FaUserTimes style={{ color: "#F44336" }} />
+                            )}
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: "bold",
+                                color: student.isActive ? "#4CAF50" : "#F44336",
+                              }}
+                            >
+                              {student.isActive ? "Active" : "Inactive"}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                      )}
                       {columnVisibility.actions && (
                         <TableCell align="center">
-                          {/* Add your Edit/Delete/More Actions buttons here */}
+                          {/* The IconButton now passes the 'student' object to handleClick */}
                           <IconButton
                             size="small"
-                            onClick={() =>
-                              console.log("Edit student", student.id)
+                            aria-label="more"
+                            aria-controls={
+                              open && selectedStudent?.id === student.id
+                                ? "student-actions-menu"
+                                : undefined
                             }
+                            aria-haspopup="true"
+                            aria-expanded={
+                              open && selectedStudent?.id === student.id
+                                ? "true"
+                                : undefined
+                            }
+                            onClick={(event) => handleClick(event, student)} // Pass the student object here
                           >
                             <FaEllipsisV fontSize="small" />
                           </IconButton>
+
+                          {/* The Menu is only rendered once, but its `open` prop is conditional */}
+                          {selectedStudent &&
+                            selectedStudent.id === student.id && (
+                              <Menu
+                                id="student-actions-menu"
+                                anchorEl={anchorEl}
+                                open={open}
+                                onClose={handleClose}
+                                elevation={0}
+                                sx={{
+                                  "& .MuiPaper-root": {
+                                    boxShadow: "none",
+                                    border: "1px solid #d3d4d5",
+                                  },
+                                }}
+                              >
+                                {/* Edit MenuItem */}
+                                <MenuItem
+                                  onClick={() => {
+                                    handleClose();
+                                    navigate("/add-student", {
+                                      state: { studentData: selectedStudent },
+                                    });
+                                  }}
+                                >
+                                  <ListItemIcon>
+                                    <FaEdit
+                                      fontSize="small"
+                                      color="primary"
+                                      style={{ color: "#1976d2" }}
+                                    />
+                                  </ListItemIcon>
+                                  <ListItemText sx={{ color: "primary.main" }}>
+                                    Edit
+                                  </ListItemText>
+                                </MenuItem>
+
+                                <MenuItem
+                                  onClick={() => handleDeleteClick(student)}
+                                >
+                                  {" "}
+                                  <ListItemIcon>
+                                    <FaTrashAlt
+                                      fontSize="small"
+                                      style={{ color: "red" }}
+                                    />
+                                  </ListItemIcon>
+                                  <ListItemText sx={{ color: "error.main" }}>
+                                    Delete
+                                  </ListItemText>
+                                </MenuItem>
+                              </Menu>
+                            )}
                         </TableCell>
                       )}
                     </TableRow>
@@ -1724,6 +1858,36 @@ const StudentsTable = () => {
             autoFocus
           >
             Confirm {newStatus ? "Activation" : "Deactivation"}
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCancelDelete} // This handler closes the dialog without taking action
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to permanently delete{" "}
+            <strong style={{ color: "red" }}>{selectedStudent?.Name}</strong>?
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          {/* This button cancels the action */}
+          <MuiButton onClick={handleCancelDelete} color="primary">
+            Cancel
+          </MuiButton>
+
+          {/* This button confirms the action and calls your function */}
+          <MuiButton
+            onClick={handleConfirmDelete} // Call the handleConfirmDelete function here
+            color="error"
+            autoFocus
+          >
+            Delete
           </MuiButton>
         </DialogActions>
       </Dialog>

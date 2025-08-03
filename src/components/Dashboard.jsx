@@ -48,7 +48,11 @@ import {
   fetchDemoClasses,
 } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
-import { getGreetingInfo,getRecentEmployeeActivity,getRecentStudentActivity } from "../mockdata/function";
+import {
+  getGreetingInfo,
+  getRecentEmployeeActivity,
+  getRecentStudentActivity,
+} from "../mockdata/function";
 const Dashboard = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -174,9 +178,9 @@ const Dashboard = () => {
     ? "Chemistry"
     : null;
   const currentUserFaculty = user?.name || "Unknown Faculty";
- const processedStudentActivity = getRecentStudentActivity(students);
-    const processedEmployeeActivity = getRecentEmployeeActivity(employees);
-    console.log("processedStudentActivity",processedStudentActivity)
+  const processedStudentActivity = getRecentStudentActivity(students);
+  const processedEmployeeActivity = getRecentEmployeeActivity(employees);
+  console.log("processedStudentActivity", processedStudentActivity);
   // ADDED: Helper function to show the MUI Snackbar
   const showSnackbar = useCallback((message, severity) => {
     setSnackbarMessage(message);
@@ -532,6 +536,9 @@ const Dashboard = () => {
         "User has no specific subject permissions (isPhysics, isChemistry) and not AllowAll. Displaying no students."
       );
     }
+    filteredStudents = filteredStudents.filter(
+      (student) => student.isActive === true
+    );
   }
   const allTimetables = [...(timetables || []), ...(autoTimetables || [])];
 
@@ -660,7 +667,7 @@ const Dashboard = () => {
   const demoMetrics = getDemoClassMetrics(filteredDemoClasses);
 
   return (
-<div className="dashboard-container">
+    <div className="dashboard-container">
       {/* Snackbar for alerts */}
       <Snackbar
         open={snackbarOpen}
@@ -678,9 +685,13 @@ const Dashboard = () => {
       </Snackbar>
 
       {/* Greeting Header */}
-      <div className={`dashboard-card dashboard-header ${greetingInfo.className}`}>
-        <div className="header-background-graphic"
-          style={{ backgroundImage: `url(${greetingInfo.imageUrl})` }}>
+      <div
+        className={`dashboard-card dashboard-header ${greetingInfo.className}`}
+      >
+        <div
+          className="header-background-graphic"
+          style={{ backgroundImage: `url(${greetingInfo.imageUrl})` }}
+        >
           <div className="background-overlay"></div>
         </div>
         <div className="header-content-wrapper">
@@ -716,7 +727,7 @@ const Dashboard = () => {
             <FaUsers />
           </div>
           <div className="metric-info">
-            <p className="metric-label">Total Students</p>
+            <p className="metric-label">Total Students (Active)</p>
             <p className="metric-value">{totalStudents}</p>
           </div>
         </div>
@@ -844,7 +855,7 @@ const Dashboard = () => {
           </div>
           <div className="activity-list">
             {processedStudentActivity?.length > 0 ? (
-             processedStudentActivity.slice(0, 5).map((student, index) => (
+              processedStudentActivity.slice(0, 5).map((student, index) => (
                 <div key={student.id || index} className="activity-item">
                   <span className="activity-icon student-icon">
                     <FaUserGraduate />
@@ -884,8 +895,12 @@ const Dashboard = () => {
                     <p className="activity-message">
                       <span className="activity-user">{employee.name}</span>'s
                       salary is
-                      <strong className={`payment-status status-${employee.paid ? 'paid' : 'unpaid'}`}>
-                        {employee.paid ? ' Paid' : ' Unpaid'}
+                      <strong
+                        className={`payment-status status-${
+                          employee.paid ? "paid" : "unpaid"
+                        }`}
+                      >
+                        {employee.paid ? " Paid" : " Unpaid"}
                       </strong>
                     </p>
                     <span className="activity-time">
