@@ -180,7 +180,6 @@ const Dashboard = () => {
   const currentUserFaculty = user?.name || "Unknown Faculty";
   const processedStudentActivity = getRecentStudentActivity(students);
   const processedEmployeeActivity = getRecentEmployeeActivity(employees);
-  console.log("processedStudentActivity", processedStudentActivity);
   // ADDED: Helper function to show the MUI Snackbar
   const showSnackbar = useCallback((message, severity) => {
     setSnackbarMessage(message);

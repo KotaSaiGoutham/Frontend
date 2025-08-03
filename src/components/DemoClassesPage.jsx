@@ -96,8 +96,10 @@ const DemoClassesPage = () => {
     dispatch(updateDemoClassStatus(demoId, newStatus));
   };
 
-  const handleEdit = (student) => {
-  navigate("/add-student", { state: { studentData: student } });
+ const handleEdit = (student) => {
+  navigate("/add-student", {
+    state: { studentData: student, isDemo: true }
+  });
 };
 
 

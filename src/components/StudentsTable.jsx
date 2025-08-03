@@ -1757,7 +1757,7 @@ const StudentsTable = () => {
                                   onClick={() => {
                                     handleClose();
                                     navigate("/add-student", {
-                                      state: { studentData: selectedStudent },
+                                      state: { studentData: selectedStudent ,studentDataEdit:true },
                                     });
                                   }}
                                 >

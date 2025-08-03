@@ -33,7 +33,11 @@ import {
   dayOptions,
 } from "../mockdata/Options";
 import { useDispatch, useSelector } from "react-redux";
-import { addStudent, clearAddStudentStatus,updateStudent } from "../redux/actions"; // Import updateStudent action
+import {
+  addStudent,
+  clearAddStudentStatus,
+  updateStudent,
+} from "../redux/actions"; // Import updateStudent action
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -44,28 +48,57 @@ const AddStudent = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { state } = useLocation();
-  const passedStudentData = state?.studentData;
-  console.log("state",state)
 
-  const initialStudentData = useRef({
-    Name: "",
-    Gender: "",
-    ContactNumber: "",
-    MotherContactNumber: "",
-    FatherContactNumber: "",
-    Subject: user.isPhysics ? "Physics" : user.isChemistry ? "Chemistry" : "",
-    "Monthly Fee": "",
-    "Payment Status": "Unpaid",
-    Stream: "",
-    College: "",
-    "Group ": "",
-    Source: "",
-    Year: "",
-    classDateandTime: [],
-    isActive: true,
-  });
+  // 1. Destructure the data from the location state.
+  // Use a different variable name for clarity.
+  const { studentData: passedStudentData, isDemo } = state || {};
+  console.log("passedStudentData",passedStudentData)
+ // This is the core mapping logic
+  const mapDemoToStudent = (demoData) => {
+    return {
+      Name: demoData.studentName || "",
+      Gender: demoData.gender || "",
+      ContactNumber: demoData.contactNo || "",
+      Subject: user.isPhysics ? "Physics" : user.isChemistry ? "Chemistry" : "",
+      "Monthly Fee": "", // Demo students don't have a fee, so we leave it empty
+      "Payment Status": "Unpaid",
+      Stream: demoData.course || "",
+      College: demoData.collegeName || "",
+      "Group ": "",
+      Source: demoData.source || "",
+      Year: demoData.year || "",
+      classDateandTime: [], // You can handle this differently if needed
+      isActive: true,
+      id: demoData.id,
+    };
+  };
 
-  const [studentData, setStudentData] = useState(initialStudentData.current);
+  // Determine the initial data based on the source
+  let initialData = {};
+  if (passedStudentData) {
+    initialData = isDemo ? mapDemoToStudent(passedStudentData) : passedStudentData;
+  } else {
+    initialData = {
+      Name: "",
+      Gender: "",
+      ContactNumber: "",
+      MotherContactNumber: "",
+      FatherContactNumber: "",
+      Subject: user.isPhysics ? "Physics" : user.isChemistry ? "Chemistry" : "",
+      "Monthly Fee": "",
+      "Payment Status": "Unpaid",
+      Stream: "",
+      College: "",
+      "Group ": "",
+      Source: "",
+      Year: "",
+      classDateandTime: [],
+      isActive: true,
+    };
+  }
+
+  // 3. Initialize the state directly, checking for passed data.
+  const [studentData, setStudentData] = useState(initialData);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -75,38 +108,9 @@ const AddStudent = () => {
   const [timeSlotError, setTimeSlotError] = useState("");
 
   const { addingStudent } = useSelector((state) => state.students);
-  const isEditMode = !!studentData.id;
+  
+  const isEditMode = !!(initialData && initialData.id); // Correctly determines edit mode from initial data
 
-  useEffect(() => {
-  if (passedStudentData) {
-    const mappedData = {
-      id: passedStudentData.id || "",
-      Name: passedStudentData.Name || "",
-      Gender: passedStudentData.Gender || "",
-      ContactNumber: passedStudentData.ContactNumber || "",
-      MotherContactNumber: passedStudentData.MotherContactNumber || "",
-      FatherContactNumber: passedStudentData.FatherContactNumber || "",
-      // This ensures the Subject from the student data is used,
-      // but falls back to user permissions if it's not present.
-      Subject: passedStudentData.Subject || (user.isPhysics ? "Physics" : user.isChemistry ? "Chemistry" : ""),
-      "Monthly Fee": passedStudentData["Monthly Fee"] || "",
-      "Payment Status": passedStudentData["Payment Status"] || "Unpaid",
-      Stream: passedStudentData.Stream || "",
-      College: passedStudentData.College || "",
-      "Group ": passedStudentData["Group "] || "",
-      Source: passedStudentData.Source || "",
-      Year: passedStudentData.Year || "",
-      classDateandTime: passedStudentData.classDateandTime || [],
-      isActive:
-        passedStudentData.isActive !== undefined
-          ? passedStudentData.isActive
-          : true,
-    };
-
-    initialStudentData.current = mappedData;
-    setStudentData(mappedData);
-  }
-}, [passedStudentData, user]);
 
   useEffect(() => {
     return () => {
@@ -140,6 +144,7 @@ const AddStudent = () => {
     });
   };
 
+
   const handleAddTimeSlot = () => {
     try {
       if (!newTimeSlotDay || !newTimeSlotTime) {
@@ -155,14 +160,14 @@ const AddStudent = () => {
       }
 
       const newSlot = `${newTimeSlotDay}-${newTimeSlotTime.toLowerCase()}`;
-      if (studentData.classDateandTime.includes(newSlot)) {
+      if (studentData?.classDateandTime?.includes(newSlot)) {
         setTimeSlotError("This time slot already exists.");
         return;
       }
 
       setStudentData((prevData) => ({
         ...prevData,
-        classDateandTime: [...prevData.classDateandTime, newSlot],
+        classDateandTime: [...prevData?.classDateandTime, newSlot],
       }));
 
       setNewTimeSlotDay("");
@@ -177,7 +182,7 @@ const AddStudent = () => {
   const handleRemoveTimeSlot = (slotToRemove) => {
     setStudentData((prevData) => ({
       ...prevData,
-      classDateandTime: prevData.classDateandTime.filter(
+      classDateandTime: prevData?.classDateandTime.filter(
         (slot) => slot !== slotToRemove
       ),
     }));
@@ -206,7 +211,7 @@ const AddStudent = () => {
     }
 
     // Validation for time slots - at least one required for new student
-    if (!isEditMode && studentData.classDateandTime.length === 0) {
+    if (!isEditMode && studentData?.classDateandTime.length === 0) {
       setSnackbarSeverity("error");
       setSnackbarMessage("Please add at least one class time slot.");
       setSnackbarOpen(true);
@@ -226,14 +231,14 @@ const AddStudent = () => {
       return;
     }
 
-    try {
+     try {
       if (isEditMode) {
-        // Dispatch the updateStudent action
         await dispatch(updateStudent(studentData.id, studentData));
         setSnackbarSeverity("success");
         setSnackbarMessage("Student updated successfully!");
       } else {
-        const dataToSubmit = { ...studentData, isActive: true };
+        // This handles both new student and converting a demo student
+        const dataToSubmit = { ...studentData, isActive: true, isDemo: false };
         await dispatch(addStudent(dataToSubmit));
         setSnackbarSeverity("success");
         setSnackbarMessage("Student added successfully!");
@@ -241,7 +246,7 @@ const AddStudent = () => {
       setSnackbarOpen(true);
 
       // Clear the form after a successful submission
-      setStudentData(initialStudentData.current);
+      setStudentData(defaultStudentData);
       setNewTimeSlotDay("");
       setNewTimeSlotTime("");
 
@@ -282,7 +287,7 @@ const AddStudent = () => {
 
   const showSubjectColumn = user?.AllowAll;
   const timeSlotRefs = useRef({});
-  studentData.classDateandTime.forEach((slot, index) => {
+  studentData?.classDateandTime?.forEach((slot, index) => {
     const key = `${slot}-${index}`;
     if (!timeSlotRefs.current[key]) {
       timeSlotRefs.current[key] = React.createRef();
@@ -435,9 +440,7 @@ const AddStudent = () => {
           </div>
 
           {/* Time Slot Section */}
-          <div className="add-student-form-section-title">
-            Classes Schedule
-          </div>
+          <div className="add-student-form-section-title">Classes Schedule</div>
           <div className="add-student-form-grid time-slot-inputs">
             <MuiSelect
               label="Day"
@@ -475,11 +478,13 @@ const AddStudent = () => {
           </div>
 
           <div className="current-time-slots-wrapper">
-            {studentData.classDateandTime.length > 0 ? (
+            {studentData?.classDateandTime?.length > 0 ? (
               <>
-                <p className="current-slots-heading">Current Scheduled Slots:</p>
+                <p className="current-slots-heading">
+                  Current Scheduled Slots:
+                </p>
                 <TransitionGroup component="ul" className="time-slot-list">
-                  {studentData.classDateandTime.map((slot, index) => {
+                  {studentData?.classDateandTime?.map((slot, index) => {
                     const key = `${slot}-${index}`;
                     const nodeRef = timeSlotRefs.current[key];
 
@@ -516,7 +521,12 @@ const AddStudent = () => {
               className="add-student-primary-button"
               disabled={addingStudent}
             >
-              <FaPlus /> {addingStudent ? "Adding Student..." : isEditMode ? "Update Student" : "Add Student"}
+              <FaPlus />{" "}
+              {addingStudent
+                ? "Adding Student..."
+                : isEditMode
+                ? "Update Student"
+                : "Add Student"}
             </button>
             <button
               type="button"
