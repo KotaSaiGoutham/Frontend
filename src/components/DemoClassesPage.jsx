@@ -13,10 +13,21 @@ import {
   CircularProgress,
   Alert,
   Slide,
-  Button as MuiButton, // Renamed to MuiButton to avoid conflict with react-icons/fa
+  Button as MuiButton,
   FormGroup,
   FormControlLabel,
   Checkbox,
+  Tooltip,
+  IconButton,
+  Menu, // Import Menu
+  MenuItem, // Import MenuItem
+  ListItemIcon, // Import ListItemIcon
+  ListItemText, // Import ListItemText
+  Dialog, // Import Dialog for confirmation
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import {
   FaChalkboardTeacher,
@@ -27,20 +38,26 @@ import {
   FaCalendarCheck,
   FaSearchDollar,
   FaPlus,
-  FaArrowRight, // NEW: Icon for "Move to Students" button
+  FaArrowRight,
+  FaEdit,
+  FaTrashAlt,
+  FaEllipsisV, // Import the ellipsis icon
 } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { streamOptions, yearOptions, statusOptions } from "../mockdata/Options";
 
-// Import your existing MuiInput and MuiDatePicker
 import {
   MuiInput,
   MuiDatePicker,
   MuiSelect,
 } from "./customcomponents/MuiCustomFormFields";
 
-import TableStatusSelect from "./customcomponents/TableStatusSelect"; // Your specialized status select
-import { fetchDemoClasses, updateDemoClassStatus } from "../redux/actions";
+import TableStatusSelect from "./customcomponents/TableStatusSelect";
+import {
+  fetchDemoClasses,
+  updateDemoClassStatus,
+  deleteDemoClass,
+} from "../redux/actions";
 
 const DemoClassesPage = () => {
   const dispatch = useDispatch();
@@ -51,6 +68,7 @@ const DemoClassesPage = () => {
   );
   const { user, loading: userLoading } = useSelector((state) => state.auth);
 
+  // State for filters
   const [filters, setFilters] = useState({
     studentName: "",
     course: "",
@@ -59,6 +77,7 @@ const DemoClassesPage = () => {
     collegeName: "",
   });
 
+  // State for column visibility
   const [columnVisibility, setColumnVisibility] = useState({
     sNo: true,
     studentName: true,
@@ -69,13 +88,33 @@ const DemoClassesPage = () => {
     collegeName: false,
     demoDate: true,
     status: true,
-    // NEW: Add visibility for the "Move to Students" column
     moveToStudents: true,
+    actions: true,
   });
+
+  // State for the actions menu
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedDemo, setSelectedDemo] = useState(null);
+  const open = Boolean(anchorEl);
+
+  // State for the delete confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchDemoClasses());
   }, [dispatch]);
+
+  // Handler for opening the actions menu
+  const handleClick = (event, demo) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedDemo(demo);
+  };
+
+  // Handler for closing the actions menu
+  const handleClose = () => {
+    setAnchorEl(null);
+    setSelectedDemo(null);
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -96,12 +135,41 @@ const DemoClassesPage = () => {
     dispatch(updateDemoClassStatus(demoId, newStatus));
   };
 
- const handleEdit = (student) => {
-  navigate("/add-student", {
-    state: { studentData: student, isDemo: true }
-  });
+  const handleMoveToStudents = (student) => {
+    navigate("/add-student", {
+      state: { studentData: student, isDemo: true },
+    });
+  };
+
+  // Handler to open the delete confirmation dialog
+  const handleDeleteClick = (demo) => {
+    setSelectedDemo(demo);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Handler to confirm deletion
+ const handleConfirmDelete = () => {
+  if (selectedDemo) {
+    // Dispatch the delete action
+    dispatch(deleteDemoClass(selectedDemo.id))
+      .then(() => {
+        // After a successful deletion, dispatch the fetch action
+        dispatch(fetchDemoClasses());
+      })
+      .catch((error) => {
+        // You might want to handle errors here, e.g., show an error message
+        console.error("Failed to delete demo class:", error);
+      });
+  }
+  setIsDeleteDialogOpen(false);
+  handleClose();
 };
 
+  // Handler to cancel deletion
+  const handleCancelDelete = () => {
+    setIsDeleteDialogOpen(false);
+    handleClose();
+  };
 
   const filteredDemoClasses = demoClasses.filter((demo) => {
     return (
@@ -139,7 +207,7 @@ const DemoClassesPage = () => {
         gap: 3,
       }}
     >
-      {/* Header Section (unchanged) */}
+      {/* ... (Your header and filter section are unchanged) ... */}
       <Slide
         direction="down"
         in={true}
@@ -199,100 +267,6 @@ const DemoClassesPage = () => {
         </Paper>
       </Slide>
 
-      {/* <Slide
-        direction="right"
-        in={true}
-        mountOnEnter
-        unmountOnExit
-        timeout={600}
-      >
-        <Paper elevation={6} sx={{ p: 3, borderRadius: "12px" }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              mb: 3,
-              flexWrap: "wrap",
-              gap: 2,
-            }}
-          >
-            <Typography
-              variant="h5"
-              component="h2"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                color: "#292551",
-                fontWeight: 600,
-              }}
-            >
-              <FaSearch
-                style={{
-                  marginRight: "10px",
-                  fontSize: "1.8rem",
-                  color: "#1976d2",
-                }}
-              />{" "}
-              Filter Demo Classes
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(3, 1fr)",
-                lg: "repeat(4, 1fr)",
-              },
-              gap: 2,
-            }}
-          >
-            <MuiInput
-              label="Student Name"
-              name="studentName"
-              value={filters.studentName}
-              onChange={handleFilterChange}
-              placeholder="Search by student name..."
-              icon={FaUserCircle}
-            />
-            <MuiSelect
-              label="Course"
-              name="course"
-              value={filters.course}
-              onChange={handleFilterChange}
-              options={streamOptions}
-              icon={FaChalkboardTeacher}
-            />
-            <MuiSelect
-              label="Status"
-              name="status"
-              value={filters.status}
-              onChange={handleFilterChange}
-              options={statusOptions}
-              icon={FaCalendarCheck}
-            />
-            <MuiSelect
-              label="Year"
-              name="year"
-              value={filters.year}
-              onChange={handleFilterChange}
-              options={yearOptions}
-              icon={FaCalendarCheck}
-            />
-            <MuiInput
-              label="College Name"
-              name="collegeName"
-              value={filters.collegeName}
-              onChange={handleFilterChange}
-              placeholder="Search by college name..."
-              icon={FaUniversity}
-            />
-          </Box>
-        </Paper>
-      </Slide> */}
-
       <Paper
         elevation={6}
         sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
@@ -321,7 +295,7 @@ const DemoClassesPage = () => {
                     ? "College Name"
                     : key === "demoDate"
                     ? "Demo Date"
-                    : key === "moveToStudents" // NEW: Added label for new column
+                    : key === "moveToStudents"
                     ? "Move To Students"
                     : key
                         .replace(/([A-Z])/g, " $1")
@@ -332,7 +306,7 @@ const DemoClassesPage = () => {
           </FormGroup>
         </Box>
       </Paper>
-
+      
       {/* Demo Classes List Table */}
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
         <Paper
@@ -569,14 +543,13 @@ const DemoClassesPage = () => {
                         Status
                       </TableCell>
                     )}
-                    {/* NEW: Table header for "Move to Students" */}
                     {columnVisibility.moveToStudents && (
                       <TableCell
                         align="center"
                         sx={{
                           fontWeight: "bold",
                           whiteSpace: "nowrap",
-                          minWidth: 180, // Adjust minWidth as needed
+                          minWidth: 180,
                           p: 1.5,
                           textTransform: "uppercase",
                           fontSize: "0.9rem",
@@ -595,6 +568,22 @@ const DemoClassesPage = () => {
                           />
                           Move To Students
                         </Box>
+                      </TableCell>
+                    )}
+                    {columnVisibility.actions && (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          minWidth: 120,
+                          p: 1.5,
+                          textTransform: "uppercase",
+                          fontSize: "0.9rem",
+                          color: "#1a237e",
+                        }}
+                      >
+                        Actions
                       </TableCell>
                     )}
                   </TableRow>
@@ -720,7 +709,6 @@ const DemoClassesPage = () => {
                           />
                         </TableCell>
                       )}
-                      {/* NEW: Table cell for "Move to Students" button */}
                       {columnVisibility.moveToStudents && (
                         <TableCell
                           align="center"
@@ -730,17 +718,17 @@ const DemoClassesPage = () => {
                             minWidth: 180,
                           }}
                         >
-                          {demo.status === "Success" && (
+                          {demo.status === "Success" ? (
                             <MuiButton
                               variant="contained"
                               size="small"
                               startIcon={<FaArrowRight />}
-                              onClick={() => handleEdit(demo)}
+                              onClick={() => handleMoveToStudents(demo)}
                               sx={{
-                                bgcolor: "#28a745", // Green color for success action
+                                bgcolor: "#28a745",
                                 "&:hover": { bgcolor: "#218838" },
                                 borderRadius: "6px",
-                                textTransform: "none", // Prevent uppercase
+                                textTransform: "none",
                                 fontSize: "0.8rem",
                                 px: 1.5,
                                 py: 0.5,
@@ -748,8 +736,7 @@ const DemoClassesPage = () => {
                             >
                               Move
                             </MuiButton>
-                          )}
-                          {demo.status !== "Success" && (
+                          ) : (
                             <Typography
                               variant="caption"
                               color="text.secondary"
@@ -757,6 +744,78 @@ const DemoClassesPage = () => {
                               (Not Success)
                             </Typography>
                           )}
+                        </TableCell>
+                      )}
+                      {columnVisibility.actions && (
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            aria-label="more"
+                            aria-controls={
+                              open && selectedDemo?.id === demo.id
+                                ? "demo-actions-menu"
+                                : undefined
+                            }
+                            aria-haspopup="true"
+                            aria-expanded={
+                              open && selectedDemo?.id === demo.id
+                                ? "true"
+                                : undefined
+                            }
+                            onClick={(event) => handleClick(event, demo)}
+                          >
+                            <FaEllipsisV fontSize="small" />
+                          </IconButton>
+                          <Menu
+                            id="demo-actions-menu"
+                            anchorEl={anchorEl}
+                            open={open && selectedDemo?.id === demo.id}
+                            onClose={handleClose}
+                            elevation={0}
+                            sx={{
+                              "& .MuiPaper-root": {
+                                boxShadow: "none",
+                                border: "1px solid #d3d4d5",
+                              },
+                            }}
+                          >
+                            <MenuItem
+                              onClick={() => {
+                                handleClose();
+                                navigate("/add-demo-class", {
+                                  state: { demoToEdit: selectedDemo },
+                                });
+                              }}
+                            >
+                              <ListItemIcon>
+                                <FaEdit
+                                  fontSize="small"
+                                  color="primary"
+                                  style={{ color: "#1976d2" }}
+                                />
+                              </ListItemIcon>
+                              <ListItemText sx={{ color: "primary.main" }}>
+                                Edit
+                              </ListItemText>
+                            </MenuItem>
+
+                            <MenuItem
+                              onClick={() => {
+                                handleClose(); // Close the menu
+                                handleDeleteClick(selectedDemo); // Open the dialog
+                              }}
+                            >
+                              <ListItemIcon>
+                                <FaTrashAlt
+                                  fontSize="small"
+                                  style={{ color: "red" }}
+                                />
+                              </ListItemIcon>
+                              <ListItemText sx={{ color: "error.main" }}>
+                                Delete
+                              </ListItemText>
+                            </MenuItem>
+                          </Menu>
                         </TableCell>
                       )}
                     </TableRow>
@@ -771,6 +830,32 @@ const DemoClassesPage = () => {
           )}
         </Paper>
       </Slide>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={isDeleteDialogOpen}
+        onClose={handleCancelDelete}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Confirm Deletion"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete the demo class for{" "}
+            <span style={{ fontWeight: 'bold' }}>{selectedDemo?.studentName}</span>? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={handleCancelDelete} color="primary">
+            Cancel
+          </MuiButton>
+          <MuiButton onClick={handleConfirmDelete} color="error" autoFocus>
+            Delete
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

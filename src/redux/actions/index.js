@@ -89,14 +89,20 @@ import {
   UPDATE_STUDENT_FIELD_REQUEST,
   UPDATE_STUDENT_FIELD_SUCCESS,
   UPDATE_STUDENT_FIELD_FAILURE,
-    UPDATE_STUDENT_REQUEST,
+  UPDATE_STUDENT_REQUEST,
   UPDATE_STUDENT_SUCCESS,
   UPDATE_STUDENT_FAILURE,
-   DELETE_STUDENT_REQUEST,
+  DELETE_STUDENT_REQUEST,
   DELETE_STUDENT_SUCCESS,
   DELETE_STUDENT_FAILURE,
+  DELETE_DEMO_CLASS_REQUEST,
+  DELETE_DEMO_CLASS_SUCCESS,
+  DELETE_DEMO_CLASS_FAILURE,
+  UPDATE_DEMO_CLASS_REQUEST,
+  UPDATE_DEMO_CLASS_SUCCESS,
+  UPDATE_DEMO_CLASS_FAILURE,
 } from "../types";
-import dayjs from "dayjs";                 // ← added
+import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
 // --- 2. Import Utility Functions ---
 // Removed generateMockTimetableData from here as it's no longer used for fallback by actions
@@ -147,7 +153,12 @@ export const logoutUser = () => {
 };
 // In your Redux actions file
 
-export const updateStudentField = (studentId, fieldName, newValue, currentStudentsData) => {
+export const updateStudentField = (
+  studentId,
+  fieldName,
+  newValue,
+  currentStudentsData
+) => {
   // `currentStudentsData` is optional, might be useful for optimistic updates
   const updateData = { [fieldName]: newValue };
 
@@ -247,45 +258,43 @@ export const loginUser = ({ username, password }) =>
         // --- IMPORTANT: Adapt this part based on the ACTUAL backend response ---
         let userIdToStore = null;
         let userEmailToStore = null;
-        let userRoleToStore = data.role || 'unknown'; // Get role from response
+        let userRoleToStore = data.role || "unknown"; // Get role from response
         let userNameToStore = null;
         let isPhysics = false; // Default to false
         let isChemistry = false; // Default to false
         let AllowAll = false; // Default to false
         const userDetailsFromResponse = data.data; // Assuming user details are under 'data'
 
-        if (userRoleToStore === 'student') {
-            userIdToStore = userDetailsFromResponse.ContactNumber; // Or _id if available
-            userEmailToStore = userDetailsFromResponse.ContactNumber; // Or a dedicated email field
-            userNameToStore = userDetailsFromResponse.Name;
-            // isPhysics, isChemistry, AllowAll from student response?
-            // They were null in the JWT from your sample student response.
-            // You need to decide if these flags come directly from the top level (data.isPhysics)
-            // or if they are properties within data.data, or determined by the 'role'
-            // For now, I'll assume they might be at the top level (data.isPhysics) if present,
-            // but if not, they'll remain false from defaults.
-            isPhysics = data.isPhysics || false;
-            isChemistry = data.isChemistry || false;
-            AllowAll = data.AllowAll || false;
-        } else if (userRoleToStore === 'faculty') {
-            // Assuming a faculty response would have different keys, e.g.:
-            userIdToStore = userDetailsFromResponse._id; // Example faculty ID
-            userEmailToStore = userDetailsFromResponse.email;
-            userNameToStore = userDetailsFromResponse.name;
-            isPhysics = data.isPhysics || false; // Assuming these are still at top level or set based on faculty
-            isChemistry = data.isChemistry || false;
-            AllowAll = data.AllowAll || false;
+        if (userRoleToStore === "student") {
+          userIdToStore = userDetailsFromResponse.ContactNumber; // Or _id if available
+          userEmailToStore = userDetailsFromResponse.ContactNumber; // Or a dedicated email field
+          userNameToStore = userDetailsFromResponse.Name;
+          // isPhysics, isChemistry, AllowAll from student response?
+          // They were null in the JWT from your sample student response.
+          // You need to decide if these flags come directly from the top level (data.isPhysics)
+          // or if they are properties within data.data, or determined by the 'role'
+          // For now, I'll assume they might be at the top level (data.isPhysics) if present,
+          // but if not, they'll remain false from defaults.
+          isPhysics = data.isPhysics || false;
+          isChemistry = data.isChemistry || false;
+          AllowAll = data.AllowAll || false;
+        } else if (userRoleToStore === "faculty") {
+          // Assuming a faculty response would have different keys, e.g.:
+          userIdToStore = userDetailsFromResponse._id; // Example faculty ID
+          userEmailToStore = userDetailsFromResponse.email;
+          userNameToStore = userDetailsFromResponse.name;
+          isPhysics = data.isPhysics || false; // Assuming these are still at top level or set based on faculty
+          isChemistry = data.isChemistry || false;
+          AllowAll = data.AllowAll || false;
 
-            localStorage.setItem("userRole", userRoleToStore);
-            localStorage.setItem("isPhysics", isPhysics);
-            localStorage.setItem("isChemistry", isChemistry);
-            localStorage.setItem("AllowAll", AllowAll);
-
+          localStorage.setItem("userRole", userRoleToStore);
+          localStorage.setItem("isPhysics", isPhysics);
+          localStorage.setItem("isChemistry", isChemistry);
+          localStorage.setItem("AllowAll", AllowAll);
         }
 
         localStorage.setItem("userId", userIdToStore);
         localStorage.setItem("userEmail", userEmailToStore);
-
 
         dispatch({
           type: LOGIN_SUCCESS,
@@ -301,7 +310,7 @@ export const loginUser = ({ username, password }) =>
               isChemistry: isChemistry,
               AllowAll: AllowAll,
               // Spread all other student/faculty data for the 'user' object in state
-              ...userDetailsFromResponse
+              ...userDetailsFromResponse,
             },
           },
         });
@@ -457,7 +466,7 @@ export const addStudent = (studentData) =>
     },
     authRequired: true,
   });
-  export const updateStudent = (studentId, studentData) =>
+export const updateStudent = (studentId, studentData) =>
   apiRequest({
     url: `/api/data/updateStudent/${studentId}`, // Note the studentId in the URL
     method: "PUT", // Or "PATCH", depending on your API
@@ -474,10 +483,13 @@ export const addStudent = (studentData) =>
     },
     onFailure: (error, dispatch) => {
       console.error("Error updating student:", error);
-      const errorMessage = error.error || error.message || "Failed to update student";
+      const errorMessage =
+        error.error || error.message || "Failed to update student";
       if (error.status === 401 || error.status === 403) {
         dispatch(
-          setAuthError("Authentication failed or session expired. Please log in again.")
+          setAuthError(
+            "Authentication failed or session expired. Please log in again."
+          )
         );
       }
       dispatch({
@@ -487,7 +499,7 @@ export const addStudent = (studentData) =>
     },
     authRequired: true,
   });
-  export const deleteStudent = (studentId) =>
+export const deleteStudent = (studentId) =>
   apiRequest({
     url: `/api/data/deleteStudent/${studentId}`,
     method: "DELETE",
@@ -502,10 +514,13 @@ export const addStudent = (studentData) =>
     },
     onFailure: (error, dispatch) => {
       console.error("Error deleting student:", error);
-      const errorMessage = error.error || error.message || "Failed to delete student";
+      const errorMessage =
+        error.error || error.message || "Failed to delete student";
       if (error.status === 401 || error.status === 403) {
         dispatch(
-          setAuthError("Authentication failed or session expired. Please log in again.")
+          setAuthError(
+            "Authentication failed or session expired. Please log in again."
+          )
         );
       }
       dispatch({
@@ -675,7 +690,7 @@ export const addTimetableEntry = (timetableData) =>
     },
     authRequired: true,
   });
-  export const updateTimetableEntry = (timetableData) =>
+export const updateTimetableEntry = (timetableData) =>
   apiRequest({
     url: "/api/data/updateTimetable",
     method: "POST",
@@ -693,9 +708,7 @@ export const addTimetableEntry = (timetableData) =>
       const errorMessage =
         error.error || error.message || "Failed to update timetable entry.";
       if (error.status === 401 || error.status === 403) {
-        dispatch(
-          setAuthError("Authentication failed. Please log in again.")
-        );
+        dispatch(setAuthError("Authentication failed. Please log in again."));
       }
       dispatch({
         type: ADD_TIMETABLE_FAILURE,
@@ -705,7 +718,6 @@ export const addTimetableEntry = (timetableData) =>
     authRequired: true,
   });
 
-
 // --------------------------------
 // studentsThunks.js
 // --------------------------------
@@ -713,7 +725,7 @@ export const updateClassesCompleted =
   (studentId, delta) => async (dispatch) => {
     // Build the FSA‑style action
     const apiAction = apiRequest({
-      url: `/api/data/students/${studentId}/classes`,   // drop the extra /api/data if you proxy
+      url: `/api/data/students/${studentId}/classes`, // drop the extra /api/data if you proxy
       method: "POST",
       data: { delta },
       authRequired: true,
@@ -724,7 +736,7 @@ export const updateClassesCompleted =
 
     // Wait for the middleware to resolve the deferred promise it
     // attached to meta.deferred
-    const updated = await apiAction.promise;   // ✔ server data here
+    const updated = await apiAction.promise; // ✔ server data here
 
     dispatch({
       type: UPDATE_STUDENT_CLASSES_SUCCESS,
@@ -736,11 +748,6 @@ export const updateClassesCompleted =
 
     return updated;
   };
-
-
-
-
-
 
 export const deleteTimetable = (timetableId) =>
   apiRequest({
@@ -862,7 +869,7 @@ export const addDemoClass = (demoClassData) =>
       });
       alert(`Failed to add demo class: ${errorMessage}`);
     },
-    authRequired:true, // Crucial as your backend routes are protected
+    authRequired: true, // Crucial as your backend routes are protected
   });
 
 // Action to Fetch Demo Classes
@@ -905,8 +912,69 @@ export const updateDemoClassStatus = (id, newStatus) =>
       console.error(`Error updating status for demo class ${id}:`, error);
       dispatch({
         type: UPDATE_DEMO_CLASS_STATUS_FAILURE,
-        payload: { error: error.message || "Failed to update demo class status" },
+        payload: {
+          error: error.message || "Failed to update demo class status",
+        },
       });
+    },
+  });
+export const deleteDemoClass = (demoId) =>
+  apiRequest({
+    url: `/api/data/democlasses/${demoId}`,
+    method: "DELETE",
+    onStart: DELETE_DEMO_CLASS_REQUEST,
+    onSuccess: (response, dispatch) => {
+      dispatch({
+        type: DELETE_DEMO_CLASS_SUCCESS,
+        payload: demoId, // Pass the ID of the deleted demo to update the state
+      });
+      console.log(`Demo class with ID ${demoId} deleted successfully.`);
+    },
+    onFailure: (error, dispatch) => {
+      console.error(`Error deleting demo class ${demoId}:`, error);
+      dispatch({
+        type: DELETE_DEMO_CLASS_FAILURE,
+        payload: { error: error.message || "Failed to delete demo class" },
+      });
+    },
+  });
+export const updateDemoClass = (demoData) =>
+  apiRequest({
+    url: `/api/data/democlasses/${demoData.id}`, // Endpoint for updating a specific demo class
+    method: "PATCH", // Use PATCH for partial updates, PUT would be for full replacement
+    data: demoData, // Send the entire updated data object
+    authRequired: true,
+
+    // ----- lifecycle handlers ---------------------------------------------
+    onStart: UPDATE_DEMO_CLASS_REQUEST,
+
+    onSuccess: (data, dispatch) => {
+      // Assuming your backend returns the updated demoClass object directly
+      dispatch({
+        type: UPDATE_DEMO_CLASS_SUCCESS,
+        payload: data, // The backend response should be the updated object
+      });
+
+      // Optionally, you might want to refetch the entire list to ensure consistency,
+      // especially if your local state management for updates is complex.
+      // dispatch(fetchDemoClasses());
+    },
+
+    onFailure: (error, dispatch) => {
+      console.error(`Error updating demo class ${demoData.id}:`, error);
+      dispatch({
+        type: UPDATE_DEMO_CLASS_FAILURE,
+        payload: {
+          error:
+            error?.error || error?.message || "Failed to update demo class",
+        },
+      });
+
+      // Handle authentication errors if needed
+      if (error?.status === 401 || error?.status === 403) {
+        // You might have a specific action for this, e.g.,
+        // dispatch(setAuthError("Session expired or unauthorized. Please log in again."));
+      }
     },
   });
 export const generateAndSaveTimetables = (timetablesToSave) =>
@@ -937,116 +1005,137 @@ export const generateAndSaveTimetables = (timetablesToSave) =>
     authRequired: true, // Assuming your timetable saving is a protected action
   });
 
-
-export const saveAutoGeneratedTimetables = (timetablesData) => apiRequest({
-  url: `/api/data/autoTimetables/saveBatch`, // New backend route
-  method: "POST",
-  data: timetablesData,
-  onStart: SAVE_AUTOGENERATED_TIMETABLES_REQUEST,
-  onSuccess: (data, dispatch) => {
-    dispatch({
-      type: SAVE_AUTOGENERATED_TIMETABLES_SUCCESS,
-      payload: data, // Backend might return the saved data or a success message
-    });
-    // After saving, re-fetch auto-timetables to update the UI with the newly saved ones
-    dispatch(fetchAutoTimetablesForToday());
-  },
-  onFailure: (error, dispatch) => {
-    console.error("Error saving auto-generated timetables:", error);
-    const errorMessage = error.error || error.message || "Failed to save auto-generated timetables.";
-    dispatch({
-      type: SAVE_AUTOGENERATED_TIMETABLES_FAILURE,
-      payload: { error: errorMessage },
-    });
-  },
-  authRequired: true,
-});
+export const saveAutoGeneratedTimetables = (timetablesData) =>
+  apiRequest({
+    url: `/api/data/autoTimetables/saveBatch`, // New backend route
+    method: "POST",
+    data: timetablesData,
+    onStart: SAVE_AUTOGENERATED_TIMETABLES_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: SAVE_AUTOGENERATED_TIMETABLES_SUCCESS,
+        payload: data, // Backend might return the saved data or a success message
+      });
+      // After saving, re-fetch auto-timetables to update the UI with the newly saved ones
+      dispatch(fetchAutoTimetablesForToday());
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error saving auto-generated timetables:", error);
+      const errorMessage =
+        error.error ||
+        error.message ||
+        "Failed to save auto-generated timetables.";
+      dispatch({
+        type: SAVE_AUTOGENERATED_TIMETABLES_FAILURE,
+        payload: { error: errorMessage },
+      });
+    },
+    authRequired: true,
+  });
 
 /**
  * Fetches auto-generated timetables for the current user and today's date.
  * This is crucial for the daily check.
  */
-export const fetchAutoTimetablesForToday = () => apiRequest({
-  url: `/api/data/autoTimetables/today`, // Backend will use current date and user ID
-  method: "GET",
-  onStart: FETCH_AUTOTIMETABLES_REQUEST,
-  onSuccess: (data, dispatch) => {
-    dispatch({
-      type: FETCH_AUTOTIMETABLES_SUCCESS,
-      payload: data, // Should be an array of auto-timetables for the day
-    });
-  },
-  onFailure: (error, dispatch) => {
-    console.error("Error fetching auto timetables:", error);
-    const errorMessage = error.error || error.message || "Failed to fetch auto timetables.";
-    // IMPORTANT: Check if the error is due to user not being logged in/auth issue
-    // If you explicitly check for user.uid in frontend and backend, this error should be less frequent
-    if (error.status === 401 || error.status === 403) {
-      dispatch(setAuthError("Authentication failed or session expired. Please log in again."));
-    }
-    dispatch({
-      type: FETCH_AUTOTIMETABLES_FAILURE,
-      payload: { error: errorMessage },
-    });
-  },
-  authRequired: true,
-});
+export const fetchAutoTimetablesForToday = () =>
+  apiRequest({
+    url: `/api/data/autoTimetables/today`, // Backend will use current date and user ID
+    method: "GET",
+    onStart: FETCH_AUTOTIMETABLES_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_AUTOTIMETABLES_SUCCESS,
+        payload: data, // Should be an array of auto-timetables for the day
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching auto timetables:", error);
+      const errorMessage =
+        error.error || error.message || "Failed to fetch auto timetables.";
+      // IMPORTANT: Check if the error is due to user not being logged in/auth issue
+      // If you explicitly check for user.uid in frontend and backend, this error should be less frequent
+      if (error.status === 401 || error.status === 403) {
+        dispatch(
+          setAuthError(
+            "Authentication failed or session expired. Please log in again."
+          )
+        );
+      }
+      dispatch({
+        type: FETCH_AUTOTIMETABLES_FAILURE,
+        payload: { error: errorMessage },
+      });
+    },
+    authRequired: true,
+  });
 
 /**
  * Updates an existing auto-generated timetable entry.
  * @param {Object} timetableData The updated timetable object. Must include 'id'.
  */
-export const updateAutoTimetableEntry = (timetableData) => apiRequest({
-  url: `/api/data/autoTimetables/update`, // New backend route
-  method: "POST", // Or PUT/PATCH if your API is RESTful
-  data: timetableData,
-  onStart: UPDATE_AUTOTIMETABLE_REQUEST,
-  onSuccess: (data, dispatch) => {
-    dispatch({
-      type: UPDATE_AUTOTIMETABLE_SUCCESS,
-      payload: data,
-    });
-    dispatch(fetchAutoTimetablesForToday()); // Re-fetch to update the list
-  },
-  onFailure: (error, dispatch) => {
-    console.error("Error updating auto-generated timetable entry:", error);
-    const errorMessage = error.error || error.message || "Failed to update auto-generated timetable entry.";
-    if (error.status === 401 || error.status === 403) {
-      dispatch(setAuthError("Authentication failed. Please log in again."));
-    }
-    dispatch({
-      type: UPDATE_AUTOTIMETABLE_FAILURE,
-      payload: { error: errorMessage },
-    });
-  },
-  authRequired: true,
-});
+export const updateAutoTimetableEntry = (timetableData) =>
+  apiRequest({
+    url: `/api/data/autoTimetables/update`, // New backend route
+    method: "POST", // Or PUT/PATCH if your API is RESTful
+    data: timetableData,
+    onStart: UPDATE_AUTOTIMETABLE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_AUTOTIMETABLE_SUCCESS,
+        payload: data,
+      });
+      dispatch(fetchAutoTimetablesForToday()); // Re-fetch to update the list
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error updating auto-generated timetable entry:", error);
+      const errorMessage =
+        error.error ||
+        error.message ||
+        "Failed to update auto-generated timetable entry.";
+      if (error.status === 401 || error.status === 403) {
+        dispatch(setAuthError("Authentication failed. Please log in again."));
+      }
+      dispatch({
+        type: UPDATE_AUTOTIMETABLE_FAILURE,
+        payload: { error: errorMessage },
+      });
+    },
+    authRequired: true,
+  });
 
 /**
  * Deletes an auto-generated timetable entry by its ID.
  * @param {string} timetableId The ID of the auto-timetable to delete.
  */
-export const deleteAutoTimetable = (timetableId) => apiRequest({
-  url: `/api/data/autoTimetables/${timetableId}`, // New backend route
-  method: "DELETE",
-  onStart: DELETE_AUTOTIMETABLE_REQUEST,
-  onSuccess: (data, dispatch) => {
-    dispatch({
-      type: DELETE_AUTOTIMETABLE_SUCCESS,
-      payload: timetableId,
-    });
-    dispatch(fetchAutoTimetablesForToday()); // Re-fetch to update the list
-  },
-  onFailure: (error, dispatch) => {
-    console.error("Error deleting auto-generated timetable entry:", error);
-    const errorMessage = error.error || error.message || "Failed to delete auto-generated timetable entry.";
-    if (error.status === 401 || error.status === 403) {
-      dispatch(setAuthError("Authentication failed or session expired. Please log in again."));
-    }
-    dispatch({
-      type: DELETE_AUTOTIMETABLE_FAILURE,
-      payload: { error: errorMessage },
-    });
-  },
-  authRequired: true,
-});
+export const deleteAutoTimetable = (timetableId) =>
+  apiRequest({
+    url: `/api/data/autoTimetables/${timetableId}`, // New backend route
+    method: "DELETE",
+    onStart: DELETE_AUTOTIMETABLE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: DELETE_AUTOTIMETABLE_SUCCESS,
+        payload: timetableId,
+      });
+      dispatch(fetchAutoTimetablesForToday()); // Re-fetch to update the list
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error deleting auto-generated timetable entry:", error);
+      const errorMessage =
+        error.error ||
+        error.message ||
+        "Failed to delete auto-generated timetable entry.";
+      if (error.status === 401 || error.status === 403) {
+        dispatch(
+          setAuthError(
+            "Authentication failed or session expired. Please log in again."
+          )
+        );
+      }
+      dispatch({
+        type: DELETE_AUTOTIMETABLE_FAILURE,
+        payload: { error: errorMessage },
+      });
+    },
+    authRequired: true,
+  });
