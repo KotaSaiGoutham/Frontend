@@ -172,6 +172,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: 10px;
+  justify-content: center;
 }
 h2 .card-icon {
   font-size: 1.2em;
