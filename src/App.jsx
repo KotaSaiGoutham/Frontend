@@ -44,7 +44,8 @@ import AuthLayout from "./layouts/AuthLayout";
 import AddDemoClassPage from "./components/AddDemoClassPage";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./components/customcomponents/theme";
-
+import AddExpenditure from "./components/AddExpenditure"
+import ExpenditureDashboard from "./components/ExpenditureDashboard"
 // A simple PrivateRoute component to protect routes
 // This component checks for a token in localStorage, you can also check Redux's isAuthenticated here
 const PrivateRoute = ({ children }) => {
@@ -91,9 +92,10 @@ function App() {
               {/* Individual protected routes inside the AuthLayout */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/students" element={<StudentsTable />} />
-              <Route path="/demo-classes" element={<DemoClassesPage />} /> 
-                            <Route path="/add-demo-class" element={<AddDemoClassPage />} /> {/* NEW ROUTE */}
-
+              <Route path="/demo-classes" element={<DemoClassesPage />} />
+              <Route path="/add-demo-class" element={<AddDemoClassPage />} /> {/* NEW ROUTE */}
+              <Route path="/add-expenditure" element={<AddExpenditure />} /> {/* NEW ROUTE */}
+              <Route path="/expenditure" element={<ExpenditureDashboard />} /> {/* NEW ROUTE */}
               <Route path="/student/:id" element={<StudentPortfolio />} />
               <Route path="/timetable" element={<TimetablePage />} />
               <Route path="/employees" element={<Employees />} />

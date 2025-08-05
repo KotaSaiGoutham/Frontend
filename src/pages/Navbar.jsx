@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logoutUser } from '../redux/actions';
+import { logoutUser } from "../redux/actions";
 import "./Navbar.css";
 
 const PROTECTED_BASE_PATHS = [
@@ -14,7 +14,9 @@ const PROTECTED_BASE_PATHS = [
   "/add-employee",
   "/add-timetable",
   "/demo-classes",
-  "/add-demo-class"
+  "/add-demo-class",
+  "/add-expenditure",
+  "/expenditure",
 ];
 
 const Navbar = () => {
@@ -22,7 +24,7 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
-  const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
   const handleLinkClick = () => {
     setMenuOpen(false);
@@ -36,10 +38,18 @@ const Navbar = () => {
       "/",
     ];
 
-    const isCurrentPathProtected = PROTECTED_BASE_PATHS.some(basePath => location.pathname.startsWith(basePath));
-    const isAuthRelatedPublicPage = AUTH_RELATED_PUBLIC_PAGES.includes(location.pathname);
+    const isCurrentPathProtected = PROTECTED_BASE_PATHS.some((basePath) =>
+      location.pathname.startsWith(basePath)
+    );
+    const isAuthRelatedPublicPage = AUTH_RELATED_PUBLIC_PAGES.includes(
+      location.pathname
+    );
 
-    if (isAuthenticated && !isCurrentPathProtected && !isAuthRelatedPublicPage) {
+    if (
+      isAuthenticated &&
+      !isCurrentPathProtected &&
+      !isAuthRelatedPublicPage
+    ) {
       dispatch(logoutUser());
     }
   }, [location.pathname, isAuthenticated, dispatch]);
@@ -47,12 +57,16 @@ const Navbar = () => {
   const handleLogoutClick = () => {
     dispatch(logoutUser());
     setMenuOpen(false);
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
     <header className="navbar">
-      <NavLink to="/" onClick={handleLinkClick} style={{ textDecoration: "none" }}>
+      <NavLink
+        to="/"
+        onClick={handleLinkClick}
+        style={{ textDecoration: "none" }}
+      >
         <div className="navbar-left">
           <img src="/spaceship.png" alt="Logo" className="logo" />
         </div>
@@ -67,26 +81,51 @@ const Navbar = () => {
       </div>
 
       <nav className={`navbar-right ${menuOpen ? "active" : ""}`}>
-        <NavLink to="/" onClick={handleLinkClick} exact activeClassName="active-link">
+        <NavLink
+          to="/"
+          onClick={handleLinkClick}
+          exact
+          activeClassName="active-link"
+        >
           Home
         </NavLink>
-        <NavLink to="/ai-summarizer" onClick={handleLinkClick} activeClassName="active-link">
+        <NavLink
+          to="/ai-summarizer"
+          onClick={handleLinkClick}
+          activeClassName="active-link"
+        >
           AI <span className="try-it-highlight">Try it!</span>
         </NavLink>
-        <NavLink to="/about" onClick={handleLinkClick} activeClassName="active-link">
+        <NavLink
+          to="/about"
+          onClick={handleLinkClick}
+          activeClassName="active-link"
+        >
           About Us
         </NavLink>
-        <NavLink to="/teachers" onClick={handleLinkClick} activeClassName="active-link">
+        <NavLink
+          to="/teachers"
+          onClick={handleLinkClick}
+          activeClassName="active-link"
+        >
           Faculty
         </NavLink>
-        <NavLink to="/careers" onClick={handleLinkClick} activeClassName="active-link">
+        <NavLink
+          to="/careers"
+          onClick={handleLinkClick}
+          activeClassName="active-link"
+        >
           Careers{" "}
         </NavLink>
         {/* Removed Blog Link as requested */}
         {/* <NavLink to="/blog" onClick={handleLinkClick} activeClassName="active-link">
           Blog{" "}
         </NavLink> */}
-        <NavLink to="/contact" onClick={handleLinkClick} activeClassName="active-link">
+        <NavLink
+          to="/contact"
+          onClick={handleLinkClick}
+          activeClassName="active-link"
+        >
           Contact Us
         </NavLink>
 
@@ -94,7 +133,12 @@ const Navbar = () => {
         {isAuthenticated ? (
           // If authenticated, show Dashboard and Logout
           <div className="auth-buttons">
-            <NavLink to="/dashboard" className="auth-btn" onClick={handleLinkClick} activeClassName="active-btn">
+            <NavLink
+              to="/dashboard"
+              className="auth-btn"
+              onClick={handleLinkClick}
+              activeClassName="active-btn"
+            >
               Dashboard
             </NavLink>
             <button onClick={handleLogoutClick} className="auth-btn logout-btn">
@@ -104,14 +148,29 @@ const Navbar = () => {
         ) : (
           // If not authenticated, show Sign Up, Login, AND Book Demo directly
           <div className="auth-buttons">
-            <NavLink to="/signup" className="auth-btn auth-secondary-btn" onClick={handleLinkClick} activeClassName="active-btn">
+            <NavLink
+              to="/signup"
+              className="auth-btn auth-secondary-btn"
+              onClick={handleLinkClick}
+              activeClassName="active-btn"
+            >
               Sign Up
             </NavLink>
-            <NavLink to="/login" className="auth-btn auth-secondary-btn" onClick={handleLinkClick} activeClassName="active-btn">
+            <NavLink
+              to="/login"
+              className="auth-btn auth-secondary-btn"
+              onClick={handleLinkClick}
+              activeClassName="active-btn"
+            >
               Login
             </NavLink>
             {/* Book Demo is still prominent CTA, potentially with a different class to distinguish its style */}
-            <NavLink to="/book-demo" className="book-btn demo-btn" onClick={handleLinkClick} activeClassName="active-btn">
+            <NavLink
+              to="/book-demo"
+              className="book-btn demo-btn"
+              onClick={handleLinkClick}
+              activeClassName="active-btn"
+            >
               Book Demo
             </NavLink>
           </div>

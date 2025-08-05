@@ -101,6 +101,15 @@ import {
   UPDATE_DEMO_CLASS_REQUEST,
   UPDATE_DEMO_CLASS_SUCCESS,
   UPDATE_DEMO_CLASS_FAILURE,
+  FETCH_EXPENDITURES_REQUEST,
+  FETCH_EXPENDITURES_SUCCESS,
+  FETCH_EXPENDITURES_FAILURE,
+  ADD_EXPENDITURE_REQUEST,
+  ADD_EXPENDITURE_SUCCESS,
+  ADD_EXPENDITURE_FAILURE,
+  DELETE_EXPENDITURE_REQUEST,
+  DELETE_EXPENDITURE_SUCCESS,
+  DELETE_EXPENDITURE_FAILURE,
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -1138,4 +1147,83 @@ export const deleteAutoTimetable = (timetableId) =>
       });
     },
     authRequired: true,
+  });
+export const fetchExpenditures = (year, month) =>
+  apiRequest({
+    url: `/api/expenditures?year=${year}&month=${month}`,
+    method: 'GET',
+    onStart: FETCH_EXPENDITURES_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_EXPENDITURES_SUCCESS,
+        payload: data,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching expenditures:", error);
+      dispatch({
+        type: FETCH_EXPENDITURES_FAILURE,
+        payload: { error: error.message || 'Failed to fetch expenditures' },
+      });
+    },
+        authRequired: true,
+
+  });
+
+/**
+ * Action to add a new expenditure.
+ * @param {object} expenditureData - The data for the new expenditure.
+ * @param {function} callback - A callback function to run on success (e.g., for navigation).
+ */
+export const addExpenditure = (expenditureData, callback) =>
+  apiRequest({
+    url: '/api/expenditures',
+    method: 'POST',
+    data: expenditureData,
+    onStart: ADD_EXPENDITURE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: ADD_EXPENDITURE_SUCCESS,
+        payload: data,
+      });
+      if (callback) callback(); // Execute the callback on success
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error adding expenditure:", error);
+      dispatch({
+        type: ADD_EXPENDITURE_FAILURE,
+        payload: { error: error.message || 'Failed to add expenditure' },
+      });
+      // Optionally, throw the error to be caught in the component
+      throw new Error(error.message || 'Failed to add expenditure');
+    },
+        authRequired: true,
+
+  });
+
+
+/**
+ * Action to delete an expenditure.
+ * @param {string} expenditureId - The ID of the expenditure to delete.
+ */
+export const deleteExpenditure = (expenditureId) =>
+  apiRequest({
+    url: `/api/expenditures/${expenditureId}`,
+    method: 'DELETE',
+    onStart: DELETE_EXPENDITURE_REQUEST,
+    onSuccess: (_, dispatch) => {
+      dispatch({
+        type: DELETE_EXPENDITURE_SUCCESS,
+        payload: expenditureId, // Send the ID to the reducer to filter the state
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error deleting expenditure:", error);
+      dispatch({
+        type: DELETE_EXPENDITURE_FAILURE,
+        payload: { error: error.message || 'Failed to delete expenditure' },
+      });
+    },
+        authRequired: true,
+
   });

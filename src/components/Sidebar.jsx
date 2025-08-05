@@ -15,7 +15,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { name: 'Demo Class', path: '/demo-classes', icon: <FaChalkboardTeacher /> }, 
 
         { name: 'Timetable', path: '/timetable', icon: <FaCalendarAlt /> },
-        { name: 'Employees', path: '/employees', icon: <FaMoneyBillAlt /> },
+        { name: 'Employees', path: '/employees', icon: <FaUsers  /> },
+                { name: 'Monthly Expenditure', path: '/expenditure', icon: <FaMoneyBillAlt /> },
+
+
     ];
 
     return (

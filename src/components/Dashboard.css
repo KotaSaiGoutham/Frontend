@@ -143,15 +143,25 @@
 .metric-icon-employee { background-color: var(--accent-color); }
 .metric-icon-classes { background-color: var(--success-color); }
 .metric-icon-fee { background-color: var(--warning-color); }
+
+
+.metric-icon-expenditure {
+  background-color: #f44336; /* Red */
+}
+
+.metric-icon-profit {
+  background-color: #2196f3; /* Blue */
+}
 .metric-info .metric-label {
   font-size: 0.9em;
   color: var(--secondary-color);
   margin-bottom: 4px;
 }
 .metric-info .metric-value {
-  font-size: 1.8em;
+  font-size: 1.5em;
   font-weight: 600;
   color: var(--text-dark);
+  text-align: center;
 }
 
 /* --- Main Content Grid --- */
