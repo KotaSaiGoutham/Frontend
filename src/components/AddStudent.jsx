@@ -246,7 +246,7 @@ const AddStudent = () => {
       setSnackbarOpen(true);
 
       // Clear the form after a successful submission
-      setStudentData(defaultStudentData);
+      setStudentData(initialData);
       setNewTimeSlotDay("");
       setNewTimeSlotTime("");
 

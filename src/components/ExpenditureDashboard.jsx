@@ -20,6 +20,11 @@ import {
   InputLabel,
   TableFooter,
   Button as MuiButton,
+  Snackbar,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from "@mui/material";
 import { BarChart, PieChart } from "@mui/x-charts";
 import {
@@ -31,139 +36,70 @@ import {
   FaRupeeSign,
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchStudents } from "../redux/actions";
+// Import your actions
+import {
+  fetchStudents,
+  fetchExpenditures,
+  deleteExpenditure,
+} from "../redux/actions";
 import "./ExpenditureDashboard.css";
-
-// Mock Data - Replace with API call
-const mockExpenditureData = [
-  {
-    id: "1",
-    date: "2025-07-05T00:00:00.000Z",
-    purpose: "Marketing",
-    work: "Bulk SMS",
-    amount: 9000,
-  },
-  {
-    id: "2",
-    date: "2025-07-05T00:00:00.000Z",
-    purpose: "Marketing",
-    work: "My Home Mangala Add",
-    amount: 2360,
-  },
-  {
-    id: "3",
-    date: "2025-07-01T00:00:00.000Z",
-    purpose: "Software",
-    work: "Zoom Online Tool",
-    amount: 1600,
-  },
-  {
-    id: "4",
-    date: "2025-07-01T00:00:00.000Z",
-    purpose: "Academics",
-    work: "Janardhan QP + Result",
-    amount: 1520,
-  },
-  {
-    id: "5",
-    date: "2025-07-10T00:00:00.000Z",
-    purpose: "Utilities",
-    work: "Electricity Bill",
-    amount: 4500,
-  },
-  {
-    id: "6",
-    date: "2025-07-15T00:00:00.000Z",
-    purpose: "Salary",
-    work: "Teacher A Salary",
-    amount: 25000,
-  },
-];
-
-const COLORS = [
-  "#0088FE",
-  "#00C49F",
-  "#FFBB28",
-  "#FF8042",
-  "#AF19FF",
-  "#FF1943",
-];
+import {
+  yearOptions,
+  monthOptions,
+  expenditureColors,
+} from "../mockdata/function";
 
 const ExpenditureDashboard = () => {
   const navigate = useNavigate();
-  const [expenditures, setExpenditures] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedDate, setSelectedDate] = useState({
-    month: new Date().getMonth() + 1, // 1-12
-    year: new Date().getFullYear(),
-  });
-
-  const {
-    students,
-    loading: studentsLoading,
-    error: studentsError,
-  } = useSelector((state) => state.students);
-  const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
-  let filteredStudents = [];
-  if (students && students.length > 0 && user) {
-    if (user.AllowAll) {
-      filteredStudents = students;
-    } else if (user.isPhysics) {
-      filteredStudents = students.filter(
-        (student) => student.Subject === "Physics"
-      );
-    } else if (user.isChemistry) {
-      filteredStudents = students.filter(
-        (student) => student.Subject === "Chemistry"
-      );
-    } else {
-      filteredStudents = [];
-      console.warn(
-        "User has no specific subject permissions (isPhysics, isChemistry) and not AllowAll. Displaying no students."
-      );
+  const [selectedDate, setSelectedDate] = useState({
+    month: new Date().getMonth() + 1, // 1-12 (Current Month)
+    year: new Date().getFullYear(), // Current Year
+  });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedExpenditure, setSelectedExpenditure] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+  // --- Get State from Redux Store ---
+  const confirmDelete = () => {
+    if (selectedExpenditure) {
+      dispatch(deleteExpenditure(selectedExpenditure.id));
+      setSnackbar({
+        open: true,
+        message: `Deleted: ${selectedExpenditure.purpose} (₹${selectedExpenditure.amount})`,
+        severity: "success",
+      });
     }
-    filteredStudents = filteredStudents.filter(
-      (student) => student.isActive === true
-    );
-  }
+    setDeleteDialogOpen(false);
+    setSelectedExpenditure(null);
+  };
 
-  const totalFeeCollection = useMemo(() => {
-    return filteredStudents.reduce((sum, student) => {
-      const paymentStatus = student["Payment Status"];
-      const monthlyFee =
-        typeof student.monthlyFee === "number"
-          ? student.monthlyFee
-          : parseFloat(student["Monthly Fee"]);
+  const { expenditures, loading, error,totalStudentPayments  } = useSelector(
+    (state) => state.expenditures
+  );
+  console.log("totalStudentPayments",totalStudentPayments)
 
-      if (paymentStatus === "Paid" && !isNaN(monthlyFee)) {
-        return sum + monthlyFee;
-      }
-      return sum;
-    }, 0);
-  }, [filteredStudents]);
+  const { students } = useSelector((state) => state.students);
+  const { user } = useSelector((state) => state.auth);
 
+  // --- Data Fetching Effect ---
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        dispatch(fetchStudents());
-        setExpenditures(mockExpenditureData);
-      } catch (err) {
-        setError(err.message || "Failed to fetch data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [selectedDate, dispatch]);
+    // Fetch expenditures for the selected month and year
+    dispatch(fetchExpenditures(selectedDate.year, selectedDate.month));
+
+    // Also fetch students data if needed for fee calculation
+    dispatch(fetchStudents());
+  }, [dispatch, selectedDate]); // Re-run when user changes the date
+
 
   const { totalExpenditure, chartData } = useMemo(() => {
-    const total = expenditures.reduce((sum, item) => sum + item.amount, 0);
+    if (!expenditures) return { totalExpenditure: 0, chartData: [] };
 
+    const total = expenditures.reduce((sum, item) => sum + item.amount, 0);
     const groupedData = expenditures.reduce((acc, item) => {
       const purpose = item.purpose || "Uncategorized";
       if (!acc[purpose]) {
@@ -179,33 +115,40 @@ const ExpenditureDashboard = () => {
     };
   }, [expenditures]);
 
-  const barChartData = useMemo(() => {
-    return [
+  const netProfit = totalStudentPayments - totalExpenditure;
+
+  // --- Chart Data Preparation ---
+  const barChartData = useMemo(
+    () => [
       {
         data: chartData.map((item) => item.amount),
         label: "Amount Spent",
         color: "#1976d2",
       },
-    ];
-  }, [chartData]);
+    ],
+    [chartData]
+  );
 
-  const pieChartData = useMemo(() => {
-    return chartData.map((item, index) => ({
-      id: index,
-      value: item.amount,
-      label: item.name,
-      color: COLORS[index % COLORS.length],
-    }));
-  }, [chartData]);
+  const pieChartData = useMemo(
+    () =>
+      chartData.map((item, index) => ({
+        id: index,
+        value: item.amount,
+        label: item.name,
+        color: expenditureColors[index % expenditureColors.length],
+      })),
+    [chartData]
+  );
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this expense?")) {
-      try {
-        setExpenditures(expenditures.filter((e) => e.id !== id));
-      } catch (err) {
-        alert("Failed to delete expense.");
-      }
-    }
+  // --- Handler Functions ---
+  const handleEdit = (expenditureToEdit) => {
+    // Navigate to the form, passing the expense data in the state
+    navigate("/add-expenditure", { state: { expenditureToEdit } });
+  };
+
+  const handleDelete = (expenditure) => {
+    setSelectedExpenditure(expenditure);
+    setDeleteDialogOpen(true);
   };
 
   const handleMonthChange = (e) => {
@@ -215,24 +158,6 @@ const ExpenditureDashboard = () => {
   const handleYearChange = (e) => {
     setSelectedDate((prev) => ({ ...prev, year: e.target.value }));
   };
-
-  const yearOptions = [2023, 2024, 2025, 2026];
-  const monthOptions = [
-    { value: 1, label: "January" },
-    { value: 2, label: "February" },
-    { value: 3, label: "March" },
-    { value: 4, label: "April" },
-    { value: 5, label: "May" },
-    { value: 6, label: "June" },
-    { value: 7, label: "July" },
-    { value: 8, label: "August" },
-    { value: 9, label: "September" },
-    { value: 10, label: "October" },
-    { value: 11, label: "November" },
-    { value: 12, label: "December" },
-  ];
-
-  const netProfit = totalFeeCollection - totalExpenditure;
 
   return (
     <Box sx={{ p: 3, backgroundColor: "#f4f6f8", minHeight: "100vh" }}>
@@ -295,6 +220,7 @@ const ExpenditureDashboard = () => {
         </Grid>
       </Paper>
 
+      {/* Conditional Rendering for Loading/Error states */}
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
           <CircularProgress />
@@ -303,7 +229,7 @@ const ExpenditureDashboard = () => {
         <Alert severity="error">{error}</Alert>
       ) : (
         <>
-          {/* Summary Card */}
+          {/* Summary Cards */}
           <div className="metrics-grid">
             <div className="dashboard-card metric-card fade-in-up">
               <div className="metric-icon metric-icon-fee">
@@ -312,7 +238,7 @@ const ExpenditureDashboard = () => {
               <div className="metric-info">
                 <p className="metric-label">Total Fee Collection</p>
                 <p className="metric-value">
-                  ₹{totalFeeCollection.toLocaleString("en-IN")}
+                  ₹{totalStudentPayments.toLocaleString("en-IN")}
                 </p>
               </div>
             </div>
@@ -345,15 +271,15 @@ const ExpenditureDashboard = () => {
             </div>
           </div>
 
-          {/* Charts Section - Equal and more space */}
+          {/* Charts Section */}
           <Grid
             container
             spacing={3}
-            sx={{ mb: 3,mt:5 }}
+            sx={{ mb: 3, mt: 5 }}
             justifyContent="space-evenly"
           >
             <Grid item xs={12} lg={6}>
-              <Paper elevation={3} sx={{ p: 2, borderRadius: 2, height: 500 }}>
+              <Paper elevation={3} sx={{ p: 2, borderRadius: 2, height: 380 }}>
                 <Typography variant="h6" color="primary" gutterBottom>
                   <FaChartBar /> Expenses by Category
                 </Typography>
@@ -366,14 +292,12 @@ const ExpenditureDashboard = () => {
                     },
                   ]}
                   series={barChartData}
-                  height={400}
-                  width={500}
-                  animation={true}
+                  height={300}
                 />
               </Paper>
             </Grid>
             <Grid item xs={12} lg={6}>
-              <Paper elevation={3} sx={{ p: 2, borderRadius: 2, height: 500 }}>
+              <Paper elevation={3} sx={{ p: 2, borderRadius: 2, height: 380 }}>
                 <Typography variant="h6" color="primary" gutterBottom>
                   <FaChartPie /> Expense Distribution
                 </Typography>
@@ -381,7 +305,7 @@ const ExpenditureDashboard = () => {
                   series={[
                     {
                       data: pieChartData,
-                      highlightScope: { fade: "global", highlight: "item" },
+                      highlightScope: { faded: "global", highlight: "item" },
                       faded: {
                         innerRadius: 30,
                         additionalRadius: -30,
@@ -389,8 +313,7 @@ const ExpenditureDashboard = () => {
                       },
                     },
                   ]}
-                  height={400}
-                  width={500}
+                  height={300}
                 />
               </Paper>
             </Grid>
@@ -423,12 +346,7 @@ const ExpenditureDashboard = () => {
                 {expenditures.map((row, index) => (
                   <TableRow
                     key={row.id}
-                    sx={{
-                      "&:hover": { backgroundColor: "#f5f5f5" },
-                      "&:nth-of-type(even)": {
-                        backgroundColor: "#fafafa",
-                      },
-                    }}
+                    sx={{ "&:hover": { backgroundColor: "#f5f5f5" } }}
                   >
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>
@@ -444,7 +362,7 @@ const ExpenditureDashboard = () => {
                         size="small"
                         color="primary"
                         sx={{ mx: 0.5 }}
-                        onClick={() => navigate(`/edit-expenditure/${row.id}`)}
+                        onClick={() => handleEdit(row)}
                       >
                         <FaEdit />
                       </IconButton>
@@ -452,7 +370,7 @@ const ExpenditureDashboard = () => {
                         size="small"
                         color="error"
                         sx={{ mx: 0.5 }}
-                        onClick={() => handleDelete(row.id)}
+                        onClick={() => handleDelete(row)}
                       >
                         <FaTrashAlt />
                       </IconButton>
@@ -486,6 +404,70 @@ const ExpenditureDashboard = () => {
           </TableContainer>
         </>
       )}
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          {selectedExpenditure && (
+            <>
+              <Typography>
+                Are you sure you want to delete this expenditure?
+              </Typography>
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  backgroundColor: "#f9f9f9",
+                  borderRadius: 2,
+                }}
+              >
+                <Typography>
+                  <strong>Date:</strong>{" "}
+                  {new Date(selectedExpenditure.date).toLocaleDateString(
+                    "en-GB"
+                  )}
+                </Typography>
+                <Typography>
+                  <strong>Purpose:</strong> {selectedExpenditure.purpose}
+                </Typography>
+                <Typography>
+                  <strong>Amount:</strong> ₹
+                  {selectedExpenditure.amount.toLocaleString("en-IN")}
+                </Typography>
+              </Box>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={() => setDeleteDialogOpen(false)} color="inherit">
+            Cancel
+          </MuiButton>
+          <MuiButton onClick={confirmDelete} color="error" variant="contained">
+            Delete
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{
+            width: "100%",
+            ...(snackbar.severity === "success" && { color: "#fff" }),
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

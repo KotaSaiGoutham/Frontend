@@ -110,6 +110,10 @@ import {
   DELETE_EXPENDITURE_REQUEST,
   DELETE_EXPENDITURE_SUCCESS,
   DELETE_EXPENDITURE_FAILURE,
+    UPDATE_EXPENDITURE_REQUEST,
+  UPDATE_EXPENDITURE_SUCCESS,
+  UPDATE_EXPENDITURE_FAILURE,
+  FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -1154,9 +1158,19 @@ export const fetchExpenditures = (year, month) =>
     method: 'GET',
     onStart: FETCH_EXPENDITURES_REQUEST,
     onSuccess: (data, dispatch) => {
+      // support both shapes
+      const expendituresArray = Array.isArray(data) ? data : (data.expenditures || []);
+      const totalStudentPayments =  data.totalStudentPayments
+
       dispatch({
         type: FETCH_EXPENDITURES_SUCCESS,
-        payload: data,
+        payload: expendituresArray,
+      });
+
+      // optional: separate action to store the sum
+      dispatch({
+        type: FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS,
+        payload: totalStudentPayments,
       });
     },
     onFailure: (error, dispatch) => {
@@ -1166,9 +1180,9 @@ export const fetchExpenditures = (year, month) =>
         payload: { error: error.message || 'Failed to fetch expenditures' },
       });
     },
-        authRequired: true,
-
+    authRequired: true,
   });
+
 
 /**
  * Action to add a new expenditure.
@@ -1226,4 +1240,24 @@ export const deleteExpenditure = (expenditureId) =>
     },
         authRequired: true,
 
+  });
+  export const updateExpenditure = (expenditureId, expenditureData) =>
+  apiRequest({
+    url: `/api/expenditures/${expenditureId}`,
+    method: 'PUT', // Use PUT for updates
+    data: expenditureData,
+    onStart: UPDATE_EXPENDITURE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_EXPENDITURE_SUCCESS,
+        payload: data, // The API should return the updated object
+      });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPDATE_EXPENDITURE_FAILURE,
+        payload: { error: error.message || 'Failed to update expenditure' },
+      });
+      throw new Error(error.message || 'Failed to update expenditure');
+    },
   });
