@@ -58,7 +58,7 @@ import {
   updateDemoClassStatus,
   deleteDemoClass,
 } from "../redux/actions";
-
+import { ActionButtons } from "./customcomponents/TableStatusSelect";
 const DemoClassesPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -207,6 +207,65 @@ const DemoClassesPage = () => {
         gap: 3,
       }}
     >
+        <Slide
+        direction="down"
+        in={true}
+        mountOnEnter
+        unmountOnExit
+        timeout={500}
+      >
+        <Paper
+          elevation={6}
+          sx={{
+            p: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 2,
+            borderRadius: "12px",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <FaChalkboardTeacher
+              style={{
+                marginRight: "15px",
+                fontSize: "2.5rem",
+                color: "#1976d2",
+              }}
+            />
+            <Box>
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
+              >
+                Demo Classes Overview
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Manage and filter your demo class records.
+              </Typography>
+            </Box>
+          </Box>
+          <MuiButton
+            variant="contained"
+            startIcon={<FaPlus />}
+            onClick={() => navigate("/add-demo-class")}
+            sx={{
+              bgcolor: "#1976d2",
+              "&:hover": { bgcolor: "#1565c0" },
+              borderRadius: "8px",
+              px: 3,
+              py: 1.2,
+              minWidth: "180px",
+              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            Add New Demo Class
+          </MuiButton>
+        </Paper>
+      </Slide>
+
            <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
         <Paper
           elevation={6}
@@ -418,78 +477,27 @@ const DemoClassesPage = () => {
                           )}
                         </TableCell>
                       )}
-                      {columnVisibility.actions && (
-                        <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            aria-label="more"
-                            aria-controls={
-                              open && selectedDemo?.id === demo.id
-                                ? "demo-actions-menu"
-                                : undefined
-                            }
-                            aria-haspopup="true"
-                            aria-expanded={
-                              open && selectedDemo?.id === demo.id
-                                ? "true"
-                                : undefined
-                            }
-                            onClick={(event) => handleClick(event, demo)}
-                          >
-                            <FaEllipsisV fontSize="small" />
-                          </IconButton>
-                          <Menu
-                            id="demo-actions-menu"
-                            anchorEl={anchorEl}
-                            open={open && selectedDemo?.id === demo.id}
-                            onClose={handleClose}
-                            elevation={0}
-                            sx={{
-                              "& .MuiPaper-root": {
-                                boxShadow: "none",
-                                border: "1px solid #d3d4d5",
-                              },
-                            }}
-                          >
-                            <MenuItem
-                              onClick={() => {
-                                handleClose();
-                                navigate("/add-demo-class", {
-                                  state: { demoToEdit: selectedDemo },
-                                });
+                  {columnVisibility.actions && (
+     <TableCell align="center" sx={{ py: 1.5 }}>
+                            <Box
+                              sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 0.5,
                               }}
                             >
-                              <ListItemIcon>
-                                <FaEdit
-                                  fontSize="small"
-                                  color="primary"
-                                  style={{ color: "#1976d2" }}
-                                />
-                              </ListItemIcon>
-                              <ListItemText sx={{ color: "primary.main" }}>
-                                Edit
-                              </ListItemText>
-                            </MenuItem>
-
-                            <MenuItem
-                              onClick={() => {
-                                handleClose(); // Close the menu
-                                handleDeleteClick(selectedDemo); // Open the dialog
-                              }}
-                            >
-                              <ListItemIcon>
-                                <FaTrashAlt
-                                  fontSize="small"
-                                  style={{ color: "red" }}
-                                />
-                              </ListItemIcon>
-                              <ListItemText sx={{ color: "error.main" }}>
-                                Delete
-                              </ListItemText>
-                            </MenuItem>
-                          </Menu>
-                        </TableCell>
-                      )}
+    <ActionButtons 
+      onEdit={() => {
+        navigate("/add-demo-class", {
+          state: { demoToEdit: demo }
+        });
+      }}
+      onDelete={() => handleDeleteClick(demo)}
+      size="small"
+    />
+     </Box>
+  </TableCell>
+)}
                     </TableRow>
                   ))}
                 </TableBody>

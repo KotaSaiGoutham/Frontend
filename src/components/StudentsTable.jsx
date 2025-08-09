@@ -37,6 +37,7 @@ import {
   ListItemText,
   Button,
 } from "@mui/material";
+import { ActionButtons } from "./customcomponents/TableStatusSelect";
 // Import ALL necessary icons from react-icons/fa
 import { isRecentPayment } from "../mockdata/function";
 import {
@@ -1715,80 +1716,27 @@ const StudentsTable = () => {
                         </TableCell>
                       )}
                       {columnVisibility.actions && (
-                        <TableCell align="center">
-                          {/* The IconButton now passes the 'student' object to handleClick */}
-                          <IconButton
-                            size="small"
-                            aria-label="more"
-                            aria-controls={
-                              open && selectedStudent?.id === student.id
-                                ? "student-actions-menu"
-                                : undefined
-                            }
-                            aria-haspopup="true"
-                            aria-expanded={
-                              open && selectedStudent?.id === student.id
-                                ? "true"
-                                : undefined
-                            }
-                            onClick={(event) => handleClick(event, student)} // Pass the student object here
+                        <TableCell align="center" sx={{ py: 1.5 }}>
+                          <Box
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
                           >
-                            <FaEllipsisV fontSize="small" />
-                          </IconButton>
-
-                          {/* The Menu is only rendered once, but its `open` prop is conditional */}
-                          {selectedStudent &&
-                            selectedStudent.id === student.id && (
-                              <Menu
-                                id="student-actions-menu"
-                                anchorEl={anchorEl}
-                                open={open}
-                                onClose={handleClose}
-                                elevation={0}
-                                sx={{
-                                  "& .MuiPaper-root": {
-                                    boxShadow: "none",
-                                    border: "1px solid #d3d4d5",
+                            <ActionButtons
+                              onEdit={() => {
+                                navigate("/add-student", {
+                                  state: {
+                                    studentData: student,
+                                    studentDataEdit: true,
                                   },
-                                }}
-                              >
-                                {/* Edit MenuItem */}
-                                <MenuItem
-                                  onClick={() => {
-                                    handleClose();
-                                    navigate("/add-student", {
-                                      state: { studentData: selectedStudent ,studentDataEdit:true },
-                                    });
-                                  }}
-                                >
-                                  <ListItemIcon>
-                                    <FaEdit
-                                      fontSize="small"
-                                      color="primary"
-                                      style={{ color: "#1976d2" }}
-                                    />
-                                  </ListItemIcon>
-                                  <ListItemText sx={{ color: "primary.main" }}>
-                                    Edit
-                                  </ListItemText>
-                                </MenuItem>
-
-                                <MenuItem
-                                  onClick={() => handleDeleteClick(student)}
-                                >
-                                  {" "}
-                                  <ListItemIcon>
-                                    <FaTrashAlt
-                                      fontSize="small"
-                                      style={{ color: "red" }}
-                                    />
-                                  </ListItemIcon>
-                                  <ListItemText sx={{ color: "error.main" }}>
-                                    Delete
-                                  </ListItemText>
-                                </MenuItem>
-                              </Menu>
-                            )}
+                                });
+                              }}
+                              onDelete={() => handleDeleteClick(student)}
+                              size="small"
+                            />
+                          </Box>
                         </TableCell>
                       )}
                     </TableRow>

@@ -25,6 +25,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Tooltip,
+  Fade,
+  Divider 
 } from "@mui/material";
 import { BarChart, PieChart } from "@mui/x-charts";
 import {
@@ -48,6 +51,7 @@ import {
   monthOptions,
   expenditureColors,
 } from "../mockdata/function";
+import { ActionButtons } from "./customcomponents/TableStatusSelect";
 
 const ExpenditureDashboard = () => {
   const navigate = useNavigate();
@@ -238,7 +242,7 @@ const ExpenditureDashboard = () => {
               <div className="metric-info">
                 <p className="metric-label">Total Fee Collection</p>
                 <p className="metric-value">
-                  ₹{totalStudentPayments.toLocaleString("en-IN")}
+                  ₹{!!totalStudentPayments? totalStudentPayments.toLocaleString("en-IN"):0}
                 </p>
               </div>
             </div>
@@ -357,24 +361,16 @@ const ExpenditureDashboard = () => {
                     <TableCell align="right">
                       {row.amount.toLocaleString("en-IN")}
                     </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        sx={{ mx: 0.5 }}
-                        onClick={() => handleEdit(row)}
-                      >
-                        <FaEdit />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        sx={{ mx: 0.5 }}
-                        onClick={() => handleDelete(row)}
-                      >
-                        <FaTrashAlt />
-                      </IconButton>
-                    </TableCell>
+<TableCell align="center" sx={{ py: 1.5 }}>
+  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+    <ActionButtons 
+      onEdit={() => handleEdit(row)} 
+      onDelete={() => handleDelete(row)} 
+    />
+  </Box>
+</TableCell>
+
+
                   </TableRow>
                 ))}
               </TableBody>
