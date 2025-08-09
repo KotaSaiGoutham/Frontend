@@ -118,7 +118,7 @@ const StudentsTable = () => {
     fatherContact: false,
     monthlyFee: true,
     classesCompleted: true,
-    nextClass: false,
+    nextClass: true,
     paymentStatus: true,
     status: true, // New column for Active/Inactive status
     actions: true, // For action buttons
@@ -149,6 +149,11 @@ const StudentsTable = () => {
     loading: classesLoading, // Loading state for timetables
     error: classesError, // Error state for timetables
   } = useSelector((state) => state.classes);
+  const {
+    timetables: autoTimetables, // NEW: This will hold auto-generated timetables
+    loading: autoTimetablesLoading,
+  } = useSelector((state) => state.autoTimetables); // This is your NEW autoTimetables reducer
+
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [studentToUpdate, setStudentToUpdate] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
@@ -253,46 +258,44 @@ const StudentsTable = () => {
       setError(""); // Clear error if no errors from Redux
     }
   }, [studentsLoading, classesLoading, studentsError, classesError]); // Dependencies ensure this runs when relevant states change
-
-  // --- Effect to augment students with nextClass from timetables ---
-  // This effect runs when `students` or `timetables` data changes.
-  // It matches students with their earliest upcoming class from the timetables.
   useEffect(() => {
-    // Only proceed if both students and timetables data are available
-    if (!students.length || !timetables.length) {
-      setStudentsWithNextClass(students); // If data is missing, use raw students
+    // Wait until students are loaded
+    if (!students.length) {
       return;
     }
 
+    // If timetables are still loading, just wait
+    if (!timetables.length && !autoTimetables.length) {
+      return;
+    }
+
+    const combinedTimetables = [...timetables, ...autoTimetables];
+    console.log("combinedTimetables", combinedTimetables);
+
     const augmentedStudents = students.map((student) => {
-      // Filter timetables to find classes for the current student
-      const studentUpcomingClasses = timetables.filter(
-        // Case-insensitive comparison for student names
+      const studentUpcomingClasses = combinedTimetables.filter(
         (uc) => uc.Student?.toLowerCase() === student.Name?.toLowerCase()
       );
 
-      let soonestFutureClass = null; // To store the earliest upcoming class Date object
+      console.log("studentUpcomingClasses", studentUpcomingClasses);
+
+      let soonestFutureClass = null;
 
       studentUpcomingClasses.forEach((uc) => {
-        const datePart = uc.Day; // e.g., "06/07/2025"
-        // Extract time part (e.g., "11:00 PM" from "11:00 PM to 12:00 AM")
+        const datePart = uc.Day;
         const timePart = uc.Time?.split(" ")[0];
         const ampmPart = uc.Time?.split(" ")[1];
 
         if (datePart && timePart && ampmPart) {
           try {
-            // Combine date and time string for parsing
             const combinedDateTimeString = `${datePart} ${timePart} ${ampmPart}`;
-            // Parse the string into a Date object using the specified format
             const classDateTime = parse(
               combinedDateTimeString,
               "dd/MM/yyyy hh:mm a",
               new Date()
             );
 
-            // Check if the parsed class date/time is in the future
             if (isFuture(classDateTime)) {
-              // If it's the first future class found, or earlier than a previously found one
               if (!soonestFutureClass || classDateTime < soonestFutureClass) {
                 soonestFutureClass = classDateTime;
               }
@@ -308,12 +311,15 @@ const StudentsTable = () => {
 
       return {
         ...student,
-        nextClass: soonestFutureClass, // Add the earliest upcoming class Date object to the student
+        nextClass: soonestFutureClass,
       };
     });
 
     setStudentsWithNextClass(augmentedStudents);
-  }, [students, timetables]); // Re-run this effect when `students` or `timetables` change
+  }, [students, timetables, autoTimetables]);
+  console.log("students", students);
+  console.log("timetables", timetables);
+  console.log("autoTimetables", autoTimetables);
 
   useEffect(() => {
     let studentsToFilter = [...studentsWithNextClass]; // Start with augmented students
