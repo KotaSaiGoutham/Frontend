@@ -10,6 +10,7 @@ import {
   fetchWeeklyMarks,
   fetchPaymentHistory,
   fetchUpcomingClasses,
+  fetchAutoTimetablesForToday
 } from "../redux/actions";
 // Icon Imports
 import {
@@ -65,6 +66,10 @@ const StudentPortfolio = () => {
     loading: classesLoading,
     error: classesError,
   } = useSelector((state) => state.classes);
+  const {
+    timetables: autoTimetables, // NEW: This will hold auto-generated timetables
+    loading: autoTimetablesLoading,
+  } = useSelector((state) => state.autoTimetables); // This is your NEW autoTimetables reducer
   const [studentData, setStudentData] = useState(
     location.state?.studentData || null
   );
@@ -82,6 +87,7 @@ const StudentPortfolio = () => {
   useEffect(() => {
     dispatch(fetchWeeklyMarks(studentData?.id || studentId));
     dispatch(fetchUpcomingClasses());
+    dispatch(fetchAutoTimetablesForToday())
   }, []);
   const payments = useSelector((state) => state.payments.data);
 
@@ -145,9 +151,16 @@ const StudentPortfolio = () => {
 
   const { user } = useSelector((state) => state.auth);
   const feeAmount = studentData?.monthlyFee || 0;
-  const timelineEvents = [];
-if (timetables?.length > 0 && studentData?.Name) {
-  const matchingClasses = timetables
+const timelineEvents = [];
+
+if ((timetables?.length > 0 || autoTimetables?.length > 0) && studentData?.Name) {
+  // Merge both arrays
+  const combinedTimetables = [
+    ...(timetables || []),
+    ...(autoTimetables || []),
+  ];
+
+  const matchingClasses = combinedTimetables
     .filter((entry) => entry.Student === studentData.Name)
     .map((entry) => ({
       ...entry,
@@ -172,7 +185,6 @@ if (timetables?.length > 0 && studentData?.Name) {
     timelineEvents.push({
       type: "Next Class",
       label,
-      timestamp: formattedDate,
     });
   }
 }
@@ -432,7 +444,7 @@ if (weeklyMarks?.length > 0) {
           />
         )}
       </div>
-      <div style={{ width: "30%" }}>
+      <div style={{ width: "40%" }}>
         <TimeLineCard events={timelineEvents} />
       </div>
     </div>
@@ -487,42 +499,54 @@ const TimeLineCard = ({ events }) => {
   </h2>
   <ul className="timeline-list">
     {events.map((event, i) => {
-      const EventIcon = getEventIcon(event.label);
-      const subHeading =
-        event.type === "Marks"
-          ? "📊 Weekly Marks"
-          : event.type === "Class"
-          ? "📅 Upcoming Class"
-          : event.type === "Payment"
-          ? "💰 Payment"
-          : "🔔 Activity";
+  const EventIcon = getEventIcon(event.label);
+  const subHeading =
+    event.type === "Marks"
+      ? "📊 Weekly Marks"
+      : event.type === "Class"
+      ? "📅 Upcoming Class"
+      : event.type === "Payment"
+      ? "💰 Payment"
+      : "🔔 Activity";
 
-      const showTimestamp = event.type !== "Activity";
+  const showTimestamp = false;
 
-      return (
-        <li
-          key={i}
-          className="timeline-item"
-          style={{ animationDelay: `${i * 0.1}s` }}
-        >
-          <span
-            className="timeline-indicator"
-            style={{ backgroundColor: getIndicatorColor(event.label) }}
-          >
-            <EventIcon className="timeline-event-icon" />
-          </span>
-          <div className="timeline-content">
-            <div className="timeline-subheading">{subHeading}</div>
-            <div className="timeline-text">
-              {event.label}
-              {showTimestamp && (
-                <span className="timestamp-inline"> ({event.timestamp})</span>
-              )}
+  // Split label into individual lines (handles both array or \n string)
+  const labelLines = Array.isArray(event.label)
+    ? event.label
+    : event.label.split("\n");
+
+  return (
+    <li
+      key={i}
+      className="timeline-item"
+      style={{ animationDelay: `${i * 0.1}s` }}
+    >
+      <span
+        className="timeline-indicator"
+        style={{ backgroundColor: getIndicatorColor(event.label) }}
+      >
+        <EventIcon className="timeline-event-icon" />
+      </span>
+      <div className="timeline-content">
+        <div className="timeline-subheading">{subHeading}</div>
+
+        <div className="timeline-text">
+          {labelLines.map((line, idx) => (
+            <div key={idx} style={{ marginBottom: "4px", lineHeight: "1.4" }}>
+              {line}
             </div>
-          </div>
-        </li>
-      );
-    })}
+          ))}
+
+          {showTimestamp && (
+            <span className="timestamp-inline">({event.timestamp})</span>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+})}
+
   </ul>
 </section>
 
