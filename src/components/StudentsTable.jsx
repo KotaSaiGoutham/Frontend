@@ -92,6 +92,7 @@ import {
   fetchUpcomingClasses, // This action should fetch timetables
   toggleStudentActiveStatus,
   deleteStudent,
+  fetchAutoTimetablesForToday,
 } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
 // PDF Download Button component
@@ -195,12 +196,10 @@ const StudentsTable = () => {
   };
   // Dialog handlers
   const handleDeleteClick = (student) => {
-    console.log("student,student", student);
     setStudentToDelete(student);
     setOpenDeleteDialog(true);
   };
   const handleConfirmDelete = async () => {
-    console.log("studentToDelete", studentToDelete);
     if (studentToDelete) {
       try {
         // Dispatch the Redux action to delete the student
@@ -246,6 +245,8 @@ const StudentsTable = () => {
   useEffect(() => {
     dispatch(fetchStudents());
     dispatch(fetchUpcomingClasses());
+          dispatch(fetchAutoTimetablesForToday());
+    
   }, [dispatch]); // `dispatch` is stable, so this runs once.
 
   useEffect(() => {
@@ -270,14 +271,12 @@ const StudentsTable = () => {
     }
 
     const combinedTimetables = [...timetables, ...autoTimetables];
-    console.log("combinedTimetables", combinedTimetables);
 
     const augmentedStudents = students.map((student) => {
       const studentUpcomingClasses = combinedTimetables.filter(
         (uc) => uc.Student?.toLowerCase() === student.Name?.toLowerCase()
       );
 
-      console.log("studentUpcomingClasses", studentUpcomingClasses);
 
       let soonestFutureClass = null;
 
@@ -317,9 +316,7 @@ const StudentsTable = () => {
 
     setStudentsWithNextClass(augmentedStudents);
   }, [students, timetables, autoTimetables]);
-  console.log("students", students);
-  console.log("timetables", timetables);
-  console.log("autoTimetables", autoTimetables);
+
 
   useEffect(() => {
     let studentsToFilter = [...studentsWithNextClass]; // Start with augmented students
@@ -1622,7 +1619,7 @@ const StudentsTable = () => {
                         <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                           {student.nextClass
                             ? format(student.nextClass, "MMM dd, hh:mm a")
-                            : "N/A"}
+                            : "-"}
                         </TableCell>
                       )}
                       {columnVisibility.paymentStatus && (
