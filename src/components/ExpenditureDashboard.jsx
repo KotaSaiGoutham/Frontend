@@ -27,7 +27,7 @@ import {
   DialogTitle,
   Tooltip,
   Fade,
-  Divider 
+  Divider,
 } from "@mui/material";
 import { BarChart, PieChart } from "@mui/x-charts";
 import {
@@ -37,9 +37,9 @@ import {
   FaChartBar,
   FaChartPie,
   FaRupeeSign,
+  FaDownload, // <-- ADDED: Icon for the download button
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
-// Import your actions
 import {
   fetchStudents,
   fetchExpenditures,
@@ -52,14 +52,15 @@ import {
   expenditureColors,
 } from "../mockdata/function";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
+import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 
 const ExpenditureDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const [selectedDate, setSelectedDate] = useState({
-    month: new Date().getMonth() + 1, // 1-12 (Current Month)
-    year: new Date().getFullYear(), // Current Year
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedExpenditure, setSelectedExpenditure] = useState(null);
@@ -68,7 +69,7 @@ const ExpenditureDashboard = () => {
     message: "",
     severity: "success",
   });
-  // --- Get State from Redux Store ---
+
   const confirmDelete = () => {
     if (selectedExpenditure) {
       dispatch(deleteExpenditure(selectedExpenditure.id));
@@ -82,27 +83,20 @@ const ExpenditureDashboard = () => {
     setSelectedExpenditure(null);
   };
 
-  const { expenditures, loading, error,totalStudentPayments  } = useSelector(
+  const { expenditures, loading, error, totalStudentPayments } = useSelector(
     (state) => state.expenditures
   );
-  console.log("totalStudentPayments",totalStudentPayments)
 
   const { students } = useSelector((state) => state.students);
   const { user } = useSelector((state) => state.auth);
 
-  // --- Data Fetching Effect ---
   useEffect(() => {
-    // Fetch expenditures for the selected month and year
     dispatch(fetchExpenditures(selectedDate.year, selectedDate.month));
-
-    // Also fetch students data if needed for fee calculation
     dispatch(fetchStudents());
-  }, [dispatch, selectedDate]); // Re-run when user changes the date
-
+  }, [dispatch, selectedDate]);
 
   const { totalExpenditure, chartData } = useMemo(() => {
     if (!expenditures) return { totalExpenditure: 0, chartData: [] };
-
     const total = expenditures.reduce((sum, item) => sum + item.amount, 0);
     const groupedData = expenditures.reduce((acc, item) => {
       const purpose = item.purpose || "Uncategorized";
@@ -121,7 +115,6 @@ const ExpenditureDashboard = () => {
 
   const netProfit = totalStudentPayments - totalExpenditure;
 
-  // --- Chart Data Preparation ---
   const barChartData = useMemo(
     () => [
       {
@@ -144,9 +137,58 @@ const ExpenditureDashboard = () => {
     [chartData]
   );
 
-  // --- Handler Functions ---
+  // --- ADDED: Helper functions to prepare data for the PDF ---
+  const getPdfTitle = () => {
+    const monthName =
+      monthOptions.find((m) => m.value === selectedDate.month)?.label || "";
+    // This title format matches the one in your sample image
+    return `${user.name} Expenditure - ${monthName.toUpperCase()} ${
+      selectedDate.year
+    }`;
+  };
+
+  const getPdfTableHeaders = () => {
+    const baseHeaders = [
+      "S. No",
+      "Purpose",
+      "Work / Details",
+      "Date",
+      "Amount",
+    ];
+
+    // Only add dummy column if we have totalExpenditure
+    if (typeof totalExpenditure === "number") {
+      return [...baseHeaders.slice(0, 4), "", baseHeaders[4]];
+    }
+    return baseHeaders;
+  };
+
+  const getPdfTableRows = () => {
+    if (!expenditures || expenditures.length === 0) return [];
+    return expenditures.map((row, index) => {
+      const baseRow = [
+        index + 1,
+        row.purpose,
+        row.work,
+        new Date(row.date).toLocaleDateString("en-GB"),
+        row.amount.toLocaleString("en-IN"),
+      ];
+
+      if (typeof totalExpenditure === "number") {
+        return [...baseRow.slice(0, 4), "", baseRow[4]];
+      }
+      return baseRow;
+    });
+  };
+
+  const getPdfFilename = () => {
+    const monthName =
+      monthOptions.find((m) => m.value === selectedDate.month)?.label ||
+      "Report";
+    return `${user.name}_Expenditure_${monthName}_${selectedDate.year}.pdf`;
+  };
+
   const handleEdit = (expenditureToEdit) => {
-    // Navigate to the form, passing the expense data in the state
     navigate("/add-expenditure", { state: { expenditureToEdit } });
   };
 
@@ -162,10 +204,9 @@ const ExpenditureDashboard = () => {
   const handleYearChange = (e) => {
     setSelectedDate((prev) => ({ ...prev, year: e.target.value }));
   };
-
+  console.log("totalExpenditure", totalExpenditure);
   return (
     <Box sx={{ p: 3, backgroundColor: "#f4f6f8", minHeight: "100vh" }}>
-      {/* Header and Controls */}
       <Paper
         elevation={3}
         sx={{ p: 3, mb: 4, borderRadius: 3, backgroundColor: "#ffffff" }}
@@ -175,18 +216,65 @@ const ExpenditureDashboard = () => {
           justifyContent="space-between"
           alignItems="center"
           flexWrap="wrap"
+          gap={2} // Added gap for better spacing
         >
           <Typography variant="h5" fontWeight="bold" color="primary.dark">
             📊 Monthly Expenditures
           </Typography>
-          <MuiButton
-            variant="contained"
-            startIcon={<FaPlus />}
-            sx={{ mt: { xs: 2, sm: 0 } }}
-            onClick={() => navigate("/add-expenditure")}
-          >
-            Add Expense
-          </MuiButton>
+          <Box display="flex" gap={2} flexWrap="wrap">
+            {" "}
+            {/* Container for buttons */}
+            <MuiButton
+              variant="contained"
+              startIcon={<FaPlus />}
+              onClick={() => navigate("/add-expenditure")}
+            >
+              Add Expense
+            </MuiButton>
+ <PdfDownloadButton
+  title={getPdfTitle()}
+  headers={getPdfTableHeaders()}
+  rows={getPdfTableRows()}
+  totalFee={totalExpenditure}
+  filename={getPdfFilename()}
+  disabled={!expenditures || expenditures.length === 0}
+  summaryBlock={{
+    totalFeeCollection: totalStudentPayments,
+    totalExpenditure,
+    netProfit,
+  }}
+  charts={[
+    {
+      chartData: {
+        labels: chartData.map((item) => item.name),
+        datasets: [
+          {
+            label: "Amount Spent",
+            data: chartData.map((item) => item.amount),
+            backgroundColor: expenditureColors.slice(0, chartData.length),
+          },
+        ],
+      },
+      chartOptions: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: "Where We Are Spending (₹)" },
+          datalabels: {
+            color: "#000",
+            anchor: "end",
+            align: "top",
+            formatter: (value) => `₹${value.toLocaleString("en-IN")}`,
+          },
+        },
+      },
+    },
+  ]}
+/>
+
+
+
+
+          </Box>
         </Box>
         <Grid container spacing={2} sx={{ mt: 2 }} alignItems="center">
           <Grid item xs={6} sm={3}>
@@ -224,7 +312,7 @@ const ExpenditureDashboard = () => {
         </Grid>
       </Paper>
 
-      {/* Conditional Rendering for Loading/Error states */}
+      {/* ... The rest of your component remains the same ... */}
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
           <CircularProgress />
@@ -242,7 +330,10 @@ const ExpenditureDashboard = () => {
               <div className="metric-info">
                 <p className="metric-label">Total Fee Collection</p>
                 <p className="metric-value">
-                  ₹{!!totalStudentPayments? totalStudentPayments.toLocaleString("en-IN"):0}
+                  ₹
+                  {!!totalStudentPayments
+                    ? totalStudentPayments.toLocaleString("en-IN")
+                    : 0}
                 </p>
               </div>
             </div>
@@ -361,16 +452,20 @@ const ExpenditureDashboard = () => {
                     <TableCell align="right">
                       {row.amount.toLocaleString("en-IN")}
                     </TableCell>
-<TableCell align="center" sx={{ py: 1.5 }}>
-  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-    <ActionButtons 
-      onEdit={() => handleEdit(row)} 
-      onDelete={() => handleDelete(row)} 
-    />
-  </Box>
-</TableCell>
-
-
+                    <TableCell align="center" sx={{ py: 1.5 }}>
+                      <Box
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                        }}
+                      >
+                        <ActionButtons
+                          onEdit={() => handleEdit(row)}
+                          onDelete={() => handleDelete(row)}
+                        />
+                      </Box>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

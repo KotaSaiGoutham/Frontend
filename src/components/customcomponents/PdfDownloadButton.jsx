@@ -1,10 +1,10 @@
 // PdfDownloadButton.jsx
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { MuiButton } from './MuiCustomFormFields';
-import logoPng from '/spaceship.png'; // Ensure this path is correct and accessible
+import React, { useState } from "react";
+import PropTypes from "prop-types";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import { MuiButton } from "./MuiCustomFormFields";
+import logoPng from "/spaceship.png"; // Ensure this path is correct and accessible
 
 // Chart.js + plugins (unchanged)
 import {
@@ -15,8 +15,8 @@ import {
   Tooltip,
   Legend,
   Title as ChartTitle,
-} from 'chart.js';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
+} from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 
 ChartJS.register(
@@ -26,40 +26,45 @@ ChartJS.register(
   Tooltip,
   Legend,
   ChartTitle,
-  ChartDataLabels,
+  ChartDataLabels
 );
 
 export default function PdfDownloadButton({
   title,
-  subtitle = '',
+  subtitle = "",
   headers,
   rows,
   summaryRow = null,
-  filename = 'report.pdf',
-  buttonLabel = 'Download PDF',
+  filename = "report.pdf",
+  buttonLabel = "Download PDF",
   buttonProps = {},
   reportDate = new Date(),
-  companyName = 'Electron Academy',
-  companyAddress = 'KPHB, Hyderabad',
-  companyContact = 'electronacademy.2019@gmail.com | +91 8341482438',
+  companyName = "Electron Academy",
+  companyAddress = "KPHB, Hyderabad",
+  companyContact = "electronacademy.2019@gmail.com | +91 8341482438",
   studentData = null,
   charts = [],
   disabled,
   totalHours = null, // Expecting a number
-  totalFee = null,   // Expecting a number
+  totalFee = null, // Expecting a number
+  summaryBlock = null, // 👈 ADD THIS
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleClick = async () => {
     if (!headers?.length || !rows?.length) {
-      alert('No data for PDF table. Cannot generate report.');
+      alert("No data for PDF table. Cannot generate report.");
       return;
     }
 
     setIsGenerating(true);
 
     try {
-      const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
+      const doc = new jsPDF({
+        unit: "pt",
+        format: "a4",
+        orientation: "landscape",
+      });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 40;
@@ -74,14 +79,14 @@ export default function PdfDownloadButton({
 
         // Determine if the full company header (logo, company details, main title/subtitle) should be shown
         // This should be shown if it's the first page OR if the report is NOT a 'Student_Report.pdf'
-const shouldShowFullCompanyHeader = isCurrentPageFirst;
+        const shouldShowFullCompanyHeader = isCurrentPageFirst;
 
         let currentHeaderContentBottomY = yCursor; // Tracks the lowest point of drawn header elements
 
         // --- Company Logo and Details (Conditional) ---
         if (shouldShowFullCompanyHeader) {
           try {
-            doc.addImage(logoPng, 'PNG', margin, yCursor, 100, 36); // logo size 100x36
+            doc.addImage(logoPng, "PNG", margin, yCursor, 100, 36); // logo size 100x36
           } catch {
             // ignore logo load failure
           }
@@ -90,21 +95,32 @@ const shouldShowFullCompanyHeader = isCurrentPageFirst;
           doc.text(companyName, margin, yCursor + 55); // Relative to logo/top
           doc.text(companyAddress, margin, yCursor + 68);
           doc.text(companyContact, margin, yCursor + 81);
-          currentHeaderContentBottomY = Math.max(currentHeaderContentBottomY, yCursor + 81); // Update based on company contact
+          currentHeaderContentBottomY = Math.max(
+            currentHeaderContentBottomY,
+            yCursor + 81
+          ); // Update based on company contact
         }
 
         // --- Title and Subtitle (Conditional, below logo/company details or at top if skipped) ---
         if (shouldShowFullCompanyHeader) {
           doc.setFontSize(24);
           doc.setTextColor(25, 118, 210);
-          doc.text(title, pageWidth / 2, yCursor + 25, { align: 'center' }); // Position relative to initial yCursor
-          currentHeaderContentBottomY = Math.max(currentHeaderContentBottomY, yCursor + 25);
+          doc.text(title, pageWidth / 2, yCursor + 25, { align: "center" }); // Position relative to initial yCursor
+          currentHeaderContentBottomY = Math.max(
+            currentHeaderContentBottomY,
+            yCursor + 25
+          );
 
           if (subtitle) {
             doc.setFontSize(14);
             doc.setTextColor(70, 70, 70);
-            doc.text(subtitle, pageWidth / 2, yCursor + 45, { align: 'center' });
-            currentHeaderContentBottomY = Math.max(currentHeaderContentBottomY, yCursor + 45);
+            doc.text(subtitle, pageWidth / 2, yCursor + 45, {
+              align: "center",
+            });
+            currentHeaderContentBottomY = Math.max(
+              currentHeaderContentBottomY,
+              yCursor + 45
+            );
           }
         }
 
@@ -113,21 +129,23 @@ const shouldShowFullCompanyHeader = isCurrentPageFirst;
         doc.setTextColor(70, 70, 70);
         let generatedDateY = yCursor + 25; // Default alignment for generated date (align with title if full header)
         if (!shouldShowFullCompanyHeader) {
-            generatedDateY = yCursor + 15; // Move up if no logo/title/subtitle
+          generatedDateY = yCursor + 15; // Move up if no logo/title/subtitle
         }
         doc.text(
-          `Generated: ${new Date(reportDate).toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
+          `Generated: ${new Date(reportDate).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
           })}`,
           pageWidth - margin,
           generatedDateY,
-          { align: 'right' },
+          { align: "right" }
         );
         // Ensure currentHeaderContentBottomY accounts for generatedDateY as well if it's the lowest.
-        currentHeaderContentBottomY = Math.max(currentHeaderContentBottomY, generatedDateY);
-
+        currentHeaderContentBottomY = Math.max(
+          currentHeaderContentBottomY,
+          generatedDateY
+        );
 
         // Add some vertical space before dynamic content like studentData
         let dynY = currentHeaderContentBottomY + 25; // Padding after the highest drawn static header element
@@ -136,9 +154,13 @@ const shouldShowFullCompanyHeader = isCurrentPageFirst;
         if (studentData) {
           doc.setFontSize(11);
           doc.setTextColor(0, 0, 0);
-          doc.text(`Student: ${studentData.Name || 'N/A'}`, margin, dynY);
-          doc.text(`Year: ${studentData.Year || 'N/A'}`, margin + 200, dynY);
-          doc.text(`Stream: ${studentData.Stream || 'N/A'}`, margin + 400, dynY);
+          doc.text(`Student: ${studentData.Name || "N/A"}`, margin, dynY);
+          doc.text(`Year: ${studentData.Year || "N/A"}`, margin + 200, dynY);
+          doc.text(
+            `Stream: ${studentData.Stream || "N/A"}`,
+            margin + 400,
+            dynY
+          );
           dynY += 15; // Move Y cursor down for the next line
         }
 
@@ -157,51 +179,122 @@ const shouldShowFullCompanyHeader = isCurrentPageFirst;
         const footerY = pageHeight - 30;
         doc.setFontSize(8);
         doc.setTextColor(70, 70, 70);
-        doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageWidth / 2, footerY, { align: 'center' });
+        doc.text(
+          `Page ${doc.internal.getNumberOfPages()}`,
+          pageWidth / 2,
+          footerY,
+          { align: "center" }
+        );
       };
 
-      // --- Initial Page Header & Footer ---
       drawHeader(true); // Draw header for the very first page
       drawFooter();
 
       /* -------------------------------------------------- TABLE */
-      const tableStartY = headerBottomY + 15; // 15pt padding below the horizontal rule
+      let tableStartY = headerBottomY + 15; // 15pt padding below the horizontal rule
       const bodyRows = [...rows]; // keep body normal
-const footerRow = headers.map((_, colIndex) => {
-  if (colIndex === 3) return 'Total:';
-  if (colIndex === 4 && typeof totalHours === 'number') {
-    return `${parseFloat(totalHours).toFixed(2)} hrs`;
-  }
-  if (colIndex === 5 && typeof totalFee === 'number') {
-    return `Rs. ${parseFloat(totalFee).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-  }
-  return '';
-});
+      const footerRow = headers.map((_, colIndex) => {
+        if (colIndex === 3) return "Total:";
+        if (colIndex === 4 && typeof totalHours === "number") {
+          return `${parseFloat(totalHours).toFixed(2)} hrs`;
+        }
+        if (colIndex === 5 && typeof totalFee === "number") {
+          return `Rs. ${parseFloat(totalFee).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+          })}`;
+        }
+        return "";
+      });
+      // --- SUMMARY BLOCK ---
+      // --- SUMMARY BLOCK ---
+      if (summaryBlock) {
+        const boxMarginTop = 30;
+        const boxPadding = 20;
+        const boxHeight = 55; // slightly taller for better spacing
+        const boxWidth = pageWidth - margin * 2;
+        const boxY = headerBottomY + boxMarginTop;
 
+        // Title
+        doc.setFontSize(16);
+        doc.setTextColor(25, 118, 210);
+        doc.setFont("helvetica", "bold");
+        doc.text("Summary :", margin, boxY);
 
+        // Background
+        doc.setFillColor(230, 240, 255); // light blue background
+        doc.roundedRect(margin, boxY + 10, boxWidth, boxHeight, 8, 8, "F");
 
+        // Value styling
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+
+        const leftX = margin + boxPadding;
+        const midX = pageWidth / 3;
+        const rightX = (pageWidth / 3) * 2;
+        const valueY = boxY + 40;
+
+        // Fee Collection
+        doc.setTextColor(54, 162, 235); // blue
+        doc.text(
+          `Total Fee Collection: Rs. ${summaryBlock.totalFeeCollection.toLocaleString(
+            "en-IN"
+          )}`,
+          leftX,
+          valueY
+        );
+
+        // Expenditure
+        doc.setTextColor(255, 99, 132); // red/pink
+        doc.text(
+          `Total Expenditure: Rs. ${summaryBlock.totalExpenditure.toLocaleString(
+            "en-IN"
+          )}`,
+          midX,
+          valueY
+        );
+
+        // Net Profit/Loss
+        if (summaryBlock.netProfit >= 0) {
+          doc.setTextColor(75, 192, 192); // green for profit
+        } else {
+          doc.setTextColor(255, 159, 64); // orange for loss
+        }
+        doc.text(
+          `Net Profit/Loss: Rs. ${summaryBlock.netProfit.toLocaleString(
+            "en-IN"
+          )}`,
+          rightX,
+          valueY
+        );
+
+        // Push table start position with extra gap
+        headerBottomY = boxY + boxHeight + 30; // extra 30px gap
+      }
+
+      // ✅ Now set tableStartY after summary
+      tableStartY = headerBottomY;
 
       autoTable(doc, {
         head: [headers],
         body: bodyRows,
-          foot: [footerRow], // 👈 add footer here
-          footStyles: {
-    textColor: [255, 255, 255],
-       fillColor: [25, 118, 210],
-    fontStyle: 'bold',
-    fontSize: 10,
-    halign: 'center',
-  },
+        foot: [footerRow], // 👈 add footer here
+        footStyles: {
+          textColor: [255, 255, 255],
+          fillColor: [25, 118, 210],
+          fontStyle: "bold",
+          fontSize: 10,
+          halign: "center",
+        },
         startY: tableStartY,
-        theme: 'striped',
+        theme: "striped",
         margin: { left: margin, right: margin },
         headStyles: {
           textColor: 255,
           fillColor: [25, 118, 210],
-          fontStyle: 'bold',
+          fontStyle: "bold",
           fontSize: 10,
-          halign: 'center',
-          valign: 'middle',
+          halign: "center",
+          valign: "middle",
           lineWidth: 0.5,
           lineColor: [220, 220, 220],
           cellPadding: 8,
@@ -209,31 +302,32 @@ const footerRow = headers.map((_, colIndex) => {
         bodyStyles: {
           textColor: [70, 70, 70],
           fontSize: 9,
-          valign: 'top',
+          valign: "top",
           lineWidth: 0.2,
           lineColor: [220, 220, 220],
           cellPadding: 6,
-          halign: 'center',
+          halign: "center",
         },
         alternateRowStyles: { fillColor: [240, 240, 240] },
         didParseCell: ({ section, row, cell }) => {
-          if (summaryRow && section === 'body' && row.index === 0) {
+          if (summaryRow && section === "body" && row.index === 0) {
             Object.assign(cell.styles, {
               fillColor: [200, 200, 200],
-              fontStyle: 'bold',
+              fontStyle: "bold",
               textColor: [0, 0, 0],
               fontSize: 10,
               cellPadding: 8,
-              halign: 'center',
+              halign: "center",
             });
           }
         },
         // --- This is where headers are redrawn for subsequent pages ---
         didDrawPage: (data) => {
-          // data.pageNumber is 1-indexed. If it's page 1, isCurrentPageFirst is true. Otherwise false.
-          const isCurrentPageFirst = data.pageNumber === 1;
-          drawHeader(isCurrentPageFirst); // Pass the correct page status
-          drawFooter();
+          if (data.pageNumber !== 1) {
+            // ✅ skip first page
+            drawHeader(false);
+            drawFooter();
+          }
         },
       });
 
@@ -257,41 +351,41 @@ const footerRow = headers.map((_, colIndex) => {
         const cfg = charts[i];
         if (!cfg?.chartData || !cfg?.chartOptions) continue;
 
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = chartW * scaleFactor;
         canvas.height = chartH * scaleFactor;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
 
         const opts = JSON.parse(JSON.stringify(cfg.chartOptions));
         const bumpFont = (objPath, fallback = 12) => {
-          const parts = objPath.split('.');
+          const parts = objPath.split(".");
           let ref = opts;
           for (const p of parts.slice(0, -1)) ref = ref?.[p] ?? {};
           const key = parts.at(-1);
           if (ref && ref[key]) ref[key] = (ref[key] || fallback) * 2;
         };
-        bumpFont('plugins.title.font.size', 14);
-        bumpFont('plugins.datalabels.font.size', 10);
-        bumpFont('scales.x.title.font.size', 12);
-        bumpFont('scales.y.title.font.size', 12);
-        bumpFont('scales.x.ticks.font.size', 10);
-        bumpFont('scales.y.ticks.font.size', 10);
+        bumpFont("plugins.title.font.size", 14);
+        bumpFont("plugins.datalabels.font.size", 10);
+        bumpFont("scales.x.title.font.size", 12);
+        bumpFont("scales.y.title.font.size", 12);
+        bumpFont("scales.x.ticks.font.size", 10);
+        bumpFont("scales.y.ticks.font.size", 10);
 
         opts.responsive = false;
         opts.maintainAspectRatio = false;
         opts.animation = false;
 
         const chart = new ChartJS(ctx, {
-          type: 'bar',
+          type: "bar",
           data: cfg.chartData,
           options: opts,
         });
 
-        await new Promise(r => setTimeout(r, 300));
-        const img = canvas.toDataURL('image/png', 1.0);
+        await new Promise((r) => setTimeout(r, 300));
+        const img = canvas.toDataURL("image/png", 1.0);
         chart.destroy();
 
-        doc.addImage(img, 'PNG', chartX, chartY, chartW, chartH);
+        doc.addImage(img, "PNG", chartX, chartY, chartW, chartH);
 
         if (i !== charts.length - 1) {
           doc.addPage();
@@ -301,21 +395,26 @@ const footerRow = headers.map((_, colIndex) => {
       }
 
       /* -------------------------------------------------- SAVE */
-      const safeTitle = title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_');
+      const safeTitle = title
+        .replace(/[^a-zA-Z0-9 ]/g, "")
+        .replace(/\s+/g, "_");
       const dateStr = new Date().toISOString().slice(0, 10);
-      const finalName = filename === 'report.pdf' ? `${safeTitle}_${dateStr}.pdf` : filename;
+      const finalName =
+        filename === "report.pdf" ? `${safeTitle}_${dateStr}.pdf` : filename;
       doc.save(finalName);
     } catch (err) {
-      console.error('PDF generation error', err);
-      alert('Failed to generate PDF: ' + err.message);
+      console.error("PDF generation error", err);
+      alert("Failed to generate PDF: " + err.message);
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-     <MuiButton
-     onClick={handleClick} disabled={isGenerating || disabled} {...buttonProps}
+    <MuiButton
+      onClick={handleClick}
+      disabled={isGenerating || disabled}
+      {...buttonProps}
       startIcon={<CloudDownloadIcon />}
       sx={{
         background: isGenerating
@@ -369,9 +468,14 @@ PdfDownloadButton.propTypes = {
     PropTypes.shape({
       chartData: PropTypes.object.isRequired,
       chartOptions: PropTypes.object.isRequired,
-    }),
+    })
   ),
-   disabled: PropTypes.bool,
+  disabled: PropTypes.bool,
   totalHours: PropTypes.number, // NEW PROP TYPE
-  totalFee: PropTypes.number,   // NEW PROP TYPE
+  totalFee: PropTypes.number, // NEW PROP TYPE
+  summaryBlock: PropTypes.shape({
+    totalFeeCollection: PropTypes.number.isRequired,
+    totalExpenditure: PropTypes.number.isRequired,
+    netProfit: PropTypes.number.isRequired,
+  }),
 };
