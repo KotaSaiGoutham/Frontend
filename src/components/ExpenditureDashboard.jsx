@@ -53,7 +53,7 @@ import {
 } from "../mockdata/function";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
-
+import MetricCard from "./customcomponents/MetricCard";
 const ExpenditureDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -205,6 +205,10 @@ const ExpenditureDashboard = () => {
     setSelectedDate((prev) => ({ ...prev, year: e.target.value }));
   };
   console.log("totalExpenditure", totalExpenditure);
+   let netProfitPercentage = 0;
+  if (totalStudentPayments > 0) {
+    netProfitPercentage = ((netProfit / totalStudentPayments) * 100).toFixed(2);
+  }
   return (
     <Box sx={{ p: 3, backgroundColor: "#f4f6f8", minHeight: "100vh" }}>
       <Paper
@@ -231,49 +235,52 @@ const ExpenditureDashboard = () => {
             >
               Add Expense
             </MuiButton>
- <PdfDownloadButton
-  title={getPdfTitle()}
-  headers={getPdfTableHeaders()}
-  rows={getPdfTableRows()}
-  totalFee={totalExpenditure}
-  filename={getPdfFilename()}
-  disabled={!expenditures || expenditures.length === 0}
-  summaryBlock={{
-    totalFeeCollection: totalStudentPayments,
-    totalExpenditure,
-    netProfit,
-  }}
-  charts={[
-    {
-      chartData: {
-        labels: chartData.map((item) => item.name),
-        datasets: [
-          {
-            label: "Amount Spent",
-            data: chartData.map((item) => item.amount),
-            backgroundColor: expenditureColors.slice(0, chartData.length),
-          },
-        ],
-      },
-      chartOptions: {
-        responsive: true,
-        plugins: {
-          title: { display: true, text: "Where We Are Spending (₹)" },
-          datalabels: {
-            color: "#000",
-            anchor: "end",
-            align: "top",
-            formatter: (value) => `₹${value.toLocaleString("en-IN")}`,
-          },
-        },
-      },
-    },
-  ]}
-/>
-
-
-
-
+            <PdfDownloadButton
+              title={getPdfTitle()}
+              headers={getPdfTableHeaders()}
+              rows={getPdfTableRows()}
+              totalFee={totalExpenditure}
+              filename={getPdfFilename()}
+              disabled={!expenditures || expenditures.length === 0}
+              summaryBlock={{
+                totalFeeCollection: totalStudentPayments,
+                totalExpenditure,
+                netProfit,
+              }}
+              charts={[
+                {
+                  chartData: {
+                    labels: chartData.map((item) => item.name),
+                    datasets: [
+                      {
+                        label: "Amount Spent",
+                        data: chartData.map((item) => item.amount),
+                        backgroundColor: expenditureColors.slice(
+                          0,
+                          chartData.length
+                        ),
+                      },
+                    ],
+                  },
+                  chartOptions: {
+                    responsive: true,
+                    plugins: {
+                      title: {
+                        display: true,
+                        text: "Where We Are Spending (₹)",
+                      },
+                      datalabels: {
+                        color: "#000",
+                        anchor: "end",
+                        align: "top",
+                        formatter: (value) =>
+                          `₹${value.toLocaleString("en-IN")}`,
+                      },
+                    },
+                  },
+                },
+              ]}
+            />
           </Box>
         </Box>
         <Grid container spacing={2} sx={{ mt: 2 }} alignItems="center">
@@ -321,50 +328,41 @@ const ExpenditureDashboard = () => {
         <Alert severity="error">{error}</Alert>
       ) : (
         <>
-          {/* Summary Cards */}
-          <div className="metrics-grid">
-            <div className="dashboard-card metric-card fade-in-up">
-              <div className="metric-icon metric-icon-fee">
-                <FaRupeeSign />
-              </div>
-              <div className="metric-info">
-                <p className="metric-label">Total Fee Collection</p>
-                <p className="metric-value">
-                  ₹
-                  {!!totalStudentPayments
-                    ? totalStudentPayments.toLocaleString("en-IN")
-                    : 0}
-                </p>
-              </div>
-            </div>
+     <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+        gap: "20px",
+        marginTop: "20px",
+      }}
+    >
+      <MetricCard
+        label="Total Fee Collection"
+        value={totalStudentPayments || 0}
+        gradient="linear-gradient(135deg, #e0e7ff, #c7d2fe)"
+        icon={<FaRupeeSign />}
+      />
 
-            <div className="dashboard-card metric-card fade-in-up delay-1">
-              <div className="metric-icon metric-icon-expenditure">
-                <FaRupeeSign />
-              </div>
-              <div className="metric-info">
-                <p className="metric-label">Total Expenditure</p>
-                <p className="metric-value">
-                  ₹{totalExpenditure.toLocaleString("en-IN")}
-                </p>
-              </div>
-            </div>
+      <MetricCard
+        label="Total Expenditure"
+        value={totalExpenditure}
+        gradient="linear-gradient(135deg, #fee2e2, #fecaca)"
+        icon={<FaRupeeSign />}
+      />
 
-            <div className="dashboard-card metric-card fade-in-up delay-2">
-              <div className="metric-icon metric-icon-profit">
-                <FaRupeeSign />
-              </div>
-              <div className="metric-info">
-                <p className="metric-label">Net Profit/Loss</p>
-                <p
-                  className="metric-value"
-                  style={{ color: netProfit >= 0 ? "green" : "red" }}
-                >
-                  ₹{netProfit.toLocaleString("en-IN")}
-                </p>
-              </div>
-            </div>
-          </div>
+      <MetricCard
+        label="Net Profit/Loss"
+        value={netProfit}
+        gradient={
+          netProfit >= 0
+            ? "linear-gradient(135deg, #dcfce7, #bbf7d0)"
+            : "linear-gradient(135deg, #fee2e2, #fecaca)"
+        }
+        textColor={netProfit >= 0 ? "#166534" : "#991b1b"}
+        icon={<FaRupeeSign />}
+        percentage={netProfitPercentage} // ✅ only this card shows percentage
+      />
+    </div>
 
           {/* Charts Section */}
           <Grid
