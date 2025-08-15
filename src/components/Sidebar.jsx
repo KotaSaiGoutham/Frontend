@@ -16,7 +16,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 
         { name: 'Timetable', path: '/timetable', icon: <FaCalendarAlt /> },
         { name: 'Employees', path: '/employees', icon: <FaUsers  /> },
-                { name: 'Monthly Expenditure', path: '/expenditure', icon: <FaMoneyBillAlt /> },
+                { name: 'Earnings', path: '/expenditure', icon: <FaMoneyBillAlt /> },
 
 
     ];

@@ -38,33 +38,38 @@ const MetricCard = ({
     fontSize: "30px",
     fontWeight: "bold",
     color: textColor,
-    marginBottom: percentage ? "4px" : "0",
-  };
-
-  const percentageStyle = {
-    fontSize: "13px",
-    fontWeight: "500",
-    color: percentage > 0 ? "#15803d" : "#b91c1c",
-    background: percentage > 0 ? "rgba(187, 247, 208, 0.6)" : "rgba(254, 202, 202, 0.6)",
-    padding: "3px 8px",
-    borderRadius: "10px",
-    display: "inline-block",
-  };
-
-  const iconWrapper = {
-    position: "absolute",
-    top: "15px",
-    right: "15px",
-    background: "rgba(255,255,255,0.5)",
-    borderRadius: "50%",
-    padding: "8px",
+    marginBottom: percentage !== null ? "4px" : "0",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    fontSize: "18px",
-    color: textColor,
-    backdropFilter: "blur(4px)",
+    gap: "5px",
   };
+
+  const getPercentageColor = (p) => (p > 0 ? "#065f46" : "#b91c1c"); // darker green
+  const getPercentageBg = (p) =>
+    p > 0 ? "rgba(187, 247, 208, 0.6)" : "rgba(254, 202, 202, 0.6)";
+
+  const percentageStyle =
+    percentage !== null
+      ? {
+          fontSize: "13px",
+          fontWeight: "600",
+          color: getPercentageColor(percentage),
+          background: getPercentageBg(percentage),
+          padding: "3px 8px",
+          borderRadius: "10px",
+          display: "inline-block",
+        }
+      : value
+      ? {
+          fontSize: "13px",
+          fontWeight: "500",
+          color: "#4b5563", // neutral gray
+          background: "rgba(243, 244, 246, 0.8)", // light gray bg
+          padding: "3px 8px",
+          borderRadius: "10px",
+          display: "inline-block",
+        }
+      : { display: "none" }; // hide if no value
 
   const handleMouseEnter = (e) => {
     e.currentTarget.style.transform = "translateY(-5px) scale(1.02)";
@@ -82,14 +87,24 @@ const MetricCard = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {icon && <div style={iconWrapper}>{icon}</div>}
-      <p style={labelStyle}>{label}</p>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <p style={labelStyle}>{label}</p>
+      <span style={percentageStyle}>
+  {percentage !== null && (
+    percentage > 0
+      ? `with previous month +${percentage.toFixed(0)}%`
+      : `with previous month ${percentage.toFixed(0)}%`
+  )}
+</span>
+
+      </div>
       <p style={valueStyle}>₹{value.toLocaleString("en-IN")}</p>
-      {percentage !== null && (
-        <span style={percentageStyle}>
-          {percentage > 0 ? `+${percentage}%` : `${percentage}%`}
-        </span>
-      )}
     </div>
   );
 };

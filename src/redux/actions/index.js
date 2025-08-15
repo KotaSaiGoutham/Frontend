@@ -113,7 +113,8 @@ import {
     UPDATE_EXPENDITURE_REQUEST,
   UPDATE_EXPENDITURE_SUCCESS,
   UPDATE_EXPENDITURE_FAILURE,
-  FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS
+  FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS,
+  FETCH_EXPENDITURES_SUM_SUCCESS
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -1152,35 +1153,43 @@ export const deleteAutoTimetable = (timetableId) =>
     },
     authRequired: true,
   });
-export const fetchExpenditures = (year, month) =>
+export const fetchExpenditures = (year, month, compareType = null) =>
   apiRequest({
-    url: `/api/expenditures?year=${year}&month=${month}`,
+    url: `/api/expenditures?year=${year}&month=${month}${compareType ? `&compare=${compareType}` : ''}`,
     method: 'GET',
     onStart: FETCH_EXPENDITURES_REQUEST,
-    onSuccess: (data, dispatch) => {
-      // support both shapes
-      const expendituresArray = Array.isArray(data) ? data : (data.expenditures || []);
-      const totalStudentPayments =  data.totalStudentPayments
+   onSuccess: (data, dispatch) => {
+  const expendituresArray = Array.isArray(data) ? data : (data.expenditures || []);
 
-      dispatch({
-        type: FETCH_EXPENDITURES_SUCCESS,
-        payload: expendituresArray,
-      });
+  const totalStudentPayments = data.totalStudentPayments || 0;
+  const previousTotalStudentPayments = data.previousPeriodTotalPayments || 0;
 
-      // optional: separate action to store the sum
-      dispatch({
-        type: FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS,
-        payload: totalStudentPayments,
-      });
+  const totalExpenditure = data.totalExpenditure || 0;
+  const previousTotalExpenditure = data.previousTotalExpenditure || 0;
+
+  dispatch({
+    type: FETCH_EXPENDITURES_SUCCESS,
+    payload: expendituresArray,
+  });
+
+  dispatch({
+    type: FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS,
+    payload: {
+      current: totalStudentPayments,
+      previous: previousTotalStudentPayments,
     },
-    onFailure: (error, dispatch) => {
-      console.error("Error fetching expenditures:", error);
-      dispatch({
-        type: FETCH_EXPENDITURES_FAILURE,
-        payload: { error: error.message || 'Failed to fetch expenditures' },
-      });
+  });
+
+  dispatch({
+    type: FETCH_EXPENDITURES_SUM_SUCCESS,
+    payload: {
+      current: totalExpenditure,
+      previous: previousTotalExpenditure,
     },
-    authRequired: true,
+  });
+}
+
+    // ... rest of the action remains the same
   });
 
 

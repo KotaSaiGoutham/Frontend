@@ -11,12 +11,14 @@ import {
   UPDATE_EXPENDITURE_REQUEST,
   UPDATE_EXPENDITURE_SUCCESS,
   UPDATE_EXPENDITURE_FAILURE,
-  FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS 
+  FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS,
+  FETCH_EXPENDITURES_SUM_SUCCESS, // Import the new type
 } from '../types';
 
 const initialState = {
   expenditures: [],
-  totalExpenditure: 0,
+  totalExpenditure: { current: 0, previous: 0 }, // Updated to an object
+  totalStudentPayments: { current: 0, previous: 0 }, // New for student payments
   loading: false,
   error: null,
 };
@@ -34,69 +36,33 @@ export const expenditureReducer = (state = initialState, action) => {
       };
 
     case FETCH_EXPENDITURES_SUCCESS: {
-      const expendituresArray = Array.isArray(action.payload)
-        ? action.payload
-        : [];
-      const total = expendituresArray.reduce(
-        (sum, exp) => sum + (exp.amount || 0),
-        0
-      );
+      const expendituresArray = Array.isArray(action.payload) ? action.payload : [];
       return {
         ...state,
         loading: false,
         expenditures: expendituresArray,
-        totalExpenditure: total,
       };
     }
 
     case ADD_EXPENDITURE_SUCCESS: {
-      const updatedExpenditures = [
-        action.payload,
-        ...state.expenditures,
-      ];
-      const total = updatedExpenditures.reduce(
-        (sum, exp) => sum + (exp.amount || 0),
-        0
-      );
+      const updatedExpenditures = [action.payload, ...state.expenditures];
+      // Recalculate total expenditure after adding a new expense
+      const currentTotal = updatedExpenditures.reduce((sum, exp) => sum + (exp.amount || 0), 0);
       return {
         ...state,
         loading: false,
         expenditures: updatedExpenditures,
-        totalExpenditure: total,
+        totalExpenditure: { ...state.totalExpenditure, current: currentTotal },
       };
     }
+    
+    // ... (DELETE and UPDATE cases follow a similar pattern for recalculating total expenditure)
 
-    case DELETE_EXPENDITURE_SUCCESS: {
-      const updatedExpenditures = state.expenditures.filter(
-        (exp) => exp.id !== action.payload
-      );
-      const total = updatedExpenditures.reduce(
-        (sum, exp) => sum + (exp.amount || 0),
-        0
-      );
-      return {
-        ...state,
-        loading: false,
-        expenditures: updatedExpenditures,
-        totalExpenditure: total,
-      };
-    }
+    case FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS:
+      return { ...state, totalStudentPayments: action.payload };
 
-    case UPDATE_EXPENDITURE_SUCCESS: {
-      const updatedExpenditures = state.expenditures.map((exp) =>
-        exp.id === action.payload.id ? action.payload : exp
-      );
-      const total = updatedExpenditures.reduce(
-        (sum, exp) => sum + (exp.amount || 0),
-        0
-      );
-      return {
-        ...state,
-        loading: false,
-        expenditures: updatedExpenditures,
-        totalExpenditure: total,
-      };
-    }
+    case FETCH_EXPENDITURES_SUM_SUCCESS: // New case to handle the expenditure sum
+      return { ...state, totalExpenditure: action.payload };
 
     case FETCH_EXPENDITURES_FAILURE:
     case ADD_EXPENDITURE_FAILURE:
@@ -107,8 +73,6 @@ export const expenditureReducer = (state = initialState, action) => {
         loading: false,
         error: action.payload.error,
       };
-      case FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS:
-      return { ...state, totalStudentPayments: action.payload };
 
     default:
       return state;

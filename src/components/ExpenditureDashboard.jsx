@@ -10,7 +10,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
   CircularProgress,
   Alert,
   Grid,
@@ -25,35 +24,23 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Tooltip,
-  Fade,
-  Divider,
 } from "@mui/material";
 import { BarChart, PieChart } from "@mui/x-charts";
 import {
   FaTrashAlt,
-  FaEdit,
   FaPlus,
   FaChartBar,
   FaChartPie,
   FaRupeeSign,
-  FaDownload, // <-- ADDED: Icon for the download button
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  fetchStudents,
-  fetchExpenditures,
-  deleteExpenditure,
-} from "../redux/actions";
+import { fetchStudents, fetchExpenditures, deleteExpenditure } from "../redux/actions";
 import "./ExpenditureDashboard.css";
-import {
-  yearOptions,
-  monthOptions,
-  expenditureColors,
-} from "../mockdata/function";
+import { yearOptions, monthOptions, expenditureColors } from "../mockdata/function";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 import MetricCard from "./customcomponents/MetricCard";
+
 const ExpenditureDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -83,21 +70,28 @@ const ExpenditureDashboard = () => {
     setSelectedExpenditure(null);
   };
 
-  const { expenditures, loading, error, totalStudentPayments } = useSelector(
-    (state) => state.expenditures
-  );
-
+  const {
+  expenditures,
+  loading,
+  error,
+  totalStudentPayments,
+  previousPeriodTotalPayments, // Add this line
+  totalExpenditure,
+  previousTotalExpenditure, // Add this line
+} = useSelector((state) => state.expenditures);
+console.log("223==>",expenditures,
+  loading,
+  error,
+  totalStudentPayments,
+  previousPeriodTotalPayments, // Add this line
+  totalExpenditure,
+  previousTotalExpenditure)
+  console.log("totalExpenditure",totalExpenditure)
   const { students } = useSelector((state) => state.students);
   const { user } = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    dispatch(fetchExpenditures(selectedDate.year, selectedDate.month));
-    dispatch(fetchStudents());
-  }, [dispatch, selectedDate]);
-
-  const { totalExpenditure, chartData } = useMemo(() => {
-    if (!expenditures) return { totalExpenditure: 0, chartData: [] };
-    const total = expenditures.reduce((sum, item) => sum + item.amount, 0);
+  const { chartData } = useMemo(() => {
+    if (!expenditures) return { chartData: [] };
     const groupedData = expenditures.reduce((acc, item) => {
       const purpose = item.purpose || "Uncategorized";
       if (!acc[purpose]) {
@@ -108,12 +102,38 @@ const ExpenditureDashboard = () => {
     }, {});
 
     return {
-      totalExpenditure: total,
       chartData: Object.values(groupedData),
     };
   }, [expenditures]);
 
-  const netProfit = totalStudentPayments - totalExpenditure;
+  const now = new Date();
+  const isCurrentMonthYear =
+    selectedDate.month === now.getMonth() + 1 &&
+    selectedDate.year === now.getFullYear();
+
+const revenueChange =
+    totalStudentPayments?.previous !== 0
+      ? ((totalStudentPayments?.current - totalStudentPayments?.previous) /
+          totalStudentPayments?.previous) * 100
+      : null; // Use null to show a dash if no previous data
+
+  const expenditureChange =
+    totalExpenditure?.previous !== 0
+      ? ((totalExpenditure?.current - totalExpenditure?.previous) /
+          totalExpenditure?.previous) * 100
+      : null; // Use null to show a dash if no previous data
+
+  const netProfit =
+    (totalStudentPayments?.current || 0) - (totalExpenditure?.current || 0);
+
+  const previousNetProfit =
+    (totalStudentPayments?.previous || 0) - (totalExpenditure?.previous || 0);
+
+  const netProfitChange = previousNetProfit !== 0
+    ? ((netProfit - previousNetProfit) / previousNetProfit) * 100
+    : netProfit > 0
+    ? 100 // Going from 0 to a positive number can be represented as +100%
+    : null; // For other cases like 0 to 0 or 0 to negativ
 
   const barChartData = useMemo(
     () => [
@@ -137,48 +157,43 @@ const ExpenditureDashboard = () => {
     [chartData]
   );
 
-  // --- ADDED: Helper functions to prepare data for the PDF ---
+  useEffect(() => {
+    const now = new Date();
+    const isCurrentMonthYear =
+      selectedDate.month === now.getMonth() + 1 &&
+      selectedDate.year === now.getFullYear();
+
+    dispatch(
+      fetchExpenditures(
+        selectedDate.year,
+        selectedDate.month,
+        isCurrentMonthYear ? "month" : null
+      )
+    );
+    dispatch(fetchStudents());
+  }, [dispatch, selectedDate.year, selectedDate.month]);
+
   const getPdfTitle = () => {
     const monthName =
       monthOptions.find((m) => m.value === selectedDate.month)?.label || "";
-    // This title format matches the one in your sample image
     return `${user.name} Expenditure - ${monthName.toUpperCase()} ${
       selectedDate.year
     }`;
   };
 
   const getPdfTableHeaders = () => {
-    const baseHeaders = [
-      "S. No",
-      "Purpose",
-      "Work / Details",
-      "Date",
-      "Amount",
-    ];
-
-    // Only add dummy column if we have totalExpenditure
-    if (typeof totalExpenditure === "number") {
-      return [...baseHeaders.slice(0, 4), "", baseHeaders[4]];
-    }
-    return baseHeaders;
+    return ["S. No", "Purpose", "Work / Details", "Date", "Amount"];
   };
 
   const getPdfTableRows = () => {
     if (!expenditures || expenditures.length === 0) return [];
-    return expenditures.map((row, index) => {
-      const baseRow = [
-        index + 1,
-        row.purpose,
-        row.work,
-        new Date(row.date).toLocaleDateString("en-GB"),
-        row.amount.toLocaleString("en-IN"),
-      ];
-
-      if (typeof totalExpenditure === "number") {
-        return [...baseRow.slice(0, 4), "", baseRow[4]];
-      }
-      return baseRow;
-    });
+    return expenditures.map((row, index) => [
+      index + 1,
+      row.purpose,
+      row.work,
+      new Date(row.date).toLocaleDateString("en-GB"),
+      row.amount.toLocaleString("en-IN"),
+    ]);
   };
 
   const getPdfFilename = () => {
@@ -204,11 +219,7 @@ const ExpenditureDashboard = () => {
   const handleYearChange = (e) => {
     setSelectedDate((prev) => ({ ...prev, year: e.target.value }));
   };
-  console.log("totalExpenditure", totalExpenditure);
-   let netProfitPercentage = 0;
-  if (totalStudentPayments > 0) {
-    netProfitPercentage = ((netProfit / totalStudentPayments) * 100).toFixed(2);
-  }
+
   return (
     <Box sx={{ p: 3, backgroundColor: "#f4f6f8", minHeight: "100vh" }}>
       <Paper
@@ -220,14 +231,12 @@ const ExpenditureDashboard = () => {
           justifyContent="space-between"
           alignItems="center"
           flexWrap="wrap"
-          gap={2} // Added gap for better spacing
+          gap={2}
         >
           <Typography variant="h5" fontWeight="bold" color="primary.dark">
             📊 Monthly Expenditures
           </Typography>
           <Box display="flex" gap={2} flexWrap="wrap">
-            {" "}
-            {/* Container for buttons */}
             <MuiButton
               variant="contained"
               startIcon={<FaPlus />}
@@ -239,12 +248,12 @@ const ExpenditureDashboard = () => {
               title={getPdfTitle()}
               headers={getPdfTableHeaders()}
               rows={getPdfTableRows()}
-              totalFee={totalExpenditure}
+              totalFee={totalExpenditure?.current || 0}
               filename={getPdfFilename()}
               disabled={!expenditures || expenditures.length === 0}
               summaryBlock={{
-                totalFeeCollection: totalStudentPayments,
-                totalExpenditure,
+                totalFeeCollection: totalStudentPayments?.current || 0,
+                totalExpenditure: totalExpenditure?.current || 0,
                 netProfit,
               }}
               charts={[
@@ -268,13 +277,6 @@ const ExpenditureDashboard = () => {
                       title: {
                         display: true,
                         text: "Where We Are Spending (₹)",
-                      },
-                      datalabels: {
-                        color: "#000",
-                        anchor: "end",
-                        align: "top",
-                        formatter: (value) =>
-                          `₹${value.toLocaleString("en-IN")}`,
                       },
                     },
                   },
@@ -318,8 +320,6 @@ const ExpenditureDashboard = () => {
           </Grid>
         </Grid>
       </Paper>
-
-      {/* ... The rest of your component remains the same ... */}
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
           <CircularProgress />
@@ -328,43 +328,46 @@ const ExpenditureDashboard = () => {
         <Alert severity="error">{error}</Alert>
       ) : (
         <>
-     <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-        gap: "20px",
-        marginTop: "20px",
-      }}
-    >
-      <MetricCard
-        label="Total Fee Collection"
-        value={totalStudentPayments || 0}
-        gradient="linear-gradient(135deg, #e0e7ff, #c7d2fe)"
-        icon={<FaRupeeSign />}
-      />
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gap: "20px",
+              marginTop: "20px",
+            }}
+          >
+     <MetricCard
+        label="Total Fee Collection"
+        value={totalStudentPayments?.current || 0}
+  gradient="linear-gradient(135deg, #dcfce7, #bbf7d0)"
+        icon={<FaRupeeSign />}
+        percentage={revenueChange}
+      />
 
-      <MetricCard
-        label="Total Expenditure"
-        value={totalExpenditure}
-        gradient="linear-gradient(135deg, #fee2e2, #fecaca)"
-        icon={<FaRupeeSign />}
-      />
+      <MetricCard
+        label="Total Expenditure"
+        value={totalExpenditure?.current || 0}
+        gradient="linear-gradient(135deg, #fee2e2, #fecaca)"
+        icon={<FaRupeeSign />}
+        percentage={expenditureChange}
+      />
 
-      <MetricCard
-        label="Net Profit/Loss"
-        value={netProfit}
-        gradient={
-          netProfit >= 0
-            ? "linear-gradient(135deg, #dcfce7, #bbf7d0)"
-            : "linear-gradient(135deg, #fee2e2, #fecaca)"
-        }
-        textColor={netProfit >= 0 ? "#166534" : "#991b1b"}
-        icon={<FaRupeeSign />}
-        percentage={netProfitPercentage} // ✅ only this card shows percentage
-      />
-    </div>
+      <MetricCard
+        label="Net Profit/Loss"
+        value={netProfit}
+       gradient={
+                netProfit >= 0
+                  ? "linear-gradient(135deg, #dcfce7, #bbf7d0)"
+                  : "linear-gradient(135deg, #fee2e2, #fecaca)"
+              }
+              textColor={netProfit >= 0 ? "#166534" : "#991b1b"}
+              icon={<FaRupeeSign />}
 
-          {/* Charts Section */}
+        percentage={netProfitChange}
+      />
+          </div>
+
+         
           <Grid
             container
             spacing={3}
@@ -412,7 +415,6 @@ const ExpenditureDashboard = () => {
             </Grid>
           </Grid>
 
-          {/* Table Section */}
           <TableContainer
             component={Paper}
             elevation={3}
@@ -424,9 +426,7 @@ const ExpenditureDashboard = () => {
                   <TableCell sx={{ fontWeight: "bold" }}>S.No</TableCell>
                   <TableCell sx={{ fontWeight: "bold" }}>Date</TableCell>
                   <TableCell sx={{ fontWeight: "bold" }}>Purpose</TableCell>
-                  <TableCell sx={{ fontWeight: "bold" }}>
-                    Work/Details
-                  </TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>Work/Details</TableCell>
                   <TableCell align="right" sx={{ fontWeight: "bold" }}>
                     Amount (₹)
                   </TableCell>
@@ -484,7 +484,7 @@ const ExpenditureDashboard = () => {
                       color: "error.main",
                     }}
                   >
-                    ₹{totalExpenditure.toLocaleString("en-IN")}
+                    ₹{(totalExpenditure?.current || 0).toLocaleString("en-IN")}
                   </TableCell>
                   <TableCell />
                 </TableRow>
@@ -493,7 +493,6 @@ const ExpenditureDashboard = () => {
           </TableContainer>
         </>
       )}
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
