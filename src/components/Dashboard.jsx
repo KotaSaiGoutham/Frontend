@@ -244,7 +244,7 @@ const Dashboard = () => {
     const relevantStudents = students
       .filter(
         (student) =>
-          canAccessAll || student.Subject?.trim() === currentUserSubject
+          student.isActive && (canAccessAll || student.Subject?.trim() === currentUserSubject)
       )
       .sort((a, b) => a.Name.localeCompare(b.Name));
 

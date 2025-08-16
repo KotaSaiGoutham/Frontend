@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { format, parseISO, fromUnixTime, parse, isFuture } from "date-fns";
 import "./StudentsTable.css"; // Ensure this CSS file exists for styling
 // Material-UI Imports
+import { ConfirmationDialog } from "./customcomponents/Dialogs";
 import {
   Table,
   TableBody,
@@ -70,6 +71,7 @@ import {
   FaEllipsisV,
   FaEdit,
   FaTrashAlt,
+  FaCalendarTimes,
 } from "react-icons/fa";
 // Assuming these are your custom components and mock data
 import { getPdfTableHeaders, getPdfTableRows } from "../mockdata/function";
@@ -183,6 +185,8 @@ const StudentsTable = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogAction, setDialogAction] = useState(null);
   const open = Boolean(anchorEl);
 
   const handleClick = (event, student) => {
@@ -230,23 +234,23 @@ const StudentsTable = () => {
     setSelectedStudent(null);
   };
   // Effect to populate lastUpdatedTimestamps from student data
-  // useEffect(() => {
-  //   const newTimestamps = {};
-  //   students.forEach((student) => {
-  //     if (student.lastUpdatedClassesAt) {
-  //       newTimestamps[student.id] = student.lastUpdatedClassesAt;
-  //     }
-  //   });
-  //   setLastUpdatedTimestamps(newTimestamps);
-  // }, [students]);
+  useEffect(() => {
+    const newTimestamps = {};
+    students.forEach((student) => {
+      if (student.lastUpdatedClassesAt) {
+        newTimestamps[student.id] = student.lastUpdatedClassesAt;
+      }
+    });
+    setLastUpdatedTimestamps(newTimestamps);
+  }, [students]);
+  console.log("lastUpdatedTimestamps", lastUpdatedTimestamps);
 
   // --- Data Fetching Effect ---
   // Dispatches actions to fetch both students and upcoming classes (timetables) on component mount.
   useEffect(() => {
     dispatch(fetchStudents());
     dispatch(fetchUpcomingClasses());
-          dispatch(fetchAutoTimetablesForToday());
-    
+    dispatch(fetchAutoTimetablesForToday());
   }, [dispatch]); // `dispatch` is stable, so this runs once.
 
   useEffect(() => {
@@ -276,7 +280,6 @@ const StudentsTable = () => {
       const studentUpcomingClasses = combinedTimetables.filter(
         (uc) => uc.Student?.toLowerCase() === student.Name?.toLowerCase()
       );
-
 
       let soonestFutureClass = null;
 
@@ -316,7 +319,6 @@ const StudentsTable = () => {
 
     setStudentsWithNextClass(augmentedStudents);
   }, [students, timetables, autoTimetables]);
-
 
   useEffect(() => {
     let studentsToFilter = [...studentsWithNextClass]; // Start with augmented students
@@ -703,6 +705,26 @@ const StudentsTable = () => {
       </Fade>
     );
   }
+  const handleOpenDialog = (student, increase) => {
+    setSelectedStudent(student);
+    setDialogAction(increase);
+    setDialogOpen(true);
+  };
+
+  const handleConfirm = () => {
+    if (selectedStudent && dialogAction !== null) {
+      handleClassChange(selectedStudent.id, dialogAction);
+    }
+    setDialogOpen(false);
+    setSelectedStudent(null);
+    setDialogAction(null);
+  };
+
+  const handleCancel = () => {
+    setDialogOpen(false);
+    setSelectedStudent(null);
+    setDialogAction(null);
+  };
   return (
     <Box
       sx={{
@@ -1512,7 +1534,7 @@ const StudentsTable = () => {
                               display: "flex",
                               flexDirection: "column",
                               alignItems: "center",
-                              gap: 0.5,
+                              gap: 0.2,
                               pointerEvents:
                                 updatingClasses === student.id
                                   ? "none"
@@ -1524,15 +1546,15 @@ const StudentsTable = () => {
                               sx={{
                                 display: "flex",
                                 alignItems: "center",
-                                gap: 0.5,
+                                gap: 0.2,
                               }}
                             >
                               <Tooltip title="Decrease classes completed">
                                 <IconButton
                                   size="small"
                                   onClick={() =>
-                                    handleClassChange(student.id, false)
-                                  }
+                                    handleOpenDialog(student, false)
+                                  } // Changed
                                   color="error"
                                   sx={{
                                     transition:
@@ -1558,8 +1580,8 @@ const StudentsTable = () => {
                                 <IconButton
                                   size="small"
                                   onClick={() =>
-                                    handleClassChange(student.id, true)
-                                  }
+                                    handleOpenDialog(student, true)
+                                  } // Changed
                                   color="success"
                                   sx={{
                                     transition:
@@ -1586,7 +1608,11 @@ const StudentsTable = () => {
                                 >
                                   Last Updated:{" "}
                                   {format(
-                                    parseISO(lastUpdatedTimestamps[student.id]),
+                                    // Corrected: Convert the Firestore timestamp object to a JavaScript Date object
+                                    new Date(
+                                      lastUpdatedTimestamps[student.id]
+                                        ._seconds * 1000
+                                    ),
                                     "MMM dd, hh:mm a"
                                   )}
                                 </Typography>
@@ -1622,58 +1648,98 @@ const StudentsTable = () => {
                             : "-"}
                         </TableCell>
                       )}
-                      {columnVisibility.paymentStatus && (
-                        <TableCell
-                          sx={{
-                            // existing props
-                            fontSize: "0.9rem",
-                            pointerEvents:
-                              updatingStudent === student.id ? "none" : "auto",
-                            opacity: updatingStudent === student.id ? 0.7 : 1,
+            {columnVisibility.paymentStatus && (
+  <TableCell
+    sx={{
+      fontSize: "0.9rem",
+      pointerEvents:
+        updatingStudent === student.id ? "none" : "auto",
+      opacity: updatingStudent === student.id ? 0.7 : 1,
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      // Remove gap to make it more compact, let spacing be handled by child elements
+      p: 1, // Add padding to the cell itself
+    }}
+  >
+    {updatingStudent === student.id ? (
+      <CircularProgress size={20} color="primary" />
+    ) : (
+      <>
+        {/* The main Chip for payment status */}
+        <Chip
+          label={student["Payment Status"]}
+          icon={
+            student["Payment Status"] === "Paid" ? (
+              <FaCheckCircle style={{ fontSize: 16 }} />
+            ) : (
+              <FaExclamationCircle style={{ fontSize: 16 }} />
+            )
+          }
+          color={
+            student["Payment Status"] === "Paid" ? "success" : "error"
+          }
+          variant="outlined"
+          onClick={() =>
+            handlePaymentStatusToggle(
+              student.id,
+              student["Payment Status"],
+              student.Name
+            )
+          }
+          sx={{
+            cursor: "pointer",
+            fontWeight: "bold",
+            "&:hover": { boxShadow: 1 },
+          }}
+        />
 
-                            /* 👇 added flex‑box centering */
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            // (optional) trim a little padding so the chip looks tight
-                          }}
-                        >
-                          {updatingStudent === student.id ? (
-                            <CircularProgress size={20} color="primary" />
-                          ) : (
-                            <Chip
-                              label={student["Payment Status"]}
-                              icon={
-                                student["Payment Status"] === "Paid" ? (
-                                  <FaCheckCircle style={{ fontSize: 16 }} />
-                                ) : (
-                                  <FaExclamationCircle
-                                    style={{ fontSize: 16 }}
-                                  />
-                                )
-                              }
-                              color={
-                                student["Payment Status"] === "Paid"
-                                  ? "success"
-                                  : "error"
-                              }
-                              variant="outlined"
-                              onClick={() =>
-                                handlePaymentStatusToggle(
-                                  student.id,
-                                  student["Payment Status"],
-                                  student.Name
-                                )
-                              }
-                              sx={{
-                                cursor: "pointer",
-                                fontWeight: "bold",
-                                "&:hover": { boxShadow: 1 },
-                              }}
-                            />
-                          )}
-                        </TableCell>
-                      )}
+        {/* --- Container for all date information to keep it together and centered --- */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center", // Center-align the date info
+            mt: 1, // Add margin to separate from the chip
+            p: 0.5, // Subtle padding for the container
+          }}
+        >
+          {student.paidDate && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <FaCalendarCheck style={{ color: '#4CAF50', fontSize: '0.8rem' }} />
+              <Typography variant="caption" color="text.secondary">
+                Paid:{" "}
+                {new Date(student.paidDate._seconds * 1000).toLocaleDateString("en-GB")}
+              </Typography>
+            </Box>
+          )}
+
+          {student.nextDueDate && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                mt: 0.5,
+              }}
+            >
+              <FaCalendarTimes style={{ color: "#F44336", fontSize: "0.8rem" }} />
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                color="error.main"
+              >
+               Due:{" "}
+                {new Date(student.nextDueDate._seconds * 1000).toLocaleDateString("en-GB")}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </>
+    )}
+  </TableCell>
+)}
                       {columnVisibility.status && (
                         <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                           <Box
@@ -1724,7 +1790,7 @@ const StudentsTable = () => {
                             sx={{
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: 0.5,
+                              gap: 0.2,
                             }}
                           >
                             <ActionButtons
@@ -1842,6 +1908,13 @@ const StudentsTable = () => {
           </MuiButton>
         </DialogActions>
       </Dialog>
+      <ConfirmationDialog
+        open={dialogOpen}
+        studentName={selectedStudent?.Name || ""}
+        isIncreaseAction={dialogAction}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
     </Box>
   );
 };
