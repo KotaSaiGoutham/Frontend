@@ -1648,98 +1648,125 @@ const StudentsTable = () => {
                             : "-"}
                         </TableCell>
                       )}
-            {columnVisibility.paymentStatus && (
-  <TableCell
-    sx={{
-      fontSize: "0.9rem",
-      pointerEvents:
-        updatingStudent === student.id ? "none" : "auto",
-      opacity: updatingStudent === student.id ? 0.7 : 1,
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      // Remove gap to make it more compact, let spacing be handled by child elements
-      p: 1, // Add padding to the cell itself
-    }}
-  >
-    {updatingStudent === student.id ? (
-      <CircularProgress size={20} color="primary" />
-    ) : (
-      <>
-        {/* The main Chip for payment status */}
-        <Chip
-          label={student["Payment Status"]}
-          icon={
-            student["Payment Status"] === "Paid" ? (
-              <FaCheckCircle style={{ fontSize: 16 }} />
-            ) : (
-              <FaExclamationCircle style={{ fontSize: 16 }} />
-            )
-          }
-          color={
-            student["Payment Status"] === "Paid" ? "success" : "error"
-          }
-          variant="outlined"
-          onClick={() =>
-            handlePaymentStatusToggle(
-              student.id,
-              student["Payment Status"],
-              student.Name
-            )
-          }
-          sx={{
-            cursor: "pointer",
-            fontWeight: "bold",
-            "&:hover": { boxShadow: 1 },
-          }}
-        />
+                      {columnVisibility.paymentStatus && (
+                        <TableCell
+                          sx={{
+                            fontSize: "0.9rem",
+                            pointerEvents:
+                              updatingStudent === student.id ? "none" : "auto",
+                            opacity: updatingStudent === student.id ? 0.7 : 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            // Remove gap to make it more compact, let spacing be handled by child elements
+                            p: 1, // Add padding to the cell itself
+                          }}
+                        >
+                          {updatingStudent === student.id ? (
+                            <CircularProgress size={20} color="primary" />
+                          ) : (
+                            <>
+                              {/* The main Chip for payment status */}
+                              <Chip
+                                label={student["Payment Status"]}
+                                icon={
+                                  student["Payment Status"] === "Paid" ? (
+                                    <FaCheckCircle style={{ fontSize: 16 }} />
+                                  ) : (
+                                    <FaExclamationCircle
+                                      style={{ fontSize: 16 }}
+                                    />
+                                  )
+                                }
+                                color={
+                                  student["Payment Status"] === "Paid"
+                                    ? "success"
+                                    : "error"
+                                }
+                                variant="outlined"
+                                onClick={() =>
+                                  handlePaymentStatusToggle(
+                                    student.id,
+                                    student["Payment Status"],
+                                    student.Name
+                                  )
+                                }
+                                sx={{
+                                  cursor: "pointer",
+                                  fontWeight: "bold",
+                                  "&:hover": { boxShadow: 1 },
+                                }}
+                              />
 
-        {/* --- Container for all date information to keep it together and centered --- */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center", // Center-align the date info
-            mt: 1, // Add margin to separate from the chip
-            p: 0.5, // Subtle padding for the container
-          }}
-        >
-          {student.paidDate && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <FaCalendarCheck style={{ color: '#4CAF50', fontSize: '0.8rem' }} />
-              <Typography variant="caption" color="text.secondary">
-                Paid:{" "}
-                {new Date(student.paidDate._seconds * 1000).toLocaleDateString("en-GB")}
-              </Typography>
-            </Box>
-          )}
+                              {/* --- Container for all date information to keep it together and centered --- */}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "center", // Center-align the date info
+                                  mt: 1, // Add margin to separate from the chip
+                                  p: 0.5, // Subtle padding for the container
+                                }}
+                              >
+                                {student.paidDate && (
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 0.5,
+                                    }}
+                                  >
+                                    <FaCalendarCheck
+                                      style={{
+                                        color: "#4CAF50",
+                                        fontSize: "0.8rem",
+                                      }}
+                                    />
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      Paid:{" "}
+                                      {new Date(
+                                        student.paidDate._seconds * 1000
+                                      ).toLocaleDateString("en-GB")}
+                                    </Typography>
+                                  </Box>
+                                )}
 
-          {student.nextDueDate && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.5,
-                mt: 0.5,
-              }}
-            >
-              <FaCalendarTimes style={{ color: "#F44336", fontSize: "0.8rem" }} />
-              <Typography
-                variant="caption"
-                fontWeight="bold"
-                color="error.main"
-              >
-               Due:{" "}
-                {new Date(student.nextDueDate._seconds * 1000).toLocaleDateString("en-GB")}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      </>
-    )}
-  </TableCell>
-)}
+                                {student.nextDueDate && (
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 0.5,
+                                      mt: 0.5,
+                                    }}
+                                  >
+                                    <FaCalendarTimes
+                                      style={{
+                                        color: "#F44336",
+                                        fontSize: "0.8rem",
+                                      }}
+                                    />
+                                    <Typography
+                                      variant="caption"
+                                      fontWeight="bold"
+                                      color="error.main"
+                                    >
+                                      Due:{" "}
+                                      {new Date(
+                                        student.nextDueDate._seconds * 1000
+                                      ).toLocaleDateString("en-GB")}
+                                    </Typography>
+                                  </Box>
+                                )}
+                              </Box>
+                            </>
+                          )}
+                        </TableCell>
+                      )}
                       {columnVisibility.status && (
                         <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                           <Box
@@ -1842,7 +1869,12 @@ const StudentsTable = () => {
                   ? "#d32f2f"
                   : "#2e7d32" // Red for Inactive, Green for Active
                 : undefined,
-            color: "#fff",
+            color:
+              snackbarSeverity === "success"
+                ? snackbarMessage.includes("Inactive")
+                  ? "black"
+                  : "white" // Red for Inactive, Green for Active
+                : undefined,
           }}
         >
           {snackbarMessage}

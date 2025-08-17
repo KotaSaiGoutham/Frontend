@@ -13,10 +13,12 @@ import {
   UPDATE_EXPENDITURE_FAILURE,
   FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS,
   FETCH_EXPENDITURES_SUM_SUCCESS, // Import the new type
+  FETCH_TOTAL_PAYMENTS_SUCCESS,
 } from '../types';
 
 const initialState = {
   expenditures: [],
+  payments:[],
   totalExpenditure: { current: 0, previous: 0 }, // Updated to an object
   totalStudentPayments: { current: 0, previous: 0 }, // New for student payments
   loading: false,
@@ -41,6 +43,14 @@ export const expenditureReducer = (state = initialState, action) => {
         ...state,
         loading: false,
         expenditures: expendituresArray,
+      };
+    }
+     case FETCH_TOTAL_PAYMENTS_SUCCESS: {
+      const paymentArray = Array.isArray(action.payload) ? action.payload : [];
+      return {
+        ...state,
+        loading: false,
+        payments: paymentArray,
       };
     }
 

@@ -114,7 +114,8 @@ import {
   UPDATE_EXPENDITURE_SUCCESS,
   UPDATE_EXPENDITURE_FAILURE,
   FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS,
-  FETCH_EXPENDITURES_SUM_SUCCESS
+  FETCH_EXPENDITURES_SUM_SUCCESS,
+  FETCH_TOTAL_PAYMENTS_SUCCESS
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -1159,7 +1160,8 @@ export const fetchExpenditures = (year, month, compareType = null) =>
     method: 'GET',
     onStart: FETCH_EXPENDITURES_REQUEST,
    onSuccess: (data, dispatch) => {
-  const expendituresArray = Array.isArray(data) ? data : (data.expenditures || []);
+ const expendituresArray = data.expenditures || [];
+      const paymentsArray = data.payments || [];
 
   const totalStudentPayments = data.totalStudentPayments || 0;
   const previousTotalStudentPayments = data.previousPeriodTotalPayments || 0;
@@ -1171,6 +1173,11 @@ export const fetchExpenditures = (year, month, compareType = null) =>
     type: FETCH_EXPENDITURES_SUCCESS,
     payload: expendituresArray,
   });
+
+   dispatch({
+        type: FETCH_TOTAL_PAYMENTS_SUCCESS, // Use the new action type
+        payload: paymentsArray,
+      });
 
   dispatch({
     type: FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS,

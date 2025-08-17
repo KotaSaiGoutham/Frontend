@@ -65,3 +65,46 @@ export const ConfirmationDialog = ({
     </Dialog>
   );
 };
+
+export const DeleteConfirmationDialog = ({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  data, // The data to display in the dialog
+}) => {
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>{title || "Confirm Delete"}</DialogTitle>
+      <DialogContent>
+        {message && <Typography>{message}</Typography>}
+        {data && (
+          <Box
+            sx={{
+              mt: 2,
+              p: 2,
+              backgroundColor: "#f9f9f9",
+              borderRadius: 2,
+            }}
+          >
+            {/* Display a list of data properties, making it reusable */}
+            {Object.entries(data).map(([key, value]) => (
+              <Typography key={key}>
+                <strong>{key}:</strong> {value}
+              </Typography>
+            ))}
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <MuiButton onClick={onClose} color="inherit">
+          Cancel
+        </MuiButton>
+        <MuiButton onClick={onConfirm} color="error" variant="contained">
+          Delete
+        </MuiButton>
+      </DialogActions>
+    </Dialog>
+  );
+};

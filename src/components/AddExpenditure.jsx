@@ -51,6 +51,7 @@ const AddExpenditure = () => {
   });
 
   const { user } = useSelector((state) => state.auth);
+  console.log("user",user)
 
   // --- Effect to Pre-fill Form for Editing ---
   useEffect(() => {
@@ -106,7 +107,7 @@ const AddExpenditure = () => {
       // Ensure amount is a number
       amount: Number(formData.amount),
       // Add the user's name for tracking who created/updated it
-      lastModifiedBy: user.name,
+      lastModifiedBy: user.subject,
     };
 
     try {
@@ -124,7 +125,7 @@ const AddExpenditure = () => {
       } else {
         // --- ADD LOGIC ---
         // Add the 'createdBy' field only when creating a new record
-        const finalPayload = { ...expenditurePayload, createdBy: user.name };
+        const finalPayload = { ...expenditurePayload, createdBy: user.subject };
         await dispatch(addExpenditure(finalPayload));
         setSnackbar({
           open: true,
