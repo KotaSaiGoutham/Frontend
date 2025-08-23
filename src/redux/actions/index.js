@@ -115,7 +115,9 @@ import {
   UPDATE_EXPENDITURE_FAILURE,
   FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS,
   FETCH_EXPENDITURES_SUM_SUCCESS,
-  FETCH_TOTAL_PAYMENTS_SUCCESS
+  FETCH_TOTAL_PAYMENTS_SUCCESS,
+  CLEAR_AUTH_ERROR,
+  RESET_LOADING_STATE
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -138,6 +140,8 @@ export const apiRequest = ({
   onFailure,
   onStart,
   authRequired = true,
+    timeout = 120000, // Add a timeout, e.g., 2 minutes (in milliseconds)
+
 }) => {
   let deferred = {};
   const promise = new Promise((resolve, reject) => {
@@ -149,6 +153,8 @@ export const apiRequest = ({
     payload: { url, method, data, onSuccess, onFailure, onStart, authRequired },
     meta: { deferred },
     promise,
+        timeout, // Add this line
+
   };
 };
 
@@ -259,7 +265,12 @@ export const signupUser = ({ name, email, mobile, password }) =>
     },
     authRequired: false, // Signup does not require authentication
   });
-
+export const clearAuthError = () => ({
+  type: CLEAR_AUTH_ERROR,
+});
+export const resetLoadingState = () => ({
+  type: RESET_LOADING_STATE,
+});
 export const loginUser = ({ username, password }) =>
   apiRequest({
     url: "/api/auth/login",

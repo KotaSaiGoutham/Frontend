@@ -10,6 +10,8 @@ import {
   SIGNUP_REQUEST, // <-- NEW
   SIGNUP_SUCCESS, // <-- NEW
   SIGNUP_FAILURE, // <-- NEW
+CLEAR_AUTH_ERROR,
+RESET_LOADING_STATE,
 } from '../types';
 
 // Helper function to determine the user's subject
@@ -50,6 +52,17 @@ const initialState = {
 
 const authReducer = (state = initialState, action) => {
   switch (action.type) {
+        case CLEAR_AUTH_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+        case RESET_LOADING_STATE:
+      return {
+        ...state,
+        loading: false,
+        error: null, // It's good practice to clear the error as well
+      };
     case LOGIN_REQUEST:
       return {
         ...state,

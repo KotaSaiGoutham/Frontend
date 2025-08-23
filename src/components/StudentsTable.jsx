@@ -1553,7 +1553,7 @@ const StudentsTable = () => {
                                 <IconButton
                                   size="small"
                                   onClick={() =>
-                                    handleOpenDialog(student, false)
+                                    handleClassChange(student.id, false)
                                   } // Changed
                                   color="error"
                                   sx={{
@@ -1580,7 +1580,7 @@ const StudentsTable = () => {
                                 <IconButton
                                   size="small"
                                   onClick={() =>
-                                    handleOpenDialog(student, true)
+                                    handleClassChange(student.id, true)
                                   } // Changed
                                   color="success"
                                   sx={{
@@ -1638,6 +1638,26 @@ const StudentsTable = () => {
                                   Payment Pending!
                                 </Typography>
                               )}
+                               {student["Payment Status"] === "Paid" &&
+                              (student.classesCompleted) < 0 && (
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: "#ef5350",
+                                    fontWeight: "bold",
+                                    mt: 0.5,
+                                    fontSize: "0.75rem",
+                                    animation:
+                                      "pulse-red 1.5s infinite alternate",
+                                    "@keyframes pulse-red": {
+                                      "0%": { opacity: 0.7 },
+                                      "100%": { opacity: 1 },
+                                    },
+                                  }}
+                                >
+                                  Classes pending payment done!
+                                </Typography>
+                              )}
                           </Box>
                         </TableCell>
                       )}
@@ -1668,36 +1688,31 @@ const StudentsTable = () => {
                           ) : (
                             <>
                               {/* The main Chip for payment status */}
-                              <Chip
-                                label={student["Payment Status"]}
-                                icon={
-                                  student["Payment Status"] === "Paid" ? (
-                                    <FaCheckCircle style={{ fontSize: 16 }} />
-                                  ) : (
-                                    <FaExclamationCircle
-                                      style={{ fontSize: 16 }}
-                                    />
-                                  )
-                                }
-                                color={
-                                  student["Payment Status"] === "Paid"
-                                    ? "success"
-                                    : "error"
-                                }
-                                variant="outlined"
-                                onClick={() =>
-                                  handlePaymentStatusToggle(
-                                    student.id,
-                                    student["Payment Status"],
-                                    student.Name
-                                  )
-                                }
-                                sx={{
-                                  cursor: "pointer",
-                                  fontWeight: "bold",
-                                  "&:hover": { boxShadow: 1 },
-                                }}
-                              />
+                             <Chip
+          // The label and color are now dynamic based on classesCompleted
+          label={student.classesCompleted > 0 ? "Unpaid" : "Paid"}
+          icon={
+            student.classesCompleted > 0 ? (
+              <FaExclamationCircle style={{ fontSize: 16 }} />
+            ) : (
+              <FaCheckCircle style={{ fontSize: 16 }} />
+            )
+          }
+          color={student.classesCompleted > 0 ? "error" : "success"}
+          variant="outlined"
+          onClick={() =>
+            handlePaymentStatusToggle(
+              student.id,
+              student.classesCompleted > 0 ? "Unpaid" : "Paid", // Pass the dynamically determined status
+              student.Name
+            )
+          }
+          sx={{
+            cursor: "pointer",
+            fontWeight: "bold",
+            "&:hover": { boxShadow: 1 },
+          }}
+        />
 
                               {/* --- Container for all date information to keep it together and centered --- */}
                               <Box
