@@ -1,3 +1,15 @@
+import {
+  FaTransgender,
+  FaBookOpen,
+  FaUsers,
+  FaUserCircle,
+  FaGraduationCap,
+  FaUniversity,
+  FaSearchDollar,
+  FaCalendarCheck,
+  FaPhone,
+} from "react-icons/fa";
+
 export const subjectOptions = [
   { value: "Physics", label: "Physics" },
   { value: "Chemistry", label: "Chemistry" },
@@ -312,4 +324,24 @@ export const dayOptions = [
   { value: "Friday", label: "Friday" },
   { value: "Saturday", label: "Saturday" },
   { value: "Sunday", label: "Sunday" },
+];
+export const studentColumns = [
+  { id: 'sNo', label: 'S.No.', minWidth: 50, align: 'center', hasSort: false },
+  { id: 'name', label: 'Name', minWidth: 150, align: 'left', hasSort: true, icon: FaUserCircle },
+  { id: 'gender', label: 'Gender', minWidth: 100, align: 'center', hasSort: false, icon: FaTransgender },
+  { id: 'subject', label: 'Subject', minWidth: 120, align: 'center', hasSort: false, icon: FaBookOpen },
+  { id: 'year', label: 'Year', minWidth: 80, align: 'center', hasSort: false, icon: FaCalendarCheck },
+  { id: 'stream', label: 'Stream', minWidth: 120, align: 'center', hasSort: false, icon: FaGraduationCap },
+  { id: 'college', label: 'College', minWidth: 150, align: 'center', hasSort: false, icon: FaUniversity },
+  { id: 'group', label: 'Group', minWidth: 100, align: 'center', hasSort: false, icon: FaUsers },
+  { id: 'source', label: 'Source', minWidth: 100, align: 'center', hasSort: false, icon: FaSearchDollar },
+  { id: 'contactNumber', label: 'Contact No.', minWidth: 150, align: 'center', hasSort: false, icon: FaPhone },
+  { id: 'motherContact', label: 'Mother Contact', minWidth: 150, align: 'center', hasSort: false, icon: FaPhone },
+  { id: 'fatherContact', label: 'Father Contact', minWidth: 150, align: 'center', hasSort: false, icon: FaPhone },
+  { id: 'monthlyFee', label: 'Monthly Fee', minWidth: 120, align: 'right', hasSort: true },
+  { id: 'classesCompleted', label: 'Classes Completed', minWidth: 160, align: 'center', hasSort: true },
+  { id: 'nextClass', label: 'Next Class', minWidth: 120, align: 'center', hasSort: false },
+  { id: 'paymentStatus', label: 'Payment Status', minWidth: 150, align: 'center', hasSort: false },
+  { id: 'status', label: 'Status', minWidth: 150, align: 'center', hasSort: false },
+  { id: 'actions', label: 'Actions', minWidth: 150, align: 'center', hasSort: false },
 ];

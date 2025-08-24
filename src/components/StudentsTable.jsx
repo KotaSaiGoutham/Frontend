@@ -97,12 +97,11 @@ import {
   fetchAutoTimetablesForToday,
 } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
-// PDF Download Button component
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 import { ClassCounterDisplay } from "../mockdata/function";
+import TableHeaders from "./students/TableHeaders";
+import { studentColumns } from "../mockdata/Options";
 
-// Custom Alert component for Snackbar, using forwardRef as recommended by Material-UI
-// This allows the Snackbar to correctly pass its ref to the Alert component.
 const MuiAlert = React.forwardRef(function MuiAlert(props, ref) {
   return <Alert elevation={6} ref={ref} variant="filled" {...props} />;
 });
@@ -127,8 +126,6 @@ const StudentsTable = () => {
     actions: true, // For action buttons
   });
   const [animate, setAnimate] = useState(false);
-
-  // Handler for checkbox changes
   const handleColumnToggle = (columnName) => (event) => {
     setColumnVisibility((prevVisibility) => ({
       ...prevVisibility,
@@ -139,7 +136,6 @@ const StudentsTable = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Selectors for Redux state
   const { user } = useSelector((state) => state.auth);
   const {
     students,
@@ -243,15 +239,12 @@ const StudentsTable = () => {
     });
     setLastUpdatedTimestamps(newTimestamps);
   }, [students]);
-  console.log("lastUpdatedTimestamps", lastUpdatedTimestamps);
 
-  // --- Data Fetching Effect ---
-  // Dispatches actions to fetch both students and upcoming classes (timetables) on component mount.
   useEffect(() => {
     dispatch(fetchStudents());
     dispatch(fetchUpcomingClasses());
     dispatch(fetchAutoTimetablesForToday());
-  }, [dispatch]); // `dispatch` is stable, so this runs once.
+  }, [dispatch]);
 
   useEffect(() => {
     setIsLoading(studentsLoading || classesLoading); // True if either students or classes are loading
@@ -260,73 +253,75 @@ const StudentsTable = () => {
     } else if (classesError) {
       setError(classesError);
     } else {
-      setError(""); // Clear error if no errors from Redux
+      setError("");
     }
-  }, [studentsLoading, classesLoading, studentsError, classesError]); // Dependencies ensure this runs when relevant states change
+  }, [studentsLoading, classesLoading, studentsError, classesError]);
+
   useEffect(() => {
-    // Wait until students are loaded
+    // Exit early if essential data is missing
+    console.log("students===>",students)
     if (!students.length) {
       return;
     }
-
-    // If timetables are still loading, just wait
-    if (!timetables.length && !autoTimetables.length) {
-      return;
-    }
-
     const combinedTimetables = [...timetables, ...autoTimetables];
+        console.log("combinedTimetables===>",combinedTimetables)
 
-    const augmentedStudents = students.map((student) => {
-      const studentUpcomingClasses = combinedTimetables.filter(
-        (uc) => uc.Student?.toLowerCase() === student.Name?.toLowerCase()
-      );
+    let augmentedStudents = [];
+    if (combinedTimetables.length > 0) {
+      augmentedStudents = students.map((student) => {
+        const studentUpcomingClasses = combinedTimetables.filter(
+          (uc) => uc.Student?.toLowerCase() === student.Name?.toLowerCase()
+        );
 
-      let soonestFutureClass = null;
+        let soonestFutureClass = null;
 
-      studentUpcomingClasses.forEach((uc) => {
-        const datePart = uc.Day;
-        const timePart = uc.Time?.split(" ")[0];
-        const ampmPart = uc.Time?.split(" ")[1];
+        studentUpcomingClasses.forEach((uc) => {
+          const datePart = uc.Day;
+          const timePart = uc.Time?.split(" ")[0];
+          const ampmPart = uc.Time?.split(" ")[1];
 
-        if (datePart && timePart && ampmPart) {
-          try {
-            const combinedDateTimeString = `${datePart} ${timePart} ${ampmPart}`;
-            const classDateTime = parse(
-              combinedDateTimeString,
-              "dd/MM/yyyy hh:mm a",
-              new Date()
-            );
+          if (datePart && timePart && ampmPart) {
+            try {
+              const combinedDateTimeString = `${datePart} ${timePart} ${ampmPart}`;
+              const classDateTime = parse(
+                combinedDateTimeString,
+                "dd/MM/yyyy hh:mm a",
+                new Date()
+              );
 
-            if (isFuture(classDateTime)) {
-              if (!soonestFutureClass || classDateTime < soonestFutureClass) {
-                soonestFutureClass = classDateTime;
+              if (isFuture(classDateTime)) {
+                if (!soonestFutureClass || classDateTime < soonestFutureClass) {
+                  soonestFutureClass = classDateTime;
+                }
               }
+            } catch (e) {
+              console.warn(
+                `Error parsing date for student ${student.Name}, class ${uc.Day} ${uc.Time}:`,
+                e
+              );
             }
-          } catch (e) {
-            console.warn(
-              `Error parsing date for student ${student.Name}, class ${uc.Day} ${uc.Time}:`,
-              e
-            );
           }
-        }
-      });
+        });
 
-      return {
-        ...student,
-        nextClass: soonestFutureClass,
-      };
-    });
+        return {
+          ...student,
+          nextClass: soonestFutureClass,
+        };
+      });
+    } else {
+      augmentedStudents = students.map((student) => ({
+    ...student,
+    nextClass: null,
+  }));
+    }
+    console.log("augmentedStudents", augmentedStudents);
 
     setStudentsWithNextClass(augmentedStudents);
   }, [students, timetables, autoTimetables]);
-
   useEffect(() => {
     let studentsToFilter = [...studentsWithNextClass]; // Start with augmented students
-
-    // 1. Apply User Permission Filters FIRST
     if (user) {
       if (user.AllowAll) {
-        // If AllowAll is true, no subject-based filtering is needed
       } else if (user.isPhysics) {
         studentsToFilter = studentsToFilter.filter(
           (student) => student.Subject?.trim() === "Physics"
@@ -954,445 +949,19 @@ const StudentsTable = () => {
             >
               {" "}
               <Table sx={{ minWidth: 1200 }} aria-label="student table">
-                <TableHead
-                  sx={{
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 2,
-                    backgroundColor: "#e3f2fd",
-                  }}
-                >
-                  <TableRow
-                    sx={{
-                      borderBottom: "2px solid #1976d2",
-                      backgroundColor: "#f5faff",
-                    }}
-                  >
-                    <TableCell
-                      align="center"
-                      sx={{
-                        fontWeight: "bold",
-                        color: "#1a237e",
-                        fontSize: "1.05rem",
-                        padding: "12px 8px",
-                      }}
-                    >
-                      S.No.
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        minWidth: 150,
-                        p: 1.5,
-                        textTransform: "uppercase",
-                        fontSize: "0.9rem",
-                        color: "#1a237e",
-                      }}
-                    >
-                      <TableSortLabel
-                        active={orderBy === "Name"}
-                        direction={orderBy === "Name" ? order : "asc"}
-                        onClick={() => handleSortRequest("Name")}
-                      >
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <FaUserCircle
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />{" "}
-                          Name
-                        </Box>
-                      </TableSortLabel>
-                    </TableCell>
-                    {columnVisibility.gender && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 100,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaTransgender
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />{" "}
-                          Gender
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.subject && showSubjectColumn && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 120,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaBookOpen
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />{" "}
-                          Subject
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.year && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 80,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaCalendarCheck
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />{" "}
-                          Year
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.stream && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 120,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaGraduationCap
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />{" "}
-                          Stream
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.college && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 150,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaUniversity
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />{" "}
-                          College
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.group && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 100,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaUsers
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />{" "}
-                          Group
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.source && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 100,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaSearchDollar
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />{" "}
-                          Source
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.contactNumber && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 150,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaPhone
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />
-                          Contact No.
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.motherContact && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 150,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaPhone
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />
-                          Mother Contact
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.fatherContact && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 150,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaPhone
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />
-                          Father Contact
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.monthlyFee && (
-                      <TableCell
-                        align="right"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 120,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <TableSortLabel
-                          active={orderBy === "monthlyFee"}
-                          direction={orderBy === "monthlyFee" ? order : "asc"}
-                          onClick={() => handleSortRequest("monthlyFee")}
-                        >
-                          Monthly Fee
-                        </TableSortLabel>
-                      </TableCell>
-                    )}
-                    {columnVisibility.classesCompleted && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 160,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <TableSortLabel
-                          active={orderBy === "classesCompleted"}
-                          direction={
-                            orderBy === "classesCompleted" ? order : "asc"
-                          }
-                          onClick={() => handleSortRequest("classesCompleted")}
-                        >
-                          Classes Completed
-                        </TableSortLabel>
-                      </TableCell>
-                    )}
-                    {columnVisibility.nextClass && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 120,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        Next Class
-                      </TableCell>
-                    )}
-                    {columnVisibility.paymentStatus && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 150,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        Payment Status
-                      </TableCell>
-                    )}
-                    {columnVisibility.status && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 150,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        Status
-                      </TableCell>
-                    )}{" "}
-                    {/* New Header */}
-                    {columnVisibility.actions && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 150,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        Actions
-                      </TableCell>
-                    )}{" "}
-                    {/* For Edit/Delete */}
-                  </TableRow>
-                </TableHead>
+                <TableHeaders
+                  columns={studentColumns}
+                  order={order}
+                  orderBy={orderBy}
+                  handleSortRequest={handleSortRequest}
+                  columnVisibility={columnVisibility}
+                  showSubjectColumn ={showSubjectColumn }
+                />
                 <TableBody>
                   {sortedFilteredStudents.map((student, index) => (
                     <TableRow
                       key={student.id}
                       sx={{
-                        // Existing styles for recent payments and alternating rows
                         backgroundColor: isRecentPayment(student)
                           ? "#e8f5e9"
                           : student.isActive // New condition for inactive status
@@ -1402,13 +971,11 @@ const StudentsTable = () => {
                           : "#ffebee", // Light red for inactive rows (Material Design error.light)
                         transition: "background-color 0.2s ease-in-out",
 
-                        // 👇 Add the animation only if student is recently paid
                         animation: isRecentPayment(student)
                           ? "highlightFade 2s ease-in-out infinite"
                           : "none",
 
                         "&:hover": {
-                          // Prioritize hover color over inactive color if both apply
                           backgroundColor: student.isActive
                             ? "#e1f5fe"
                             : "#ffcdd2", // Slightly darker red on hover for inactive
@@ -1446,7 +1013,6 @@ const StudentsTable = () => {
                         scope="row"
                         sx={{ fontSize: "0.9rem" }}
                       >
-                        {/* Consider making the entire row clickable or using a dedicated action button for details */}
                         <Link
                           to={`/student/${student.id}`}
                           state={{ studentData: student }}
@@ -1638,8 +1204,8 @@ const StudentsTable = () => {
                                   Payment Pending!
                                 </Typography>
                               )}
-                               {student["Payment Status"] === "Paid" &&
-                              (student.classesCompleted) < 0 && (
+                            {student["Payment Status"] === "Paid" &&
+                              student.classesCompleted < 0 && (
                                 <Typography
                                   variant="caption"
                                   sx={{
@@ -1688,31 +1254,43 @@ const StudentsTable = () => {
                           ) : (
                             <>
                               {/* The main Chip for payment status */}
-                             <Chip
-          // The label and color are now dynamic based on classesCompleted
-          label={student.classesCompleted > 0 ? "Unpaid" : "Paid"}
-          icon={
-            student.classesCompleted > 0 ? (
-              <FaExclamationCircle style={{ fontSize: 16 }} />
-            ) : (
-              <FaCheckCircle style={{ fontSize: 16 }} />
-            )
-          }
-          color={student.classesCompleted > 0 ? "error" : "success"}
-          variant="outlined"
-          onClick={() =>
-            handlePaymentStatusToggle(
-              student.id,
-              student.classesCompleted > 0 ? "Unpaid" : "Paid", // Pass the dynamically determined status
-              student.Name
-            )
-          }
-          sx={{
-            cursor: "pointer",
-            fontWeight: "bold",
-            "&:hover": { boxShadow: 1 },
-          }}
-        />
+                              <Chip
+                                // The label and color are now dynamic based on classesCompleted
+                                label={
+                                  student.classesCompleted > 0
+                                    ? "Unpaid"
+                                    : "Paid"
+                                }
+                                icon={
+                                  student.classesCompleted > 0 ? (
+                                    <FaExclamationCircle
+                                      style={{ fontSize: 16 }}
+                                    />
+                                  ) : (
+                                    <FaCheckCircle style={{ fontSize: 16 }} />
+                                  )
+                                }
+                                color={
+                                  student.classesCompleted > 0
+                                    ? "error"
+                                    : "success"
+                                }
+                                variant="outlined"
+                                onClick={() =>
+                                  handlePaymentStatusToggle(
+                                    student.id,
+                                    student.classesCompleted > 0
+                                      ? "Unpaid"
+                                      : "Paid", // Pass the dynamically determined status
+                                    student.Name
+                                  )
+                                }
+                                sx={{
+                                  cursor: "pointer",
+                                  fontWeight: "bold",
+                                  "&:hover": { boxShadow: 1 },
+                                }}
+                              />
 
                               {/* --- Container for all date information to keep it together and centered --- */}
                               <Box
