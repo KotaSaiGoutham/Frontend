@@ -44,10 +44,9 @@ import AuthLayout from "./layouts/AuthLayout";
 import AddDemoClassPage from "./components/AddDemoClassPage";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./components/customcomponents/theme";
-import AddExpenditure from "./components/AddExpenditure"
-import ExpenditureDashboard from "./components/ExpenditureDashboard"
-// A simple PrivateRoute component to protect routes
-// This component checks for a token in localStorage, you can also check Redux's isAuthenticated here
+import AddExpenditure from "./components/AddExpenditure";
+import ExpenditureDashboard from "./components/ExpenditureDashboard";
+import { SnackbarProvider } from "./components/customcomponents/SnackbarContext";
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get from Redux
   const token = localStorage.getItem("token"); // Also check localStorage for robustness on initial load
@@ -59,66 +58,84 @@ const PrivateRoute = ({ children }) => {
 function App() {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get auth status from Redux
 
-
   return (
-    <ThemeProvider theme={theme}>
-      <Router>
-        <ScrollToTop /> {/* Handles scrolling on route change */}
-        <div>
-          <Navbar /> {/* Your global Navbar */}
+    <SnackbarProvider>
+      <ThemeProvider theme={theme}>
+        <Router>
+          <ScrollToTop /> {/* Handles scrolling on route change */}
+          <div>
+            <Navbar /> {/* Your global Navbar */}
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/teachers" element={<Teachers />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/ai-summarizer" element={<PageSummarizer />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/book-demo" element={<BookDemo />} />
+              <Route path="/subjects/physics" element={<PhysicsPage />} />
+              <Route path="/subjects/chemistry" element={<ChemistryPage />} />
+              <Route path="/subjects/maths" element={<MathsPage />} />
+              <Route path="/subjects/biology" element={<BiologyPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/teachers" element={<Teachers />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/ai-summarizer" element={<PageSummarizer />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/book-demo" element={<BookDemo />} />
-            <Route path="/subjects/physics" element={<PhysicsPage />} />
-            <Route path="/subjects/chemistry" element={<ChemistryPage />} />
-            <Route path="/subjects/maths" element={<MathsPage />} />
-            <Route path="/subjects/biology" element={<BiologyPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+              {/* Protected Routes - Nested structure */}
+              {/* The outer Route with AuthLayout and PrivateRoute ensures */}
+              {/* that all nested routes inherit the layout and require authentication. */}
+              <Route
+                element={
+                  <PrivateRoute>
+                    <AuthLayout />
+                  </PrivateRoute>
+                }
+              >
+                {/* Individual protected routes inside the AuthLayout */}
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/students" element={<StudentsTable />} />
+                <Route path="/demo-classes" element={<DemoClassesPage />} />
+                <Route
+                  path="/add-demo-class"
+                  element={<AddDemoClassPage />}
+                />{" "}
+                {/* NEW ROUTE */}
+                <Route
+                  path="/add-expenditure"
+                  element={<AddExpenditure />}
+                />{" "}
+                {/* NEW ROUTE */}
+                <Route
+                  path="/expenditure"
+                  element={<ExpenditureDashboard />}
+                />{" "}
+                {/* NEW ROUTE */}
+                <Route path="/student/:id" element={<StudentPortfolio />} />
+                <Route path="/timetable" element={<TimetablePage />} />
+                <Route path="/employees" element={<Employees />} />
+                <Route path="/add-student" element={<AddStudent />} />
+                <Route path="/add-employee" element={<AddEmployeePage />} />
+                <Route path="/add-timetable" element={<AddTimetablePage />} />
+              </Route>
 
-            {/* Protected Routes - Nested structure */}
-            {/* The outer Route with AuthLayout and PrivateRoute ensures */}
-            {/* that all nested routes inherit the layout and require authentication. */}
-            <Route element={<PrivateRoute><AuthLayout /></PrivateRoute>}>
-              {/* Individual protected routes inside the AuthLayout */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/students" element={<StudentsTable />} />
-              <Route path="/demo-classes" element={<DemoClassesPage />} />
-              <Route path="/add-demo-class" element={<AddDemoClassPage />} /> {/* NEW ROUTE */}
-              <Route path="/add-expenditure" element={<AddExpenditure />} /> {/* NEW ROUTE */}
-              <Route path="/expenditure" element={<ExpenditureDashboard />} /> {/* NEW ROUTE */}
-              <Route path="/student/:id" element={<StudentPortfolio />} />
-              <Route path="/timetable" element={<TimetablePage />} />
-              <Route path="/employees" element={<Employees />} />
-              <Route path="/add-student" element={<AddStudent />} />
-              <Route path="/add-employee" element={<AddEmployeePage />} />
-              <Route path="/add-timetable" element={<AddTimetablePage />} />
-            </Route>
-
-            {/* Fallback Route: Redirects unhandled paths based on authentication status */}
-            {/* This should be the last route in your Routes list */}
-            <Route
-              path="*" // Matches any path not matched by previous routes
-              element={
-                <Navigate
-                  to={isAuthenticated ? "/dashboard" : "/login"} // Redirect to dashboard if logged in, else to login
-                  replace // Replaces the current entry in the history stack
-                />
-              }
-            />
-          </Routes>
-        </div>
-      </Router>
-    </ThemeProvider>
+              {/* Fallback Route: Redirects unhandled paths based on authentication status */}
+              {/* This should be the last route in your Routes list */}
+              <Route
+                path="*" // Matches any path not matched by previous routes
+                element={
+                  <Navigate
+                    to={isAuthenticated ? "/dashboard" : "/login"} // Redirect to dashboard if logged in, else to login
+                    replace // Replaces the current entry in the history stack
+                  />
+                }
+              />
+            </Routes>
+          </div>
+        </Router>
+      </ThemeProvider>
+    </SnackbarProvider>
   );
 }
 

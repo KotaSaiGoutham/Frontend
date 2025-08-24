@@ -169,6 +169,8 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-unit);
+  grid-auto-rows: auto;   /* 👈 rows shrink to fit content */
+
 }
 
 /* --- Card Headers and Icons --- */

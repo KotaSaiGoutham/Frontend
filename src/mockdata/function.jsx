@@ -494,29 +494,69 @@ export const getQuickChartUrl = (chartType, data) => {
     JSON.stringify(chartConfig)
   )}&f=png&bkg=transparent`;
 };
-export const getRecentStudentActivity = (students) => {
-  const activeStudents = students?.filter(
-    (student) => student.lastUpdatedClassesAt
+
+export const getRecentStudentActivity = (students, currentMonthPayments) => {
+  if (!students) return [];
+
+  const paidStudentIds = new Set(
+    currentMonthPayments?.map((p) => p.studentId)
   );
 
-  if (!activeStudents) return [];
+  const enhancedStudents = students
+    .filter((student) => student.isActive && student.lastUpdatedClassesAt)
+    .map((student) => {
+      const isPaid = paidStudentIds.has(student.id);
+      return {
+        ...student,
+        isPaid,
+        paymentStatus: isPaid ? "Paid" : "Pending",
+        lastUpdatedClassesAt: student.lastUpdatedClassesAt
+          ? new Date(student.lastUpdatedClassesAt._seconds * 1000).toLocaleString()
+          : null,
+      };
+    });
 
-  // Sort students by the most recent class date
-  const sortedStudents = activeStudents.sort((a, b) => {
-    // Convert timestamps to Date objects for comparison
-    const dateA = new Date(a.lastUpdatedClassesAt._seconds * 1000);
-    const dateB = new Date(b.lastUpdatedClassesAt._seconds * 1000);
+  const sortedStudents = enhancedStudents.sort((a, b) => {
+    if (a.paymentStatus !== b.paymentStatus) {
+      return a.paymentStatus === "Pending" ? -1 : 1;
+    }
+    const dateA = new Date(a.lastUpdatedClassesAt);
+    const dateB = new Date(b.lastUpdatedClassesAt);
     return dateB - dateA;
   });
 
-  // Map over the sorted students to format the timestamp
-  return sortedStudents.map((student) => ({
-    ...student,
-    // Format the timestamp into a readable string here
-    lastUpdatedClassesAt: new Date(
-      student.lastUpdatedClassesAt._seconds * 1000
-    ).toLocaleString(),
-  }));
+  return sortedStudents;
+};
+
+export const getCombinedRecentActivity = (students, payments) => {
+  const activities = [];
+
+  // Add a new activity for each student's latest class
+  students.forEach(student => {
+    if (student.lastUpdatedClassesAt && student.isActive) {
+      activities.push({
+        type: 'class_completed',
+        id: student.id,
+        timestamp: new Date(student.lastUpdatedClassesAt._seconds * 1000),
+        message: `${student.Name} completed their class in ${student.Subject}.`
+      });
+    }
+  });
+
+  // Add a new activity for each payment received
+  payments.forEach(payment => {
+    activities.push({
+      type: 'payment_received',
+      id: payment.id,
+      timestamp: new Date(payment.paidOn),
+      message: `${payment.studentName} paid their fee of ₹${payment.amount.toLocaleString()}.`
+    });
+  });
+
+  // Sort all activities by the most recent timestamp
+  const sortedActivities = activities.sort((a, b) => b.timestamp - a.timestamp);
+
+  return sortedActivities;
 };
 
 // Logic to get recent employee activity
@@ -554,3 +594,29 @@ export const expenditureColors = [
   "#AF19FF",
   "#FF1943",
 ];
+export   const getDemoClassMetrics = (demos) => {
+    if (!demos)
+      return {
+        successCount: 0,
+        scheduledCount: 0,
+        pendingCount: 0,
+        failureCount: 0,
+        total: 0,
+      };
+
+    const successCount = demos.filter(
+      (d) => d.status?.toLowerCase() === "success"
+    ).length;
+    const scheduledCount = demos.filter(
+      (d) => d.status?.toLowerCase() === "scheduled"
+    ).length;
+    const pendingCount = demos.filter(
+      (d) => d.status?.toLowerCase() === "pending"
+    ).length;
+    const failureCount = demos.filter(
+      (d) => d.status?.toLowerCase() === "failure"
+    ).length;
+
+    const total = demos.length;
+    return { successCount, scheduledCount, pendingCount, failureCount, total };
+  };

@@ -506,148 +506,148 @@ const ExpenditureDashboard = () => {
       ) : (
         <>
           <Grid container spacing={3} sx={{ mt: 2 }}>
-  {/* Left side - Metric Cards */}
-  <Grid item xs={12} md={4}>
-    <Grid
-      container
-      spacing={1.25}
-      sx={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "10px",
-      }}
-    >
-      <Grid item>
-        <MetricCard
-          label="Total Fee Collection"
-          value={paidStudentSum}
-          gradient="linear-gradient(135deg, #e3f2fd, #bbdefb)"
-          icon={<FaRupeeSign />}
-          percentage={revenueChange}
-        />
-      </Grid>
-      <Grid item>
-        <MetricCard
-          label="Total Expenditure"
-          value={totalFilteredExpenditure || 0}
-          gradient="linear-gradient(135deg, #ffebee, #ffcdd2)"
-          icon={<FaRupeeSign />}
-          percentage={expenditureChange}
-        />
-      </Grid>
-      <Grid item>
-        <MetricCard
-          label="Pending Fee Amount"
-          value={pendingStudentSum || 0}
-          gradient="linear-gradient(135deg, #fff8e1, #ffecb3)"
-          icon={<FaRupeeSign />}
-        />
-      </Grid>
-      <Grid item>
-        <MetricCard
-          label="Net Profit/Loss"
-          value={netProfit}
-          gradient={
-            netProfit >= 0
-              ? "linear-gradient(135deg, #e0f7fa, #b2ebf2)"
-              : "linear-gradient(135deg, #ffebee, #ffcdd2)"
-          }
-          textColor={netProfit >= 0 ? "success.dark" : "error.dark"}
-          icon={<FaRupeeSign />}
-        />
-      </Grid>
-    </Grid>
-  </Grid>
+            {/* Left side - Metric Cards */}
+            <Grid item xs={12} md={4}>
+              <Grid
+                container
+                spacing={1.25}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "10px",
+                }}
+              >
+                <Grid item>
+                  <MetricCard
+                    label="Total Fee Collection"
+                    value={paidStudentSum}
+                    gradient="linear-gradient(135deg, #e3f2fd, #bbdefb)"
+                    icon={<FaRupeeSign />}
+                    percentage={revenueChange}
+                  />
+                </Grid>
+                <Grid item>
+                  <MetricCard
+                    label="Total Expenditure"
+                    value={totalFilteredExpenditure || 0}
+                    gradient="linear-gradient(135deg, #ffebee, #ffcdd2)"
+                    icon={<FaRupeeSign />}
+                    percentage={expenditureChange}
+                  />
+                </Grid>
+                <Grid item>
+                  <MetricCard
+                    label="Pending Fee Amount"
+                    value={pendingStudentSum || 0}
+                    gradient="linear-gradient(135deg, #fff8e1, #ffecb3)"
+                    icon={<FaRupeeSign />}
+                  />
+                </Grid>
+                <Grid item>
+                  <MetricCard
+                    label="Net Profit/Loss"
+                    value={netProfit}
+                    gradient={
+                      netProfit >= 0
+                        ? "linear-gradient(135deg, #e0f7fa, #b2ebf2)"
+                        : "linear-gradient(135deg, #ffebee, #ffcdd2)"
+                    }
+                    textColor={netProfit >= 0 ? "success.dark" : "error.dark"}
+                    icon={<FaRupeeSign />}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
 
-  {/* Middle - Bar Chart */}
-  <Grid item xs={12} md={4}>
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
-      <Paper
-        elevation={4}
-        sx={{ p: 3, borderRadius: 3, height: 350 }}
-      >
-        <Typography variant="h6" color="primary" gutterBottom>
-          <FaChartBar /> Monthly Financial Overview
-        </Typography>
-        <BarChart
-          xAxis={[
-            {
-              scaleType: "band",
-              data: [
-                monthOptions.find(
-                  (m) =>
-                    m.value ===
-                    (selectedDate.month === 1 ? 12 : selectedDate.month - 1)
-                )?.label,
-                monthOptions.find((m) => m.value === selectedDate.month)?.label,
-              ],
-              label: "Month",
-            },
-          ]}
-          yAxis={[{ label: "Amount (₹)" }]}
-          series={[
-            {
-              data: [
-                getPreviousMonthData("revenue"),
-                paidStudentSum,
-              ],
-              label: "Fee Collection",
-              color: "#2196f3",
-            },
-            {
-              data: [
-                getPreviousMonthData("expenditure"),
-                totalFilteredExpenditure,
-              ],
-              label: "Expenditure",
-              color: "#f44336",
-            },
-          ]}
-          height={250}
-        />
-      </Paper>
-    </motion.div>
-  </Grid>
+            {/* Middle - Bar Chart */}
+            <Grid item xs={12} md={4}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Paper
+                  elevation={4}
+                  sx={{ p: 3, borderRadius: 3, height: 350 }}
+                >
+                  <Typography variant="h6" color="primary" gutterBottom>
+                    <FaChartBar /> Monthly Financial Overview
+                  </Typography>
+                  <BarChart
+                    xAxis={[
+                      {
+                        scaleType: "band",
+                        data: [
+                          monthOptions.find(
+                            (m) =>
+                              m.value ===
+                              (selectedDate.month === 1
+                                ? 12
+                                : selectedDate.month - 1)
+                          )?.label,
+                          monthOptions.find(
+                            (m) => m.value === selectedDate.month
+                          )?.label,
+                        ],
+                        label: "Month",
+                      },
+                    ]}
+                    yAxis={[{ label: "Amount (₹)" }]}
+                    series={[
+                      {
+                        data: [getPreviousMonthData("revenue"), paidStudentSum],
+                        label: "Fee Collection",
+                        color: "#2196f3",
+                      },
+                      {
+                        data: [
+                          getPreviousMonthData("expenditure"),
+                          totalFilteredExpenditure,
+                        ],
+                        label: "Expenditure",
+                        color: "#f44336",
+                      },
+                    ]}
+                    height={250}
+                  />
+                </Paper>
+              </motion.div>
+            </Grid>
 
-  {/* Right side - Pie Chart */}
-  <Grid item xs={12} md={4}>
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.2 }}
-    >
-      <Paper
-        elevation={4}
-        sx={{ p: 3, borderRadius: 3, height: 350 }}
-      >
-        <Typography variant="h6" color="primary" gutterBottom>
-          <FaChartPie /> Expenditures
-        </Typography>
-        <PieChart
-          series={[
-            {
-              data: pieChartData,
-              highlightScope: {
-                faded: "global",
-                highlight: "item",
-              },
-              faded: {
-                innerRadius: 30,
-                additionalRadius: -30,
-                color: "gray",
-              },
-            },
-          ]}
-          height={250}
-        />
-      </Paper>
-    </motion.div>
-  </Grid>
-</Grid>
+            <Grid item xs={12} md={4}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <Paper
+                  elevation={4}
+                  sx={{ p: 3, borderRadius: 3, height: 350 }}
+                >
+                  <Typography variant="h6" color="primary" gutterBottom>
+                    <FaChartPie /> Expenditures
+                  </Typography>
+                  <PieChart
+                    series={[
+                      {
+                        data: pieChartData,
+                        highlightScope: {
+                          faded: "global",
+                          highlight: "item",
+                        },
+                        faded: {
+                          innerRadius: 30,
+                          additionalRadius: -30,
+                          color: "gray",
+                        },
+                      },
+                    ]}
+                    height={250}
+                  />
+                </Paper>
+              </motion.div>
+            </Grid>
+          </Grid>
 
           <Paper elevation={4} sx={{ p: 3, borderRadius: 3, mb: 4 }}>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
