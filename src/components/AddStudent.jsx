@@ -17,6 +17,7 @@ import {
   FaTimesCircle,
   FaClock,
   FaTrash,
+  FaEdit 
 } from "react-icons/fa";
 
 import Snackbar from "@mui/material/Snackbar";
@@ -145,40 +146,52 @@ const AddStudent = () => {
   };
 
 
-  const handleAddTimeSlot = () => {
-    try {
-      if (!newTimeSlotDay || !newTimeSlotTime) {
-        setTimeSlotError("Please select both day and time.");
-        return;
-      }
-      const timeRegex = /^(0?[1-9]|1[0-2]):([0-5]\d)(am|pm)$/i;
-      if (!timeRegex.test(newTimeSlotTime)) {
-        setTimeSlotError(
-          "Please enter time in HH:MMam/pm format (e.g., 04:00pm)."
-        );
-        return;
-      }
-
-      const newSlot = `${newTimeSlotDay}-${newTimeSlotTime.toLowerCase()}`;
-      if (studentData?.classDateandTime?.includes(newSlot)) {
-        setTimeSlotError("This time slot already exists.");
-        return;
-      }
-
-      setStudentData((prevData) => ({
-        ...prevData,
-        classDateandTime: [...prevData?.classDateandTime, newSlot],
-      }));
-
-      setNewTimeSlotDay("");
-      setNewTimeSlotTime("");
-      setTimeSlotError("");
-    } catch (err) {
-      console.error("Error adding time slot:", err);
-      alert("Error adding time slot: " + err.message);
+const handleAddTimeSlot = () => {
+  try {
+    if (!newTimeSlotDay || !newTimeSlotTime) {
+      setTimeSlotError("Please select both day and time.");
+      return;
     }
-  };
+    const timeRegex = /^(0?[1-9]|1[0-2]):([0-5]\d)(am|pm)$/i;
+    if (!timeRegex.test(newTimeSlotTime)) {
+      setTimeSlotError("Please enter time in HH:MMam/pm format (e.g., 04:00pm).");
+      return;
+    }
 
+    const newSlot = `${newTimeSlotDay}-${newTimeSlotTime.toLowerCase()}`;
+    if (studentData?.classDateandTime?.includes(newSlot)) {
+      setTimeSlotError("This time slot already exists.");
+      return;
+    }
+
+    setStudentData((prevData) => {
+      const updatedSlots = [...(prevData?.classDateandTime || []), newSlot];
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      
+      const lastAddedDay = days.indexOf(newTimeSlotDay);
+      const nextDayIndex = (lastAddedDay + 2) % 7;
+      const nextSuggestedDay = days[nextDayIndex];
+      
+      setNewTimeSlotDay(nextSuggestedDay); // Set next suggested day
+      setNewTimeSlotTime(newTimeSlotTime); // Keep the time the same
+      setTimeSlotError("");
+      
+      return {
+        ...prevData,
+        classDateandTime: updatedSlots,
+      };
+    });
+  } catch (err) {
+    console.error("Error adding time slot:", err);
+    alert("Error adding time slot: " + err.message);
+  }
+};
+const handleEditTimeSlot = (slotToEdit) => {
+  const [day, time] = slotToEdit.split('-');
+  setNewTimeSlotDay(day);
+  setNewTimeSlotTime(time);
+  handleRemoveTimeSlot(slotToEdit); // Remove the old slot after editing
+};
   const handleRemoveTimeSlot = (slotToRemove) => {
     setStudentData((prevData) => ({
       ...prevData,
@@ -496,13 +509,18 @@ const AddStudent = () => {
                         classNames="time-slot-item-anim"
                       >
                         <li ref={nodeRef} className="time-slot-item">
-                          <span>{slot}</span>
-                          <FaTrash
-                            className="delete-time-slot-icon"
-                            onClick={() => handleRemoveTimeSlot(slot)}
-                            title="Remove time slot"
-                          />
-                        </li>
+  <span>{slot}</span>
+  <FaEdit 
+    className="edit-time-slot-icon"
+    onClick={() => handleEditTimeSlot(slot)} 
+    title="Edit time slot"
+  />
+  <FaTrash
+    className="delete-time-slot-icon"
+    onClick={() => handleRemoveTimeSlot(slot)}
+    title="Remove time slot"
+  />
+</li>
                       </CSSTransition>
                     );
                   })}
