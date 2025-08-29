@@ -47,6 +47,10 @@ import theme from "./components/customcomponents/theme";
 import AddExpenditure from "./components/AddExpenditure";
 import ExpenditureDashboard from "./components/ExpenditureDashboard";
 import { SnackbarProvider } from "./components/customcomponents/SnackbarContext";
+import Reports from "./components/Reports";
+import StudentExam from "./components/StudentExam";
+import Analytics from "./components/Analytics";
+import AddStudentExamPage from "./components/AddStudentExamPage";
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get from Redux
   const token = localStorage.getItem("token"); // Also check localStorage for robustness on initial load
@@ -97,6 +101,13 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/students" element={<StudentsTable />} />
                 <Route path="/demo-classes" element={<DemoClassesPage />} />
+                   <Route path="/reports" element={<Reports />} />
+                <Route path="/student-exams" element={<StudentExam />} />
+                <Route path="/analytics" element={<Analytics />} />
+                  <Route
+                  path="/add-student-exam"
+                  element={<AddStudentExamPage />}
+                />
                 <Route
                   path="/add-demo-class"
                   element={<AddDemoClassPage />}

@@ -44,7 +44,7 @@ import {
   FaEllipsisV, // Import the ellipsis icon
 } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import { streamOptions, yearOptions, statusOptions } from "../mockdata/Options";
+import { streamOptions, yearOptions, statusOptions, demoStatusConfig } from "../mockdata/Options";
 
 import {
   MuiInput,
@@ -59,6 +59,8 @@ import {
   deleteDemoClass,
 } from "../redux/actions";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
+import TableHeaders from "./students/TableHeaders";
+import { demoTableColumns } from "../mockdata/Options";
 const DemoClassesPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -148,22 +150,22 @@ const DemoClassesPage = () => {
   };
 
   // Handler to confirm deletion
- const handleConfirmDelete = () => {
-  if (selectedDemo) {
-    // Dispatch the delete action
-    dispatch(deleteDemoClass(selectedDemo.id))
-      .then(() => {
-        // After a successful deletion, dispatch the fetch action
-        dispatch(fetchDemoClasses());
-      })
-      .catch((error) => {
-        // You might want to handle errors here, e.g., show an error message
-        console.error("Failed to delete demo class:", error);
-      });
-  }
-  setIsDeleteDialogOpen(false);
-  handleClose();
-};
+  const handleConfirmDelete = () => {
+    if (selectedDemo) {
+      // Dispatch the delete action
+      dispatch(deleteDemoClass(selectedDemo.id))
+        .then(() => {
+          // After a successful deletion, dispatch the fetch action
+          dispatch(fetchDemoClasses());
+        })
+        .catch((error) => {
+          // You might want to handle errors here, e.g., show an error message
+          console.error("Failed to delete demo class:", error);
+        });
+    }
+    setIsDeleteDialogOpen(false);
+    handleClose();
+  };
 
   // Handler to cancel deletion
   const handleCancelDelete = () => {
@@ -207,7 +209,7 @@ const DemoClassesPage = () => {
         gap: 3,
       }}
     >
-        <Slide
+      <Slide
         direction="down"
         in={true}
         mountOnEnter
@@ -266,7 +268,7 @@ const DemoClassesPage = () => {
         </Paper>
       </Slide>
 
-           <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
+      <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
         <Paper
           elevation={6}
           sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
@@ -287,110 +289,10 @@ const DemoClassesPage = () => {
               }}
             >
               <Table sx={{ minWidth: 1200 }} aria-label="demo classes table">
-                <TableHead
-                  sx={{
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 2,
-                    backgroundColor: "#e3f2fd",
-                  }}
-                >
-                  <TableRow
-                    sx={{
-                      borderBottom: "2px solid #1976d2",
-                      backgroundColor: "#f5faff",
-                    }}
-                  >
-                    {columnVisibility.sNo && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          color: "#1a237e",
-                          fontSize: "1.05rem",
-                          padding: "12px 8px",
-                        }}
-                      >
-                        S.No.
-                      </TableCell>
-                    )}
-                    {columnVisibility.demoDate && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 120,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        Demo Date
-                      </TableCell>
-                    )}
-                    {columnVisibility.status && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 150,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        Status
-                      </TableCell>
-                    )}
-                    {columnVisibility.moveToStudents && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 180,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <FaArrowRight
-                            style={{ marginRight: 8, color: "#1976d2" }}
-                          />
-                          Move To Students
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.actions && (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          whiteSpace: "nowrap",
-                          minWidth: 120,
-                          p: 1.5,
-                          textTransform: "uppercase",
-                          fontSize: "0.9rem",
-                          color: "#1a237e",
-                        }}
-                      >
-                        Actions
-                      </TableCell>
-                    )}
-                  </TableRow>
-                </TableHead>
+                <TableHeaders
+                  columns={demoTableColumns}
+                  columnVisibility={columnVisibility}
+                />
                 <TableBody>
                   {sortedFilteredDemoClasses.map((demo, index) => (
                     <TableRow
@@ -414,13 +316,24 @@ const DemoClassesPage = () => {
                       )}
                       {columnVisibility.studentName && (
                         <TableCell
+                          align="center"
                           sx={{
                             fontSize: "0.85rem",
                             padding: "10px 8px",
-                            whiteSpace: "nowrap",
                           }}
                         >
                           {demo.studentName}
+                        </TableCell>
+                      )}
+                      {columnVisibility.demoDate && (
+                        <TableCell
+                          align="center"
+                          sx={{
+                            fontSize: "0.85rem",
+                            padding: "10px 8px",
+                          }}
+                        >
+                          {new Date(demo.demoDate).toLocaleDateString("en-GB")}{" "}
                         </TableCell>
                       )}
                       {columnVisibility.status && (
@@ -437,6 +350,7 @@ const DemoClassesPage = () => {
                             onChange={(e) =>
                               handleStatusChange(demo.id, e.target.value)
                             }
+                            options={demoStatusConfig}
                           />
                         </TableCell>
                       )}
@@ -477,27 +391,27 @@ const DemoClassesPage = () => {
                           )}
                         </TableCell>
                       )}
-                  {columnVisibility.actions && (
-     <TableCell align="center" sx={{ py: 1.5 }}>
-                            <Box
-                              sx={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 0.5,
+                      {columnVisibility.actions && (
+                        <TableCell align="center" sx={{ py: 1.5 }}>
+                          <Box
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            <ActionButtons
+                              onEdit={() => {
+                                navigate("/add-demo-class", {
+                                  state: { demoToEdit: demo },
+                                });
                               }}
-                            >
-    <ActionButtons 
-      onEdit={() => {
-        navigate("/add-demo-class", {
-          state: { demoToEdit: demo }
-        });
-      }}
-      onDelete={() => handleDeleteClick(demo)}
-      size="small"
-    />
-     </Box>
-  </TableCell>
-)}
+                              onDelete={() => handleDeleteClick(demo)}
+                              size="small"
+                            />
+                          </Box>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -518,13 +432,14 @@ const DemoClassesPage = () => {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">
-          {"Confirm Deletion"}
-        </DialogTitle>
+        <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             Are you sure you want to delete the demo class for{" "}
-            <span style={{ fontWeight: 'bold' }}>{selectedDemo?.studentName}</span>? This action cannot be undone.
+            <span style={{ fontWeight: "bold" }}>
+              {selectedDemo?.studentName}
+            </span>
+            ? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

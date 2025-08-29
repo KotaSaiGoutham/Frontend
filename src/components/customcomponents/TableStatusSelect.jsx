@@ -31,35 +31,9 @@ const glow = keyframes`
   100% { box-shadow: 0 0 0px rgba(0,0,0,0); }
 `;
 
-const statusConfig = {
-  Pending: {
-    label: "Pending",
-    icon: <PendingIcon fontSize="small" />,
-    backgroundColor: "#fff3cd",
-    color: "#664d03",
-  },
-  Success: {
-    label: "Success",
-    icon: <SuccessIcon fontSize="small" />,
-    backgroundColor: "#d1e7dd",
-    color: "#0f5132",
-  },
-  Failed: {
-    label: "Failed",
-    icon: <FailedIcon fontSize="small" />,
-    backgroundColor: "#f8d7da",
-    color: "#842029",
-  },
-  Rescheduled: {
-    label: "Rescheduled",
-    icon: <RescheduledIcon fontSize="small" />,
-    backgroundColor: "#cfe2ff",
-    color: "#052c65",
-  },
-};
 
-const TableStatusSelect = ({ value, onChange }) => {
-  const statusOptions = Object.keys(statusConfig);
+const TableStatusSelect = ({ value, onChange,options }) => {
+  const statusOptions = Object.keys(options);
   const [selected, setSelected] = useState(value || '');
   const [animate, setAnimate] = useState(false);
 
@@ -80,7 +54,7 @@ const TableStatusSelect = ({ value, onChange }) => {
         displayEmpty
         input={<OutlinedInput notched={false} />}
         renderValue={(selectedVal) => {
-          const config = statusConfig[selectedVal];
+          const config = options[selectedVal];
           if (!config) return <Box>Select Status</Box>;
 
           return (
@@ -129,7 +103,7 @@ const TableStatusSelect = ({ value, onChange }) => {
         }}
       >
         {statusOptions.map((status) => {
-          const config = statusConfig[status];
+          const config = options[status];
           return (
             <MenuItem
               key={status}

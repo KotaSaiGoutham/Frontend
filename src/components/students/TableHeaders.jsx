@@ -6,7 +6,7 @@ import {
   Box,
 } from "@mui/material";
 
-const TableHeaders = ({ columns, order, orderBy, handleSortRequest, columnVisibility,showSubjectColumn  }) => {
+const TableHeaders = ({ columns, order, orderBy, handleSortRequest, columnVisibility, showSubjectColumn }) => {
   // Common styles for all cells
   const commonSx = {
     fontWeight: "bold",
@@ -33,10 +33,15 @@ const TableHeaders = ({ columns, order, orderBy, handleSortRequest, columnVisibi
         }}
       >
         {columns.map((column) => {
-          // Conditional rendering based on columnVisibility and other flags
-          const shouldRender = columnVisibility[column.id] || (column.id === 'subject' && showSubjectColumn);
+          // Default to true if columnVisibility is not provided or the key doesn't exist
+          const isVisible = (columnVisibility && columnVisibility[column.id] !== undefined)
+            ? columnVisibility[column.id]
+            : true;
 
-          if (shouldRender || column.id === 'sNo') { // S.No. is always visible
+          // Special case for 'subject' column
+          const shouldRender = isVisible || (column.id === 'subject' && showSubjectColumn);
+
+          if (shouldRender || column.id === 'sNo') {
             return (
               <TableCell
                 key={column.id}

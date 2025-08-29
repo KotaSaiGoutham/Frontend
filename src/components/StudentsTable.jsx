@@ -619,7 +619,7 @@ const StudentsTable = () => {
     try {
       // Dispatch the action to update classes completed
       const updatedStudent = await dispatch(
-        updateClassesCompleted(studentId, delta)
+        updateClassesCompleted(studentId, delta,user.name)
       );
 
       setSnackbarMessage(

@@ -8,38 +8,7 @@ import { Stack } from "@mui/material"; // You still need to import Stack for lay
 // Define the mark schemes outside the component to prevent re-creation on every render
 import { addWeeklyMarks,fetchWeeklyMarks } from "../redux/actions";
 import { useDispatch, useSelector } from "react-redux";
-
-const MARK_SCHEMES = {
-  JEE: {
-    Maths: 100,
-    Physics: 100,
-    Chemistry: 100,
-  },
-  NEET: {
-    Botany: 180,
-    Zoology: 180,
-    Physics: 180,
-    Chemistry: 180,
-  },
-  FOUNDATION: {
-    Maths: 15,
-    Physics: 15,
-    Chemistry: 15,
-  },
-  BITSAT: {
-    Maths: 120,
-    Physics: 90,
-    Chemistry: 90,
-    English: 30,
-    "Logical Reasoning": 60,
-  },
-  CBSE: {
-    Maths: 35,
-    Physics: 35,
-    Chemistry: 35,
-  },
-  // 'Others' will be handled by dynamic custom fields
-};
+import { MARK_SCHEMES } from "../mockdata/Options";
 
 const AddWeeklyMarksModal = ({
   studentId,

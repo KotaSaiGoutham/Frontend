@@ -10,6 +10,9 @@ import {
   FaCalendarAlt,
   FaMoneyBillAlt,
   FaHome,
+  FaChartBar,
+  FaFileAlt,
+  FaBookOpen,
 } from "react-icons/fa";
 import "./Sidebar.css";
 
@@ -33,6 +36,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       path: "/expenditure",
       icon: <FaMoneyBillAlt />,
     },
+    { name: "Reports", path: "/reports", icon: <FaFileAlt /> },
+    { name: "Student Exams", path: "/student-exams", icon: <FaBookOpen /> },
+    { name: "Analytics", path: "/analytics", icon: <FaChartBar /> },
   ];
 
   return (

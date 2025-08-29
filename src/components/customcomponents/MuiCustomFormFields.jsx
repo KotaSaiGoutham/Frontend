@@ -160,14 +160,9 @@ export const MuiDatePicker = ({
           </>
         }
         value={dateValue}
-        onChange={(newValue) => {
-          onChange({
-            target: {
-              name: name,
-              value: newValue ? format(newValue, "yyyy-MM-dd") : "",
-            },
-          });
-        }}
+       onChange={(newValue) => {
+    onChange(newValue ? format(newValue, "yyyy-MM-dd") : "");
+  }}
         format="dd/MM/yyyy"
         minDate={minDate}
         maxDate={maxDate}

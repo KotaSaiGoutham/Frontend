@@ -4,15 +4,20 @@ import {
   isValid,
   parseISO,
   startOfDay,
+  getDay,
+  endOfDay,
   addDays,
   isWithinInterval,
   isSameDay,
   isAfter,
   isBefore,
+  constructNow,
+   setHours, setMinutes
 } from "date-fns";
 import React, { useState, useEffect, useRef } from "react";
 import { Typography, CircularProgress, Box } from "@mui/material";
 import { keyframes } from "@mui/system"; // Import keyframes from MUI system
+import { v4 as uuidv4 } from 'uuid';
 export const sortAndFilterTimetableData = (data) => {
   const now = new Date(); // Current date and time
   const todayFormatted = now.toLocaleDateString("en-GB"); // Format: DD/MM/YYYY
@@ -498,9 +503,7 @@ export const getQuickChartUrl = (chartType, data) => {
 export const getRecentStudentActivity = (students, currentMonthPayments) => {
   if (!students) return [];
 
-  const paidStudentIds = new Set(
-    currentMonthPayments?.map((p) => p.studentId)
-  );
+  const paidStudentIds = new Set(currentMonthPayments?.map((p) => p.studentId));
 
   const enhancedStudents = students
     .filter((student) => student.isActive && student.lastUpdatedClassesAt)
@@ -511,7 +514,9 @@ export const getRecentStudentActivity = (students, currentMonthPayments) => {
         isPaid,
         paymentStatus: isPaid ? "Paid" : "Pending",
         lastUpdatedClassesAt: student.lastUpdatedClassesAt
-          ? new Date(student.lastUpdatedClassesAt._seconds * 1000).toLocaleString()
+          ? new Date(
+              student.lastUpdatedClassesAt._seconds * 1000
+            ).toLocaleString()
           : null,
       };
     });
@@ -532,24 +537,26 @@ export const getCombinedRecentActivity = (students, payments) => {
   const activities = [];
 
   // Add a new activity for each student's latest class
-  students.forEach(student => {
+  students.forEach((student) => {
     if (student.lastUpdatedClassesAt && student.isActive) {
       activities.push({
-        type: 'class_completed',
+        type: "class_completed",
         id: student.id,
         timestamp: new Date(student.lastUpdatedClassesAt._seconds * 1000),
-        message: `${student.Name} completed their class in ${student.Subject}.`
+        message: `${student.Name} completed their class in ${student.Subject}.`,
       });
     }
   });
 
   // Add a new activity for each payment received
-  payments.forEach(payment => {
+  payments.forEach((payment) => {
     activities.push({
-      type: 'payment_received',
+      type: "payment_received",
       id: payment.id,
       timestamp: new Date(payment.paidOn),
-      message: `${payment.studentName} paid their fee of ₹${payment.amount.toLocaleString()}.`
+      message: `${
+        payment.studentName
+      } paid their fee of ₹${payment.amount.toLocaleString()}.`,
     });
   });
 
@@ -594,29 +601,125 @@ export const expenditureColors = [
   "#AF19FF",
   "#FF1943",
 ];
-export   const getDemoClassMetrics = (demos) => {
-    if (!demos)
-      return {
-        successCount: 0,
-        scheduledCount: 0,
-        pendingCount: 0,
-        failureCount: 0,
-        total: 0,
-      };
+export const getDemoClassMetrics = (demos) => {
+  if (!demos)
+    return {
+      successCount: 0,
+      scheduledCount: 0,
+      pendingCount: 0,
+      failureCount: 0,
+      total: 0,
+    };
 
-    const successCount = demos.filter(
-      (d) => d.status?.toLowerCase() === "success"
-    ).length;
-    const scheduledCount = demos.filter(
-      (d) => d.status?.toLowerCase() === "scheduled"
-    ).length;
-    const pendingCount = demos.filter(
-      (d) => d.status?.toLowerCase() === "pending"
-    ).length;
-    const failureCount = demos.filter(
-      (d) => d.status?.toLowerCase() === "failure"
-    ).length;
+  const successCount = demos.filter(
+    (d) => d.status?.toLowerCase() === "success"
+  ).length;
+  const scheduledCount = demos.filter(
+    (d) => d.status?.toLowerCase() === "scheduled"
+  ).length;
+  const pendingCount = demos.filter(
+    (d) => d.status?.toLowerCase() === "pending"
+  ).length;
+  const failureCount = demos.filter(
+    (d) => d.status?.toLowerCase() === "failure"
+  ).length;
 
-    const total = demos.length;
-    return { successCount, scheduledCount, pendingCount, failureCount, total };
-  };
+  const total = demos.length;
+  return { successCount, scheduledCount, pendingCount, failureCount, total };
+};
+// Mock utility functions for demonstration
+const dayNameToDayNum = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+};
+const convertSingleTimeToSlot = (time) => `${time} to ${time}`;
+
+/**
+ * Creates a unique, consistent key for a time slot to check for clashes.
+ * This helper function centralizes the logic and prevents subtle formatting errors.
+ * @param {Date} dateObj - The date object for the slot.
+ * @param {string} timeStr - The time string for the slot (e.g., "10:00 AM").
+ * @param {string} name - The name of the student or faculty.
+ * @returns {string} A formatted key for the time slot.
+ */
+const getSlotKey = (dateObj, timeStr, name) => {
+  const combinedDateTime = parse(
+    `${format(dateObj, "yyyy-MM-dd")} ${timeStr}`,
+    "yyyy-MM-dd hh:mm a",
+    new Date()
+  );
+  if (!isValid(combinedDateTime)) {
+    return null;
+  }
+  const formattedDateTime = format(combinedDateTime, "yyyy-MM-dd_hh:mm a");
+  return `${formattedDateTime}_${name}`;
+};
+
+
+
+export function generateTimetables({ students, dateStr, user }) {
+  console.log("selectedDate", dateStr);
+  if (!dateStr) return [];
+
+  const parsedDate = parse(dateStr, "dd/MM/yyyy", new Date());
+  const weekday = format(parsedDate, "EEEE"); // e.g. "Monday"
+  const formattedDate = format(parsedDate, "dd/MM/yyyy");
+  const now = new Date();
+
+  const generated = [];
+
+  students.forEach((student) => {
+    if (!student.classDateandTime || !Array.isArray(student.classDateandTime)) return;
+
+    // Find time slots for the selected weekday
+    const matchingSlots = student.classDateandTime.filter((slot) =>
+      slot.startsWith(weekday)
+    );
+
+    matchingSlots.forEach((slot) => {
+      const timeSlot = slot.split("-")[1]?.trim(); // extract "04:00pm"
+      if (!timeSlot) return;
+
+      // Parse the time string to a Date object
+      const timeParsed = parse(timeSlot, "hh:mma", new Date());
+      
+      // Calculate start and end times
+      const startTimeISO = setMinutes(setHours(parsedDate, timeParsed.getHours()), timeParsed.getMinutes());
+      const endTimeISO = new Date(startTimeISO.getTime() + 60 * 60 * 1000); // Add 1 hour
+
+      // Calculate monthly fee per class
+      let monthlyFeePerClass = "N/A";
+      const monthlyFee = student.monthlyFee || parseFloat(student["Monthly Fee"]);
+      if (typeof monthlyFee === "number" && monthlyFee > 0) {
+          monthlyFeePerClass = (monthlyFee / 12).toFixed(2);
+      }
+      
+      generated.push({
+        id: student.id, // Generate a unique ID
+        Student: student.Name,
+        Topic: "", // Default to empty string
+        Day: formattedDate,
+        Faculty: student.Faculty || "", // Using Faculty from student data, assuming it exists
+        Subject: student.Subject || "",
+        Time: `${format(startTimeISO, "hh:mm a")} to ${format(endTimeISO, "hh:mm a")}`,
+        userId: user.id,
+        generationDate: format(now, "yyyy-MM-dd"),
+        generatedOnDemand: true,
+        isAutoGenerated: true,
+        createdAt: now.toISOString(),
+        classDateTime: startTimeISO.toISOString(), // Use ISO string to store UTC date
+        dateTimeISO: startTimeISO.toISOString(), // Assuming this is the same as classDateTime
+        monthlyFeePerClass: monthlyFeePerClass
+      });
+    });
+  });
+
+  return generated;
+}
+
+

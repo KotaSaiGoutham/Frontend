@@ -3,18 +3,26 @@ import {
   FETCH_CLASSES_REQUEST,
   FETCH_CLASSES_SUCCESS,
   FETCH_CLASSES_FAILURE,
-  ADD_TIMETABLE_REQUEST,  // NEW
-  ADD_TIMETABLE_SUCCESS,  // NEW
-  ADD_TIMETABLE_FAILURE,  // NEW
+  ADD_TIMETABLE_REQUEST,
+  ADD_TIMETABLE_SUCCESS,
+  ADD_TIMETABLE_FAILURE,
+  // 👇 NEW: Import the action types
+  FETCH_CLASS_UPDATES_START,
+  FETCH_CLASS_UPDATES_SUCCESS,
+  FETCH_CLASS_UPDATES_FAILURE,
 } from '../types';
 
 const initialState = {
-  timetables: [], // Assuming this holds your fetched timetable entries
+  timetables: [],
   loading: false,
   error: null,
-  addingTimetable: false,   // NEW: Loading state for adding a timetable entry
-  addTimetableSuccess: null, // NEW: Success message/data after adding entry
-  addTimetableError: null,  // NEW: Error for adding entry
+  addingTimetable: false,
+  addTimetableSuccess: null,
+  addTimetableError: null,
+  // 👇 NEW: State for class updates log
+  classUpdates: [],
+  classUpdatesLoading: false,
+  classUpdatesError: null,
 };
 
 const classReducer = (state = initialState, action) => {
@@ -41,7 +49,7 @@ const classReducer = (state = initialState, action) => {
         error: action.payload.error,
       };
 
-    // --- NEW: Cases for adding a timetable entry ---
+    // --- Cases for adding a timetable entry (unchanged) ---
     case ADD_TIMETABLE_REQUEST:
       return {
         ...state,
@@ -53,10 +61,8 @@ const classReducer = (state = initialState, action) => {
       return {
         ...state,
         addingTimetable: false,
-        addTimetableSuccess: action.payload, // Store success response
+        addTimetableSuccess: action.payload,
         addTimetableError: null,
-        // Optionally, if the API returns the full new entry, you could add it to timetables array
-        // timetables: [...state.timetables, action.payload]
       };
     case ADD_TIMETABLE_FAILURE:
       return {
@@ -64,6 +70,28 @@ const classReducer = (state = initialState, action) => {
         addingTimetable: false,
         addTimetableSuccess: null,
         addTimetableError: action.payload.error,
+      };
+
+    // 👇 NEW: Cases for fetching class updates log
+    case FETCH_CLASS_UPDATES_START:
+      return {
+        ...state,
+        classUpdatesLoading: true,
+        classUpdatesError: null,
+      };
+    case FETCH_CLASS_UPDATES_SUCCESS:
+      return {
+        ...state,
+        classUpdatesLoading: false,
+        classUpdates: action.payload,
+        classUpdatesError: null,
+      };
+    case FETCH_CLASS_UPDATES_FAILURE:
+      return {
+        ...state,
+        classUpdatesLoading: false,
+        classUpdates: [],
+        classUpdatesError: action.payload.error,
       };
 
     default:

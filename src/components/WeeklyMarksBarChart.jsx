@@ -16,7 +16,7 @@ import { useSelector } from "react-redux";
 
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-
+import { MARK_SCHEMES } from "../mockdata/Options";
 // Register Chart.js components and datalabels plugin
 ChartJS.register(
   CategoryScale,
@@ -29,20 +29,6 @@ ChartJS.register(
   ChartDataLabels
 );
 
-// MARK_SCHEMES (reused from your previous code for subject identification)
-const MARK_SCHEMES = {
-  JEE: { Maths: 100, Physics: 100, Chemistry: 100 },
-  NEET: { Botany: 180, Zoology: 180, Physics: 180, Chemistry: 180 },
-  FOUNDATION: { Maths: 15, Physics: 15, Chemistry: 15 },
-  BITS: {
-    Maths: 120,
-    Physics: 90,
-    Chemistry: 90,
-    English: 30,
-    "Logical Reasoning": 60,
-  },
-  CBSE: { Maths: 35, Physics: 35, Chemistry: 35 },
-};
 
 // Helper function (reused)
 const formatSubjectNameForDisplay = (subjectKey) => {

@@ -8,8 +8,19 @@ import {
   FaSearchDollar,
   FaCalendarCheck,
   FaPhone,
+  FaArrowRight,
+  FaCalendarAlt, FaCheckCircle, FaTrashAlt,
+  FaBook, FaFlask, FaAtom, FaBalanceScale 
 } from "react-icons/fa";
+import {
+  HourglassEmpty as PendingIcon,
+  CheckCircle as PresentIcon,
+  Cancel as AbsentIcon,    
+    CheckCircle as SuccessIcon,
+  Cancel as FailedIcon,
+  Schedule as RescheduledIcon,
 
+} from '@mui/icons-material';
 export const subjectOptions = [
   { value: "Physics", label: "Physics" },
   { value: "Chemistry", label: "Chemistry" },
@@ -344,4 +355,172 @@ export const studentColumns = [
   { id: 'paymentStatus', label: 'Payment Status', minWidth: 150, align: 'center', hasSort: false },
   { id: 'status', label: 'Status', minWidth: 150, align: 'center', hasSort: false },
   { id: 'actions', label: 'Actions', minWidth: 150, align: 'center', hasSort: false },
+];
+
+
+
+export const demoTableColumns = [
+  {
+    id: 'sNo',
+    label: 'S.No.',
+    align: 'center',
+    minWidth: 'auto',
+    hasSort: false,
+    icon: null,
+  },
+  {
+    id: 'studentName',
+    label: 'Student Name',
+    align: 'center',
+    minWidth: 120,
+    hasSort: true, // You might want to enable sorting for dates
+    icon: FaCalendarAlt,
+  },
+  {
+    id: 'demoDate',
+    label: 'Demo Date',
+    align: 'center',
+    minWidth: 120,
+    hasSort: true, // You might want to enable sorting for dates
+    icon: FaCalendarAlt,
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    align: 'center',
+    minWidth: 150,
+    hasSort: true, // Status is often sortable
+    icon: FaCheckCircle,
+  },
+  {
+    id: 'moveToStudents',
+    label: 'Move To Students',
+    align: 'center',
+    minWidth: 180,
+    hasSort: false,
+    icon: FaArrowRight,
+  },
+  {
+    id: 'actions',
+    label: 'Actions',
+    align: 'center',
+    minWidth: 120,
+    hasSort: false,
+  },
+];
+
+
+// Define all possible columns
+export const allExamTableColumns = [
+  { id: 'sNo', label: 'S.No', align: 'center', hasSort: false, icon: null },
+  { id: 'studentName', label: 'Student Name', align: 'center', hasSort: true, icon: FaBook },
+  { id: 'examDate', label: 'Exam Date', align: 'center', hasSort: true, icon: FaCalendarAlt },
+  { id: 'stream', label: 'Stream', align: 'center', hasSort: true, icon: FaFlask },
+  { id: 'status', label: 'Status', align: 'center', hasSort: true, icon: FaCheckCircle },
+  { id: 'maths', label: 'Math', align: 'center', hasSort: true, icon: FaBalanceScale },
+  { id: 'physics', label: 'Physics', align: 'center', hasSort: true, icon: FaAtom },
+  { id: 'chemistry', label: 'Chemistry', align: 'center', hasSort: true, icon: FaFlask },
+  { id: 'total', label: 'Total', align: 'center', hasSort: true, icon: null },
+  { id: 'actions', label: 'Actions', align: 'center', hasSort: false, icon: null },
+];
+
+export const getExamTableColumns = (user) => {
+  if (!user) return [];
+
+  return allExamTableColumns.filter(column => {
+    // These columns are always visible
+    if (['sNo', 'studentName', 'examDate', 'stream', 'status', 'total', 'actions'].includes(column.id)) {
+      return true;
+    }
+
+    // Conditionally show subject columns
+    if (column.id === 'physics' && user.isPhysics) {
+      return true;
+    }
+    if (column.id === 'chemistry' && user.isChemistry) {
+      return true;
+    }
+    if (column.id === 'maths' && user.isMaths) {
+      return true;
+    }
+
+    return false;
+  });
+};
+export const MARK_SCHEMES = {
+  JEE: { Maths: 100, Physics: 100, Chemistry: 100 },
+  NEET: { Botany: 180, Zoology: 180, Physics: 180, Chemistry: 180 },
+  FOUNDATION: { Maths: 15, Physics: 15, Chemistry: 15 },
+  BITSAT: {
+    Maths: 120,
+    Physics: 90,
+    Chemistry: 90,
+    English: 30,
+    "Logical Reasoning": 60,
+  },
+  CBSE: { Maths: 35, Physics: 35, Chemistry: 35 },
+};
+
+
+
+export const examStatusConfig = {
+  Present: {
+    label: "Present",
+    icon: <PresentIcon fontSize="small" />,
+    backgroundColor: "#d1e7dd", // Green-like color
+    color: "#0f5132",
+  },
+  Absent: {
+    label: "Absent",
+    icon: <AbsentIcon fontSize="small" />,
+    backgroundColor: "#f8d7da", // Red-like color
+    color: "#842029",
+  },
+  Pending: {
+    label: "Pending",
+    icon: <PendingIcon fontSize="small" />,
+    backgroundColor: "#fff3cd", // Yellow-like color
+    color: "#664d03",
+  },
+};
+
+export const demoStatusConfig = {
+  Pending: {
+    label: "Pending",
+    icon: <PendingIcon fontSize="small" />,
+    backgroundColor: "#fff3cd",
+    color: "#664d03",
+  },
+  Success: {
+    label: "Success",
+    icon: <SuccessIcon fontSize="small" />,
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+  },
+  Failed: {
+    label: "Failed",
+    icon: <FailedIcon fontSize="small" />,
+    backgroundColor: "#f8d7da",
+    color: "#842029",
+  },
+  Rescheduled: {
+    label: "Rescheduled",
+    icon: <RescheduledIcon fontSize="small" />,
+    backgroundColor: "#cfe2ff",
+    color: "#052c65",
+  },
+};
+
+export const reportTypeOptions = [
+  { value: "todayTimetable", label: "Today Timetable" },
+  { value: "demoClasses", label: "Demo Classes" },
+  { value: "monthlyExpense", label: "Monthly Expense" },
+  { value: "monthlyTimetable", label: "Monthly Timetable Download" },
+    { value: "studentData", label: "Student Data (Month Wise)" },
+
+];
+
+export const exportTypeOptions = [
+  { value: "pdf", label: "PDF" },
+  { value: "excel", label: "Excel" },
 ];

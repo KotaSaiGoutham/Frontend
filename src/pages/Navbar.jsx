@@ -17,6 +17,11 @@ const PROTECTED_BASE_PATHS = [
   "/add-demo-class",
   "/add-expenditure",
   "/expenditure",
+  "/reports",
+  "/student-exams",
+    "/add-student-exam",
+
+  "/analytics"
 ];
 
 const Navbar = () => {
@@ -89,13 +94,13 @@ const Navbar = () => {
         >
           Home
         </NavLink>
-        <NavLink
+        {/* <NavLink
           to="/ai-summarizer"
           onClick={handleLinkClick}
           activeClassName="active-link"
         >
           AI <span className="try-it-highlight">Try it!</span>
-        </NavLink>
+        </NavLink> */}
         <NavLink
           to="/about"
           onClick={handleLinkClick}
