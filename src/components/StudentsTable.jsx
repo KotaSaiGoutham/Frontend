@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { format, parseISO, fromUnixTime, parse, isFuture } from "date-fns";
+import { format, parseISO, fromUnixTime, parse, isFuture, constructNow } from "date-fns";
 import "./StudentsTable.css"; // Ensure this CSS file exists for styling
 // Material-UI Imports
 import { ConfirmationDialog } from "./customcomponents/Dialogs";
@@ -95,6 +95,7 @@ import {
   toggleStudentActiveStatus,
   deleteStudent,
   fetchAutoTimetablesForToday,
+  fetchClassUpdates
 } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
@@ -144,6 +145,12 @@ const StudentsTable = () => {
     loading: studentsLoading,
     error: studentsError,
   } = useSelector((state) => state.students);
+   const {
+    classUpdates,
+    loading: classUpdatesLoading,
+    error: classUpdatesError,
+  } = useSelector((state) => state.classes);
+  console.log("classUpdates",classUpdates)
 
   const {
     timetables,
@@ -237,6 +244,7 @@ const StudentsTable = () => {
 
   useEffect(() => {
     dispatch(fetchStudents());
+    dispatch(fetchClassUpdates())
     dispatch(fetchUpcomingClasses());
     dispatch(fetchAutoTimetablesForToday());
   }, [dispatch]);
