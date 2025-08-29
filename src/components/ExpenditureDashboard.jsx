@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Box,
   Paper,
@@ -56,6 +55,7 @@ import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 import MetricCard from "./customcomponents/MetricCard";
 import TableHeadCell from "./customcomponents/TableHeadCell";
 import { DeleteConfirmationDialog } from "./customcomponents/Dialogs";
+import { Link, useNavigate } from "react-router-dom";
 
 const ExpenditureDashboard = () => {
   const navigate = useNavigate();
@@ -384,6 +384,7 @@ const ExpenditureDashboard = () => {
         return 0;
       });
   }, [students, paidStudentIds, payments, selectedDate, user]);
+  console.log("filteredStudents,filteredStudents",filteredStudents)
   return (
     <Box
       sx={{
@@ -707,8 +708,27 @@ const ExpenditureDashboard = () => {
                           }}
                         >
                           <TableCell align="center">{index + 1}</TableCell>
-                          <TableCell align="center">{student.Name}</TableCell>
-                          <TableCell align="center">
+ <TableCell
+                        component="th"
+                        scope="row"
+                        sx={{ fontSize: "0.9rem" }}
+                      >
+                        <Link
+                          to={`/student/${student.id}`}
+                          state={{ studentData: student }}
+                          className="student-name-link"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            textDecoration: "underline",
+                            color: "inherit",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {student.Name}
+                        </Link>
+                      </TableCell>                        
+                       <TableCell align="center">
                             {student.Subject}
                           </TableCell>
                           <TableCell align="center">

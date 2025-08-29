@@ -302,12 +302,13 @@ const TimetablePage = () => {
       );
     }
 
-    const studentSubjectFeeMap = new Map();
+    // Map to store student data by name and subject for quick lookup
+    const studentSubjectDataMap = new Map();
     if (students && students.length > 0) {
       students.forEach((student) => {
         if (student.Name && student.Subject) {
           const key = `${student.Name.toLowerCase()}_${student.Subject.toLowerCase()}`;
-          studentSubjectFeeMap.set(key, student);
+          studentSubjectDataMap.set(key, student);
         }
       });
     }
@@ -317,9 +318,12 @@ const TimetablePage = () => {
       const subjectLower = item.Subject?.toLowerCase();
       const lookupKey = `${studentNameLower}_${subjectLower}`;
 
-      const matchedStudent = studentSubjectFeeMap.get(lookupKey);
+      const matchedStudent = studentSubjectDataMap.get(lookupKey);
       let monthlyFeePerClass = "N/A";
+      let studentId = null; // Initialize studentId
+
       if (matchedStudent) {
+        studentId = matchedStudent.id; // Assign student ID
         let feeToUse = 0;
         if (
           typeof matchedStudent.monthlyFee === "number" &&
@@ -341,6 +345,7 @@ const TimetablePage = () => {
       return {
         ...item,
         monthlyFeePerClass: monthlyFeePerClass,
+        studentId: studentId, // Add the studentId key here
       };
     });
 
@@ -360,7 +365,7 @@ const TimetablePage = () => {
     return currentTimetables;
   }, [
     manualTimetables,
-    autoTimetables, // Make sure autoTimetables is a dependency
+    autoTimetables,
     searchTerm,
     filterDurationType,
     filterDate,
@@ -370,6 +375,7 @@ const TimetablePage = () => {
     canAccessAll,
     calculateDuration,
   ]);
+  console.log("combinedAndFilteredTimetables", combinedAndFilteredTimetables);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -636,48 +642,52 @@ const TimetablePage = () => {
   };
   const Exceltitle = `Electron Academy ${subject} class details ${current?.month} ${current?.year}`;
   // ✅ Define a function for date change
-// TimetablePage.jsx
+  // TimetablePage.jsx
 
-const handleDateChange = async (dateString) => {
-  if (!dateString) {
-    // Handle case where date is cleared
-    setFilterDate(null);
-    setGeneratedTimetables([]);
-    return;
-  }
-  
-  const selectedDate = parseISO(dateString);
-  setFilterDate(selectedDate);
-
-  const dateStr = format(selectedDate, "dd/MM/yyyy");
-  const generated = generateTimetables({
-    students,
-    dateStr,
-    user,
-  });
-
-  setGeneratedTimetables(generated);
-  console.log("generated", generated);
-
-  if (generated.length > 0) {
-    try {
-      console.log("finalGeneratedItems", generated);
-
-      // --- CRITICAL FIX: Pass the date string and the generated data ---
-      const dateStrForBackend = format(selectedDate, "yyyy-MM-dd");
-      await dispatch(saveOrFetchAutoTimetables(dateStrForBackend, generated));
-      // ------------------------------------------------------------------
-
-      console.log(`Auto timetables saved via API for ${dateStr}`);
-    } catch (err) {
-      console.error("Error saving auto timetables:", err);
+  const handleDateChange = async (dateString) => {
+    if (!dateString) {
+      // Handle case where date is cleared
+      setFilterDate(null);
+      setGeneratedTimetables([]);
+      return;
     }
-  }
-};
-console.log("combinedAndFilteredTimetables",combinedAndFilteredTimetables);
-console.log("generatedTimetables",generatedTimetables);
 
+    const selectedDate = parseISO(dateString);
+    setFilterDate(selectedDate);
 
+    const dateStr = format(selectedDate, "dd/MM/yyyy");
+    const generated = generateTimetables({
+      students,
+      dateStr,
+      user,
+    });
+
+    setGeneratedTimetables(generated);
+    console.log("generated", generated);
+
+    if (generated.length > 0) {
+      try {
+        console.log("finalGeneratedItems", generated);
+
+        // --- CRITICAL FIX: Pass the date string and the generated data ---
+        const dateStrForBackend = format(selectedDate, "yyyy-MM-dd");
+        await dispatch(saveOrFetchAutoTimetables(dateStrForBackend, generated));
+        // ------------------------------------------------------------------
+
+        console.log(`Auto timetables saved via API for ${dateStr}`);
+      } catch (err) {
+        console.error("Error saving auto timetables:", err);
+      }
+    }
+  };
+  const handleNavigatetoStudentData = (studentId) => {
+    const student = students.find((item) => item.id === studentId);
+    if (student) {
+      navigate(`/student/${student.studentId}`, {
+        state: { studentData: student },
+      });
+    }
+  };
   return (
     <Box
       sx={{
@@ -812,7 +822,7 @@ console.log("generatedTimetables",generatedTimetables);
                 borderRadius: "8px",
                 px: 3,
                 py: 1.2,
-                minWidth: "180px", 
+                minWidth: "180px",
                 boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
               }}
             >
@@ -900,7 +910,7 @@ console.log("generatedTimetables",generatedTimetables);
                 value={format(filterDate, "yyyy-MM-dd")}
                 onChange={handleDateChange}
               />
-            </Box> 
+            </Box>
           </Box>
         </Paper>
       </Slide>
@@ -914,8 +924,7 @@ console.log("generatedTimetables",generatedTimetables);
           {combinedAndFilteredTimetables.length > 0 ? (
             <TableContainer>
               <Table sx={{ minWidth: 800 }} aria-label="timetable">
-                <TableHead>
-                </TableHead>
+                <TableHead></TableHead>
                 <TableBody>
                   {combinedAndFilteredTimetables.map((item, index) => {
                     const now = new Date();
@@ -1028,8 +1037,24 @@ console.log("generatedTimetables",generatedTimetables);
                         }}
                       >
                         <TableCell>{index + 1}</TableCell>
-                        <TableCell>{item.Student}</TableCell>
-
+                        <TableCell
+                          onClick={() =>
+                            handleNavigatetoStudentData(item.studentId)
+                          }
+                          sx={{
+                            cursor: "pointer",
+                            textDecoration: "underline", // This line is now active by default
+                            color: "#1976d2", // A standard blue to signify a link
+                            fontWeight: 500,
+                            "&:hover": {
+                              // You can add a different effect on hover, like a color change
+                              color: "#0d47a1",
+                              // or no change to the underline, since it's already there
+                            },
+                          }}
+                        >
+                          {item.Student}
+                        </TableCell>
                         <TableCell align="center">
                           <Box
                             sx={{
