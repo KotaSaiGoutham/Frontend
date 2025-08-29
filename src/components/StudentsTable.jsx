@@ -40,7 +40,7 @@ import {
 } from "@mui/material";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
 // Import ALL necessary icons from react-icons/fa
-import { isRecentPayment } from "../mockdata/function";
+import { isRecentPayment,formatFirestoreDate,calculateExpectedEndDate } from "../mockdata/function";
 import {
   FaSearch,
   FaUserGraduate,
@@ -115,15 +115,17 @@ const StudentsTable = () => {
     college: false,
     group: false,
     source: false,
-    contactNumber: true,
+    contactNumber: false,
     motherContact: false,
     fatherContact: false,
     monthlyFee: true,
     classesCompleted: true,
-    nextClass: true,
+    startDate :true,
+    endDate :true,
+    nextClass: false,
     paymentStatus: true,
-    status: true, // New column for Active/Inactive status
-    actions: true, // For action buttons
+    status: false,
+    actions: true,
   });
   const [animate, setAnimate] = useState(false);
   const handleColumnToggle = (columnName) => (event) => {
@@ -144,21 +146,18 @@ const StudentsTable = () => {
   } = useSelector((state) => state.students);
 
   const {
-    timetables, // The actual data for upcoming classes
-    loading: classesLoading, // Loading state for timetables
-    error: classesError, // Error state for timetables
+    timetables,
+    loading: classesLoading,
+    error: classesError,
   } = useSelector((state) => state.classes);
-  const {
-    timetables: autoTimetables, // NEW: This will hold auto-generated timetables
-    loading: autoTimetablesLoading,
-  } = useSelector((state) => state.autoTimetables); // This is your NEW autoTimetables reducer
+  const { timetables: autoTimetables, loading: autoTimetablesLoading } =
+    useSelector((state) => state.autoTimetables);
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [studentToUpdate, setStudentToUpdate] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
-  // Local component states
-  const [studentsWithNextClass, setStudentsWithNextClass] = useState([]); // Students augmented with next class info
-  const [filteredStudents, setFilteredStudents] = useState([]); // Students after applying filters
+  const [studentsWithNextClass, setStudentsWithNextClass] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
   const [filters, setFilters] = useState({
     studentName: "",
     subject: "",
@@ -202,15 +201,11 @@ const StudentsTable = () => {
   const handleConfirmDelete = async () => {
     if (studentToDelete) {
       try {
-        // Dispatch the Redux action to delete the student
         await dispatch(deleteStudent(studentToDelete.id));
-
-        // Show a success message
         setSnackbarSeverity("success");
         setSnackbarMessage(`Successfully deleted ${studentToDelete.Name}.`);
         setSnackbarOpen(true);
       } catch (error) {
-        // Handle any errors that occurred during the API call
         console.error("Failed to delete student:", error);
         setSnackbarSeverity("error");
         setSnackbarMessage(
@@ -259,12 +254,12 @@ const StudentsTable = () => {
 
   useEffect(() => {
     // Exit early if essential data is missing
-    console.log("students===>",students)
+    console.log("students===>", students);
     if (!students.length) {
       return;
     }
     const combinedTimetables = [...timetables, ...autoTimetables];
-        console.log("combinedTimetables===>",combinedTimetables)
+    console.log("combinedTimetables===>", combinedTimetables);
 
     let augmentedStudents = [];
     if (combinedTimetables.length > 0) {
@@ -310,9 +305,9 @@ const StudentsTable = () => {
       });
     } else {
       augmentedStudents = students.map((student) => ({
-    ...student,
-    nextClass: null,
-  }));
+        ...student,
+        nextClass: null,
+      }));
     }
     console.log("augmentedStudents", augmentedStudents);
 
@@ -320,28 +315,6 @@ const StudentsTable = () => {
   }, [students, timetables, autoTimetables]);
   useEffect(() => {
     let studentsToFilter = [...studentsWithNextClass]; // Start with augmented students
-    if (user) {
-      if (user.AllowAll) {
-      } else if (user.isPhysics) {
-        studentsToFilter = studentsToFilter.filter(
-          (student) => student.Subject?.trim() === "Physics"
-        );
-      } else if (user.isChemistry) {
-        studentsToFilter = studentsToFilter.filter(
-          (student) => student.Subject?.trim() === "Chemistry"
-        );
-      } else {
-        // If no specific subject permission and not AllowAll, show no students by default
-        studentsToFilter = [];
-        console.warn(
-          "User has no specific subject permissions (isPhysics, isChemistry) and not AllowAll. Initial student list will be empty."
-        );
-      }
-    } else {
-      studentsToFilter = []; // If user object is not available yet, show no students
-      console.warn("User object not available for permission filtering.");
-    }
-
     if (filters.studentName) {
       studentsToFilter = studentsToFilter.filter((student) =>
         student.Name?.toLowerCase().includes(filters.studentName.toLowerCase())
@@ -464,7 +437,7 @@ const StudentsTable = () => {
       let bValue;
 
       switch (orderBy) {
-        case "Name":
+        case "name":
           aValue = a.Name?.toLowerCase() || "";
           bValue = b.Name?.toLowerCase() || "";
           return order === "asc"
@@ -619,7 +592,7 @@ const StudentsTable = () => {
     try {
       // Dispatch the action to update classes completed
       const updatedStudent = await dispatch(
-        updateClassesCompleted(studentId, delta,user.name)
+        updateClassesCompleted(studentId, delta, user.name)
       );
 
       setSnackbarMessage(
@@ -955,7 +928,7 @@ const StudentsTable = () => {
                   orderBy={orderBy}
                   handleSortRequest={handleSortRequest}
                   columnVisibility={columnVisibility}
-                  showSubjectColumn ={showSubjectColumn }
+                  showSubjectColumn={showSubjectColumn}
                 />
                 <TableBody>
                   {sortedFilteredStudents.map((student, index) => (
@@ -1082,7 +1055,7 @@ const StudentsTable = () => {
                         </TableCell>
                       )}
                       {columnVisibility.monthlyFee && (
-                        <TableCell align="right" sx={{ fontSize: "0.9rem" }}>
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                           ₹
                           {(typeof student["Monthly Fee"] === "number"
                             ? student["Monthly Fee"]
@@ -1172,7 +1145,7 @@ const StudentsTable = () => {
                                   color="text.secondary"
                                   sx={{ fontSize: "0.7rem" }}
                                 >
-                                  Last Updated:{" "}
+                                  Last Class Updated:{" "}
                                   {format(
                                     // Corrected: Convert the Firestore timestamp object to a JavaScript Date object
                                     new Date(
@@ -1184,49 +1157,26 @@ const StudentsTable = () => {
                                 </Typography>
                               </Fade>
                             )}
-                            {student["Payment Status"] === "Unpaid" &&
-                              (student.classesCompleted || 0) >= 12 && (
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: "#ef5350",
-                                    fontWeight: "bold",
-                                    mt: 0.5,
-                                    fontSize: "0.75rem",
-                                    animation:
-                                      "pulse-red 1.5s infinite alternate",
-                                    "@keyframes pulse-red": {
-                                      "0%": { opacity: 0.7 },
-                                      "100%": { opacity: 1 },
-                                    },
-                                  }}
-                                >
-                                  Payment Pending!
-                                </Typography>
-                              )}
-                            {student["Payment Status"] === "Paid" &&
-                              student.classesCompleted < 0 && (
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: "#ef5350",
-                                    fontWeight: "bold",
-                                    mt: 0.5,
-                                    fontSize: "0.75rem",
-                                    animation:
-                                      "pulse-red 1.5s infinite alternate",
-                                    "@keyframes pulse-red": {
-                                      "0%": { opacity: 0.7 },
-                                      "100%": { opacity: 1 },
-                                    },
-                                  }}
-                                >
-                                  Classes pending payment done!
-                                </Typography>
-                              )}
                           </Box>
                         </TableCell>
                       )}
+                      {columnVisibility.startDate && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          {formatFirestoreDate(student.startDate)}
+                        </TableCell>
+                      )}
+                      {/* Add End Date Column */}
+                      {columnVisibility.endDate && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            {/* Display the original endDate from the backend */}
+                            <Typography variant="body2" fontWeight="bold">
+                              {formatFirestoreDate(student.endDate)}
+                            </Typography>
+
+                          </Box>
+                        </TableCell>
+                      )}
                       {columnVisibility.nextClass && (
                         <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                           {student.nextClass
@@ -1253,16 +1203,14 @@ const StudentsTable = () => {
                             <CircularProgress size={20} color="primary" />
                           ) : (
                             <>
-                              {/* The main Chip for payment status */}
                               <Chip
-                                // The label and color are now dynamic based on classesCompleted
                                 label={
-                                  student.classesCompleted > 0
+                                  student.classesCompleted > 12
                                     ? "Unpaid"
                                     : "Paid"
                                 }
                                 icon={
-                                  student.classesCompleted > 0 ? (
+                                  student.classesCompleted > 12 ? (
                                     <FaExclamationCircle
                                       style={{ fontSize: 16 }}
                                     />
@@ -1271,7 +1219,7 @@ const StudentsTable = () => {
                                   )
                                 }
                                 color={
-                                  student.classesCompleted > 0
+                                  student.classesCompleted > 12
                                     ? "error"
                                     : "success"
                                 }
@@ -1279,7 +1227,7 @@ const StudentsTable = () => {
                                 onClick={() =>
                                   handlePaymentStatusToggle(
                                     student.id,
-                                    student.classesCompleted > 0
+                                    student.classesCompleted > 12
                                       ? "Unpaid"
                                       : "Paid", // Pass the dynamically determined status
                                     student.Name
@@ -1291,73 +1239,28 @@ const StudentsTable = () => {
                                   "&:hover": { boxShadow: 1 },
                                 }}
                               />
-
-                              {/* --- Container for all date information to keep it together and centered --- */}
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  alignItems: "center", // Center-align the date info
-                                  mt: 1, // Add margin to separate from the chip
-                                  p: 0.5, // Subtle padding for the container
-                                }}
-                              >
-                                {student.paidDate && (
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 0.5,
-                                    }}
-                                  >
-                                    <FaCalendarCheck
-                                      style={{
-                                        color: "#4CAF50",
-                                        fontSize: "0.8rem",
-                                      }}
-                                    />
-                                    <Typography
-                                      variant="caption"
-                                      color="text.secondary"
-                                    >
-                                      Paid:{" "}
-                                      {new Date(
-                                        student.paidDate._seconds * 1000
-                                      ).toLocaleDateString("en-GB")}
-                                    </Typography>
-                                  </Box>
-                                )}
-
-                                {student.nextDueDate && (
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 0.5,
-                                      mt: 0.5,
-                                    }}
-                                  >
-                                    <FaCalendarTimes
-                                      style={{
-                                        color: "#F44336",
-                                        fontSize: "0.8rem",
-                                      }}
-                                    />
-                                    <Typography
-                                      variant="caption"
-                                      fontWeight="bold"
-                                      color="error.main"
-                                    >
-                                      Due:{" "}
-                                      {new Date(
-                                        student.nextDueDate._seconds * 1000
-                                      ).toLocaleDateString("en-GB")}
-                                    </Typography>
-                                  </Box>
-                                )}
-                              </Box>
                             </>
                           )}
+                          {student["Payment Status"] === "Unpaid" &&
+                            (student.classesCompleted || 0) >= 12 && (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "#ef5350",
+                                  fontWeight: "bold",
+                                  mt: 0.5,
+                                  fontSize: "0.75rem",
+                                  animation:
+                                    "pulse-red 1.5s infinite alternate",
+                                  "@keyframes pulse-red": {
+                                    "0%": { opacity: 0.7 },
+                                    "100%": { opacity: 1 },
+                                  },
+                                }}
+                              >
+                                Payment Pending!
+                              </Typography>
+                            )}
                         </TableCell>
                       )}
                       {columnVisibility.status && (

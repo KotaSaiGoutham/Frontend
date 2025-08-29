@@ -723,3 +723,55 @@ export function generateTimetables({ students, dateStr, user }) {
 }
 
 
+// This function can be defined outside your component, or in a utility file.
+// It converts a Firestore timestamp object to a formatted date string.
+export const formatFirestoreDate = (timestamp) => {
+  if (!timestamp || !timestamp._seconds) return 'N/A';
+  const milliseconds = timestamp._seconds * 1000;
+  const date = new Date(milliseconds);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+// This function calculates the expected end date
+export const calculateExpectedEndDate = (startDate, classDays, totalClasses) => {
+  console.log("startDate", "classDays","totalClasses",startDate,classDays,totalClasses)
+  if (!startDate || totalClasses === 0 || !classDays || classDays.length === 0) {
+    return 'N/A';
+  }
+
+  // Convert Firestore timestamp to a JavaScript Date object
+  const startMillis = startDate._seconds * 1000;
+  const currentDate = new Date(startMillis);
+
+  // Map day names to a numerical value (0 = Sunday, 1 = Monday, etc.)
+  const dayMap = {
+    'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+    'Thursday': 4, 'Friday': 5, 'Saturday': 6,
+  };
+  const scheduledDays = classDays.map(dayTime => dayMap[dayTime.split('-')[0]]);
+
+  let classesCount = 0;
+  // Iterate day by day until we find the date of the last class
+  while (classesCount < totalClasses) {
+    const currentDayOfWeek = currentDate.getDay();
+
+    // Check if the current day is a scheduled class day
+    if (scheduledDays.includes(currentDayOfWeek)) {
+      classesCount++;
+    }
+
+    // Move to the next day
+    if (classesCount < totalClasses) {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  }
+
+  // Format the final date
+  const day = String(currentDate.getDate()).padStart(2, '0');
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const year = currentDate.getFullYear();
+  return `${day}/${month}/${year}`;
+};

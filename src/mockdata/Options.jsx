@@ -10,8 +10,9 @@ import {
   FaPhone,
   FaArrowRight,
   FaCalendarAlt, FaCheckCircle, FaTrashAlt,
-  FaBook, FaFlask, FaAtom, FaBalanceScale 
+  FaBook, FaFlask, FaAtom, FaBalanceScale,FaRupeeSign,FaClipboardList, FaRegCalendarCheck
 } from "react-icons/fa";
+
 import {
   HourglassEmpty as PendingIcon,
   CheckCircle as PresentIcon,
@@ -336,6 +337,7 @@ export const dayOptions = [
   { value: "Saturday", label: "Saturday" },
   { value: "Sunday", label: "Sunday" },
 ];
+
 export const studentColumns = [
   { id: 'sNo', label: 'S.No.', minWidth: 50, align: 'center', hasSort: false },
   { id: 'name', label: 'Name', minWidth: 150, align: 'left', hasSort: true, icon: FaUserCircle },
@@ -349,8 +351,10 @@ export const studentColumns = [
   { id: 'contactNumber', label: 'Contact No.', minWidth: 150, align: 'center', hasSort: false, icon: FaPhone },
   { id: 'motherContact', label: 'Mother Contact', minWidth: 150, align: 'center', hasSort: false, icon: FaPhone },
   { id: 'fatherContact', label: 'Father Contact', minWidth: 150, align: 'center', hasSort: false, icon: FaPhone },
-  { id: 'monthlyFee', label: 'Monthly Fee', minWidth: 120, align: 'right', hasSort: true },
-  { id: 'classesCompleted', label: 'Classes Completed', minWidth: 160, align: 'center', hasSort: true },
+  { id: 'monthlyFee', label: 'Monthly Fee', minWidth: 120, align: 'center', hasSort: true, icon: FaRupeeSign },
+  { id: 'classesCompleted', label: 'Classes Completed', minWidth: 160, align: 'center', hasSort: true, icon: FaClipboardList  },
+  { id: 'startDate', label: 'Start Date', minWidth: 120, align: 'center', hasSort: false, icon: FaCalendarAlt },
+  { id: 'endDate', label: 'End Date', minWidth: 120, align: 'center', hasSort: false, icon: FaRegCalendarCheck },
   { id: 'nextClass', label: 'Next Class', minWidth: 120, align: 'center', hasSort: false },
   { id: 'paymentStatus', label: 'Payment Status', minWidth: 150, align: 'center', hasSort: false },
   { id: 'status', label: 'Status', minWidth: 150, align: 'center', hasSort: false },

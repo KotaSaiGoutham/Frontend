@@ -775,42 +775,6 @@ const Dashboard = () => {
         </MuiAlert>
       </Snackbar>
 
-<div className="dashboard-header">
-  <div className="header-background">
-    <div className="background-gradient"></div>
-  </div>
-  
-  <div className="header-content">
-    <div className="text-content">
-      <h1 className="greeting">
-        Good {greetingInfo.text}, <span className="name">{firstName}</span>!
-      </h1>
-      <p className="welcome">Welcome to your Electron Academy Dashboard.</p>
-{/*       
-      {currentQuote && (
-        <div className="quote-container">
-          <div className="quote-icon">"</div>
-          <p className="quote">"{currentQuote}"</p>
-        </div>
-      )} */}
-    </div>
-    
-    <div className="graphic-content">
-      <div className="icon-wrapper">
-        {greetingInfo.className === "morning" && (
-          <FaSun className="icon morning-icon" />
-        )}
-        {greetingInfo.className === "afternoon" && (
-          <FaBookOpen className="icon afternoon-icon" />
-        )}
-        {greetingInfo.className === "evening" && (
-          <FaMoon className="icon evening-icon" />
-        )}
-      </div>
-    </div>
-  </div>
-</div>
-
       {/* Key Metrics Grid */}
       <div className="metrics-grid">
         <Link

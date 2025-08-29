@@ -7,7 +7,6 @@ import {
 } from "@mui/material";
 
 const TableHeaders = ({ columns, order, orderBy, handleSortRequest, columnVisibility, showSubjectColumn }) => {
-  // Common styles for all cells
   const commonSx = {
     fontWeight: "bold",
     whiteSpace: "nowrap",
@@ -33,30 +32,39 @@ const TableHeaders = ({ columns, order, orderBy, handleSortRequest, columnVisibi
         }}
       >
         {columns.map((column) => {
-          // Default to true if columnVisibility is not provided or the key doesn't exist
-          const isVisible = (columnVisibility && columnVisibility[column.id] !== undefined)
-            ? columnVisibility[column.id]
-            : true;
+          const isVisible =
+            columnVisibility && columnVisibility[column.id] !== undefined
+              ? columnVisibility[column.id]
+              : true;
 
-          // Special case for 'subject' column
-          const shouldRender = isVisible || (column.id === 'subject' && showSubjectColumn);
+          const shouldRender =
+            isVisible || (column.id === "subject" && showSubjectColumn);
 
-          if (shouldRender || column.id === 'sNo') {
+          if (shouldRender || column.id === "sNo") {
+            const isActive = orderBy === column.id;
+
             return (
               <TableCell
                 key={column.id}
                 align={column.align}
                 sx={{ ...commonSx, minWidth: column.minWidth }}
+                // Keep this line as is, it sets the overall sort direction for the table cell
+                sortDirection={isActive ? order : false}
               >
                 {column.hasSort ? (
                   <TableSortLabel
-                    active={orderBy === column.id}
-                    direction={orderBy === column.id ? order : "asc"}
+                    active={isActive}
+                    // This is the key change: always provide a direction,
+                    // even when not active. This forces the arrow to show.
+                    direction={isActive ? order : "asc"}
                     onClick={() => handleSortRequest(column.id)}
+                    hideSortIcon={false} // Ensure this is always false
                   >
                     {column.icon ? (
                       <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <column.icon style={{ marginRight: 8, color: "#1976d2" }} />
+                        <column.icon
+                          style={{ marginRight: 8, color: "#1976d2" }}
+                        />
                         {column.label}
                       </Box>
                     ) : (
@@ -68,11 +76,14 @@ const TableHeaders = ({ columns, order, orderBy, handleSortRequest, columnVisibi
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: column.align === 'center' ? 'center' : 'flex-start',
+                      justifyContent:
+                        column.align === "center" ? "center" : "flex-start",
                     }}
                   >
                     {column.icon && (
-                      <column.icon style={{ marginRight: 8, color: "#1976d2" }} />
+                      <column.icon
+                        style={{ marginRight: 8, color: "#1976d2" }}
+                      />
                     )}
                     {column.label}
                   </Box>
