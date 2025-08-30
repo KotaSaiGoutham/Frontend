@@ -1,209 +1,110 @@
-/* HistoricalTables.css */
-:root {
-  --primary: #4a6cf7;
-  --primary-light: rgba(74, 108, 247, 0.1);
-  --primary-gradient: linear-gradient(135deg, #4a6cf7 0%, #2e4fd0 100%);
-  --secondary: #6b7280;
-  --accent: #10b981;
-  --light: #f9fafb;
-  --dark: #1f2937;
-  --dark-light: #374151;
-  --border: #e5e7eb;
-  --white: #ffffff;
-  --box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-  --box-shadow-hover: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 10px 20px -5px rgba(0, 0, 0, 0.08);
-  --border-radius: 16px;
-  --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  
-  /* Highlight colors */
-  --highlight-bg: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  --highlight-border: #2196f3;
-  --highlight-text: #0d47a1;
-  --highlight-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  background-color: #f8fafc;
-  line-height: 1.6;
-}
-
 .historical-tables-container {
-  padding: 25px;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 15px;
+  max-width: 1200px;
 }
 
 .table-section {
-  margin-bottom: 40px;
-  position: relative;
+  margin-bottom: 20px;
 }
 
-.table-section:first-child {
-  margin-top: 0;
-}
-
-.section-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--dark);
-  margin-bottom: 25px;
-  padding-left: 20px;
-  position: relative;
+.row-container {
   display: flex;
-  align-items: center;
-  text-align: left;
+  gap: 15px;
   width: 100%;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  align-items: stretch;
 }
 
-.section-title::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 70%;
-  width: 6px;
-  background: var(--primary-gradient);
-  border-radius: 3px;
+.table-container {
+  flex: 1;
+  min-width: 0;
 }
 
-.icon-wrapper {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: var(--primary-light);
-  border-radius: 10px;
-  margin-right: 15px;
-  color: var(--primary);
-  transition: var(--transition);
-}
-
-.section-title:hover .icon-wrapper {
-  transform: rotate(10deg) scale(1.1);
-  background: var(--primary-gradient);
-  color: var(--white);
-}
-
-.table-row {
+/* For the chart containers */
+.chart-container-history {
+  width: 35%;
+  min-width: 300px;
   display: flex;
-  flex-direction: column;
-  gap: 25px;
-  margin-bottom: 0;
+  align-items: stretch;
 }
 
 .table-card {
-  background: var(--white);
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  padding: 25px;
-  flex: 1;
-  transition: var(--transition);
+  border-radius: 12px;
+  box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  padding: 5px;
+  transition: all 0.3s ease;
   border: 1px solid transparent;
   position: relative;
   overflow: hidden;
-  margin-bottom: 0;
-}
-
-.table-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: var(--primary-gradient);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.5s ease;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
 }
 
 .table-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--box-shadow-hover);
-  border-color: var(--primary-light);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-.table-card:hover::before {
-  transform: scaleX(1);
+.primary-card {
+  background: #FCCD11;
 }
 
-.full-width {
-  flex: 0 0 100%;
+.secondary-card {
+  background: #B21F62;
+  color: white;
+}
+
+.tertiary-card {
+  background: #292551;
+  color: white;
 }
 
 .table-heading {
-  color: var(--dark);
-  font-size: 1.2rem;
+  font-size: 1.2rem; /* Increased from 1rem */
   font-weight: 600;
-  margin: 0 0 20px 0;
+  margin: 0 0 12px 0;
   display: flex;
   align-items: center;
-  padding-bottom: 15px;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-  position: relative;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.decorative-bar {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  background: var(--primary-gradient);
-  border-radius: 2px;
-  margin-right: 12px;
-  position: relative;
+.secondary-card .table-heading,
+.tertiary-card .table-heading {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.decorative-bar::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  width: 30px;
-  height: 2px;
-  background: var(--primary-light);
-  margin-left: 8px;
+.heading-icon {
+  margin-right: 6px;
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem; /* Increased from 0.9rem */
 }
 
+/* Ensure table cells can expand to fit content */
 .data-table {
+  table-layout: auto;
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-top: 10px;
-}
-
-.data-table thead {
-  background: var(--primary-gradient);
-  border-radius: 12px 12px 0 0;
-  overflow: hidden;
 }
 
 .data-table th {
-  padding: 16px 12px;
+  padding: 10px 8px; /* Increased padding */
   text-align: center;
-  color: var(--white);
-  font-weight: 500;
-  font-size: 0.9rem;
+  font-weight: 600; /* Increased from 500 */
+  font-size: 1rem; /* Increased from 0.8rem */
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
   position: relative;
-  transition: var(--transition);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.th-content {
-  display: inline-block;
-  position: relative;
-  z-index: 2;
+.secondary-card .data-table th,
+.tertiary-card .data-table th {
+  color: white;
 }
 
 .data-table th:not(:last-child)::after {
@@ -212,217 +113,243 @@ body {
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 60%;
+  height: 50%;
   width: 1px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.secondary-card .data-table th:not(:last-child)::after,
+.tertiary-card .data-table th:not(:last-child)::after {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.data-table tbody tr {
-  transition: var(--transition);
-  position: relative;
-}
-
-.data-table tbody tr:nth-child(even) {
-  background-color: var(--light);
-}
-
 .data-table td {
-  padding: 16px 12px;
+  padding: 10px 8px; /* Increased padding */
   text-align: center;
-  color: var(--dark-light);
   font-weight: 500;
-  border-bottom: 1px solid var(--border);
-  transition: var(--transition);
-  position: relative;
-}
-
-.data-value {
-  display: inline-block;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(74, 108, 247, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  min-width: 40px;
   position: relative;
-  z-index: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.data-value:hover {
-  background: rgba(74, 108, 247, 0.15);
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2);
+.secondary-card .data-table td,
+.tertiary-card .data-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* --- HIGHLIGHT STYLES --- */
+.data-value {
+  display: inline-block;
+  padding: 8px 12px; /* Increased padding */
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  min-width: 35px; /* Increased min-width */
+  position: relative;
+  z-index: 1;
+  font-size: 1.3rem; /* Increased from 25px to rem units */
+  font-weight: 700; /* Increased from 600 */
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Hover effect for data values */
+.data-value:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+}
+
+.primary-card .data-value:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.secondary-card .data-value:hover,
+.tertiary-card .data-value:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.primary-card .data-value {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.secondary-card .data-value,
+.tertiary-card .data-value {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .highlight-cell {
-  background: var(--highlight-bg) !important;
-  color: var(--highlight-text) !important;
+  background: rgba(255, 255, 255, 0.3) !important;
   font-weight: 700 !important;
   position: relative;
   z-index: 1;
-  box-shadow: var(--highlight-shadow);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 }
 
-.highlight-cell::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+.highlight-cell .data-value {
+  background: transparent;
+  font-size: 1.5rem; /* Increased from 1.1rem */
+  font-weight: 800;
+}
+
+.highlight-cell .data-value:hover {
+  transform: scale(1.15);
+}
+
+.total-column-header {
+  background: #4caf50;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem; /* Increased from 0.8rem */
+}
+
+.total-column-cell {
+  background: #e8f5e9;
+  color: #1b5e20;
+  font-weight: 700;
+  border-left: 2px solid #4caf50;
+}
+
+.secondary-card .total-column-cell,
+.tertiary-card .total-column-cell {
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.data-value-total {
+  font-size: 1.5rem; /* Increased from 1.1rem */
+  font-weight: 800;
+}
+
+.data-value-total:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.chart-card {
+  border-radius: 12px;
+  box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  padding: 10px;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  position: relative;
+  overflow: hidden;
   height: 100%;
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%);
-  z-index: -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  min-height: 200px;
+  width: 100%;
 }
 
-/* Pulse animation for header highlight */
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
-  }
+/* Ensure charts use full container */
+.chart-card > div {
+  width: 100% !important;
+  height: 100% !important;
 }
 
-.pulse {
-  animation: pulse 2s infinite;
+.chart-card .MuiCharts-root {
+  width: 100% !important;
+  height: 100% !important;
 }
 
-/* Floating animation for table cards */
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
+.chart-card .MuiCharts-surface {
+  width: 100% !important;
+  height: 100% !important;
 }
 
-.table-card {
-  animation: float 6s ease-in-out infinite;
+.chart-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-.table-card:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.table-card:nth-child(2) {
-  animation-delay: 1s;
-}
-
-.table-card:nth-child(3) {
-  animation-delay: 2s;
-}
-
-/* Animation for table rows */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.data-table tbody tr {
-  animation: fadeInUp 0.6s ease-out forwards;
-}
-
-.data-table tbody tr:nth-child(1) { animation-delay: 0.1s; }
-.data-table tbody tr:nth-child(2) { animation-delay: 0.2s; }
-.data-table tbody tr:nth-child(3) { animation-delay: 0.3s; }
-
-/* Glow effect for section titles */
-@keyframes titleGlow {
-  0% {
-    text-shadow: 0 0 5px rgba(74, 108, 247, 0.5);
-  }
-  50% {
-    text-shadow: 0 0 20px rgba(74, 108, 247, 0.8), 0 0 30px rgba(74, 108, 247, 0.6);
-  }
-  100% {
-    text-shadow: 0 0 5px rgba(74, 108, 247, 0.5);
-  }
-}
-
-.section-title {
-  animation: titleGlow 4s ease-in-out infinite;
-}
-
-/* Responsive design */
 @media (max-width: 1024px) {
-  .table-row {
-    gap: 20px;
+  .row-container {
+    flex-direction: column;
   }
   
-  .table-card {
-    padding: 20px;
+  .chart-container-history {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 8px 6px; /* Adjusted for tablet */
+    font-size: 0.9rem; /* Slightly smaller but still larger than before */
+  }
+  
+  .data-value {
+    font-size: 1.1rem; /* Adjusted for tablet */
+    padding: 6px 10px;
+  }
+  
+  .highlight-cell .data-value {
+    font-size: 1.3rem; /* Adjusted for tablet */
+  }
+  
+  .data-value-total {
+    font-size: 1.3rem; /* Adjusted for tablet */
   }
 }
 
 @media (max-width: 768px) {
   .historical-tables-container {
-    padding: 15px;
+    padding: 10px;
   }
   
   .table-card {
-    margin-bottom: 0;
-    padding: 20px;
+    margin-bottom: 15px;
+    padding: 12px;
+    height: auto; /* Allow height to adjust on mobile */
+    min-height: auto;
   }
   
   .data-table {
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* Increased base font */
   }
   
   .data-table th, 
   .data-table td {
-    padding: 12px 8px;
-  }
-  
-  .section-title {
-    font-size: 1.4rem;
-    margin-bottom: 20px;
+    padding: 8px 4px; /* Adjusted for mobile */
   }
   
   .table-heading {
-    font-size: 1.1rem;
-    margin-bottom: 15px;
+    font-size: 1.1rem; /* Increased for mobile */
   }
   
-  .icon-wrapper {
-    width: 35px;
-    height: 35px;
+  .data-value {
+    font-size: 1rem; /* Increased for mobile */
+    padding: 5px 8px;
   }
   
-  .data-value:hover {
-    transform: scale(1.05);
+  .highlight-cell .data-value {
+    font-size: 1.2rem; /* Increased for mobile */
+  }
+  
+  .data-value-total {
+    font-size: 1.2rem; /* Increased for mobile */
+  }
+  
+  .chart-card {
+    padding: 12px;
+    height: 180px; /* Fixed height for mobile */
   }
 }
 
-/* Remove extra spacing from potential global styles */
-.historical-tables-container > *:first-child {
-  margin-top: 0;
+/* For the chart to use maximum space */
+.MuiCharts-root {
+  width: 100% !important;
+  height: 100% !important;
 }
 
-/* Custom scrollbar for tables on desktop */
-@media (min-width: 769px) {
-  .table-card {
-    overflow: hidden;
-  }
-  
-  .table-card:hover {
-    overflow: visible;
-  }
+.MuiCharts-surface {
+  width: 100% !important;
+  height: 100% !important;
 }

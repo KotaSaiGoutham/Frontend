@@ -101,6 +101,8 @@ import ExcelDownloadButton from "./customcomponents/ExcelDownloadButton";
 const TimetablePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+    const location = useLocation(); // ✅ Add useLocation hook
+
   const {
     timetables: manualTimetables, // Renamed from 'timetables' for clarity with autoTimetables
     loading: classesLoading,
@@ -165,15 +167,27 @@ const TimetablePage = () => {
   useEffect(() => {
     dispatch(fetchUpcomingClasses());
     dispatch(fetchStudents());
-    if (user && user.id) {
-      dispatch(fetchAutoTimetablesForToday());
+    if (user) {
+      console.log("location.state",location.state)
+      if (location.state && location.state.date) {
+        // Parse the date from the state and set it
+        const dateFromState = parse(location.state.date, "dd/MM/yyyy", new Date());
+        console.log("dateFromState",dateFromState)
+        if (isValid(dateFromState)) {
+          setFilterDate(dateFromState);
+          // Trigger the generation and saving of timetables for this date
+          handleDateChange(format(dateFromState, 'yyyy-MM-dd'));
+        }
+      } else {
+        // If no date is passed, fetch auto timetables for today
+        dispatch(fetchAutoTimetablesForToday());
+      }
     } else {
       console.warn(
         "Effect 1: User or user.id is not available yet for fetching auto timetables. Will retry if user becomes available."
       );
     }
-  }, [dispatch, user]);
-
+  }, [dispatch, user, location.state]);
   const calculateDuration = useCallback((timeString) => {
     try {
       const [startTimeStr, endTimeStr] = timeString.split(" to ");
