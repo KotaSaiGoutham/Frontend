@@ -135,7 +135,8 @@ import {
   SAVE_OR_FETCH_AUTOTIMETABLES_FAILURE,
   FETCH_CLASS_UPDATES_START,
   FETCH_CLASS_UPDATES_SUCCESS,
-  FETCH_CLASS_UPDATES_FAILURE
+  FETCH_CLASS_UPDATES_FAILURE,
+  FETCH_MONTHLY_PAYMENTS_SUCCESS
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -241,7 +242,7 @@ export const updateStudentField = (
       });
       if (error && (error.status === 401 || error.status === 403)) {
         dispatch(
-          setAuthError("Session expired or unauthorized. Please log in again.")
+          setAuthError("Session expired please login again")
         );
         dispatch(logoutUser());
       }
@@ -400,7 +401,7 @@ export const fetchUpcomingClasses = () =>
       });
       if (error.status === 401 || error.status === 403) {
         dispatch(
-          setAuthError("Session expired or unauthorized. Please log in again.")
+          setAuthError("Session expired please login again")
         );
       }
     },
@@ -436,7 +437,7 @@ export const fetchStudents = () =>
         error.error || error.message || "Failed to fetch students";
       if (error.status === 401 || error.status === 403) {
         dispatch(
-          setAuthError("Session expired or unauthorized. Please log in again.")
+          setAuthError("Session expired please login again")
         );
       }
       dispatch({
@@ -467,7 +468,7 @@ export const fetchStudentById = (studentId) =>
         `Failed to fetch student ${studentId} data`;
       if (error.status === 401 || error.status === 403) {
         dispatch(
-          setAuthError("Session expired or unauthorized. Please log in again.")
+          setAuthError("Session expired please login again")
         );
       }
       dispatch({
@@ -600,7 +601,7 @@ export const fetchWeeklyMarks = (studentId) =>
       // or explicitly here if needed.
       if (error && (error.status === 401 || error.status === 403)) {
         dispatch(
-          setAuthError("Session expired or unauthorized. Please log in again.")
+          setAuthError("Session expired please login again")
         );
         dispatch(logoutUser());
       }
@@ -659,7 +660,7 @@ export const fetchEmployees = () =>
         error.error || error.message || "Failed to fetch employees";
       if (error.status === 401 || error.status === 403) {
         dispatch(
-          setAuthError("Session expired or unauthorized. Please log in again.")
+          setAuthError("Session expired please login again")
         );
       }
       dispatch({
@@ -880,7 +881,7 @@ export const fetchPaymentHistory = (studentId) =>
 
       if (error?.status === 401 || error?.status === 403) {
         dispatch(
-          setAuthError("Session expired or unauthorized. Please log in again.")
+          setAuthError("Session expired please login again")
         );
       }
     },
@@ -1013,7 +1014,7 @@ export const updateDemoClass = (demoData) =>
       // Handle authentication errors if needed
       if (error?.status === 401 || error?.status === 403) {
         // You might have a specific action for this, e.g.,
-        // dispatch(setAuthError("Session expired or unauthorized. Please log in again."));
+        // dispatch(setAuthError("Session expired please login again"));
       }
     },
   });
@@ -1430,3 +1431,30 @@ export const fetchClassUpdates = () =>
     },
     authRequired: true,
   });
+  
+export const fetchMonthlyPayments = () =>
+  apiRequest({
+    url: '/api/data/payments/monthly',
+    method: 'GET',
+    onStart: 'FETCH_MONTHLY_PAYMENTS_REQUEST',
+    onSuccess: (data, dispatch) => {
+      // The `data` object should contain the monthly totals from the server
+      const monthlyPayments = data.totals || {};
+
+      dispatch({
+        type: FETCH_MONTHLY_PAYMENTS_SUCCESS,
+        payload: monthlyPayments,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      // Dispatch an error action if the API call fails
+      dispatch({
+        type: 'FETCH_MONTHLY_PAYMENTS_FAILURE',
+        payload: error,
+      });
+      console.error('Error fetching monthly payments:', error);
+    },
+        authRequired: true,
+
+  })
+

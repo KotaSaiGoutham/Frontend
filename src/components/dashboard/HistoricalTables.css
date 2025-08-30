@@ -1,0 +1,428 @@
+/* HistoricalTables.css */
+:root {
+  --primary: #4a6cf7;
+  --primary-light: rgba(74, 108, 247, 0.1);
+  --primary-gradient: linear-gradient(135deg, #4a6cf7 0%, #2e4fd0 100%);
+  --secondary: #6b7280;
+  --accent: #10b981;
+  --light: #f9fafb;
+  --dark: #1f2937;
+  --dark-light: #374151;
+  --border: #e5e7eb;
+  --white: #ffffff;
+  --box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --box-shadow-hover: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 10px 20px -5px rgba(0, 0, 0, 0.08);
+  --border-radius: 16px;
+  --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  
+  /* Highlight colors */
+  --highlight-bg: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  --highlight-border: #2196f3;
+  --highlight-text: #0d47a1;
+  --highlight-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: #f8fafc;
+  line-height: 1.6;
+}
+
+.historical-tables-container {
+  padding: 25px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.table-section {
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.table-section:first-child {
+  margin-top: 0;
+}
+
+.section-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 25px;
+  padding-left: 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  width: 100%;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 70%;
+  width: 6px;
+  background: var(--primary-gradient);
+  border-radius: 3px;
+}
+
+.icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--primary-light);
+  border-radius: 10px;
+  margin-right: 15px;
+  color: var(--primary);
+  transition: var(--transition);
+}
+
+.section-title:hover .icon-wrapper {
+  transform: rotate(10deg) scale(1.1);
+  background: var(--primary-gradient);
+  color: var(--white);
+}
+
+.table-row {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  margin-bottom: 0;
+}
+
+.table-card {
+  background: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 25px;
+  flex: 1;
+  transition: var(--transition);
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+.table-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--primary-gradient);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s ease;
+}
+
+.table-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--box-shadow-hover);
+  border-color: var(--primary-light);
+}
+
+.table-card:hover::before {
+  transform: scaleX(1);
+}
+
+.full-width {
+  flex: 0 0 100%;
+}
+
+.table-heading {
+  color: var(--dark);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  position: relative;
+}
+
+.decorative-bar {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: var(--primary-gradient);
+  border-radius: 2px;
+  margin-right: 12px;
+  position: relative;
+}
+
+.decorative-bar::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 30px;
+  height: 2px;
+  background: var(--primary-light);
+  margin-left: 8px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 10px;
+}
+
+.data-table thead {
+  background: var(--primary-gradient);
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+}
+
+.data-table th {
+  padding: 16px 12px;
+  text-align: center;
+  color: var(--white);
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  position: relative;
+  transition: var(--transition);
+}
+
+.th-content {
+  display: inline-block;
+  position: relative;
+  z-index: 2;
+}
+
+.data-table th:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.data-table tbody tr {
+  transition: var(--transition);
+  position: relative;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: var(--light);
+}
+
+.data-table td {
+  padding: 16px 12px;
+  text-align: center;
+  color: var(--dark-light);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  transition: var(--transition);
+  position: relative;
+}
+
+.data-value {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(74, 108, 247, 0.05);
+  transition: all 0.3s ease;
+  min-width: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.data-value:hover {
+  background: rgba(74, 108, 247, 0.15);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* --- HIGHLIGHT STYLES --- */
+.highlight-cell {
+  background: var(--highlight-bg) !important;
+  color: var(--highlight-text) !important;
+  font-weight: 700 !important;
+  position: relative;
+  z-index: 1;
+  box-shadow: var(--highlight-shadow);
+}
+
+.highlight-cell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%);
+  z-index: -1;
+}
+
+/* Pulse animation for header highlight */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Floating animation for table cards */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.table-card {
+  animation: float 6s ease-in-out infinite;
+}
+
+.table-card:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.table-card:nth-child(2) {
+  animation-delay: 1s;
+}
+
+.table-card:nth-child(3) {
+  animation-delay: 2s;
+}
+
+/* Animation for table rows */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.data-table tbody tr {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.data-table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+.data-table tbody tr:nth-child(2) { animation-delay: 0.2s; }
+.data-table tbody tr:nth-child(3) { animation-delay: 0.3s; }
+
+/* Glow effect for section titles */
+@keyframes titleGlow {
+  0% {
+    text-shadow: 0 0 5px rgba(74, 108, 247, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(74, 108, 247, 0.8), 0 0 30px rgba(74, 108, 247, 0.6);
+  }
+  100% {
+    text-shadow: 0 0 5px rgba(74, 108, 247, 0.5);
+  }
+}
+
+.section-title {
+  animation: titleGlow 4s ease-in-out infinite;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .table-row {
+    gap: 20px;
+  }
+  
+  .table-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .historical-tables-container {
+    padding: 15px;
+  }
+  
+  .table-card {
+    margin-bottom: 0;
+    padding: 20px;
+  }
+  
+  .data-table {
+    font-size: 0.9rem;
+  }
+  
+  .data-table th, 
+  .data-table td {
+    padding: 12px 8px;
+  }
+  
+  .section-title {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+  
+  .table-heading {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+  }
+  
+  .icon-wrapper {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .data-value:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* Remove extra spacing from potential global styles */
+.historical-tables-container > *:first-child {
+  margin-top: 0;
+}
+
+/* Custom scrollbar for tables on desktop */
+@media (min-width: 769px) {
+  .table-card {
+    overflow: hidden;
+  }
+  
+  .table-card:hover {
+    overflow: visible;
+  }
+}

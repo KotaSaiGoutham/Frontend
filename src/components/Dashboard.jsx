@@ -63,6 +63,7 @@ import UpcomingClassesCard from "./dashboard/UpcomingClassesCard";
 import DemoClassInsightsCard from "./dashboard/DemoClassInsightsCard";
 import { Link } from "react-router-dom";
 import ClassesOverview from "./dashboard/ClassesOverview";
+import HistoricalTables from "./dashboard/HistoricalTables";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -774,9 +775,8 @@ const Dashboard = () => {
           {snackbarMessage}
         </MuiAlert>
       </Snackbar>
-
-      {/* Key Metrics Grid */}
-      <div className="metrics-grid">
+<HistoricalTables students={students}  />
+      {/* <div className="metrics-grid">
         <Link
           to="/students"
           className="dashboard-card metric-card fade-in-up"
@@ -827,8 +827,8 @@ const Dashboard = () => {
             </p>
           </div>
         </div>
-      </div>
-      <ClassesOverview students={students} />
+      </div> */}
+      {/* <ClassesOverview students={students} /> */}
       <div
         className="dashboard-grid"
         style={{

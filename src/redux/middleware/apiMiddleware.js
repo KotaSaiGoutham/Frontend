@@ -73,7 +73,7 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
 
       // Handle specific authentication errors (e.g., 401 Unauthorized, 403 Forbidden)
       if (response.status === 401 || response.status === 403) {
-        dispatch(setAuthError(errorData.message || "Session expired or unauthorized. Please log in again."));
+        dispatch(setAuthError(errorData.message || "Session expired please login again"));
         dispatch({ type: LOGOUT }); // Dispatch logout to clear state and trigger redirect
         localStorage.removeItem("token"); // Also clear from local storage
       }

@@ -12,15 +12,19 @@ import {
   UPDATE_EXPENDITURE_SUCCESS,
   UPDATE_EXPENDITURE_FAILURE,
   FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS,
-  FETCH_EXPENDITURES_SUM_SUCCESS, // Import the new type
+  FETCH_EXPENDITURES_SUM_SUCCESS,
   FETCH_TOTAL_PAYMENTS_SUCCESS,
+  // Import the new action type
+  FETCH_MONTHLY_PAYMENTS_SUCCESS,
 } from '../types';
 
 const initialState = {
   expenditures: [],
-  payments:[],
-  totalExpenditure: { current: 0, previous: 0 }, // Updated to an object
-  totalStudentPayments: { current: 0, previous: 0 }, // New for student payments
+  payments: [],
+  // Add a new property to store the monthly payment totals
+  monthlyPayments: {}, 
+  totalExpenditure: { current: 0, previous: 0 },
+  totalStudentPayments: { current: 0, previous: 0 },
   loading: false,
   error: null,
 };
@@ -45,7 +49,8 @@ export const expenditureReducer = (state = initialState, action) => {
         expenditures: expendituresArray,
       };
     }
-     case FETCH_TOTAL_PAYMENTS_SUCCESS: {
+    
+    case FETCH_TOTAL_PAYMENTS_SUCCESS: {
       const paymentArray = Array.isArray(action.payload) ? action.payload : [];
       return {
         ...state,
@@ -54,9 +59,16 @@ export const expenditureReducer = (state = initialState, action) => {
       };
     }
 
+    // Add a new case to handle the monthly payments data
+    case FETCH_MONTHLY_PAYMENTS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        monthlyPayments: action.payload, // Store the monthly totals in the new state property
+      };
+
     case ADD_EXPENDITURE_SUCCESS: {
       const updatedExpenditures = [action.payload, ...state.expenditures];
-      // Recalculate total expenditure after adding a new expense
       const currentTotal = updatedExpenditures.reduce((sum, exp) => sum + (exp.amount || 0), 0);
       return {
         ...state,
@@ -65,13 +77,13 @@ export const expenditureReducer = (state = initialState, action) => {
         totalExpenditure: { ...state.totalExpenditure, current: currentTotal },
       };
     }
-    
-    // ... (DELETE and UPDATE cases follow a similar pattern for recalculating total expenditure)
+
+    // ... (DELETE and UPDATE cases follow)
 
     case FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS:
       return { ...state, totalStudentPayments: action.payload };
 
-    case FETCH_EXPENDITURES_SUM_SUCCESS: // New case to handle the expenditure sum
+    case FETCH_EXPENDITURES_SUM_SUCCESS:
       return { ...state, totalExpenditure: action.payload };
 
     case FETCH_EXPENDITURES_FAILURE:
