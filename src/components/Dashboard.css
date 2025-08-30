@@ -814,3 +814,55 @@ h2 .card-icon {
 .breakdown-item.today .sub-counts {
   color: inherit;
 }
+.month-navigation {
+  display: flex;
+  margin-bottom: 1.5rem;
+  gap: 10px;
+}
+
+.month-button {
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  white-space: nowrap;
+  /* Basic state */
+  border: 1px solid #e0e0e0;
+  background-color: #f7f9fc;
+  color: #555;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Hover and Focus states */
+.month-button:hover,
+.month-button:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  border-color: #b0b0b0;
+}
+
+/* Selected/Active state */
+.month-button.selected {
+  transform: translateY(0); /* Reset transform for active state */
+  background-color: #4a6cf7;
+  color: #fff;
+  border: 1px solid #4a6cf7;
+  box-shadow: 0 4px 15px rgba(74, 108, 247, 0.4);
+  animation: pulse 1.5s infinite;
+}
+
+/* Optional subtle pulse animation for the selected button */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 4px 15px rgba(74, 108, 247, 0.2);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(74, 108, 247, 0.6);
+  }
+  100% {
+    box-shadow: 0 4px 15px rgba(74, 108, 247, 0.2);
+  }
+}

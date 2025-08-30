@@ -136,7 +136,10 @@ import {
   FETCH_CLASS_UPDATES_START,
   FETCH_CLASS_UPDATES_SUCCESS,
   FETCH_CLASS_UPDATES_FAILURE,
-  FETCH_MONTHLY_PAYMENTS_SUCCESS
+  FETCH_MONTHLY_PAYMENTS_SUCCESS,
+   FETCH_ALL_MONTHLY_PAYMENTS_REQUEST,
+  FETCH_ALL_MONTHLY_PAYMENTS_SUCCESS,
+  FETCH_ALL_MONTHLY_PAYMENTS_FAILURE,
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -1458,3 +1461,29 @@ export const fetchMonthlyPayments = () =>
 
   })
 
+
+// The new fetch monthly payments action in the requested format
+export const fetchAllPayments = () =>
+  apiRequest({
+    url: "/api/data/payments/all",
+    method: "GET",
+    onStart: FETCH_ALL_MONTHLY_PAYMENTS_REQUEST,
+ onSuccess: (data, dispatch) => {
+
+      dispatch({
+
+        type: FETCH_ALL_MONTHLY_PAYMENTS_SUCCESS,
+
+        payload: data, // Array of demo classes from Firestore
+
+      });
+
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching monthly payments:", error);
+      dispatch({
+        type:FETCH_ALL_MONTHLY_PAYMENTS_FAILURE,
+        payload: { error: error.message || "Failed to fetch monthly payments" },
+      });
+    },
+  });
