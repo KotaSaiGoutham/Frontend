@@ -517,11 +517,10 @@ export const demoStatusConfig = {
 
 export const reportTypeOptions = [
   { value: "todayTimetable", label: "Today Timetable" },
+  { value: "studentData", label: "Student Data" },
+  { value: "monthlyTimetable", label: "Monthly Timetable Download" },
   { value: "demoClasses", label: "Demo Classes" },
   { value: "monthlyExpense", label: "Monthly Expense" },
-  { value: "monthlyTimetable", label: "Monthly Timetable Download" },
-    { value: "studentData", label: "Student Data (Month Wise)" },
-
 ];
 
 export const exportTypeOptions = [

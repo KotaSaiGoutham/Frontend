@@ -1,28 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Paper, Typography } from "@mui/material";
-import { FaCalendarAlt, FaDownload } from "react-icons/fa";
-import { MuiSelect, MuiButton } from "./customcomponents/MuiCustomFormFields";
-
+import { FaCalendarAlt } from "react-icons/fa";
+import { MuiSelect } from "./customcomponents/MuiCustomFormFields";
+import StudentReport from "./reports/StudentReport";
+import TodayTimetablePdfButton from "./reports/TodayTimetablePdfButton"; // Import the new component
 import { reportTypeOptions, exportTypeOptions } from "../mockdata/Options";
+import WeeklyTimetableExcelButton from "./reports/WeeklyTimetableExcelButton";
 
 const Reports = () => {
   const [reportType, setReportType] = useState("");
-  const [exportType, setExportType] = useState("");
 
   const handleReportChange = (e) => {
     setReportType(e.target.value);
   };
 
-  const handleExportChange = (e) => {
-    setExportType(e.target.value);
-  };
-
-  const handleDownload = () => {
-    if (!reportType || !exportType) {
-      alert("Please select both report type and export type.");
-      return;
+  const renderReportComponent = () => {
+    switch (reportType) {
+      case "studentData":
+        return <StudentReport />;
+      case "todayTimetable":
+        return <TodayTimetablePdfButton />;
+          case "monthlyTimetable":
+        return <WeeklyTimetableExcelButton />;
+      default:
+        
+        return null;
     }
-    console.log(`Downloading ${reportType} as ${exportType.toUpperCase()}`);
   };
 
   return (
@@ -30,19 +33,12 @@ const Reports = () => {
       sx={{
         minHeight: "100vh",
         backgroundColor: "#f7f8fc",
-        p: "30px", // Added padding 30px
+        p: "30px",
       }}
     >
-      {/* Header */}
-      <Typography
-        variant="h5"
-        fontWeight="bold"
-        sx={{ mb: 2, color: "#333" }}
-      >
+      <Typography variant="h5" fontWeight="bold" sx={{ mb: 2, color: "#333" }}>
         Reports
       </Typography>
-
-      {/* Top filter bar */}
       <Paper
         elevation={3}
         sx={{
@@ -50,14 +46,13 @@ const Reports = () => {
           borderRadius: 2,
           mb: 3,
           display: "flex",
-          flexDirection: { xs: "column", sm: "row" }, // column on mobile, row on larger screens
+          flexDirection: { xs: "column", sm: "row" },
           gap: 2,
           alignItems: { xs: "stretch", sm: "center" },
           justifyContent: "flex-start",
           backgroundColor: "white",
         }}
       >
-        {/* Select Report Type */}
         <MuiSelect
           label="Select Report"
           name="reportType"
@@ -67,8 +62,8 @@ const Reports = () => {
           icon={FaCalendarAlt}
           sx={{ minWidth: 220, flex: 1 }}
         />
-
-        {/* Select Export Type */}
+        {/* The export type selector and download button are now rendered by the specific report component */}
+        {/*
         <MuiSelect
           label="Export As"
           name="exportType"
@@ -77,24 +72,22 @@ const Reports = () => {
           options={exportTypeOptions}
           icon={FaCalendarAlt}
           sx={{ minWidth: 180, flex: 1 }}
+          disabled={reportType === "studentData"}
         />
 
-        {/* Download Button */}
-        <MuiButton
-          variant="contained"
-          color="primary"
-          startIcon={<FaDownload />}
-          onClick={handleDownload}
-          sx={{ px: 3, py: 1.5, flexShrink: 0 }}
-        >
-          Download
-        </MuiButton>
+        {reportType !== "studentData" && (
+          <MuiButton
+            variant="contained"
+            color="primary"
+            startIcon={<FaDownload />}
+            sx={{ px: 3, py: 1.5, flexShrink: 0 }}
+          >
+            Download
+          </MuiButton>
+        )}
+        */}
       </Paper>
-
-      {/* Future tables will go here */}
-      <Box>
-        {/* <YourTableComponent /> */}
-      </Box>
+      <Box>{renderReportComponent()}</Box>
     </Box>
   );
 };
