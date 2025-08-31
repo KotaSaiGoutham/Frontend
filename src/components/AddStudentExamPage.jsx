@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  fetchStudents,
   addStudentExam,
   addWeeklyMarks,
   updateStudentExam,
@@ -56,10 +55,6 @@ const StudentExamFormPage = () => {
 
   const [studentsToFilter, setStudentsToFilter] = useState([]);
 
-  // Fetch students on component mount
-  useEffect(() => {
-    dispatch(fetchStudents());
-  }, [dispatch]);
 
   useEffect(() => {
     if (examToEdit) {

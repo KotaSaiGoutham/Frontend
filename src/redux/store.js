@@ -11,7 +11,7 @@ import { resetLoadingState } from './actions';
 const persistConfig = {
   key: 'root', // The key for the localStorage entry (e.g., 'root' or 'myAppName')
   storage,    // Which storage to use (localStorage is 'storage', sessionStorage is 'storageSession')
-  whitelist: ['auth', 'classes'], // These are the reducers whose states will be saved
+  whitelist: ['auth', 'classes','students','employees','demoClasses'], // These are the reducers whose states will be saved
 
 };
 

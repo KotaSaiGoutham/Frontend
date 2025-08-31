@@ -1,6 +1,4 @@
-// src/components/MuiCustomFormFields.jsx
-
-import React from "react";
+import React,{useState } from "react";
 import {
   TextField,
   MenuItem,
@@ -9,9 +7,13 @@ import {
   InputAdornment,
   Box,
   styled,
-  FormControl
-,
-Select} from "@mui/material";
+  FormControl,
+  Select,
+  Chip,
+  FormHelperText,
+  InputLabel,
+  Checkbox 
+} from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import {
   LocalizationProvider,
@@ -19,6 +21,8 @@ import {
   TimePicker,
 } from "@mui/x-date-pickers";
 import { format, isValid, parseISO } from "date-fns";
+import { FaTrashAlt } from "react-icons/fa";
+import CancelIcon from "@mui/icons-material/Cancel";
 
 const COMMON_FIELD_SX = {
   // Styles for the root Mui TextField component (which MuiSelect, DatePicker, TimePicker use)
@@ -160,9 +164,9 @@ export const MuiDatePicker = ({
           </>
         }
         value={dateValue}
-       onChange={(newValue) => {
-    onChange(newValue ? format(newValue, "yyyy-MM-dd") : "");
-  }}
+        onChange={(newValue) => {
+          onChange(newValue ? format(newValue, "yyyy-MM-dd") : "");
+        }}
         format="dd/MM/yyyy"
         minDate={minDate}
         maxDate={maxDate}
@@ -366,6 +370,7 @@ export const EnhancedMuiSelect = ({
               "& .MuiInputAdornment-root": {
                 ...(noPadding && {
                   marginTop: "0px !important", // Align vertically
+                  height: "auto",
                 }),
               },
               // For table usage, remove margin for better fit if label is not needed
@@ -454,3 +459,73 @@ export const EnhancedMuiSelect = ({
     </FormControl>
   );
 };
+// MuiMultiSelectChip Component
+// Custom Multi-Select with Chips
+export const MuiMultiSelectChip = ({
+  label,
+  name,
+  value,
+  onChange,
+  options,
+  MenuProps,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  // The `handleChipDelete` is now gone, as the `onChange` will handle everything
+  // The MUI `Select` component already handles chip deletion by triggering a change event
+  // with the new array of values. We just need to ensure the parent handles it.
+
+  const handleChange = (event) => {
+    onChange(event);
+  };
+
+  return (
+    <FormControl sx={{ m: 1, width: 300 }}>
+      <InputLabel id={`select-label-${name}`}>{label}</InputLabel>
+      <Select
+        labelId={`select-label-${name}`}
+        id={`select-${name}`}
+        multiple
+        value={value}
+        onChange={handleChange}
+        open={open}
+        onOpen={() => setOpen(true)}
+        onClose={() => setOpen(false)} // No need to propagate close
+        input={<OutlinedInput id="select-multiple-chip" label={label} />}
+        renderValue={(selected) => (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+            {selected.map((selectedValue) => {
+              const selectedOption = options.find(
+                (option) => option.value === selectedValue
+              );
+              return (
+                <Chip
+                  key={selectedValue}
+                  label={selectedOption ? selectedOption.label : ""}
+                  onDelete={() => {
+                    const newValues = value.filter((v) => v !== selectedValue);
+                    onChange({
+                      target: { name, value: newValues },
+                    });
+                  }}
+                  deleteIcon={
+                    <CancelIcon onMouseDown={(e) => e.stopPropagation()} />
+                  }
+                />
+              );
+            })}
+          </Box>
+        )}
+        MenuProps={MenuProps}
+      >
+        {options.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            <Checkbox checked={value.includes(option.value)} />
+            {option.label}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
+};
+

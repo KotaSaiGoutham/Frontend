@@ -58,7 +58,7 @@ const Employees = () => {
   const employees = useSelector((state) => state.employees.employees); // The main employee data from Redux
   const employeesLoading = useSelector((state) => state.employees.loading); // Loading state from Redux
   const employeesError = useSelector((state) => state.employees.error); // Error state from Redux
-
+console.log("employees",employees)
   // Local state for filtering and sorting, initialized from Redux data
   const [filteredSalaries, setFilteredSalaries] = useState([]); // Will be initialized from `employees`
   const [filters, setFilters] = useState({
@@ -497,24 +497,24 @@ const Employees = () => {
                       },
                     }}
                   >
-                    <TableCell sx={{ textAlign: "center" }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <FaUserCircle
-                          style={{
-                            marginRight: "8px",
-                            fontSize: "1.5rem",
-                            color: "#555",
-                          }}
-                        />
-                        <Typography variant="body1">{employee.name}</Typography>
-                      </Box>
-                    </TableCell>
+                    <TableCell sx={{ textAlign: "left" }}>
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "flex-start", // ⬅️ Correct value for left-alignment
+    }}
+  >
+    <FaUserCircle
+      style={{
+        marginRight: "8px",
+        fontSize: "1.5rem",
+        color: "#555",
+      }}
+    />
+    <Typography variant="body1">{employee.name}</Typography>
+  </Box>
+</TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
                       <Typography variant="body2">
                         {employee.mobile || "N/A"}

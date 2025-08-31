@@ -251,7 +251,7 @@ const handleEditTimeSlot = (slotToEdit) => {
         setSnackbarMessage("Student updated successfully!");
       } else {
         // This handles both new student and converting a demo student
-        const dataToSubmit = { ...studentData, isActive: true, isDemo: false };
+        const dataToSubmit = { ...studentData, isActive: true, isDemo: false,deactivated: false };
         await dispatch(addStudent(dataToSubmit));
         setSnackbarSeverity("success");
         setSnackbarMessage("Student added successfully!");

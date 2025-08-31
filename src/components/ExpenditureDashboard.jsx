@@ -41,7 +41,6 @@ import {
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import {
-  fetchStudents,
   fetchExpenditures,
   deleteExpenditure,
 } from "../redux/actions";
@@ -136,10 +135,6 @@ const ExpenditureDashboard = () => {
       })),
     [chartData]
   );
-
-  useEffect(() => {
-    dispatch(fetchStudents());
-  }, [dispatch]);
 
   const getPdfTitle = () => {
     const monthName =
@@ -384,7 +379,7 @@ const ExpenditureDashboard = () => {
         return 0;
       });
   }, [students, paidStudentIds, payments, selectedDate, user]);
-  console.log("filteredStudents,filteredStudents",filteredStudents)
+  console.log("filteredStudents,filteredStudents", filteredStudents);
   return (
     <Box
       sx={{
@@ -708,27 +703,27 @@ const ExpenditureDashboard = () => {
                           }}
                         >
                           <TableCell align="center">{index + 1}</TableCell>
- <TableCell
-                        component="th"
-                        scope="row"
-                        sx={{ fontSize: "0.9rem" }}
-                      >
-                        <Link
-                          to={`/student/${student.id}`}
-                          state={{ studentData: student }}
-                          className="student-name-link"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            textDecoration: "underline",
-                            color: "inherit",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {student.Name}
-                        </Link>
-                      </TableCell>                        
-                       <TableCell align="center">
+                          <TableCell
+                            component="th"
+                            scope="row"
+                            sx={{ fontSize: "0.9rem" }}
+                          >
+                            <Link
+                              to={`/student/${student.id}`}
+                              state={{ studentData: student }}
+                              className="student-name-link"
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                textDecoration: "underline",
+                                color: "inherit",
+                                fontWeight: 500,
+                              }}
+                            >
+                              {student.Name}
+                            </Link>
+                          </TableCell>
+                          <TableCell align="center">
                             {student.Subject}
                           </TableCell>
                           <TableCell align="center">

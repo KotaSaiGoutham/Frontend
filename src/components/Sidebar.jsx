@@ -13,37 +13,37 @@ import {
   FaChartBar,
   FaFileAlt,
   FaBookOpen,
+  FaListAlt
 } from "react-icons/fa";
 import "./Sidebar.css";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const location = useLocation();
-
-  // Define all navigation items for the sidebar
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: <FaHome /> },
     { name: "Students", path: "/students", icon: <FaUsers /> },
-    {
-      name: "Demo Class",
-      path: "/demo-classes",
-      icon: <FaChalkboardTeacher />,
-    },
-
     { name: "Timetable", path: "/timetable", icon: <FaCalendarAlt /> },
-    { name: "Employees", path: "/employees", icon: <FaUsers /> },
+  { name: "Week Syllabus", path: "/week-syllabus", icon: <FaListAlt /> }, // New icon
+
+        { name: "Student Exams", path: "/student-exams", icon: <FaBookOpen /> },
     {
       name: "Earning & Expenditure",
       path: "/expenditure",
       icon: <FaMoneyBillAlt />,
     },
     { name: "Reports", path: "/reports", icon: <FaFileAlt /> },
-    { name: "Student Exams", path: "/student-exams", icon: <FaBookOpen /> },
+    {
+      name: "Demo Class",
+      path: "/demo-classes",
+      icon: <FaChalkboardTeacher />,
+    },
+    { name: "Employees", path: "/employees", icon: <FaUsers /> },
+
     { name: "Analytics", path: "/analytics", icon: <FaChartBar /> },
   ];
 
   return (
     <>
-      {/* Mobile Menu Toggle Button */}
       <div className="mobile-menu-toggle" onClick={toggleSidebar}>
         {isSidebarOpen ? <FaTimes /> : <FaBars />}
       </div>

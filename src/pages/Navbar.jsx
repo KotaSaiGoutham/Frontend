@@ -20,7 +20,7 @@ const PROTECTED_BASE_PATHS = [
   "/reports",
   "/student-exams",
     "/add-student-exam",
-
+   "/week-syllabus",
   "/analytics"
 ];
 

@@ -775,7 +775,7 @@ const Dashboard = () => {
           {snackbarMessage}
         </MuiAlert>
       </Snackbar>
-<HistoricalTables students={students}  />
+      <HistoricalTables students={students} />
       {/* <div className="metrics-grid">
         <Link
           to="/students"
@@ -833,7 +833,7 @@ const Dashboard = () => {
         className="dashboard-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "2.33fr 1fr",
           gap: "2.5rem",
           padding: "2rem",
           backgroundColor: "#f0f2f5",

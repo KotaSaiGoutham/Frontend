@@ -37,7 +37,6 @@ import {
 } from "../components/customcomponents/MuiCustomFormFields";
 import { topicOptions } from "../mockdata/Options";
 import {
-  fetchStudents,
   fetchEmployees,
   addTimetableEntry,
   updateTimetableEntry,
@@ -192,7 +191,6 @@ const AddTimetablePage = () => {
       return;
     }
     dispatch(fetchEmployees());
-    dispatch(fetchStudents());
   }, [dispatch, navigate]);
 
   // Handle Redux errors for initial data fetching and submission

@@ -32,7 +32,7 @@ const RecentActivity = ({ activities }) => {
         <FaHistory style={{ fontSize: "2rem", marginRight: "1rem", color: "#e67e22" }} />
         <h2 style={{ fontSize: "1.6rem", fontWeight: 700, margin: 0 }}>Recent Activity</h2>
       </div>
-      <div style={{ flexGrow: 1, overflowY: "auto", maxHeight: "400px" }}>
+      <div style={{ flexGrow: 1, overflowY: "auto", maxHeight: "900px" }}>
         {activities?.length > 0 ? (
           activities.slice(0, 7).map((activity, index) => (
             <motion.div

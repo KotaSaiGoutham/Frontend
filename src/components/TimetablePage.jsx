@@ -87,7 +87,6 @@ import {
 import "./TimetablePage.css";
 import {
   fetchUpcomingClasses,
-  fetchStudents,
   deleteTimetable,
   fetchAutoTimetablesForToday,
   updateAutoTimetableEntry,
@@ -166,8 +165,7 @@ const TimetablePage = () => {
 
   useEffect(() => {
     dispatch(fetchUpcomingClasses());
-    dispatch(fetchStudents());
-    if (user) {
+        if (user) {
       console.log("location.state",location.state)
       if (location.state && location.state.date) {
         // Parse the date from the state and set it
@@ -225,170 +223,181 @@ const TimetablePage = () => {
     }
   }, []);
 
-  const combinedAndFilteredTimetables = useMemo(() => {
-    // Combine manual and auto-generated timetables
-    let combinedTimetables = [...manualTimetables, ...autoTimetables];
+const combinedAndFilteredTimetables = useMemo(() => {
+  // Combine manual and auto-generated timetables
+  let combinedTimetables = [...manualTimetables, ...autoTimetables];
 
-    let permissionFilteredTimetables = [];
+  // --- Deduplication Logic ---
+  const uniqueTimetables = new Map();
+  combinedTimetables.forEach(item => {
+    // Create a unique key based on Student name and Time
+    const key = `${item.Student}-${item.Time}`;
+    // Add the item to the Map. If a key already exists, this will overwrite it,
+    // effectively keeping only the last occurrence.
+    uniqueTimetables.set(key, item);
+  });
+  // Convert the Map values back to an array
+  let permissionFilteredTimetables = Array.from(uniqueTimetables.values());
+  // --- End of Deduplication Logic ---
 
-    if (user && combinedTimetables && combinedTimetables.length > 0) {
-      if (canAccessAll) {
-        permissionFilteredTimetables = combinedTimetables;
-      } else if (currentUserSubject) {
-        permissionFilteredTimetables = combinedTimetables.filter(
-          (schedule) => schedule.Subject?.trim() === currentUserSubject
-        );
-      } else {
-        permissionFilteredTimetables = [];
-      }
-    } else if (!user) {
+  if (user && permissionFilteredTimetables && permissionFilteredTimetables.length > 0) {
+    if (canAccessAll) {
+      // The uniqueTimetables array is already filtered by this logic,
+      // but keeping the variable name for clarity.
+      // We can directly use it.
+    } else if (currentUserSubject) {
+      permissionFilteredTimetables = permissionFilteredTimetables.filter(
+        (schedule) => schedule.Subject?.trim() === currentUserSubject
+      );
+    } else {
       permissionFilteredTimetables = [];
     }
+  } else if (!user) {
+    permissionFilteredTimetables = [];
+  }
 
-    let currentTimetables = [...permissionFilteredTimetables];
-    const now = new Date();
+  let currentTimetables = [...permissionFilteredTimetables];
+  const now = new Date();
 
-    let startDate = null;
-    let endDate = null;
+  let startDate = null;
+  let endDate = null;
 
-    switch (filterDurationType) {
-      case "Daily":
-        startDate = startOfDay(filterDate);
-        endDate = endOfDay(filterDate);
-        break;
-      case "2days":
-        startDate = startOfDay(now);
-        endDate = endOfDay(addDays(now, 1));
-        break;
-      case "3days":
-        startDate = startOfDay(now);
-        endDate = endOfDay(addDays(now, 2));
-        break;
-      case "4days":
-        startDate = startOfDay(now);
-        endDate = endOfDay(addDays(now, 3));
-        break;
-      case "5days":
-        startDate = startOfDay(now);
-        endDate = endOfDay(addDays(now, 4));
-        break;
-      case "Week":
-        startDate = startOfWeek(now, { weekStartsOn: 1 });
-        endDate = endOfWeek(now, { weekStartsOn: 1 });
-        break;
-      case "Month":
-        startDate = startOfMonth(now);
-        endDate = endOfMonth(now);
-        break;
-      case "Year":
-        startDate = startOfYear(now);
-        endDate = endOfYear(now);
-        break;
-      default:
-        break;
-    }
+  switch (filterDurationType) {
+    case "Daily":
+      startDate = startOfDay(filterDate);
+      endDate = endOfDay(filterDate);
+      break;
+    case "2days":
+      startDate = startOfDay(now);
+      endDate = endOfDay(addDays(now, 1));
+      break;
+    case "3days":
+      startDate = startOfDay(now);
+      endDate = endOfDay(addDays(now, 2));
+      break;
+    case "4days":
+      startDate = startOfDay(now);
+      endDate = endOfDay(addDays(now, 3));
+      break;
+    case "5days":
+      startDate = startOfDay(now);
+      endDate = endOfDay(addDays(now, 4));
+      break;
+    case "Week":
+      startDate = startOfWeek(now, { weekStartsOn: 1 });
+      endDate = endOfWeek(now, { weekStartsOn: 1 });
+      break;
+    case "Month":
+      startDate = startOfMonth(now);
+      endDate = endOfMonth(now);
+      break;
+    case "Year":
+      startDate = startOfYear(now);
+      endDate = endOfYear(now);
+      break;
+    default:
+      break;
+  }
 
-    if (startDate && endDate) {
-      currentTimetables = currentTimetables.filter((item) => {
-        // Use classDateTime (Firestore Timestamp) or parse Day string
-        let itemDate;
-        if (item.classDateTime && item.classDateTime.toDate) {
-          itemDate = item.classDateTime.toDate();
-        } else {
-          itemDate = parse(item.Day, "dd/MM/yyyy", new Date());
-        }
+  if (startDate && endDate) {
+    currentTimetables = currentTimetables.filter((item) => {
+      let itemDate;
+      if (item.classDateTime && item.classDateTime.toDate) {
+        itemDate = item.classDateTime.toDate();
+      } else {
+        itemDate = parse(item.Day, "dd/MM/yyyy", new Date());
+      }
 
-        return (
-          isValid(itemDate) &&
-          isWithinInterval(itemDate, { start: startDate, end: endDate })
-        );
-      });
-    }
-
-    if (searchTerm) {
-      currentTimetables = currentTimetables.filter(
-        (item) =>
-          item.Faculty?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.Subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.Topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.Student?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.Time?.toLowerCase().includes(searchTerm.toLowerCase())
+      return (
+        isValid(itemDate) &&
+        isWithinInterval(itemDate, { start: startDate, end: endDate })
       );
-    }
+    });
+  }
 
-    // Map to store student data by name and subject for quick lookup
-    const studentSubjectDataMap = new Map();
-    if (students && students.length > 0) {
-      students.forEach((student) => {
-        if (student.Name && student.Subject) {
-          const key = `${student.Name.toLowerCase()}_${student.Subject.toLowerCase()}`;
-          studentSubjectDataMap.set(key, student);
-        }
-      });
-    }
+  if (searchTerm) {
+    currentTimetables = currentTimetables.filter(
+      (item) =>
+        item.Faculty?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.Subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.Topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.Student?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.Time?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }
 
-    currentTimetables = currentTimetables.map((item) => {
-      const studentNameLower = item.Student?.toLowerCase();
-      const subjectLower = item.Subject?.toLowerCase();
-      const lookupKey = `${studentNameLower}_${subjectLower}`;
+  const studentSubjectDataMap = new Map();
+  if (students && students.length > 0) {
+    students.forEach((student) => {
+      if (student.Name && student.Subject) {
+        const key = `${student.Name.toLowerCase()}_${student.Subject.toLowerCase()}`;
+        studentSubjectDataMap.set(key, student);
+      }
+    });
+  }
 
-      const matchedStudent = studentSubjectDataMap.get(lookupKey);
-      let monthlyFeePerClass = "N/A";
-      let studentId = null; // Initialize studentId
+  currentTimetables = currentTimetables.map((item) => {
+    const studentNameLower = item.Student?.toLowerCase();
+    const subjectLower = item.Subject?.toLowerCase();
+    const lookupKey = `${studentNameLower}_${subjectLower}`;
 
-      if (matchedStudent) {
-        studentId = matchedStudent.id; // Assign student ID
-        let feeToUse = 0;
-        if (
-          typeof matchedStudent.monthlyFee === "number" &&
-          matchedStudent.monthlyFee > 0
-        ) {
-          feeToUse = matchedStudent.monthlyFee;
-        } else if (
-          typeof matchedStudent["Monthly Fee"] === "string" &&
-          parseFloat(matchedStudent["Monthly Fee"]) > 0
-        ) {
-          feeToUse = parseFloat(matchedStudent["Monthly Fee"]);
-        }
+    const matchedStudent = studentSubjectDataMap.get(lookupKey);
+    let monthlyFeePerClass = "N/A";
+    let studentId = null;
 
-        if (feeToUse > 0) {
-          monthlyFeePerClass = (feeToUse / 12).toFixed(2);
-        }
+    if (matchedStudent) {
+      studentId = matchedStudent.id;
+      let feeToUse = 0;
+      if (
+        typeof matchedStudent.monthlyFee === "number" &&
+        matchedStudent.monthlyFee > 0
+      ) {
+        feeToUse = matchedStudent.monthlyFee;
+      } else if (
+        typeof matchedStudent["Monthly Fee"] === "string" &&
+        parseFloat(matchedStudent["Monthly Fee"]) > 0
+      ) {
+        feeToUse = parseFloat(matchedStudent["Monthly Fee"]);
       }
 
-      return {
-        ...item,
-        monthlyFeePerClass: monthlyFeePerClass,
-        studentId: studentId, // Add the studentId key here
-      };
-    });
-
-    currentTimetables.sort((a, b) => {
-      const dateA = getDateFromTimetableItem(a);
-      const dateB = getDateFromTimetableItem(b);
-
-      if (dateA.getTime() !== dateB.getTime()) {
-        return dateA.getTime() - dateB.getTime();
+      if (feeToUse > 0) {
+        monthlyFeePerClass = (feeToUse / 12).toFixed(2);
       }
+    }
 
-      const timeA = parse(a.Time?.split(" to ")[0], "hh:mm a", new Date());
-      const timeB = parse(b.Time?.split(" to ")[0], "hh:mm a", new Date());
-      return timeA.getTime() - timeB.getTime();
-    });
+    return {
+      ...item,
+      monthlyFeePerClass: monthlyFeePerClass,
+      studentId: studentId,
+    };
+  });
 
-    return currentTimetables;
-  }, [
-    manualTimetables,
-    autoTimetables,
-    searchTerm,
-    filterDurationType,
-    filterDate,
-    user,
-    students,
-    currentUserSubject,
-    canAccessAll,
-    calculateDuration,
-  ]);
+  currentTimetables.sort((a, b) => {
+    const dateA = getDateFromTimetableItem(a);
+    const dateB = getDateFromTimetableItem(b);
+
+    if (dateA.getTime() !== dateB.getTime()) {
+      return dateA.getTime() - dateB.getTime();
+    }
+
+    const timeA = parse(a.Time?.split(" to ")[0], "hh:mm a", new Date());
+    const timeB = parse(b.Time?.split(" to ")[0], "hh:mm a", new Date());
+    return timeA.getTime() - timeB.getTime();
+  });
+
+  return currentTimetables;
+}, [
+  manualTimetables,
+  autoTimetables,
+  searchTerm,
+  filterDurationType,
+  filterDate,
+  user,
+  students,
+  currentUserSubject,
+  canAccessAll,
+  calculateDuration,
+]);
   console.log("combinedAndFilteredTimetables", combinedAndFilteredTimetables);
 
   const handleSearchChange = (e) => {
@@ -676,7 +685,7 @@ const TimetablePage = () => {
       user,
     });
 
-    setGeneratedTimetables(generated);
+    // setGeneratedTimetables(generated);
     console.log("generated", generated);
 
     if (generated.length > 0) {
@@ -702,6 +711,7 @@ const TimetablePage = () => {
       });
     }
   };
+  console.log("combinedAndFilteredTimetables",combinedAndFilteredTimetables)
   return (
     <Box
       sx={{

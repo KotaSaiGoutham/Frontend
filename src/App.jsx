@@ -51,6 +51,7 @@ import Reports from "./components/Reports";
 import StudentExam from "./components/StudentExam";
 import Analytics from "./components/Analytics";
 import AddStudentExamPage from "./components/AddStudentExamPage";
+import WeekSyllabusPage from "./components/WeekSyallabus";
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get from Redux
   const token = localStorage.getItem("token"); // Also check localStorage for robustness on initial load
@@ -104,6 +105,8 @@ function App() {
                    <Route path="/reports" element={<Reports />} />
                 <Route path="/student-exams" element={<StudentExam />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/week-syllabus" element={<WeekSyllabusPage />} />
+ 
                   <Route
                   path="/add-student-exam"
                   element={<AddStudentExamPage />}
