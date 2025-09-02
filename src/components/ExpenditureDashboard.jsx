@@ -40,10 +40,7 @@ import {
   FaBriefcase,
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  fetchExpenditures,
-  deleteExpenditure,
-} from "../redux/actions";
+import { fetchExpenditures, deleteExpenditure } from "../redux/actions";
 import {
   yearOptions,
   monthOptions,
@@ -379,7 +376,7 @@ const ExpenditureDashboard = () => {
         return 0;
       });
   }, [students, paidStudentIds, payments, selectedDate, user]);
-  console.log("filteredStudents,filteredStudents", filteredStudents);
+  const showSubjectColumn = user?.AllowAll;
   return (
     <Box
       sx={{
@@ -651,7 +648,7 @@ const ExpenditureDashboard = () => {
               {monthOptions.find((m) => m.value === selectedDate.month)?.label}{" "}
               {selectedDate.year}
             </Typography>
-            <TableContainer sx={{ maxHeight: 440 }}>
+            <TableContainer>
               <Table stickyHeader size="small">
                 <TableHead
                   sx={{
@@ -662,9 +659,12 @@ const ExpenditureDashboard = () => {
                   <TableRow>
                     <TableHeadCell>S.No</TableHeadCell>
                     <TableHeadCell icon={<FaUserCircle />}>Name</TableHeadCell>
-                    <TableHeadCell icon={<FaGraduationCap />}>
-                      Subject
-                    </TableHeadCell>
+                    {showSubjectColumn && (
+                      <TableHeadCell icon={<FaGraduationCap />}>
+                        Subject
+                      </TableHeadCell>
+                    )}
+
                     <TableHeadCell icon={<FaCalendarAlt />}>
                       Paid Date
                     </TableHeadCell>
@@ -704,28 +704,29 @@ const ExpenditureDashboard = () => {
                         >
                           <TableCell align="center">{index + 1}</TableCell>
                           <TableCell
-                            component="th"
-                            scope="row"
-                            sx={{ fontSize: "0.9rem" }}
+                            sx={{ fontSize: "0.9rem", p: 1.5 }}
+                            align="center"
                           >
                             <Link
                               to={`/student/${student.id}`}
                               state={{ studentData: student }}
                               className="student-name-link"
                               style={{
-                                display: "flex",
-                                alignItems: "center",
                                 textDecoration: "underline",
                                 color: "inherit",
                                 fontWeight: 500,
+                                display: "block",
                               }}
                             >
                               {student.Name}
                             </Link>
                           </TableCell>
-                          <TableCell align="center">
-                            {student.Subject}
-                          </TableCell>
+                          {showSubjectColumn && (
+                            <TableCell align="center">
+                              {student.Subject}
+                            </TableCell>
+                          )}
+
                           <TableCell align="center">
                             {hasPaid
                               ? new Date(

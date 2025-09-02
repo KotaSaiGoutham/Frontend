@@ -538,7 +538,7 @@ const Dashboard = () => {
     dispatch(fetchAutoTimetablesForToday(user?.id));
     dispatch(fetchStudents());
     dispatch(fetchEmployees());
-    dispatch(fetchUpcomingClasses());
+    dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
     dispatch(fetchDemoClasses());
     dispatch(fetchExpenditures(currentYear, currentMonth, "month"));
   }, [dispatch, user]);

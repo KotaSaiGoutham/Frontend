@@ -2,7 +2,12 @@ import React, { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaGraduationCap, FaRupeeSign, FaCalendarAlt } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchMonthlyPayments, fetchClassUpdates } from "../../redux/actions";
+import {
+  fetchMonthlyPayments,
+  fetchClassUpdates,
+  fetchAutoTimetablesForToday,
+  fetchUpcomingClasses,
+} from "../../redux/actions";
 import { Box, Tooltip } from "@mui/material";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
@@ -19,19 +24,30 @@ import "./HistoricalTables.css";
 const HistoricalTables = ({ students }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
 
   const today = new Date();
   const currentDayAbbr = today.toLocaleDateString("en-US", {
     weekday: "short",
   });
   const currentMonth = today.toLocaleDateString("en-US", { month: "short" });
-
   const {
-    classUpdates,
-    loading: classUpdatesLoading,
-    error: classUpdatesError,
+    timetables: manualTimetables, // Renamed from 'timetables' for clarity with autoTimetables
+    loading: classesLoading,
+    error: classesError,
   } = useSelector((state) => state.classes);
+  const {
+    timetables: autoTimetables, // NEW: This will hold auto-generated timetables
+    loading: autoTimetablesLoading,
+    error: autoTimetablesError,
+    hasSavedToday: autoTimetablesHasSavedToday, // NEW: Track if auto-timetables were saved for today
+  } = useSelector((state) => state.autoTimetables); // This is your NEW autoTimetables reducer
+  console.log("manualTimetables", manualTimetables);
   useEffect(() => {
+    dispatch(fetchAutoTimetablesForToday(user?.id));
+
+    dispatch(fetchUpcomingClasses());
+
     dispatch(fetchMonthlyPayments());
     dispatch(fetchClassUpdates());
   }, [dispatch]);
@@ -52,7 +68,6 @@ const HistoricalTables = ({ students }) => {
     "Nov",
     "Dec",
   ];
-  const currentYear = today.getFullYear();
 
   const rawDailyClassesData = useMemo(() => {
     const classCount = {
@@ -65,32 +80,51 @@ const HistoricalTables = ({ students }) => {
       Sat: 0,
     };
 
-    if (!students || !Array.isArray(students)) return classCount;
+    if (students && Array.isArray(students)) {
+      students.forEach((student) => {
+        if (!student.isActive || !Array.isArray(student.classDateandTime))
+          return;
+        student.classDateandTime.forEach((schedule) => {
+          const [dayNameRaw] = schedule.split("-");
+          const dayName = dayNameRaw.trim();
+          const dayMap = {
+            Sunday: "Sun",
+            Monday: "Mon",
+            Tuesday: "Tue",
+            Wednesday: "Wed",
+            Thursday: "Thu",
+            Friday: "Fri",
+            Saturday: "Sat",
+          };
+          const dayAbbr = dayMap[dayName] || dayName.substring(0, 3);
+          if (classCount.hasOwnProperty(dayAbbr)) {
+            classCount[dayAbbr] += 1;
+          }
+        });
+      });
+    }
 
-    students.forEach((student) => {
-      if (!student.isActive || !Array.isArray(student.classDateandTime)) return;
+    if (manualTimetables && Array.isArray(manualTimetables)) {
+      manualTimetables.forEach((timetable) => {
+        if (timetable.dateTimeISO) {
+          try {
+            const classDate = parseISO(timetable.dateTimeISO);
+            const dayAbbr = format(classDate, "EEE");
 
-      student.classDateandTime.forEach((schedule) => {
-        const [dayNameRaw] = schedule.split("-");
-        const dayName = dayNameRaw.trim();
-        const dayMap = {
-          Sunday: "Sun",
-          Monday: "Mon",
-          Tuesday: "Tue",
-          Wednesday: "Wed",
-          Thursday: "Thu",
-          Friday: "Fri",
-          Saturday: "Sat",
-        };
-        const dayAbbr = dayMap[dayName] || dayName.substring(0, 3);
-        if (classCount.hasOwnProperty(dayAbbr)) {
-          classCount[dayAbbr] += 1;
+            if (classCount.hasOwnProperty(dayAbbr)) {
+              classCount[dayAbbr] += 1;
+            }
+          } catch (error) {
+            console.error("Error parsing date from manual timetable:", error);
+          }
         }
       });
-    });
+    }
 
     return classCount;
-  }, [students]);
+  }, [students, manualTimetables]); // ⬅️ Add manualTimetables to the dependency array
+
+  // ... (rest of the component code)
 
   const sevenDayClassesData = useMemo(() => {
     const data = [];
@@ -126,51 +160,47 @@ const HistoricalTables = ({ students }) => {
   }, [monthlyPayments, allMonths]);
 
   const monthlyStudentData = useMemo(() => {
-  if (!students || students.length === 0) return {};
+    if (!students || students.length === 0) return {};
 
-  const data = {};
-  const today = new Date();
+    const data = {};
+    const today = new Date();
 
-  allMonths.forEach((monthAbbr, index) => {
-    const year = today.getFullYear();
+    allMonths.forEach((monthAbbr, index) => {
+      const year = today.getFullYear();
 
-    const monthStart = startOfMonth(new Date(year, index, 1));
-    const monthEnd = endOfMonth(new Date(year, index, 1));
+      const monthStart = startOfMonth(new Date(year, index, 1));
+      const monthEnd = endOfMonth(new Date(year, index, 1));
 
-    // ✅ If month is in the future → mark as "-"
-    if (monthStart > today) {
-      data[monthAbbr] = "-";
-      return;
-    }
-
-    let count = 0;
-
-    students.forEach((student) => {
-      if (!student.admissionDate?._seconds) return;
-
-      const admissionDate = new Date(student.admissionDate._seconds * 1000);
-
-      // 🟢 Step 1: Must have joined before end of this month
-      if (admissionDate > monthEnd) return;
-
-      // 🟢 Step 2: Must be active (isActive true, deactivated false)
-      if (!student.isActive || student.deactivated) return;
-
-      // 🟢 Step 3: If deactivatedAt exists, make sure it’s AFTER this month
-      if (student.deactivatedAt?._seconds) {
-        const deactivatedAt = new Date(student.deactivatedAt._seconds * 1000);
-        if (deactivatedAt <= monthEnd) return; // left before / in this month
+      // ✅ If month is in the future → mark as "-"
+      if (monthStart > today) {
+        data[monthAbbr] = "-";
+        return;
       }
 
-      count++;
+      let count = 0;
+
+      students.forEach((student) => {
+        if (!student.admissionDate?._seconds) return;
+
+        const admissionDate = new Date(student.admissionDate._seconds * 1000);
+
+        if (admissionDate > monthEnd) return;
+
+        if (!student.isActive || student.deactivated) return;
+
+        if (student.deactivatedAt?._seconds) {
+          const deactivatedAt = new Date(student.deactivatedAt._seconds * 1000);
+          if (deactivatedAt <= monthEnd) return; // left before / in this month
+        }
+
+        count++;
+      });
+
+      data[monthAbbr] = count;
     });
 
-    data[monthAbbr] = count;
-  });
-
-  return data;
-}, [students, allMonths]);
-
+    return data;
+  }, [students, allMonths]);
 
   const handleDateClick = (date) => {
     const dateFormatted = format(date, "dd/MM/yyyy");

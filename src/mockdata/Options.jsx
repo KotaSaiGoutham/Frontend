@@ -9,31 +9,38 @@ import {
   FaCalendarCheck,
   FaPhone,
   FaArrowRight,
-  FaCalendarAlt, FaCheckCircle, FaTrashAlt,
-  FaBook, FaFlask, FaAtom, FaBalanceScale,FaRupeeSign,FaClipboardList, FaRegCalendarCheck
+  FaEdit,
+  FaCalendarAlt,
+  FaCheckCircle,
+  FaBook,
+  FaFlask,
+  FaAtom,
+  FaBalanceScale,
+  FaRupeeSign,
+  FaClipboardList,
+  FaRegCalendarCheck,
 } from "react-icons/fa";
 
 import {
   HourglassEmpty as PendingIcon,
   CheckCircle as PresentIcon,
-  Cancel as AbsentIcon,    
-    CheckCircle as SuccessIcon,
+  Cancel as AbsentIcon,
+  CheckCircle as SuccessIcon,
   Cancel as FailedIcon,
   Schedule as RescheduledIcon,
-
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 export const subjectOptions = [
   { value: "Physics", label: "Physics" },
   { value: "Chemistry", label: "Chemistry" },
   { value: "Maths", label: "Maths" },
   { value: "Biology", label: "Biology" },
 ];
- export const statusOptions = [
-    { value: "Pending", label: "Pending" },
-    { value: "Success", label: "Success" }, // Corrected typo here from "Succes" to "Success"
-    { value: "Failed", label: "Failed" },
-    { value: "Rescheduled", label: "Rescheduled" },
-  ];
+export const statusOptions = [
+  { value: "Pending", label: "Pending" },
+  { value: "Success", label: "Success" }, // Corrected typo here from "Succes" to "Success"
+  { value: "Failed", label: "Failed" },
+  { value: "Rescheduled", label: "Rescheduled" },
+];
 export const paymentStatusOptions = [
   { value: "Paid", label: "Paid" },
   { value: "Unpaid", label: "Unpaid" },
@@ -325,10 +332,15 @@ export const yearOptions = [
   { value: "1st Class", label: "1st Class" },
 ];
 
-
-export const validRoles = ["Physics", "Chemistry", "Biology", "Zoology", "Maths"];
+export const validRoles = [
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "Zoology",
+  "Maths",
+];
 export const dayOptions = [
-  { value: "", label: "Select Day" }, 
+  { value: "", label: "Select Day" },
   { value: "Monday", label: "Monday" },
   { value: "Tuesday", label: "Tuesday" },
   { value: "Wednesday", label: "Wednesday" },
@@ -339,112 +351,304 @@ export const dayOptions = [
 ];
 
 export const studentColumns = [
-  { id: 'sNo', label: 'S.No.', minWidth: 50, align: 'center', hasSort: false },
-  { id: 'name', label: 'Name', minWidth: 150, align: 'left', hasSort: true, icon: FaUserCircle },
-  { id: 'gender', label: 'Gender', minWidth: 100, align: 'center', hasSort: false, icon: FaTransgender },
-  { id: 'subject', label: 'Subject', minWidth: 120, align: 'center', hasSort: false, icon: FaBookOpen },
-  { id: 'year', label: 'Year', minWidth: 80, align: 'center', hasSort: false, icon: FaCalendarCheck },
-  { id: 'stream', label: 'Stream', minWidth: 120, align: 'center', hasSort: false, icon: FaGraduationCap },
-  { id: 'college', label: 'College', minWidth: 150, align: 'center', hasSort: false, icon: FaUniversity },
-  { id: 'group', label: 'Group', minWidth: 100, align: 'center', hasSort: false, icon: FaUsers },
-  { id: 'source', label: 'Source', minWidth: 100, align: 'center', hasSort: false, icon: FaSearchDollar },
-  { id: 'contactNumber', label: 'Contact No.', minWidth: 150, align: 'center', hasSort: false, icon: FaPhone },
-  { id: 'motherContact', label: 'Mother Contact', minWidth: 150, align: 'center', hasSort: false, icon: FaPhone },
-  { id: 'fatherContact', label: 'Father Contact', minWidth: 150, align: 'center', hasSort: false, icon: FaPhone },
-  { id: 'monthlyFee', label: 'Monthly Fee', minWidth: 120, align: 'center', hasSort: true, icon: FaRupeeSign },
-  { id: 'classesCompleted', label: 'Classes Completed', minWidth: 160, align: 'center', hasSort: true, icon: FaClipboardList  },
-  { id: 'startDate', label: 'Start Date', minWidth: 120, align: 'center', hasSort: false, icon: FaCalendarAlt },
-  { id: 'endDate', label: 'End Date', minWidth: 120, align: 'center', hasSort: false, icon: FaRegCalendarCheck },
-  { id: 'nextClass', label: 'Next Class', minWidth: 120, align: 'center', hasSort: false },
-  { id: 'paymentStatus', label: 'Payment Status', minWidth: 150, align: 'center', hasSort: false },
-  { id: 'status', label: 'Status', minWidth: 150, align: 'center', hasSort: false },
-  { id: 'actions', label: 'Actions', minWidth: 150, align: 'center', hasSort: false },
+  { id: "sNo", label: "S.No.", minWidth: 50, align: "center", hasSort: false },
+  {
+    id: "name",
+    label: "Name",
+    minWidth: 150,
+    align: "left",
+    hasSort: true,
+    icon: FaUserCircle,
+  },
+  {
+    id: "gender",
+    label: "Gender",
+    minWidth: 100,
+    align: "center",
+    hasSort: false,
+    icon: FaTransgender,
+  },
+  {
+    id: "subject",
+    label: "Subject",
+    minWidth: 120,
+    align: "center",
+    hasSort: false,
+    icon: FaBookOpen,
+  },
+  {
+    id: "year",
+    label: "Year",
+    minWidth: 80,
+    align: "center",
+    hasSort: false,
+    icon: FaCalendarCheck,
+  },
+  {
+    id: "stream",
+    label: "Stream",
+    minWidth: 120,
+    align: "center",
+    hasSort: false,
+    icon: FaGraduationCap,
+  },
+  {
+    id: "college",
+    label: "College",
+    minWidth: 150,
+    align: "center",
+    hasSort: false,
+    icon: FaUniversity,
+  },
+  {
+    id: "group",
+    label: "Group",
+    minWidth: 100,
+    align: "center",
+    hasSort: false,
+    icon: FaUsers,
+  },
+  {
+    id: "source",
+    label: "Source",
+    minWidth: 100,
+    align: "center",
+    hasSort: false,
+    icon: FaSearchDollar,
+  },
+  {
+    id: "contactNumber",
+    label: "Contact No.",
+    minWidth: 150,
+    align: "center",
+    hasSort: false,
+    icon: FaPhone,
+  },
+  {
+    id: "motherContact",
+    label: "Mother Contact",
+    minWidth: 150,
+    align: "center",
+    hasSort: false,
+    icon: FaPhone,
+  },
+  {
+    id: "fatherContact",
+    label: "Father Contact",
+    minWidth: 150,
+    align: "center",
+    hasSort: false,
+    icon: FaPhone,
+  },
+  {
+    id: "monthlyFee",
+    label: "Monthly Fee",
+    minWidth: 120,
+    align: "center",
+    hasSort: true,
+    icon: FaRupeeSign,
+  },
+  {
+    id: "classesCompleted",
+    label: "Classes Completed",
+    minWidth: 160,
+    align: "center",
+    hasSort: true,
+    icon: FaClipboardList,
+  },
+  {
+    id: "startDate",
+    label: "Start Date",
+    minWidth: 120,
+    align: "center",
+    hasSort: false,
+    icon: FaCalendarAlt,
+  },
+  {
+    id: "endDate",
+    label: "End Date",
+    minWidth: 120,
+    align: "center",
+    hasSort: false,
+    icon: FaRegCalendarCheck,
+  },
+  {
+    id: "nextClass",
+    label: "Next Class",
+    minWidth: 120,
+    align: "center",
+    hasSort: false,
+  },
+  {
+    id: "paymentStatus",
+    label: "Payment Status",
+    minWidth: 150,
+    align: "center",
+    hasSort: false,
+  },
+  {
+    id: "status",
+    label: "Status",
+    minWidth: 150,
+    align: "center",
+    hasSort: false,
+  },
+  {
+    id: "actions",
+    label: "Actions",
+    minWidth: 150,
+    align: "center",
+    hasSort: false,
+  },
 ];
-
-
 
 export const demoTableColumns = [
   {
-    id: 'sNo',
-    label: 'S.No.',
-    align: 'center',
-    minWidth: 'auto',
+    id: "sNo",
+    label: "S.No.",
+    align: "center",
+    minWidth: "auto",
     hasSort: false,
     icon: null,
   },
   {
-    id: 'studentName',
-    label: 'Student Name',
-    align: 'center',
+    id: "studentName",
+    label: "Student Name",
+    align: "center",
     minWidth: 120,
     hasSort: true, // You might want to enable sorting for dates
     icon: FaCalendarAlt,
   },
   {
-    id: 'demoDate',
-    label: 'Demo Date',
-    align: 'center',
+    id: "demoDate",
+    label: "Demo Date",
+    align: "center",
     minWidth: 120,
     hasSort: true, // You might want to enable sorting for dates
     icon: FaCalendarAlt,
   },
   {
-    id: 'status',
-    label: 'Status',
-    align: 'center',
+    id: "status",
+    label: "Status",
+    align: "center",
     minWidth: 150,
     hasSort: true, // Status is often sortable
     icon: FaCheckCircle,
   },
   {
-    id: 'moveToStudents',
-    label: 'Move To Students',
-    align: 'center',
+    id: "moveToStudents",
+    label: "Move To Students",
+    align: "center",
     minWidth: 180,
     hasSort: false,
     icon: FaArrowRight,
   },
   {
-    id: 'actions',
-    label: 'Actions',
-    align: 'center',
+    id: "remarks",
+    label: "Remarks",
+    align: "center",
+    minWidth: 180,
+    hasSort: false,
+    icon: FaEdit,
+  },
+  {
+    id: "actions",
+    label: "Actions",
+    align: "center",
     minWidth: 120,
     hasSort: false,
   },
 ];
 
-
 // Define all possible columns
 export const allExamTableColumns = [
-  { id: 'sNo', label: 'S.No', align: 'center', hasSort: false, icon: null },
-  { id: 'studentName', label: 'Student Name', align: 'center', hasSort: true, icon: FaBook },
-  { id: 'examDate', label: 'Exam Date', align: 'center', hasSort: true, icon: FaCalendarAlt },
-  { id: 'stream', label: 'Stream', align: 'center', hasSort: true, icon: FaFlask },
-  { id: 'status', label: 'Status', align: 'center', hasSort: true, icon: FaCheckCircle },
-  { id: 'maths', label: 'Math', align: 'center', hasSort: true, icon: FaBalanceScale },
-  { id: 'physics', label: 'Physics', align: 'center', hasSort: true, icon: FaAtom },
-  { id: 'chemistry', label: 'Chemistry', align: 'center', hasSort: true, icon: FaFlask },
-  { id: 'total', label: 'Total', align: 'center', hasSort: true, icon: null },
-  { id: 'actions', label: 'Actions', align: 'center', hasSort: false, icon: null },
+  { id: "sNo", label: "S.No", align: "center", hasSort: false, icon: null },
+  {
+    id: "studentName",
+    label: "Student Name",
+    align: "center",
+    hasSort: true,
+    icon: FaBook,
+  },
+  {
+    id: "examDate",
+    label: "Exam Date",
+    align: "center",
+    hasSort: true,
+    icon: FaCalendarAlt,
+  },
+  {
+    id: "stream",
+    label: "Stream",
+    align: "center",
+    hasSort: true,
+    icon: FaFlask,
+  },
+  {
+    id: "status",
+    label: "Status",
+    align: "center",
+    hasSort: true,
+    icon: FaCheckCircle,
+  },
+  {
+    id: "maths",
+    label: "Math",
+    align: "center",
+    hasSort: true,
+    icon: FaBalanceScale,
+  },
+  {
+    id: "physics",
+    label: "Physics",
+    align: "center",
+    hasSort: true,
+    icon: FaAtom,
+  },
+  {
+    id: "chemistry",
+    label: "Chemistry",
+    align: "center",
+    hasSort: true,
+    icon: FaFlask,
+  },
+  { id: "total", label: "Total", align: "center", hasSort: true, icon: null },
+  {
+    id: "actions",
+    label: "Actions",
+    align: "center",
+    hasSort: false,
+    icon: null,
+  },
 ];
 
 export const getExamTableColumns = (user) => {
   if (!user) return [];
 
-  return allExamTableColumns.filter(column => {
+  return allExamTableColumns.filter((column) => {
     // These columns are always visible
-    if (['sNo', 'studentName', 'examDate', 'stream', 'status', 'total', 'actions'].includes(column.id)) {
+    if (
+      [
+        "sNo",
+        "studentName",
+        "examDate",
+        "stream",
+        "status",
+        "total",
+        "actions",
+      ].includes(column.id)
+    ) {
       return true;
     }
 
     // Conditionally show subject columns
-    if (column.id === 'physics' && user.isPhysics) {
+    if (column.id === "physics" && user.isPhysics) {
       return true;
     }
-    if (column.id === 'chemistry' && user.isChemistry) {
+    if (column.id === "chemistry" && user.isChemistry) {
       return true;
     }
-    if (column.id === 'maths' && user.isMaths) {
+    if (column.id === "maths" && user.isMaths) {
       return true;
     }
 
@@ -464,8 +668,6 @@ export const MARK_SCHEMES = {
   },
   CBSE: { Maths: 35, Physics: 35, Chemistry: 35 },
 };
-
-
 
 export const examStatusConfig = {
   Present: {

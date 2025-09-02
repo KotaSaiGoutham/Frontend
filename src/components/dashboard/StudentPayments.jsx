@@ -181,7 +181,7 @@ const StudentPayments = ({ students }) => {
               transition={{ duration: 0.2 }}
             >
               <div style={{ display: "flex", flexDirection: "column" }}>
-     <Tooltip title={`Click to view details for ${student.Name}`}>
+                <Tooltip title={`Click to view details for ${student.Name}`}>
                   <Link
                     to={`/student/${student.id}`}
                     state={{ studentData: student }}

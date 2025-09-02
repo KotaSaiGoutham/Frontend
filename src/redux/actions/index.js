@@ -380,14 +380,14 @@ export const loginUser = ({ username, password }) =>
     authRequired: false,
   });
 
-// --- 5. Class Timetable Action Creator (Updated - no mock fallback) ---
-export const fetchUpcomingClasses = () =>
+export const fetchUpcomingClasses = (payload) =>
   apiRequest({
-    url: "/api/data/timetable",
+    url: `/api/data/timetable?date=${payload?.date}`,
     method: "GET",
     onStart: FETCH_CLASSES_REQUEST,
     onSuccess: (data, dispatch) => {
-      const finalTimetable = sortAndFilterTimetableData(data || []); // Ensure data is an array
+      const finalTimetable = sortAndFilterTimetableData(data || []);
+
       dispatch({
         type: FETCH_CLASSES_SUCCESS,
         payload: finalTimetable,
@@ -708,7 +708,7 @@ export const addTimetableEntry = (timetableData) =>
         payload: data, // The response from the backend
       });
       // Optionally, refetch the entire timetable list to update UI immediately
-      dispatch(fetchUpcomingClasses());
+      dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
     },
     onFailure: (error, dispatch) => {
       console.error("Error adding timetable entry:", error);
@@ -739,7 +739,7 @@ export const updateTimetableEntry = (timetableData) =>
         type: ADD_TIMETABLE_SUCCESS,
         payload: data,
       });
-      dispatch(fetchUpcomingClasses());
+      dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
     },
     onFailure: (error, dispatch) => {
       console.error("Error updating timetable entry:", error);
@@ -796,7 +796,7 @@ export const deleteTimetable = (timetableId) =>
         payload: timetableId, // Send the ID of the deleted item for potential UI updates
       });
       // Re-fetch to update the list immediately after successful deletion
-      dispatch(fetchUpcomingClasses());
+      dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
     },
     onFailure: (error, dispatch) => {
       console.error("Error deleting timetable entry:", error);
@@ -1020,7 +1020,7 @@ export const generateAndSaveTimetables = (timetablesToSave) =>
         payload: data.savedTimetables, // Backend should return saved data
       });
       // Crucial: Re-fetch existing classes to include the newly saved ones
-      dispatch(fetchUpcomingClasses());
+      dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
     },
     onFailure: (error, dispatch) => {
       console.error("Error saving generated timetables:", error);

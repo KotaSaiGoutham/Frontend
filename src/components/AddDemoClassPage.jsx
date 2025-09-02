@@ -74,7 +74,7 @@ const AddDemoClassPage = () => {
     demoDate: "",
     demoTime: null,
     status: "Pending",
-    notes: "",
+    remarks: "",
   });
 
   // Effect to pre-fill the form if a demo class is being edited
@@ -95,7 +95,7 @@ const AddDemoClassPage = () => {
           ? parse(demoToEdit.demoTime, "HH:mm", new Date())
           : null,
         status: demoToEdit.status || "Pending",
-        notes: demoToEdit.notes || "",
+        remarks: demoToEdit.remarks || "",
       });
     }
   }, [demoToEdit]);
@@ -116,7 +116,7 @@ const AddDemoClassPage = () => {
         demoDate: "",
         demoTime: null,
         status: "Pending",
-        notes: "",
+        remarks: "",
       });
       setTimeout(() => navigate("/demo-classes"), 1500);
     } else if (updateSuccess) {
@@ -320,12 +320,12 @@ const AddDemoClassPage = () => {
               required
             />
             <MuiInput
-              label="Notes (Optional)"
+              label="Remarks (Optional)"
               icon={FaInfoCircle}
-              name="notes"
-              value={formData.notes}
+              name="remarks"
+              value={formData.remarks}
               onChange={handleChange}
-              placeholder="Any additional notes about the demo class"
+              placeholder="Any additional Remarks about the demo class"
               multiline
               rows={3}
               sx={{ gridColumn: "1 / -1" }}

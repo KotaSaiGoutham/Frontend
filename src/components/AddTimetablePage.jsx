@@ -798,7 +798,7 @@ const handleSubmit = async (e) => {
                 name="fromTime"
                 value={formData.fromTime}
                 onChange={handleTimeChange}
-                minTime={minTimeForFromPicker}
+                // minTime={minTimeForFromPicker}
                 required
               />
 
@@ -809,9 +809,9 @@ const handleSubmit = async (e) => {
                 name="toTime"
                 value={formData.toTime}
                 onChange={handleTimeChange}
-                minTime={
-                  formData.fromTime || startOfDay(parseISO(formData.date))
-                }
+                // minTime={
+                //   formData.fromTime || startOfDay(parseISO(formData.date))
+                // }
                 required
               />
             </div>

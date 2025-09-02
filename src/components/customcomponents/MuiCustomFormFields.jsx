@@ -12,7 +12,8 @@ import {
   Chip,
   FormHelperText,
   InputLabel,
-  Checkbox 
+  Checkbox,
+  useTheme 
 } from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import {
@@ -470,10 +471,7 @@ export const MuiMultiSelectChip = ({
   MenuProps,
 }) => {
   const [open, setOpen] = useState(false);
-
-  // The `handleChipDelete` is now gone, as the `onChange` will handle everything
-  // The MUI `Select` component already handles chip deletion by triggering a change event
-  // with the new array of values. We just need to ensure the parent handles it.
+  const theme = useTheme();
 
   const handleChange = (event) => {
     onChange(event);
@@ -490,7 +488,7 @@ export const MuiMultiSelectChip = ({
         onChange={handleChange}
         open={open}
         onOpen={() => setOpen(true)}
-        onClose={() => setOpen(false)} // No need to propagate close
+        onClose={() => setOpen(false)}
         input={<OutlinedInput id="select-multiple-chip" label={label} />}
         renderValue={(selected) => (
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
@@ -502,6 +500,8 @@ export const MuiMultiSelectChip = ({
                 <Chip
                   key={selectedValue}
                   label={selectedOption ? selectedOption.label : ""}
+                  // This is the key change!
+                  color="primary" // Sets the background color to the primary theme color
                   onDelete={() => {
                     const newValues = value.filter((v) => v !== selectedValue);
                     onChange({
@@ -518,12 +518,24 @@ export const MuiMultiSelectChip = ({
         )}
         MenuProps={MenuProps}
       >
-        {options.map((option) => (
-          <MenuItem key={option.value} value={option.value}>
-            <Checkbox checked={value.includes(option.value)} />
-            {option.label}
-          </MenuItem>
-        ))}
+        {options.map((option) => {
+          const isSelected = value.includes(option.value);
+          return (
+            <MenuItem
+              key={option.value}
+              value={option.value}
+              sx={{
+                backgroundColor: isSelected ? theme.palette.action.hover : "inherit",
+                "&:hover": {
+                  backgroundColor: theme.palette.action.selected,
+                },
+              }}
+            >
+              <Checkbox checked={isSelected} />
+              {option.label}
+            </MenuItem>
+          );
+        })}
       </Select>
     </FormControl>
   );

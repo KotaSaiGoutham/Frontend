@@ -13,7 +13,7 @@ const TodayTimetablePdfButton = () => {
   const { students } = useSelector((state) => state.students);
 
   useEffect(() => {
-    dispatch(fetchUpcomingClasses());
+    dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
     dispatch(fetchAutoTimetablesForToday());
   }, [dispatch]);
 

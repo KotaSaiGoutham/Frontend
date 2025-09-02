@@ -8,59 +8,35 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
   CircularProgress,
   Alert,
   Slide,
   Button as MuiButton,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
-  Tooltip,
-  IconButton,
-  Menu, // Import Menu
-  MenuItem, // Import MenuItem
-  ListItemIcon, // Import ListItemIcon
-  ListItemText, // Import ListItemText
-  Dialog, // Import Dialog for confirmation
+  Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
+  TextField,
+  Tooltip,
 } from "@mui/material";
-import {
-  FaChalkboardTeacher,
-  FaSearch,
-  FaUserCircle,
-  FaPhone,
-  FaUniversity,
-  FaCalendarCheck,
-  FaSearchDollar,
-  FaPlus,
-  FaArrowRight,
-  FaEdit,
-  FaTrashAlt,
-  FaEllipsisV, // Import the ellipsis icon
-} from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
-import { streamOptions, yearOptions, statusOptions, demoStatusConfig } from "../mockdata/Options";
-
-import {
-  MuiInput,
-  MuiDatePicker,
-  MuiSelect,
-} from "./customcomponents/MuiCustomFormFields";
+import { FaChalkboardTeacher, FaPlus, FaArrowRight, FaEdit } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { demoStatusConfig } from "../mockdata/Options";
 
 import TableStatusSelect from "./customcomponents/TableStatusSelect";
 import {
   fetchDemoClasses,
   updateDemoClassStatus,
   deleteDemoClass,
+  updateDemoClass,
 } from "../redux/actions";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
 import TableHeaders from "./students/TableHeaders";
 import { demoTableColumns } from "../mockdata/Options";
+
 const DemoClassesPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -92,7 +68,12 @@ const DemoClassesPage = () => {
     status: true,
     moveToStudents: true,
     actions: true,
+    remarks: true,
   });
+
+  // State for remarks dialog
+  const [isRemarksDialogOpen, setIsRemarksDialogOpen] = useState(false);
+  const [currentRemarks, setCurrentRemarks] = useState("");
 
   // State for the actions menu
   const [anchorEl, setAnchorEl] = useState(null);
@@ -152,14 +133,11 @@ const DemoClassesPage = () => {
   // Handler to confirm deletion
   const handleConfirmDelete = () => {
     if (selectedDemo) {
-      // Dispatch the delete action
       dispatch(deleteDemoClass(selectedDemo.id))
         .then(() => {
-          // After a successful deletion, dispatch the fetch action
           dispatch(fetchDemoClasses());
         })
         .catch((error) => {
-          // You might want to handle errors here, e.g., show an error message
           console.error("Failed to delete demo class:", error);
         });
     }
@@ -171,6 +149,24 @@ const DemoClassesPage = () => {
   const handleCancelDelete = () => {
     setIsDeleteDialogOpen(false);
     handleClose();
+  };
+
+  // Handler to save remarks
+  const handleSaveRemarks = async () => {
+    if (selectedDemo) {
+      const updatedDemo = {
+        ...selectedDemo,
+        remarks: currentRemarks,
+      };
+      try {
+        await dispatch(updateDemoClass(updatedDemo));
+        setIsRemarksDialogOpen(false);
+        setSelectedDemo(null);
+        setCurrentRemarks("");
+      } catch (error) {
+        console.error("Failed to update remarks:", error);
+      }
+    }
   };
 
   const filteredDemoClasses = demoClasses.filter((demo) => {
@@ -267,7 +263,6 @@ const DemoClassesPage = () => {
           </MuiButton>
         </Paper>
       </Slide>
-
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
         <Paper
           elevation={6}
@@ -284,8 +279,14 @@ const DemoClassesPage = () => {
               component={Paper}
               elevation={3}
               sx={{
-                borderRadius: 2,
-                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.08)",
+                borderRadius: 3,
+                overflow: "hidden",
+                transition:
+                  "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.15)",
+                },
               }}
             >
               <Table sx={{ minWidth: 1200 }} aria-label="demo classes table">
@@ -298,41 +299,27 @@ const DemoClassesPage = () => {
                     <TableRow
                       key={demo.id}
                       sx={{
-                        "&:nth-of-type(odd)": { backgroundColor: "#fbfcfd" },
+                        transition: "background-color 0.3s ease, transform 0.2s ease",
+                        "&:nth-of-type(odd)": { backgroundColor: "#f9fafb" },
                         "&:hover": {
-                          backgroundColor: "#eef7ff",
-                          cursor: "pointer",
+                          backgroundColor: "#e3f2fd",
+                          transform: "scale(1.005)",
+                          boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
                         },
-                        borderBottom: "1px solid #e0e0e0",
                       }}
                     >
                       {columnVisibility.sNo && (
-                        <TableCell
-                          align="center"
-                          sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
-                        >
+                        <TableCell align="center" sx={{ fontSize: "0.9rem", p: 1.5 }}>
                           {index + 1}
                         </TableCell>
                       )}
                       {columnVisibility.studentName && (
-                        <TableCell
-                          align="center"
-                          sx={{
-                            fontSize: "0.85rem",
-                            padding: "10px 8px",
-                          }}
-                        >
+                        <TableCell align="center" sx={{ fontSize: "0.9rem", p: 1.5 }}>
                           {demo.studentName}
                         </TableCell>
                       )}
                       {columnVisibility.demoDate && (
-                        <TableCell
-                          align="center"
-                          sx={{
-                            fontSize: "0.85rem",
-                            padding: "10px 8px",
-                          }}
-                        >
+                        <TableCell align="center" sx={{ fontSize: "0.9rem", p: 1.5 }}>
                           {new Date(demo.demoDate).toLocaleDateString("en-GB")}{" "}
                         </TableCell>
                       )}
@@ -341,7 +328,7 @@ const DemoClassesPage = () => {
                           align="center"
                           sx={{
                             fontSize: "0.85rem",
-                            padding: "10px 8px",
+                            p: 1.5,
                             minWidth: 150,
                           }}
                         >
@@ -359,7 +346,7 @@ const DemoClassesPage = () => {
                           align="center"
                           sx={{
                             fontSize: "0.85rem",
-                            padding: "10px 8px",
+                            p: 1.5,
                             minWidth: 180,
                           }}
                         >
@@ -370,29 +357,65 @@ const DemoClassesPage = () => {
                               startIcon={<FaArrowRight />}
                               onClick={() => handleMoveToStudents(demo)}
                               sx={{
-                                bgcolor: "#28a745",
-                                "&:hover": { bgcolor: "#218838" },
+                                bgcolor: "#4caf50",
+                                "&:hover": { bgcolor: "#388e3c", boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)" },
                                 borderRadius: "6px",
                                 textTransform: "none",
-                                fontSize: "0.8rem",
+                                fontSize: "0.85rem",
                                 px: 1.5,
-                                py: 0.5,
+                                py: 0.8,
+                                transition: "background-color 0.3s ease, box-shadow 0.3s ease",
                               }}
                             >
                               Move
                             </MuiButton>
                           ) : (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
+                            <Typography variant="caption" color="text.secondary">
                               (Not Success)
                             </Typography>
                           )}
                         </TableCell>
                       )}
+                      {columnVisibility.remarks && (
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.9rem", p: 1.5 }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                maxWidth: 200,
+                                whiteSpace: "pre-wrap",
+                                textAlign: "left",
+                              }}
+                            >
+                              {demo.remarks || "No remarks"}
+                            </Typography>
+                            <Tooltip title="Edit Remarks">
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  setSelectedDemo(demo);
+                                  setCurrentRemarks(demo.remarks || "");
+                                  setIsRemarksDialogOpen(true);
+                                }}
+                              >
+                                <FaEdit color="#34495e" size={14} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      )}
                       {columnVisibility.actions && (
-                        <TableCell align="center" sx={{ py: 1.5 }}>
+                        <TableCell align="center" sx={{ py: 1.5, p: 1.5 }}>
                           <Box
                             sx={{
                               display: "inline-flex",
@@ -424,6 +447,49 @@ const DemoClassesPage = () => {
           )}
         </Paper>
       </Slide>
+
+      {/* Remarks Edit Dialog */}
+      <Dialog
+        open={isRemarksDialogOpen}
+        onClose={() => setIsRemarksDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Remarks for {selectedDemo?.studentName}</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Update the remarks for this demo class below.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="remarks"
+            label="Remarks"
+            type="text"
+            fullWidth
+            multiline
+            rows={4}
+            variant="outlined"
+            value={currentRemarks}
+            onChange={(e) => setCurrentRemarks(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <MuiButton
+            onClick={() => setIsRemarksDialogOpen(false)}
+            color="error"
+          >
+            Cancel
+          </MuiButton>
+          <MuiButton
+            onClick={handleSaveRemarks}
+            color="primary"
+            variant="contained"
+          >
+            Save
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog

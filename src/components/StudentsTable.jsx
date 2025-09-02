@@ -245,7 +245,7 @@ const StudentsTable = () => {
   useEffect(() => {
     dispatch(fetchStudents());
     dispatch(fetchClassUpdates())
-    dispatch(fetchUpcomingClasses());
+    dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
     dispatch(fetchAutoTimetablesForToday());
   }, [dispatch]);
 

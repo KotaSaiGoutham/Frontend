@@ -86,7 +86,7 @@ const StudentPortfolio = () => {
 
   useEffect(() => {
     dispatch(fetchWeeklyMarks(studentData?.id || studentId));
-    dispatch(fetchUpcomingClasses());
+    dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
     dispatch(fetchAutoTimetablesForToday())
   }, []);
   const payments = useSelector((state) => state.payments.data);
