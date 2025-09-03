@@ -17,7 +17,7 @@ import {
   FaEdit,
 } from "react-icons/fa";
 
-import { format, startOfDay, isValid, parse, parseISO } from "date-fns";
+import { format, startOfDay, isValid, parse, parseISO,isFuture, isToday  } from "date-fns";
 
 import { Snackbar, Alert as MuiAlert, CircularProgress } from "@mui/material";
 
@@ -57,7 +57,7 @@ const AddDemoClassPage = () => {
 
   // Get demoToEdit from the location state
   const demoToEdit = location.state?.demoToEdit;
-  console.log("demoToEdit",demoToEdit)
+  console.log("demoToEdit", demoToEdit);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -139,13 +139,26 @@ const AddDemoClassPage = () => {
     }));
   };
 
-  const handleDatePickerChange = (eventLikeObject) => {
-    const { name, value } = eventLikeObject.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
+const handleDatePickerChange = (dateValue) => {
+  let newStatus = formData.status; 
+  
+  if (isFuture(dateValue)) {
+    // If the selected date is in the future
+    newStatus = "Scheduled";
+  } else if (isToday(dateValue)) {
+    // If the selected date is today
+    newStatus = "Pending";
+  } else {
+    // If the selected date is in the past, keep it as "Pending"
+    newStatus = "Pending"; 
+  }
+
+  setFormData((prevData) => ({
+    ...prevData,
+    demoDate: dateValue,
+    status: newStatus, // Update the status based on the date
+  }));
+};
 
   const handleTimePickerChange = (name, timeObject) => {
     setFormData((prevData) => ({
@@ -156,6 +169,8 @@ const AddDemoClassPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Reset snackbar state
     setSnackbarOpen(false);
     setSnackbarMessage("");
     setSnackbarSeverity("success");
@@ -186,18 +201,40 @@ const AddDemoClassPage = () => {
     const dataToSend = {
       ...formData,
       demoTime: formattedDemoTime,
-      Subject: user.isPhysics ? "Physics" : user.isChemistry ? "Chemistry" : "",
+      Subject: user.isPhysics
+        ? "Physics"
+        : user.isChemistry
+        ? "Chemistry"
+        : "All",
     };
 
-    if (demoToEdit) {
-      // Update existing demo class
-      dispatch(updateDemoClass({ ...dataToSend, id: demoToEdit.id }));
-    } else {
-      // Add new demo class
-      dispatch(addDemoClass(dataToSend));
+    try {
+      if (!!demoToEdit) {
+        // Update existing demo class
+        await dispatch(
+          updateDemoClass({ ...dataToSend, id: demoToEdit.id })
+        ).unwrap();
+        setSnackbarMessage("Demo class updated successfully!");
+      } else {
+        // Add new demo class
+        await dispatch(addDemoClass(dataToSend)).unwrap();
+        setSnackbarMessage("Demo class added successfully!");
+      }
+
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+
+      // Navigate after a brief delay to allow the snackbar to appear
+      setTimeout(() => {
+        navigate("/demo-classes");
+      }, 1500); // 1.5-second delay
+    } catch (error) {
+      console.error("Failed to save demo class:", error);
+      setSnackbarSeverity("error");
+      setSnackbarMessage("Failed to save demo class. Please try again.");
+      setSnackbarOpen(true);
     }
   };
-
   const handleSnackbarClose = (event, reason) => {
     if (reason === "clickaway") return;
     setSnackbarOpen(false);
@@ -298,10 +335,10 @@ const AddDemoClassPage = () => {
               icon={FaCalendarAlt}
               name="demoDate"
               value={formData.demoDate}
-              onChange={handleDatePickerChange}
-              minDate={minDateForPicker}
+              onChange={handleDatePickerChange} // This handler now receives the date value directly
               required
             />
+
             <MuiTimePicker
               label="Demo Time"
               icon={FaClock}

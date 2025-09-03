@@ -889,8 +889,6 @@ export const addDemoClass = (demoClassData) =>
         type: ADD_DEMO_CLASS_SUCCESS,
         payload: data.demoClass, // The newly added demo class from backend response
       });
-      // Optionally, refetch the entire list to update the UI
-      dispatch(fetchDemoClasses()); // This will now fetch from Firestore
     },
     onFailure: (error, dispatch) => {
       console.error("Error adding demo class:", error);

@@ -28,6 +28,7 @@ import {
   CheckCircle as SuccessIcon,
   Cancel as FailedIcon,
   Schedule as RescheduledIcon,
+  AccessAlarm as ScheduledIcon, // Use a valid icon here
 } from "@mui/icons-material";
 export const subjectOptions = [
   { value: "Physics", label: "Physics" },
@@ -39,6 +40,7 @@ export const statusOptions = [
   { value: "Pending", label: "Pending" },
   { value: "Success", label: "Success" }, // Corrected typo here from "Succes" to "Success"
   { value: "Failed", label: "Failed" },
+  { value: "Scheduled", label: "Scheduled" },
   { value: "Rescheduled", label: "Rescheduled" },
 ];
 export const paymentStatusOptions = [
@@ -714,6 +716,13 @@ export const demoStatusConfig = {
     icon: <RescheduledIcon fontSize="small" />,
     backgroundColor: "#cfe2ff",
     color: "#052c65",
+  },
+  // Add the "Scheduled" status here
+  Scheduled: {
+    label: "Scheduled",
+    icon: <ScheduledIcon fontSize="small" />,
+    backgroundColor: "#e2e3e5", // A light gray for a neutral/upcoming state
+    color: "#343a40", // A dark gray for text
   },
 };
 
