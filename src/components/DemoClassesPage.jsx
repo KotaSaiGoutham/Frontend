@@ -22,7 +22,12 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
-import { FaChalkboardTeacher, FaPlus, FaArrowRight, FaEdit } from "react-icons/fa";
+import {
+  FaChalkboardTeacher,
+  FaPlus,
+  FaArrowRight,
+  FaEdit,
+} from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { demoStatusConfig } from "../mockdata/Options";
 
@@ -65,6 +70,7 @@ const DemoClassesPage = () => {
     course: true,
     collegeName: false,
     demoDate: true,
+    demoTime: true,
     status: true,
     moveToStudents: true,
     actions: true,
@@ -180,7 +186,8 @@ const DemoClassesPage = () => {
       (filters.collegeName === "" ||
         demo.collegeName
           .toLowerCase()
-          .includes(filters.collegeName.toLowerCase()))
+          .includes(filters.collegeName.toLowerCase())) &&
+      !demo.addstudenttostudenttable
     );
   });
 
@@ -280,7 +287,8 @@ const DemoClassesPage = () => {
               elevation={3}
               sx={{
                 borderRadius: 3,
-                overflow: "hidden",
+                overflowX: "auto", // Apply horizontal scroll here
+                overflowY: "hidden", // Prevent vertical scroll unless needed
                 transition:
                   "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
                 "&:hover": {
@@ -299,7 +307,8 @@ const DemoClassesPage = () => {
                     <TableRow
                       key={demo.id}
                       sx={{
-                        transition: "background-color 0.3s ease, transform 0.2s ease",
+                        transition:
+                          "background-color 0.3s ease, transform 0.2s ease",
                         "&:nth-of-type(odd)": { backgroundColor: "#f9fafb" },
                         "&:hover": {
                           backgroundColor: "#e3f2fd",
@@ -309,18 +318,43 @@ const DemoClassesPage = () => {
                       }}
                     >
                       {columnVisibility.sNo && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem", p: 1.5 }}>
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.9rem", p: 1.5 }}
+                        >
                           {index + 1}
                         </TableCell>
                       )}
                       {columnVisibility.studentName && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem", p: 1.5 }}>
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.9rem", p: 1.5 }}
+                        >
                           {demo.studentName}
                         </TableCell>
                       )}
                       {columnVisibility.demoDate && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem", p: 1.5 }}>
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.9rem", p: 1.5 }}
+                        >
                           {new Date(demo.demoDate).toLocaleDateString("en-GB")}{" "}
+                        </TableCell>
+                      )}
+                      {/* New TableCell for demoTime */}
+                      {columnVisibility.demoTime && (
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.9rem", p: 1.5 }}
+                        >
+                          {/* Convert 24-hour time to 12-hour format with AM/PM */}
+                          {new Date(
+                            `1970-01-01T${demo.demoTime}:00`
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })}
                         </TableCell>
                       )}
                       {columnVisibility.status && (
@@ -341,52 +375,27 @@ const DemoClassesPage = () => {
                           />
                         </TableCell>
                       )}
-                      {columnVisibility.moveToStudents && (
-                        <TableCell
-                          align="center"
-                          sx={{
-                            fontSize: "0.85rem",
-                            p: 1.5,
-                            minWidth: 180,
-                          }}
-                        >
-                          {demo.status === "Success" ? (
-                            <MuiButton
-                              variant="contained"
-                              size="small"
-                              startIcon={<FaArrowRight />}
-                              onClick={() => handleMoveToStudents(demo)}
-                              sx={{
-                                bgcolor: "#4caf50",
-                                "&:hover": { bgcolor: "#388e3c", boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)" },
-                                borderRadius: "6px",
-                                textTransform: "none",
-                                fontSize: "0.85rem",
-                                px: 1.5,
-                                py: 0.8,
-                                transition: "background-color 0.3s ease, box-shadow 0.3s ease",
-                              }}
-                            >
-                              Move
-                            </MuiButton>
-                          ) : (
-                            <Typography variant="caption" color="text.secondary">
-                              (Not Success)
-                            </Typography>
-                          )}
-                        </TableCell>
-                      )}
                       {columnVisibility.remarks && (
                         <TableCell
-                          align="center"
-                          sx={{ fontSize: "0.9rem", p: 1.5 }}
+                          align="left"
+                          sx={{
+                            fontSize: "0.9rem",
+                            p: 1,
+                            border: "1px solid #e0e0e0", // Adds a subtle border around the entire cell
+                          }}
                         >
                           <Box
                             sx={{
                               display: "flex",
                               alignItems: "center",
-                              justifyContent: "center",
-                              gap: 1,
+                              justifyContent: "space-between",
+                              gap: 1, // Space between text and icon
+                              p: 1, // Inner padding for the hover effect
+                              borderRadius: 1, // Slight rounding for a softer look
+                              transition: "box-shadow 0.3s ease-in-out", // Smooth transition for the hover effect
+                              "&:hover": {
+                                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)", // Creates a subtle shadow on hover
+                              },
                             }}
                           >
                             <Typography
@@ -395,6 +404,8 @@ const DemoClassesPage = () => {
                                 maxWidth: 200,
                                 whiteSpace: "pre-wrap",
                                 textAlign: "left",
+                                wordBreak: "break-word",
+                                flexGrow: 1,
                               }}
                             >
                               {demo.remarks || "No remarks"}
@@ -414,6 +425,49 @@ const DemoClassesPage = () => {
                           </Box>
                         </TableCell>
                       )}
+                      {columnVisibility.moveToStudents && (
+                        <TableCell
+                          align="center"
+                          sx={{
+                            fontSize: "0.85rem",
+                            p: 1.5,
+                            minWidth: 180,
+                          }}
+                        >
+                          {demo.status === "Success" ? (
+                            <MuiButton
+                              variant="contained"
+                              size="small"
+                              startIcon={<FaArrowRight />}
+                              onClick={() => handleMoveToStudents(demo)}
+                              sx={{
+                                bgcolor: "#4caf50",
+                                "&:hover": {
+                                  bgcolor: "#388e3c",
+                                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+                                },
+                                borderRadius: "6px",
+                                textTransform: "none",
+                                fontSize: "0.85rem",
+                                px: 1.5,
+                                py: 0.8,
+                                transition:
+                                  "background-color 0.3s ease, box-shadow 0.3s ease",
+                              }}
+                            >
+                              Move
+                            </MuiButton>
+                          ) : (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              (Not Success)
+                            </Typography>
+                          )}
+                        </TableCell>
+                      )}
+
                       {columnVisibility.actions && (
                         <TableCell align="center" sx={{ py: 1.5, p: 1.5 }}>
                           <Box

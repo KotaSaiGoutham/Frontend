@@ -19,6 +19,7 @@ import {
   FaRupeeSign,
   FaClipboardList,
   FaRegCalendarCheck,
+  FaRegClock,
 } from "react-icons/fa";
 
 import {
@@ -530,20 +531,20 @@ export const demoTableColumns = [
     icon: FaCalendarAlt,
   },
   {
+    id: "demoTime",
+    label: "Demo Time",
+    align: "center",
+    minWidth: 120,
+    hasSort: true,
+    icon: FaRegClock, // or FaClock
+  },
+  {
     id: "status",
     label: "Status",
     align: "center",
     minWidth: 150,
     hasSort: true, // Status is often sortable
     icon: FaCheckCircle,
-  },
-  {
-    id: "moveToStudents",
-    label: "Move To Students",
-    align: "center",
-    minWidth: 180,
-    hasSort: false,
-    icon: FaArrowRight,
   },
   {
     id: "remarks",
@@ -553,6 +554,15 @@ export const demoTableColumns = [
     hasSort: false,
     icon: FaEdit,
   },
+  {
+    id: "moveToStudents",
+    label: "Move To Students",
+    align: "center",
+    minWidth: 180,
+    hasSort: false,
+    icon: FaArrowRight,
+  },
+
   {
     id: "actions",
     label: "Actions",

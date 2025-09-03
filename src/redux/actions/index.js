@@ -143,6 +143,9 @@ import {
   UPDATE_SYLLABUS_REQUEST,
   UPDATE_SYLLABUS_SUCCESS,
   UPDATE_SYLLABUS_FAILURE,
+    UPDATE_EMPLOYEE_REQUEST,
+  UPDATE_EMPLOYEE_SUCCESS,
+  UPDATE_EMPLOYEE_FAILURE,
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -1489,6 +1492,40 @@ export const updateWeeklySyllabus = (studentId, updatedLessons) =>
       dispatch({
         type: UPDATE_SYLLABUS_FAILURE,
         payload: { error: error.message || "Failed to update syllabus" },
+      });
+    },
+  });
+
+export const updateEmployeeData = (employeeId, updatedData) => (dispatch) =>
+  apiRequest({
+    url: `/api/employees/${employeeId}`, // The backend endpoint
+    method: "PATCH", // Use PATCH for partial updates
+    data: updatedData, // Send only the updated fields (e.g., { salary: 5000 } or { paid: true })
+    authRequired: true,
+
+    // ----- lifecycle handlers ---------------------------------------------
+    onStart: () =>
+      dispatch({
+        type: UPDATE_EMPLOYEE_REQUEST,
+        payload: { employeeId }, // Pass the ID to the reducer to handle the loading state for a specific item
+      }),
+
+    onSuccess: (data, dispatch) => {
+      // Assuming your backend returns the updated employee object directly
+      dispatch({
+        type: UPDATE_EMPLOYEE_SUCCESS,
+        payload: data, // The backend response should be the updated object
+      });
+    },
+
+    onFailure: (error, dispatch) => {
+      console.error(`Error updating employee ${employeeId}:`, error);
+      dispatch({
+        type: UPDATE_EMPLOYEE_FAILURE,
+        payload: {
+          employeeId, // Pass the ID to the reducer to handle the error state for this employee
+          error: error?.error || error?.message || "Failed to update employee",
+        },
       });
     },
   });

@@ -23,9 +23,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { name: "Dashboard", path: "/dashboard", icon: <FaHome /> },
     { name: "Students", path: "/students", icon: <FaUsers /> },
     { name: "Timetable", path: "/timetable", icon: <FaCalendarAlt /> },
-  { name: "Week Syllabus", path: "/week-syllabus", icon: <FaListAlt /> }, // New icon
+  { name: "Syllabus", path: "/week-syllabus", icon: <FaListAlt /> }, // New icon
 
-        { name: "Student Exams", path: "/student-exams", icon: <FaBookOpen /> },
+        { name: "Marks", path: "/student-exams", icon: <FaBookOpen /> },
     {
       name: "Earning & Expenditure",
       path: "/expenditure",

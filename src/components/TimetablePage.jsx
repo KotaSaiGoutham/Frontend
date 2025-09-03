@@ -636,25 +636,26 @@ const TimetablePage = () => {
     autoTimetablesLoading ||
     isGeneratingAuto ||
     isDeleting;
-  const { sumHours, sumFee } = combinedAndFilteredTimetables.reduce(
-    (acc, item) => {
-      // Calculate duration safely
-      const duration = parseFloat(calculateDuration(item.Time));
-      if (!isNaN(duration)) {
-        acc.sumHours += duration;
-      }
+ const { sumHours, sumFee } = combinedAndFilteredTimetables.reduce(
+  (acc, item) => {
+    // Calculate duration safely
+    const duration = parseFloat(calculateDuration(item.Time));
+    if (!isNaN(duration)) {
+      acc.sumHours += duration;
+    }
 
-      // Extract fee, remove '₹', and convert to number
-      if (item.monthlyFeePerClass && item.monthlyFeePerClass !== "N/A") {
-        const feeValue = parseFloat(item.monthlyFeePerClass.replace("₹", ""));
-        if (!isNaN(feeValue)) {
-          acc.sumFee += feeValue;
-        }
+    // Extract fee, remove '₹', and convert to number
+    if (item.monthlyFeePerClass && item.monthlyFeePerClass !== "N/A") {
+      const feeValue = parseFloat(item.monthlyFeePerClass.replace("₹", ""));
+      // Multiply the fee by the duration and add to the sum
+      if (!isNaN(feeValue) && !isNaN(duration)) {
+        acc.sumFee += feeValue * duration;
       }
-      return acc;
-    },
-    { sumHours: 0, sumFee: 0 } // Initial accumulator values
-  );
+    }
+    return acc;
+  },
+  { sumHours: 0, sumFee: 0 } // Initial accumulator values
+);
   const missingTopicItems = combinedAndFilteredTimetables.filter(
     (item) => !item.Topic
   );
@@ -695,17 +696,12 @@ const TimetablePage = () => {
       user,
     });
 
-    // setGeneratedTimetables(generated);
-    console.log("generated", generated);
-
     if (generated.length > 0) {
       try {
-        console.log("finalGeneratedItems", generated);
-
-        // --- CRITICAL FIX: Pass the date string and the generated data ---
         const dateStrForBackend = format(selectedDate, "yyyy-MM-dd");
         await dispatch(saveOrFetchAutoTimetables(dateStrForBackend, generated));
         // ------------------------------------------------------------------
+        await dispatch(fetchUpcomingClasses({ date: dateStr }));
 
         console.log(`Auto timetables saved via API for ${dateStr}`);
       } catch (err) {
@@ -875,7 +871,6 @@ const TimetablePage = () => {
       >
         <Paper elevation={6} sx={{ p: 3, borderRadius: "12px" }}>
           {" "}
-          {/* Increased elevation, rounded corners */}
           <Box
             sx={{
               display: "flex",
@@ -1221,11 +1216,11 @@ const TimetablePage = () => {
 
                         <TableCell>{calculateDuration(item.Time)}</TableCell>
 
-                        <TableCell>
-                          {item.monthlyFeePerClass !== "N/A"
-                            ? `₹${item.monthlyFeePerClass}`
-                            : "N/A"}
-                        </TableCell>
+                  <TableCell>
+  {item.monthlyFeePerClass !== "N/A"
+    ? `₹${parseFloat(item.monthlyFeePerClass) * parseInt(calculateDuration(item.Time))}`
+    : "N/A"}
+</TableCell>
 
                         <TableCell>
                           <Box

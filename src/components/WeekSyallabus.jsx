@@ -17,7 +17,7 @@ import {
   Slide,
   Chip,
   useTheme,
-  Tooltip 
+  Tooltip,
 } from "@mui/material";
 import { FaListAlt } from "react-icons/fa";
 import { topicOptions } from "../mockdata/Options";
@@ -252,13 +252,15 @@ const WeekSyllabusPage = () => {
                 <TableHead>
                   <TableRow sx={{ backgroundColor: "#eef7ff" }}>
                     <TableCell
-                      align="center"
+                      align="left"
                       sx={{
                         fontWeight: "bold",
-                        fontSize: "1.1rem",
+                        fontSize: "1rem",
                         color: theme.palette.primary.main,
-                        py: 2,
+                        py: 1,
                         borderBottom: "2px solid #ddd",
+                        width: "60px", // 👈 Compact
+                        whiteSpace: "nowrap",
                       }}
                     >
                       <SchoolIcon
@@ -268,13 +270,15 @@ const WeekSyllabusPage = () => {
                       Sl No
                     </TableCell>
                     <TableCell
-                      align="center"
+                      align="left"
                       sx={{
                         fontWeight: "bold",
-                        fontSize: "1.1rem",
+                        fontSize: "1rem",
                         color: theme.palette.primary.main,
-                        py: 2,
+                        py: 1,
                         borderBottom: "2px solid #ddd",
+                        width: "180px", // 👈 Compact name column
+                        whiteSpace: "nowrap",
                       }}
                     >
                       <PersonIcon
@@ -284,13 +288,15 @@ const WeekSyllabusPage = () => {
                       Student Name
                     </TableCell>
                     <TableCell
-                      align="center"
+                      align="left"
                       sx={{
                         fontWeight: "bold",
-                        fontSize: "1.1rem",
+                        fontSize: "1rem",
                         color: theme.palette.primary.main,
-                        py: 2,
+                        py: 1,
                         borderBottom: "2px solid #ddd",
+                        width: "120px", // 👈 Compact stream
+                        whiteSpace: "nowrap",
                       }}
                     >
                       <ScienceIcon
@@ -303,11 +309,11 @@ const WeekSyllabusPage = () => {
                       align="center"
                       sx={{
                         fontWeight: "bold",
-                        fontSize: "1.1rem",
+                        fontSize: "1rem",
                         color: theme.palette.primary.main,
-                        py: 2,
+                        py: 1,
                         borderBottom: "2px solid #ddd",
-                        minWidth: 280,
+                        width: "100%", // 👈 Take remaining space
                       }}
                     >
                       <ClassIcon
@@ -318,6 +324,7 @@ const WeekSyllabusPage = () => {
                     </TableCell>
                   </TableRow>
                 </TableHead>
+
                 <TableBody>
                   {students
                     .filter((student) => student.isActive)
@@ -339,16 +346,12 @@ const WeekSyllabusPage = () => {
                           borderBottom: "1px solid #e0e0e0",
                         }}
                       >
-                        <TableCell
-                          align="center"
-                          sx={{ p: 0, fontSize: "1rem" }}
-                        >
+                   <TableCell align="center" sx={{ p: 0.5, width: "60px", whiteSpace: "nowrap" }}>
+
                           {index + 1}
                         </TableCell>
-                        <TableCell
-                          align="center"
-                          sx={{ p: 2, fontSize: "1rem" }}
-                        >
+                 <TableCell align="center" sx={{ p: 0.5, width: "180px", whiteSpace: "nowrap" }}>
+
                           <Tooltip
                             title={`Click to view details for ${student.Name}`}
                           >
@@ -375,14 +378,13 @@ const WeekSyllabusPage = () => {
                               {student.Name}
                             </Link>
                           </Tooltip>
-                        </TableCell>{" "}
-                        <TableCell
-                          align="center"
-                          sx={{ p: 0, fontSize: "1rem" }}
-                        >
+                        </TableCell>
+               <TableCell align="center" sx={{ p: 0.5, width: "120px", whiteSpace: "nowrap" }}>
+
                           {student.Stream}
                         </TableCell>
-                        <TableCell align="center" sx={{ p: 0, minWidth: 280 }}>
+               <TableCell align="center" sx={{ p: 0.5, width: "100%" }}>
+
                           <MuiMultiSelectChip
                             label="Lesson"
                             name={`lesson-${student.id}`}

@@ -17,14 +17,18 @@ import {
   FaTimesCircle,
   FaClock,
   FaTrash,
-  FaEdit 
+  FaEdit,
 } from "react-icons/fa";
 
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 import { CSSTransition, TransitionGroup } from "react-transition-group"; // Import for animations
 
-import { MuiInput, MuiSelect } from "./customcomponents/MuiCustomFormFields";
+import {
+  MuiButton,
+  MuiInput,
+  MuiSelect,
+} from "./customcomponents/MuiCustomFormFields";
 import "./AddStudent.css";
 import {
   streamOptions,
@@ -53,8 +57,7 @@ const AddStudent = () => {
   // 1. Destructure the data from the location state.
   // Use a different variable name for clarity.
   const { studentData: passedStudentData, isDemo } = state || {};
-  console.log("passedStudentData",passedStudentData)
- // This is the core mapping logic
+  // This is the core mapping logic
   const mapDemoToStudent = (demoData) => {
     return {
       Name: demoData.studentName || "",
@@ -65,7 +68,12 @@ const AddStudent = () => {
       "Payment Status": "Unpaid",
       Stream: demoData.course || "",
       College: demoData.collegeName || "",
-      "Group ": "",
+      "Group ":
+        demoData.course === "JEE"
+          ? "MPC"
+          : demoData.course === "BIPC"
+          ? "NEET"
+          : "",
       Source: demoData.source || "",
       Year: demoData.year || "",
       classDateandTime: [], // You can handle this differently if needed
@@ -77,7 +85,9 @@ const AddStudent = () => {
   // Determine the initial data based on the source
   let initialData = {};
   if (passedStudentData) {
-    initialData = isDemo ? mapDemoToStudent(passedStudentData) : passedStudentData;
+    initialData = isDemo
+      ? mapDemoToStudent(passedStudentData)
+      : passedStudentData;
   } else {
     initialData = {
       Name: "",
@@ -109,9 +119,8 @@ const AddStudent = () => {
   const [timeSlotError, setTimeSlotError] = useState("");
 
   const { addingStudent } = useSelector((state) => state.students);
-  
-  const isEditMode = !!(initialData && initialData.id); // Correctly determines edit mode from initial data
 
+  const isEditMode = !!(initialData && initialData.id); // Correctly determines edit mode from initial data
 
   useEffect(() => {
     return () => {
@@ -145,53 +154,70 @@ const AddStudent = () => {
     });
   };
 
+  const handleAddTimeSlot = () => {
+    try {
+      if (!newTimeSlotDay || !newTimeSlotTime) {
+        setTimeSlotError("Please select both day and time.");
+        return;
+      }
+      const timeRegex = /^(0?[1-9]|1[0-2]):([0-5]\d)(am|pm)$/i;
+      if (!timeRegex.test(newTimeSlotTime)) {
+        setTimeSlotError(
+          "Please enter time in HH:MMam/pm format (e.g., 04:00pm)."
+        );
+        return;
+      }
 
-const handleAddTimeSlot = () => {
-  try {
-    if (!newTimeSlotDay || !newTimeSlotTime) {
-      setTimeSlotError("Please select both day and time.");
-      return;
-    }
-    const timeRegex = /^(0?[1-9]|1[0-2]):([0-5]\d)(am|pm)$/i;
-    if (!timeRegex.test(newTimeSlotTime)) {
-      setTimeSlotError("Please enter time in HH:MMam/pm format (e.g., 04:00pm).");
-      return;
-    }
+      const newSlot = `${newTimeSlotDay}-${newTimeSlotTime.toLowerCase()}`;
+      if (studentData?.classDateandTime?.includes(newSlot)) {
+        setTimeSlotError("This time slot already exists.");
+        return;
+      }
 
-    const newSlot = `${newTimeSlotDay}-${newTimeSlotTime.toLowerCase()}`;
-    if (studentData?.classDateandTime?.includes(newSlot)) {
-      setTimeSlotError("This time slot already exists.");
-      return;
-    }
+      setStudentData((prevData) => {
+        const updatedSlots = [...(prevData?.classDateandTime || []), newSlot];
+        const days = [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ];
 
-    setStudentData((prevData) => {
-      const updatedSlots = [...(prevData?.classDateandTime || []), newSlot];
-      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      
-      const lastAddedDay = days.indexOf(newTimeSlotDay);
-      const nextDayIndex = (lastAddedDay + 2) % 7;
-      const nextSuggestedDay = days[nextDayIndex];
-      
-      setNewTimeSlotDay(nextSuggestedDay); // Set next suggested day
-      setNewTimeSlotTime(newTimeSlotTime); // Keep the time the same
-      setTimeSlotError("");
-      
-      return {
-        ...prevData,
-        classDateandTime: updatedSlots,
-      };
-    });
-  } catch (err) {
-    console.error("Error adding time slot:", err);
-    alert("Error adding time slot: " + err.message);
-  }
-};
-const handleEditTimeSlot = (slotToEdit) => {
-  const [day, time] = slotToEdit.split('-');
-  setNewTimeSlotDay(day);
-  setNewTimeSlotTime(time);
-  handleRemoveTimeSlot(slotToEdit); // Remove the old slot after editing
-};
+        const lastAddedDay = days.indexOf(newTimeSlotDay);
+        const nextDayIndex = (lastAddedDay + 2) % 7;
+        const nextSuggestedDay = days[nextDayIndex];
+
+        setNewTimeSlotDay(nextSuggestedDay); // Set next suggested day
+        setNewTimeSlotTime(newTimeSlotTime); // Keep the time the same
+        setTimeSlotError("");
+
+        // ✅ NEW: Show success Snackbar
+        setSnackbarSeverity("success");
+        setSnackbarMessage("Time slot added successfully! ✅");
+        setSnackbarOpen(true);
+
+        return {
+          ...prevData,
+          classDateandTime: updatedSlots,
+        };
+      });
+    } catch (err) {
+      console.error("Error adding time slot:", err);
+      // Optional: Show error Snackbar for unexpected errors
+      setSnackbarSeverity("error");
+      setSnackbarMessage("Failed to add time slot.");
+      setSnackbarOpen(true);
+    }
+  };
+  const handleEditTimeSlot = (slotToEdit) => {
+    const [day, time] = slotToEdit.split("-");
+    setNewTimeSlotDay(day);
+    setNewTimeSlotTime(time);
+    handleRemoveTimeSlot(slotToEdit); // Remove the old slot after editing
+  };
   const handleRemoveTimeSlot = (slotToRemove) => {
     setStudentData((prevData) => ({
       ...prevData,
@@ -244,21 +270,25 @@ const handleEditTimeSlot = (slotToEdit) => {
       return;
     }
 
-     try {
-      if (isEditMode) {
+    try {
+      if (isEditMode && !isDemo) {
         await dispatch(updateStudent(studentData.id, studentData));
         setSnackbarSeverity("success");
         setSnackbarMessage("Student updated successfully!");
       } else {
         // This handles both new student and converting a demo student
-        const dataToSubmit = { ...studentData, isActive: true, isDemo: false,deactivated: false };
+
+        const dataToSubmit = {
+          ...studentData,
+          isActive: true,
+          isDemo: isDemo ? true : false,
+          deactivated: false,
+        };
         await dispatch(addStudent(dataToSubmit));
         setSnackbarSeverity("success");
         setSnackbarMessage("Student added successfully!");
       }
       setSnackbarOpen(true);
-
-      // Clear the form after a successful submission
       setStudentData(initialData);
       setNewTimeSlotDay("");
       setNewTimeSlotTime("");
@@ -312,7 +342,7 @@ const handleEditTimeSlot = (slotToEdit) => {
       <div className="dashboard-card add-student-form-card">
         <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <FaUserPlus />
-          {isEditMode ? "Edit Student" : "Add New Student"}
+          {isEditMode && !isDemo ? "Edit Student" : "Add New Student"}
         </h2>
 
         <form onSubmit={handleSubmit} className="add-student-form">
@@ -417,9 +447,7 @@ const handleEditTimeSlot = (slotToEdit) => {
           </div>
 
           {/* Financial Information */}
-          <div className="add-student-form-section-title">
-            Financial Details
-          </div>
+          <div className="add-student-form-section-title">Fees Details</div>
           <div className="add-student-form-grid">
             <MuiInput
               label="Monthly Fee (₹)"
@@ -509,18 +537,18 @@ const handleEditTimeSlot = (slotToEdit) => {
                         classNames="time-slot-item-anim"
                       >
                         <li ref={nodeRef} className="time-slot-item">
-  <span>{slot}</span>
-  <FaEdit 
-    className="edit-time-slot-icon"
-    onClick={() => handleEditTimeSlot(slot)} 
-    title="Edit time slot"
-  />
-  <FaTrash
-    className="delete-time-slot-icon"
-    onClick={() => handleRemoveTimeSlot(slot)}
-    title="Remove time slot"
-  />
-</li>
+                          <span>{slot}</span>
+                          <FaEdit
+                            className="edit-time-slot-icon"
+                            onClick={() => handleEditTimeSlot(slot)}
+                            title="Edit time slot"
+                          />
+                          <FaTrash
+                            className="delete-time-slot-icon"
+                            onClick={() => handleRemoveTimeSlot(slot)}
+                            title="Remove time slot"
+                          />
+                        </li>
                       </CSSTransition>
                     );
                   })}
@@ -542,7 +570,7 @@ const handleEditTimeSlot = (slotToEdit) => {
               <FaPlus />{" "}
               {addingStudent
                 ? "Adding Student..."
-                : isEditMode
+                : isEditMode && !isDemo
                 ? "Update Student"
                 : "Add Student"}
             </button>

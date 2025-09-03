@@ -1,5 +1,3 @@
-// src/redux/rootReducer.js
-
 import { combineReducers } from "redux";
 import classReducer from "./reducers/classReducer";
 import studentReducer from "./reducers/studentReducer";

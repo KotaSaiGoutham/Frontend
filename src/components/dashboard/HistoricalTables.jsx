@@ -9,7 +9,7 @@ import {
   fetchUpcomingClasses,
 } from "../../redux/actions";
 import { Box, Tooltip } from "@mui/material";
-import { LineChart } from "@mui/x-charts/LineChart";
+import { BarChart } from "@mui/x-charts"; // Changed from LineChart to BarChart
 import {
   format,
   addDays,
@@ -20,6 +20,7 @@ import {
   endOfMonth,
 } from "date-fns"; // ⬅️ Add `isSameMonth` and `parseISO`
 import "./HistoricalTables.css";
+import { calculateQuartiles } from "../../mockdata/function";
 
 const HistoricalTables = ({ students }) => {
   const dispatch = useDispatch();
@@ -210,33 +211,40 @@ const HistoricalTables = ({ students }) => {
     const todayDateFormatted = format(today, "dd/MM/yyyy");
     navigate("/timetable", { state: { date: todayDateFormatted } });
   };
-
+  const { median: medianClasses, q3: q3Classes } = useMemo(() => {
+    const counts = sevenDayClassesData.map((item) => item.count);
+    return calculateQuartiles(counts);
+  }, [sevenDayClassesData]);
+  const { median: medianFee, q3: q3Fee } = useMemo(() => {
+    const fees = Object.values(monthlyFeeData).filter(
+      (val) => typeof val === "number"
+    );
+    return calculateQuartiles(fees);
+  }, [monthlyFeeData]);
+  const { median: medianStudents, q3: q3Students } = useMemo(() => {
+    const studentsCount = Object.values(monthlyStudentData).filter(
+      (val) => typeof val === "number"
+    );
+    return calculateQuartiles(studentsCount);
+  }, [monthlyStudentData]);
   return (
     <div className="historical-tables-container">
-            {/* First Row: Classes per day */}     {" "}
+      {/* First Row: Classes per day */}
       <div className="table-section">
-               {" "}
         <div className="row-container">
-                   {" "}
           <div className="table-container">
-                       {" "}
             <div className="table-card primary-card">
-                           {" "}
               <h3
                 className="table-heading clickable-heading"
                 onClick={handleNavigateToToday}
               >
-                               {" "}
                 <span className="heading-icon">
                   <FaCalendarAlt />
-                </span>{" "}
-                No of classes per day              {" "}
+                </span>
+                No of classes per day
               </h3>
-                           {" "}
               <table className="data-table">
-                               {" "}
                 <thead>
-                                   {" "}
                   <tr>
                                        {" "}
                     {sevenDayClassesData.map(({ date, dayAbbr }) => (
@@ -249,20 +257,13 @@ const HistoricalTables = ({ students }) => {
                             : ""
                         }
                       >
-                                               {" "}
-                        <span className="th-content">{dayAbbr}</span>           
-                                 {" "}
+                        <span className="th-content">{dayAbbr}</span>
                       </th>
                     ))}
-                                     {" "}
                   </tr>
-                                 {" "}
                 </thead>
-                               {" "}
                 <tbody>
-                                   {" "}
                   <tr>
-                                       {" "}
                     {sevenDayClassesData.map(
                       ({ date, dayAbbr, count }, index) => (
                         <td
@@ -275,84 +276,66 @@ const HistoricalTables = ({ students }) => {
                           }`}
                           onClick={() => handleDateClick(date)}
                         >
-                                                 {" "}
                           <Tooltip
                             title={`Click to view timetable for ${dayAbbr}`}
                             placement="top"
                           >
-                                                     {" "}
-                            <span className="data-value">{count}</span>         
-                                         {" "}
+                            <span className="data-value">{count}</span>
                           </Tooltip>
-                                               {" "}
                         </td>
                       )
                     )}
-                                     {" "}
                   </tr>
-                                 {" "}
                 </tbody>
-                             {" "}
               </table>
-                         {" "}
             </div>
-                     {" "}
           </div>
-                   {" "}
           <div className="chart-container-history">
-                       {" "}
             <Box className="chart-card">
-                           {" "}
-              <LineChart
+              {/* Bar Chart for Classes per day */}
+              <BarChart
                 xAxis={[
                   {
-                    scaleType: "point",
+                    scaleType: "band",
                     data: sevenDayClassesData.map((item) => item.dayAbbr),
                   },
                 ]}
-                yAxis={[{ min: 0 }]}
+                yAxis={[
+                  {
+                    min: 0,
+                    max: q3Classes + q3Classes * 0.1, // A little buffer above Q3
+                    tickNumber: 3, // Show 3 ticks: min, median, max
+                    tickValues: [0, medianClasses, q3Classes], // Set specific tick values
+                  },
+                ]}
                 series={[
                   {
                     data: sevenDayClassesData.map((item) => item.count),
                     color: "#4a6cf7",
-                    area: true,
-                    curve: "natural",
                   },
                 ]}
                 height={180}
                 margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
               />
-                         {" "}
             </Box>
-                     {" "}
           </div>
-                 {" "}
         </div>
-             {" "}
       </div>
-            {/* Second Row: Fee payment per month */}     {" "}
+
+      {/* Second Row: Fee payment per month */}
       <div className="table-section">
-               {" "}
         <div className="row-container">
-                   {" "}
           <div className="table-container">
-                       {" "}
             <div className="table-card secondary-card">
-                           {" "}
               <h3 className="table-heading">
-                               {" "}
                 <span className="heading-icon">
                   <FaRupeeSign />
-                </span>{" "}
-                Fee payment per month              {" "}
+                </span>
+                Fee payment per month
               </h3>
-                           {" "}
               <table className="data-table">
-                               {" "}
                 <thead>
-                                   {" "}
                   <tr>
-                                       {" "}
                     {Object.keys(monthlyFeeData).map((month) => (
                       <th
                         key={month}
@@ -360,20 +343,13 @@ const HistoricalTables = ({ students }) => {
                           month === currentMonth ? "highlight-cell pulse" : ""
                         }
                       >
-                                               {" "}
-                        <span className="th-content">{month}</span>             
-                               {" "}
+                        <span className="th-content">{month}</span>
                       </th>
                     ))}
-                                     {" "}
                   </tr>
-                                 {" "}
                 </thead>
-                               {" "}
                 <tbody>
-                                   {" "}
                   <tr>
-                                       {" "}
                     {Object.keys(monthlyFeeData).map((monthKey, index) => {
                       const amount = monthlyFeeData[monthKey];
                       return (
@@ -383,72 +359,60 @@ const HistoricalTables = ({ students }) => {
                             monthKey === currentMonth ? "highlight-cell" : ""
                           }
                         >
-                                                   {" "}
                           <span className="data-value">
                             {amount.toLocaleString()}
                           </span>
-                                                 {" "}
                         </td>
                       );
                     })}
-                                     {" "}
                   </tr>
-                                 {" "}
                 </tbody>
-                             {" "}
               </table>
-                         {" "}
             </div>
-                     {" "}
           </div>
-                   {" "}
           <div className="chart-container-history">
-                       {" "}
-            <LineChart
-              xAxis={[{ scaleType: "point", data: allMonths }]}
-              yAxis={[{ min: 0 }]}
-              series={[
-                {
-                  data: Object.values(monthlyFeeData).map((val) =>
-                    val === "-" ? 0 : val
-                  ),
-                  color: "#B21F62",
-                  area: true,
-                  curve: "natural",
-                },
-              ]}
-              height={180}
-              margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
-            />
-                     {" "}
+            {/* Bar Chart for Fee payment per month */}
+            <Box className="chart-card">
+              <BarChart
+                xAxis={[{ scaleType: "band", data: allMonths }]}
+                yAxis={[
+                  {
+                    min: 0,
+                    max: q3Fee + q3Fee * 0.1,
+                    tickNumber: 3,
+                    tickValues: [0, medianFee, q3Fee],
+                  },
+                ]}
+                series={[
+                  {
+                    data: Object.values(monthlyFeeData).map((val) =>
+                      val === "-" ? 0 : val
+                    ),
+                    color: "#B21F62",
+                  },
+                ]}
+                height={180}
+                margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
+              />
+            </Box>
           </div>
-                 {" "}
         </div>
-             {" "}
       </div>
-                  {/* Third Row: Students per month */}     {" "}
+
+      {/* Third Row: Students per month */}
       <div className="table-section">
-               {" "}
         <div className="row-container">
-                   {" "}
           <div className="table-container">
-                       {" "}
             <div className="table-card tertiary-card">
-                           {" "}
               <h3 className="table-heading">
-                               {" "}
                 <span className="heading-icon">
                   <FaGraduationCap />
-                </span>{" "}
-                No of students per month              {" "}
+                </span>
+                No of students per month
               </h3>
-                           {" "}
               <table className="data-table">
-                               {" "}
                 <thead>
-                                   {" "}
                   <tr>
-                                       {" "}
                     {Object.keys(monthlyStudentData).map((month) => (
                       <th
                         key={month}
@@ -456,20 +420,13 @@ const HistoricalTables = ({ students }) => {
                           month === currentMonth ? "highlight-cell pulse" : ""
                         }
                       >
-                                               {" "}
-                        <span className="th-content">{month}</span>             
-                               {" "}
+                        <span className="th-content">{month}</span>
                       </th>
                     ))}
-                                     {" "}
                   </tr>
-                                 {" "}
                 </thead>
-                               {" "}
                 <tbody>
-                                   {" "}
                   <tr>
-                                       {" "}
                     {Object.values(monthlyStudentData).map((count, index) => {
                       const monthKey = Object.keys(monthlyStudentData)[index];
                       return (
@@ -479,53 +436,43 @@ const HistoricalTables = ({ students }) => {
                             monthKey === currentMonth ? "highlight-cell" : ""
                           }
                         >
-                                                   {" "}
-                          <span className="data-value">{count}</span>           
-                                     {" "}
+                          <span className="data-value">{count}</span>
                         </td>
                       );
                     })}
-                                   {" "}
                   </tr>
-                                 {" "}
                 </tbody>
-                             {" "}
               </table>
-                         {" "}
             </div>
-                     {" "}
           </div>
-                   {" "}
           <div className="chart-container-history">
-                       {" "}
             <Box className="chart-card">
-                           {" "}
-              <LineChart
-                xAxis={[{ scaleType: "point", data: allMonths }]}
-                yAxis={[{ min: 0 }]}
+              {/* Bar Chart for Students per month */}
+              <BarChart
+                xAxis={[{ scaleType: "band", data: allMonths }]}
+                yAxis={[
+                  {
+                    min: 0,
+                    max: q3Students + q3Students * 0.1,
+                    tickNumber: 3,
+                    tickValues: [0, medianStudents, q3Students],
+                  },
+                ]}
                 series={[
                   {
-                    // ✅ convert "-" to 0 for chart only
                     data: Object.values(monthlyStudentData).map((val) =>
                       val === "-" ? 0 : val
                     ),
                     color: "#292551",
-                    area: true,
-                    curve: "natural",
                   },
                 ]}
                 height={180}
                 margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
               />
-                         {" "}
             </Box>
-                     {" "}
           </div>
-                 {" "}
         </div>
-             {" "}
       </div>
-         {" "}
     </div>
   );
 };

@@ -57,7 +57,26 @@ export const formatFirebaseDate = (timestampObject) => {
     return "Invalid Date";
   }
 };
+export const calculateQuartiles = (data) => {
+  // Filter out any non-numeric or future values (like '-')
+  const numericData = data.filter(val => typeof val === 'number');
+  if (numericData.length === 0) {
+    return { q1: 0, median: 0, q3: 0 };
+  }
+  
+  // Sort the data in ascending order
+  numericData.sort((a, b) => a - b);
 
+  const median = numericData[Math.floor(numericData.length / 2)];
+  
+  const lowerHalf = numericData.slice(0, Math.floor(numericData.length / 2));
+  const upperHalf = numericData.slice(Math.ceil(numericData.length / 2));
+
+  const q1 = lowerHalf[Math.floor(lowerHalf.length / 2)];
+  const q3 = upperHalf[Math.floor(upperHalf.length / 2)];
+
+  return { q1, median, q3 };
+};
 const ALL_PDF_COLUMNS = [
   // key: Matches the key in your `columnVisibility` state
   // label: The text that will appear in the PDF header

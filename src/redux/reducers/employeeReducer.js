@@ -3,18 +3,21 @@ import {
   FETCH_EMPLOYEES_REQUEST,
   FETCH_EMPLOYEES_SUCCESS,
   FETCH_EMPLOYEES_FAILURE,
-  ADD_EMPLOYEE_REQUEST,  // NEW
-  ADD_EMPLOYEE_SUCCESS,  // NEW
-  ADD_EMPLOYEE_FAILURE,  // NEW
-} from '../types';
+  ADD_EMPLOYEE_REQUEST,
+  ADD_EMPLOYEE_SUCCESS,
+  ADD_EMPLOYEE_FAILURE,
+  UPDATE_EMPLOYEE_REQUEST, // NEW: Import update request type
+  UPDATE_EMPLOYEE_SUCCESS, // NEW: Import update success type
+  UPDATE_EMPLOYEE_FAILURE, // NEW: Import update failure type
+} from "../types";
 
 const initialState = {
   employees: [],
   loading: false,
   error: null,
-  addingEmployee: false,   // NEW: Loading state for adding employee
-  addEmployeeSuccess: null, // NEW: Success message/data after adding employee
-  addEmployeeError: null,  // NEW: Error for adding employee
+  addingEmployee: false,
+  addEmployeeSuccess: null,
+  addEmployeeError: null,
 };
 
 const employeeReducer = (state = initialState, action) => {
@@ -41,7 +44,7 @@ const employeeReducer = (state = initialState, action) => {
         error: action.payload.error,
       };
 
-    // --- NEW: Cases for adding an employee ---
+    // --- Cases for adding an employee ---
     case ADD_EMPLOYEE_REQUEST:
       return {
         ...state,
@@ -53,10 +56,8 @@ const employeeReducer = (state = initialState, action) => {
       return {
         ...state,
         addingEmployee: false,
-        addEmployeeSuccess: action.payload, // Store success response
+        addEmployeeSuccess: action.payload,
         addEmployeeError: null,
-        // Optionally add the new employee to the existing 'employees' array if payload contains the full employee object
-        // employees: [...state.employees, action.payload]
       };
     case ADD_EMPLOYEE_FAILURE:
       return {
@@ -64,6 +65,29 @@ const employeeReducer = (state = initialState, action) => {
         addingEmployee: false,
         addEmployeeSuccess: null,
         addEmployeeError: action.payload.error,
+      };
+
+    // --- NEW: Cases for updating an employee ---
+    case UPDATE_EMPLOYEE_REQUEST:
+      // You can add a specific loading state per employee if needed
+      return state;
+
+    case UPDATE_EMPLOYEE_SUCCESS:
+      // Find the employee in the array and replace it with the updated data
+      const updatedEmployee = action.payload;
+      return {
+        ...state,
+        employees: state.employees.map((employee) =>
+          employee.id === updatedEmployee.id ? updatedEmployee : employee
+        ),
+        error: null,
+      };
+
+    case UPDATE_EMPLOYEE_FAILURE:
+      // Display the error but don't change the data to avoid visual inconsistencies
+      return {
+        ...state,
+        error: action.payload.error,
       };
 
     default:

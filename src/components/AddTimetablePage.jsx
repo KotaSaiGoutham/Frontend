@@ -736,7 +736,7 @@ const handleSubmit = async (e) => {
                     },
                   })
                 }
-                minDate={startOfDay(new Date())}
+                // minDate={startOfDay(new Date())}
                 required
               />
 

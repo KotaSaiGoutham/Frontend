@@ -150,7 +150,6 @@ const StudentsTable = () => {
     loading: classUpdatesLoading,
     error: classUpdatesError,
   } = useSelector((state) => state.classes);
-  console.log("classUpdates",classUpdates)
 
   const {
     timetables,
@@ -261,13 +260,10 @@ const StudentsTable = () => {
   }, [studentsLoading, classesLoading, studentsError, classesError]);
 
   useEffect(() => {
-    // Exit early if essential data is missing
-    console.log("students===>", students);
     if (!students.length) {
       return;
     }
     const combinedTimetables = [...timetables, ...autoTimetables];
-    console.log("combinedTimetables===>", combinedTimetables);
 
     let augmentedStudents = [];
     if (combinedTimetables.length > 0) {
@@ -317,7 +313,6 @@ const StudentsTable = () => {
         nextClass: null,
       }));
     }
-    console.log("augmentedStudents", augmentedStudents);
 
     setStudentsWithNextClass(augmentedStudents);
   }, [students, timetables, autoTimetables]);

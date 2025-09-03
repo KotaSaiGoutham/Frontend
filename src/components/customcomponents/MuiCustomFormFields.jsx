@@ -1,4 +1,4 @@
-import React,{useState } from "react";
+import React, { useState } from "react";
 import {
   TextField,
   MenuItem,
@@ -13,7 +13,7 @@ import {
   FormHelperText,
   InputLabel,
   Checkbox,
-  useTheme 
+  useTheme,
 } from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import {
@@ -460,8 +460,7 @@ export const EnhancedMuiSelect = ({
     </FormControl>
   );
 };
-// MuiMultiSelectChip Component
-// Custom Multi-Select with Chips
+
 export const MuiMultiSelectChip = ({
   label,
   name,
@@ -478,7 +477,7 @@ export const MuiMultiSelectChip = ({
   };
 
   return (
-    <FormControl sx={{ m: 1, width: 300 }}>
+    <FormControl sx={{ m: 1, display: "inline-flex" }}>
       <InputLabel id={`select-label-${name}`}>{label}</InputLabel>
       <Select
         labelId={`select-label-${name}`}
@@ -491,7 +490,14 @@ export const MuiMultiSelectChip = ({
         onClose={() => setOpen(false)}
         input={<OutlinedInput id="select-multiple-chip" label={label} />}
         renderValue={(selected) => (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 0.5,
+              maxWidth: "100%",
+            }}
+          >
             {selected.map((selectedValue) => {
               const selectedOption = options.find(
                 (option) => option.value === selectedValue
@@ -500,8 +506,7 @@ export const MuiMultiSelectChip = ({
                 <Chip
                   key={selectedValue}
                   label={selectedOption ? selectedOption.label : ""}
-                  // This is the key change!
-                  color="primary" // Sets the background color to the primary theme color
+                  color="primary"
                   onDelete={() => {
                     const newValues = value.filter((v) => v !== selectedValue);
                     onChange({
@@ -517,6 +522,11 @@ export const MuiMultiSelectChip = ({
           </Box>
         )}
         MenuProps={MenuProps}
+        sx={{
+          display: "inline-flex", // 👈 only as wide as content
+          maxWidth: 750, // 👈 limit max size
+          minWidth: 150, // 👈 small safety minimum
+        }}
       >
         {options.map((option) => {
           const isSelected = value.includes(option.value);
@@ -525,7 +535,9 @@ export const MuiMultiSelectChip = ({
               key={option.value}
               value={option.value}
               sx={{
-                backgroundColor: isSelected ? theme.palette.action.hover : "inherit",
+                backgroundColor: isSelected
+                  ? theme.palette.action.hover
+                  : "inherit",
                 "&:hover": {
                   backgroundColor: theme.palette.action.selected,
                 },
@@ -540,4 +552,3 @@ export const MuiMultiSelectChip = ({
     </FormControl>
   );
 };
-
