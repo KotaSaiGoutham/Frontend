@@ -190,7 +190,7 @@ const AddTimetablePage = () => {
       navigate("/login");
       return;
     }
-    dispatch(fetchEmployees());
+    // dispatch(fetchEmployees());
   }, [dispatch, navigate]);
 
   // Handle Redux errors for initial data fetching and submission

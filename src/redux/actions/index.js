@@ -892,6 +892,7 @@ export const addDemoClass = (demoClassData) =>
         type: ADD_DEMO_CLASS_SUCCESS,
         payload: data.demoClass, // The newly added demo class from backend response
       });
+      dispatch(fetchDemoClasses());
     },
     onFailure: (error, dispatch) => {
       console.error("Error adding demo class:", error);
@@ -1496,19 +1497,14 @@ export const updateWeeklySyllabus = (studentId, updatedLessons) =>
     },
   });
 
-export const updateEmployeeData = (employeeId, updatedData) => (dispatch) =>
+
+export const updateEmployeeData = (employeeId, updatedData) =>
   apiRequest({
-    url: `/api/employees/${employeeId}`, // The backend endpoint
+    url: `/api/data/employees/${employeeId}`, // The backend endpoint
     method: "PATCH", // Use PATCH for partial updates
     data: updatedData, // Send only the updated fields (e.g., { salary: 5000 } or { paid: true })
-    authRequired: true,
+    onStart: UPDATE_EMPLOYEE_REQUEST, // ✅ make it same style as demo
 
-    // ----- lifecycle handlers ---------------------------------------------
-    onStart: () =>
-      dispatch({
-        type: UPDATE_EMPLOYEE_REQUEST,
-        payload: { employeeId }, // Pass the ID to the reducer to handle the loading state for a specific item
-      }),
 
     onSuccess: (data, dispatch) => {
       // Assuming your backend returns the updated employee object directly

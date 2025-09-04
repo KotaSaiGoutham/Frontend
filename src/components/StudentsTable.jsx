@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { format, parseISO, fromUnixTime, parse, isFuture, constructNow } from "date-fns";
+import {
+  format,
+  parseISO,
+  fromUnixTime,
+  parse,
+  isFuture,
+  constructNow,
+} from "date-fns";
 import "./StudentsTable.css"; // Ensure this CSS file exists for styling
 // Material-UI Imports
 import { ConfirmationDialog } from "./customcomponents/Dialogs";
@@ -40,7 +47,11 @@ import {
 } from "@mui/material";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
 // Import ALL necessary icons from react-icons/fa
-import { isRecentPayment,formatFirestoreDate,calculateExpectedEndDate } from "../mockdata/function";
+import {
+  isRecentPayment,
+  formatFirestoreDate,
+  calculateExpectedEndDate,
+} from "../mockdata/function";
 import {
   FaSearch,
   FaUserGraduate,
@@ -91,11 +102,11 @@ import {
   fetchStudents,
   updateStudentField,
   updateClassesCompleted,
-  fetchUpcomingClasses, // This action should fetch timetables
+  fetchUpcomingClasses, 
   toggleStudentActiveStatus,
   deleteStudent,
   fetchAutoTimetablesForToday,
-  fetchClassUpdates
+  fetchClassUpdates,
 } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
@@ -121,8 +132,8 @@ const StudentsTable = () => {
     fatherContact: false,
     monthlyFee: true,
     classesCompleted: true,
-    startDate :true,
-    endDate :true,
+    startDate: true,
+    endDate: true,
     nextClass: false,
     paymentStatus: true,
     status: false,
@@ -145,7 +156,7 @@ const StudentsTable = () => {
     loading: studentsLoading,
     error: studentsError,
   } = useSelector((state) => state.students);
-   const {
+  const {
     classUpdates,
     loading: classUpdatesLoading,
     error: classUpdatesError,
@@ -243,8 +254,10 @@ const StudentsTable = () => {
 
   useEffect(() => {
     dispatch(fetchStudents());
-    dispatch(fetchClassUpdates())
-    dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
+    dispatch(fetchClassUpdates());
+    dispatch(
+      fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
+    );
     dispatch(fetchAutoTimetablesForToday());
   }, [dispatch]);
 
@@ -1163,23 +1176,39 @@ const StudentsTable = () => {
                           </Box>
                         </TableCell>
                       )}
-                      {columnVisibility.startDate && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {formatFirestoreDate(student.startDate)}
-                        </TableCell>
-                      )}
-                      {/* Add End Date Column */}
-                      {columnVisibility.endDate && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            {/* Display the original endDate from the backend */}
-                            <Typography variant="body2" fontWeight="bold">
-                              {formatFirestoreDate(student.endDate)}
-                            </Typography>
-
-                          </Box>
-                        </TableCell>
-                      )}
+                                           {" "}
+                      {columnVisibility.startDate && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                                                   {" "}
+                          {formatFirestoreDate(student.startDate)}             
+                                   {" "}
+                        </TableCell>
+                      )}
+                                            {/* Add End Date Column */}         
+                                 {" "}
+                      {columnVisibility.endDate && (
+                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                                                   {" "}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                            }}
+                          >
+                                                       {" "}
+                            {/* Display the original endDate from the backend */}
+                                                       {" "}
+                            <Typography variant="body2" fontWeight="bold">
+                                                           {" "}
+                              {formatFirestoreDate(student.endDate)}           
+                                             {" "}
+                            </Typography>
+                                                     {" "}
+                          </Box>
+                                                 {" "}
+                        </TableCell>
+                      )}
                       {columnVisibility.nextClass && (
                         <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                           {student.nextClass
@@ -1198,8 +1227,7 @@ const StudentsTable = () => {
                             flexDirection: "column",
                             justifyContent: "center",
                             alignItems: "center",
-                            // Remove gap to make it more compact, let spacing be handled by child elements
-                            p: 1, // Add padding to the cell itself
+                            p: 1,
                           }}
                         >
                           {updatingStudent === student.id ? (
@@ -1207,13 +1235,9 @@ const StudentsTable = () => {
                           ) : (
                             <>
                               <Chip
-                                label={
-                                  student.classesCompleted > 12
-                                    ? "Unpaid"
-                                    : "Paid"
-                                }
+                                label={student["Payment Status"]}
                                 icon={
-                                  student.classesCompleted > 12 ? (
+                                  student["Payment Status"] === "Unpaid" ? (
                                     <FaExclamationCircle
                                       style={{ fontSize: 16 }}
                                     />
@@ -1222,7 +1246,7 @@ const StudentsTable = () => {
                                   )
                                 }
                                 color={
-                                  student.classesCompleted > 12
+                                  student["Payment Status"] === "Unpaid"
                                     ? "error"
                                     : "success"
                                 }
@@ -1230,9 +1254,7 @@ const StudentsTable = () => {
                                 onClick={() =>
                                   handlePaymentStatusToggle(
                                     student.id,
-                                    student.classesCompleted > 12
-                                      ? "Unpaid"
-                                      : "Paid", // Pass the dynamically determined status
+                                    student["Payment Status"],
                                     student.Name
                                   )
                                 }

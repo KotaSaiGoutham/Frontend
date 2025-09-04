@@ -14,8 +14,8 @@ import {
   FaPlusCircle,
   FaExclamationCircle,
   FaPhone,
-  FaEdit, // Import edit icon
-  FaCheck, // Import tick/check icon
+  FaEdit,
+  FaCheck,
 } from "react-icons/fa";
 import { format, parseISO } from "date-fns";
 
@@ -32,9 +32,9 @@ import {
   TableCell,
   CircularProgress,
   Alert,
-  IconButton, // Import IconButton for the edit/save icons
-  TextField, // Import TextField for the editable salary
-  TableSortLabel 
+  IconButton,
+  TextField,
+  TableSortLabel, // This is already imported, good.
 } from "@mui/material";
 
 import {
@@ -45,7 +45,7 @@ import {
 
 import "./Employees.css";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchEmployees,updateEmployeeData } from "../redux/actions";
+import { fetchEmployees, updateEmployeeData } from "../redux/actions";
 
 const Employees = () => {
   const dispatch = useDispatch();
@@ -54,6 +54,7 @@ const Employees = () => {
   const employees = useSelector((state) => state.employees.employees);
   const employeesLoading = useSelector((state) => state.employees.loading);
   const employeesError = useSelector((state) => state.employees.error);
+  const [editingRow, setEditingRow] = useState(null);
 
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [filters, setFilters] = useState({
@@ -61,12 +62,8 @@ const Employees = () => {
     role: "",
     paymentStatus: "",
   });
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-
-  // State to manage which row's salary is being edited
-  const [editingRow, setEditingRow] = useState(null);
-  // State to hold the new salary value during editing
-  const [newSalary, setNewSalary] = useState(0);
+  // ✅ Change initial sort key to 'name' to have it sorted by default if desired
+  const [sortConfig, setSortConfig] = useState({ key: "name", direction: "asc" });
 
   const uniqueRoles = React.useMemo(() => {
     return [...new Set(employees.map((emp) => emp.role))].sort();
@@ -91,7 +88,9 @@ const Employees = () => {
     }
     if (filters.paymentStatus) {
       const isPaid = filters.paymentStatus === "paid";
-      tempEmployees = tempEmployees.filter((employee) => employee.paid === isPaid);
+      tempEmployees = tempEmployees.filter(
+        (employee) => employee.paid === isPaid
+      );
     }
 
     if (sortConfig.key) {
@@ -99,6 +98,7 @@ const Employees = () => {
         const aValue = a[sortConfig.key];
         const bValue = b[sortConfig.key];
 
+        // ✅ This check now applies to both name (string) and salary (number)
         if (typeof aValue === "string" && typeof bValue === "string") {
           const comparison = aValue.localeCompare(bValue);
           return sortConfig.direction === "asc" ? comparison : -comparison;
@@ -130,6 +130,7 @@ const Employees = () => {
 
   const handleSort = (key) => {
     let direction = "asc";
+    // ✅ This logic is perfect and works for any sortable column
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
     }
@@ -137,24 +138,24 @@ const Employees = () => {
   };
 
   // --- Handlers for new functionality ---
-
-  // Handle click on the edit icon
   const handleEditClick = (employee) => {
     setEditingRow(employee.id);
     setNewSalary(employee.salary);
   };
 
-  // Handle click on the save (tick) icon
-  const handleSaveClick = (employeeId) => {
-    dispatch(updateEmployeeData(employeeId, { salary: Number(newSalary) }));
+  const handleSaveClick = async (employeeId) => {
+    await dispatch(
+      updateEmployeeData(employeeId, { salary: Number(newSalary) })
+    );
     setEditingRow(null);
   };
 
-  // Handle click on the payment status icon
   const handlePaidToggle = (employee) => {
     const newPaidStatus = !employee.paid;
-    // Dispatch the Redux action to update the paid status
-    dispatch(updateEmployeeData(employee.id, { paid: newPaidStatus }));
+    const updatedData = {
+      paid: newPaidStatus,
+    };
+    dispatch(updateEmployeeData(employee.id, updatedData));
   };
 
   // --- Conditional Rendering for Loading and Error States ---
@@ -235,7 +236,6 @@ const Employees = () => {
         gap: 3,
       }}
     >
-      {/* Header Card */}
       <Paper
         elevation={3}
         sx={{
@@ -263,7 +263,6 @@ const Employees = () => {
         </Typography>
       </Paper>
 
-      {/* Filters Section */}
       <Paper elevation={3} sx={{ p: 3 }}>
         <Box
           sx={{
@@ -336,7 +335,6 @@ const Employees = () => {
         </div>
       </Paper>
 
-      {/* Table Section */}
       <Paper elevation={3} sx={{ p: 2 }}>
         {filteredEmployees.length > 0 ? (
           <TableContainer>
@@ -362,27 +360,31 @@ const Employees = () => {
                       p: "18px 12px",
                       textAlign: "center",
                     }}
+                    // ✅ Add the sort direction and onClick handler here
+                    sortDirection={sortConfig.key === "name" ? sortConfig.direction : false}
                   >
-                    <Box
+                    <TableSortLabel
+                      active={sortConfig.key === "name"}
+                      direction={sortConfig.key === "name" ? sortConfig.direction : "asc"}
+                      onClick={() => handleSort("name")}
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        "& .MuiTableSortLabel-icon": {
+                          opacity: sortConfig.key === "name" ? 1 : 0.4,
+                        },
                       }}
                     >
-                      <FaUserTie style={{ marginRight: "8px" }} /> Employee
-                      Name
-                    </Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FaUserTie style={{ marginRight: "8px" }} /> Employee Name
+                      </Box>
+                    </TableSortLabel>
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      color: "#333",
-                      fontWeight: "bold",
-                      fontSize: "1.05rem",
-                      p: "18px 12px",
-                      textAlign: "center",
-                    }}
-                  >
+                  <TableCell sx={{ textAlign: "center" }}>
                     <Box
                       sx={{
                         display: "flex",
@@ -393,15 +395,7 @@ const Employees = () => {
                       <FaPhone style={{ marginRight: "8px" }} /> Mobile Number
                     </Box>
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      color: "#333",
-                      fontWeight: "bold",
-                      fontSize: "1.05rem",
-                      p: "18px 12px",
-                      textAlign: "center",
-                    }}
-                  >
+                  <TableCell sx={{ textAlign: "center" }}>
                     <Box
                       sx={{
                         display: "flex",
@@ -500,8 +494,7 @@ const Employees = () => {
                       backgroundColor: index % 2 === 0 ? "#FFFFFF" : "#f7f8fc",
                       "&:hover": { backgroundColor: "#e3f2fd !important" },
                       "& > td": {
-                        borderBottom:
-                          "1px solid rgba(0, 0, 0, 0.05) !important",
+                        borderBottom: "1px solid rgba(0, 0, 0, 0.05) !important",
                       },
                     }}
                   >
@@ -516,9 +509,7 @@ const Employees = () => {
                           justifyContent: "flex-start",
                         }}
                       >
-                        <Typography variant="body1">
-                          {employee.name}
-                        </Typography>
+                        <Typography variant="body1">{employee.name}</Typography>
                       </Box>
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
@@ -527,13 +518,16 @@ const Employees = () => {
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
-                      <Typography variant="body2">
-                        {employee.role}
-                      </Typography>
+                      <Typography variant="body2">{employee.role}</Typography>
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {/* Conditional rendering for edit vs. display mode */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
                         {editingRow === employee.id ? (
                           <>
                             <TextField
@@ -570,7 +564,7 @@ const Employees = () => {
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
                       <Typography variant="body2">
-                        {employee.lastPaid
+                        {employee.lastPaid && typeof employee.lastPaid === "string"
                           ? format(parseISO(employee.lastPaid), "MMM dd, yyyy")
                           : "N/A"}
                       </Typography>
