@@ -123,7 +123,7 @@ const HistoricalTables = ({ students }) => {
     }
 
     return classCount;
-  }, [students, manualTimetables]); // ⬅️ Add manualTimetables to the dependency array
+  }, [students, manualTimetables]); 
 
   // ... (rest of the component code)
 
@@ -139,6 +139,7 @@ const HistoricalTables = ({ students }) => {
   }, [today, rawDailyClassesData]);
 
   const monthlyFeeData = useMemo(() => {
+    console.log("monthlyPayments",monthlyPayments)
     if (!monthlyPayments) return {};
 
     const data = {};
