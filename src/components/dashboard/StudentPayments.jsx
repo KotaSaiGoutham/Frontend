@@ -5,11 +5,19 @@ import {
   FaExclamationCircle,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { format, subMonths } from "date-fns";
+import {
+  format,
+  subMonths,
+  getYear,
+  getMonth,
+  isBefore,
+  isSameMonth,
+} from "date-fns";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchAllPayments } from "../../redux/actions";
 import { Link } from "react-router-dom";
 import Tooltip from "@mui/material/Tooltip";
+import { Timestamp } from "firebase/firestore";
 
 const StudentPayments = ({ students }) => {
   const dispatch = useDispatch();
@@ -49,29 +57,57 @@ const StudentPayments = ({ students }) => {
         .filter((payment) => payment.month === selectedMonth)
         .map((payment) => [payment.studentId, payment])
     );
-
     let paidStudents = [];
     let pendingStudents = [];
     let totalPaidFee = 0;
     let totalPendingFee = 0;
 
+    // Convert selected month string to a Date object for comparison
+    const selectedMonthDate = new Date(`${selectedMonth}-01`);
+    const selectedMonthYear = getYear(selectedMonthDate);
+    const selectedMonthMonth = getMonth(selectedMonthDate);
+
     students.forEach((student) => {
-      const paymentData = paymentsMap.get(student.id);
-      const isPaid = !!paymentData;
-
-      const processedStudent = {
-        ...student,
-        isPaid,
-        paymentStatus: isPaid ? "Paid" : "Pending",
-        paidDate: isPaid ? paymentData.paidOn : null,
-      };
-
-      if (isPaid) {
-        paidStudents.push(processedStudent);
-        totalPaidFee += student.monthlyFee || student["Monthly Fee"] || 0;
+      // Safely get the student's admission date
+      let admissionDate;
+      if (student.admissionDate instanceof Timestamp) {
+        admissionDate = student.admissionDate.toDate();
+      } else if (student.admissionDate && typeof student.admissionDate === 'object' && student.admissionDate._seconds) {
+        admissionDate = new Date(student.admissionDate._seconds * 1000);
+      } else if (student.admissionDate) {
+        admissionDate = new Date(student.admissionDate);
       } else {
-        pendingStudents.push(processedStudent);
-        totalPendingFee += student.monthlyFee || student["Monthly Fee"] || 0;
+        // If no admission date, skip this student
+        return;
+      }
+
+      // Get admission year and month
+      const admissionYear = getYear(admissionDate);
+      const admissionMonth = getMonth(admissionDate);
+
+      // ✅ FIXED LOGIC: Check if the student was admitted on or before the selected month
+      const isAdmittedOnOrBeforeSelectedMonth = 
+        admissionYear < selectedMonthYear || 
+        (admissionYear === selectedMonthYear && admissionMonth <= selectedMonthMonth);
+
+      if (isAdmittedOnOrBeforeSelectedMonth) {
+        const paymentData = paymentsMap.get(student.id);
+        const isPaid = !!paymentData;
+
+        const processedStudent = {
+          ...student,
+          isPaid,
+          paymentStatus: isPaid ? "Paid" : "Pending",
+          paidDate: isPaid ? paymentData.paidOn : null,
+        };
+
+        if (isPaid) {
+          paidStudents.push(processedStudent);
+          totalPaidFee += student.monthlyFee || student["Monthly Fee"] || 0;
+        } else {
+          pendingStudents.push(processedStudent);
+          totalPendingFee += student.monthlyFee || student["Monthly Fee"] || 0;
+        }
       }
     });
 
@@ -86,6 +122,7 @@ const StudentPayments = ({ students }) => {
     };
   }, [allPayments, students, selectedMonth]);
 
+  // Rest of the component remains the same...
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -206,10 +243,9 @@ const StudentPayments = ({ students }) => {
                 {student.paidDate && (
                   <span style={{ fontSize: "0.8rem", color: "#7f8c8d" }}>
                     Paid on:{" "}
-                    {format(
-                      new Date(student.paidDate._seconds * 1000),
-                      "dd MMM yyyy"
-                    )}
+                    {student.paidDate._seconds 
+                      ? format(new Date(student.paidDate._seconds * 1000), "dd MMM yyyy")
+                      : format(new Date(student.paidDate), "dd MMM yyyy")}
                   </span>
                 )}
                 <span

@@ -10,6 +10,7 @@ import {
 } from "date-fns";
 import "./StudentsTable.css"; // Ensure this CSS file exists for styling
 // Material-UI Imports
+import CloseIcon from "@mui/icons-material/Close";
 import { ConfirmationDialog } from "./customcomponents/Dialogs";
 import {
   Table,
@@ -54,6 +55,7 @@ import {
 } from "../mockdata/function";
 import {
   FaSearch,
+  FaEye,
   FaUserGraduate,
   FaTransgender,
   FaDollarSign,
@@ -102,7 +104,7 @@ import {
   fetchStudents,
   updateStudentField,
   updateClassesCompleted,
-  fetchUpcomingClasses, 
+  fetchUpcomingClasses,
   toggleStudentActiveStatus,
   deleteStudent,
   fetchAutoTimetablesForToday,
@@ -113,6 +115,7 @@ import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 import { ClassCounterDisplay } from "../mockdata/function";
 import TableHeaders from "./students/TableHeaders";
 import { studentColumns } from "../mockdata/Options";
+import ClassesCompletedTable from "./students/ClassesCompletedTable";
 
 const MuiAlert = React.forwardRef(function MuiAlert(props, ref) {
   return <Alert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -146,6 +149,7 @@ const StudentsTable = () => {
       [columnName]: event.target.checked,
     }));
   };
+  const [isTableOpen, setIsTableOpen] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -157,16 +161,12 @@ const StudentsTable = () => {
     error: studentsError,
   } = useSelector((state) => state.students);
   const {
-    classUpdates,
-    loading: classUpdatesLoading,
-    error: classUpdatesError,
-  } = useSelector((state) => state.classes);
-
-  const {
     timetables,
+    classUpdates,
     loading: classesLoading,
     error: classesError,
   } = useSelector((state) => state.classes);
+
   const { timetables: autoTimetables, loading: autoTimetablesLoading } =
     useSelector((state) => state.autoTimetables);
 
@@ -708,6 +708,17 @@ const StudentsTable = () => {
     setDialogOpen(false);
     setSelectedStudent(null);
     setDialogAction(null);
+  };
+  const handleViewClasses = (student) => {
+    // You may need to refetch the student data here if it's stale
+    // or just use the current student object
+    setSelectedStudent(student);
+    setIsTableOpen(true);
+  };
+
+  const handleCloseTable = () => {
+    setIsTableOpen(false);
+    setSelectedStudent(null);
   };
   return (
     <Box
@@ -1264,28 +1275,41 @@ const StudentsTable = () => {
                                   "&:hover": { boxShadow: 1 },
                                 }}
                               />
+                              {student["Payment Status"] === "Unpaid" &&
+                                (student.classesCompleted || 0) >= 12 && (
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: "#ef5350",
+                                      fontWeight: "bold",
+                                      mt: 0.5,
+                                      fontSize: "0.75rem",
+                                      animation:
+                                        "pulse-red 1.5s infinite alternate",
+                                      "@keyframes pulse-red": {
+                                        "0%": { opacity: 0.7 },
+                                        "100%": { opacity: 1 },
+                                      },
+                                    }}
+                                  >
+                                    Payment Pending!
+                                  </Typography>
+                                )}
+
+                              {/* ✅ New Button to View Classes */}
+                              {student.startDate && (
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<FaEye />}
+                                  onClick={() => handleViewClasses(student)}
+                                  sx={{ mt: 1 }}
+                                >
+                                  View Classes
+                                </Button>
+                              )}
                             </>
                           )}
-                          {student["Payment Status"] === "Unpaid" &&
-                            (student.classesCompleted || 0) >= 12 && (
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: "#ef5350",
-                                  fontWeight: "bold",
-                                  mt: 0.5,
-                                  fontSize: "0.75rem",
-                                  animation:
-                                    "pulse-red 1.5s infinite alternate",
-                                  "@keyframes pulse-red": {
-                                    "0%": { opacity: 0.7 },
-                                    "100%": { opacity: 1 },
-                                  },
-                                }}
-                              >
-                                Payment Pending!
-                              </Typography>
-                            )}
                         </TableCell>
                       )}
                       {columnVisibility.status && (
@@ -1468,6 +1492,36 @@ const StudentsTable = () => {
         onConfirm={handleConfirm}
         onCancel={handleCancel}
       />
+      <Dialog
+        open={isTableOpen}
+        onClose={handleCloseTable}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Class Details
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseTable}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {selectedStudent && (
+            <ClassesCompletedTable
+              student={selectedStudent}
+              allTimetables={timetables}
+              allAutoTimetables={autoTimetables}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

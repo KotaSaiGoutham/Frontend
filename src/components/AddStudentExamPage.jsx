@@ -53,8 +53,6 @@ const StudentExamFormPage = () => {
     topic: "",
   });
 
-  const [studentsToFilter, setStudentsToFilter] = useState([]);
-
 
   useEffect(() => {
     if (examToEdit) {
@@ -78,7 +76,7 @@ const StudentExamFormPage = () => {
         subject: examToEdit.subject, // This ensures formData.subject is set correctly
         stream: examToEdit.stream,
         marks: initialMarks,
-      outOf: user.isPhysics?examToEdit?.maxPhysics:examToEdit?.maxChemistry,
+        outOf: user.isPhysics?examToEdit?.maxPhysics:examToEdit?.maxChemistry,
         total: examToEdit.total,
         examDate: format(new Date(examToEdit.examDate), "yyyy-MM-dd"),
         status: examToEdit.status,
@@ -105,22 +103,9 @@ const StudentExamFormPage = () => {
     }
   }, [examToEdit, user]);
 
-  // Filter students based on faculty rights
-  useEffect(() => {
-    if (!user) return;
-    if (user.AllowAll) setStudentsToFilter(students);
-    else if (user.isPhysics)
-      setStudentsToFilter(
-        students.filter((s) => s.Subject?.trim() === "Physics")
-      );
-    else if (user.isChemistry)
-      setStudentsToFilter(
-        students.filter((s) => s.Subject?.trim() === "Chemistry")
-      );
-    else setStudentsToFilter([]);
-  }, [user, students]);
 
-  const sortedStudents = [...studentsToFilter].sort((a, b) =>
+
+  const sortedStudents = [...students].sort((a, b) =>
     a.Name.localeCompare(b.Name)
   );
 
@@ -208,7 +193,7 @@ const StudentExamFormPage = () => {
       recordedBy: user.id,
       status: formData.status,
       topic: formData.topic,
-      userId: userId,
+      subject:user.isPhysics?"Physics":user.isChemistry?"Chemistry":"Any"
     };
 
     if (MARK_SCHEMES[formData.stream]) {
