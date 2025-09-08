@@ -290,11 +290,17 @@ const ClassesCompletedTable = ({
         </head>
         <body>
           <div class="header">
-            <h1>${student.Name}'s Classes ${isPaymentCycleOngoing ? "Progress" : "Completed"}</h1>
-            <div class="subtitle">Period: ${formatDate(student.startDate)} - ${formatDate(student.endDate)}</div>
+            <h1>${student.Name}'s Classes ${
+      isPaymentCycleOngoing ? "Progress" : "Completed"
+    }</h1>
+            <div class="subtitle">Period: ${formatDate(
+              student.startDate
+            )} - ${formatDate(student.endDate)}</div>
           </div>
           
-          ${classesData.length > 0 ? `
+          ${
+            classesData.length > 0
+              ? `
           <table>
             <thead>
               <tr>
@@ -306,7 +312,9 @@ const ClassesCompletedTable = ({
               </tr>
             </thead>
             <tbody>
-              ${classesData.map((classItem, index) => `
+              ${classesData
+                .map(
+                  (classItem, index) => `
                 <tr>
                   <td>${index + 1}</td>
                   <td>${formatDate(classItem.date)}</td>
@@ -314,7 +322,9 @@ const ClassesCompletedTable = ({
                   <td>${classItem.duration.toFixed(1)}h</td>
                   <td>${classItem.topic}</td>
                 </tr>
-              `).join('')}
+              `
+                )
+                .join("")}
               <tr class="total">
                 <td colspan="3" style="text-align: right;"><strong>Total Duration:</strong></td>
                 <td><strong>${totalDuration.toFixed(1)} hours</strong></td>
@@ -322,11 +332,13 @@ const ClassesCompletedTable = ({
               </tr>
             </tbody>
           </table>
-          ` : `
+          `
+              : `
           <div class="no-data">
             No classes recorded for this period
           </div>
-          `}
+          `
+          }
           
           <div class="footer">
             Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
@@ -336,22 +348,22 @@ const ClassesCompletedTable = ({
     `;
 
     // Create a blob with the HTML content
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    
+    const blob = new Blob([htmlContent], { type: "text/html" });
+
     // Create a download link
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `${student.Name.replace(/\s+/g, '_')}_Classes_Report.html`;
-    
+    link.download = `${student.Name.replace(/\s+/g, "_")}_Classes_Report.html`;
+
     // Trigger download
     document.body.appendChild(link);
     link.click();
-    
+
     // Clean up
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
+
     setSnackbarMessage("Report downloaded successfully!");
     setSnackbarOpen(true);
   };
@@ -361,6 +373,7 @@ const ClassesCompletedTable = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
+      sx={{ width: "100%" }} // Using sx prop instead of style
     >
       {/* Summary Card */}
       <Card
@@ -368,7 +381,7 @@ const ClassesCompletedTable = ({
           mb: 2,
           borderRadius: 2,
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-          background: "linear-gradient(135deg, #B21F62 0%, #ffb703 100%)",
+          background: "linear-gradient(135deg, #3F51B5 0%, #2196F3 100%)",
           color: "white",
         }}
       >
@@ -383,11 +396,11 @@ const ClassesCompletedTable = ({
             <Grid item xs={12} md={6}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <StatusIcon sx={{ fontSize: 28 }} />
+                  <StatusIcon sx={{ fontSize: 32 }} />
                   <Box>
                     <Typography
                       variant="h6"
-                      sx={{ fontWeight: 600, fontSize: "1.2rem" }}
+                      sx={{ fontWeight: 600, fontSize: "1.4rem" }}
                     >
                       {student.Name}
                     </Typography>
@@ -396,23 +409,28 @@ const ClassesCompletedTable = ({
                         label={formatDate(student.startDate)}
                         size="small"
                         sx={{
-                          backgroundColor: "#B21F62",
+                          backgroundColor: "#3F51B5",
                           color: "white",
                           fontWeight: 500,
-                          fontSize: "0.7rem",
+                          fontSize: "0.85rem",
+                          height: 28,
                         }}
                       />
-                      <Typography variant="body2" sx={{ color: "white" }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "white", fontSize: "0.95rem" }}
+                      >
                         to
                       </Typography>
                       <Chip
                         label={formatDate(student.endDate)}
                         size="small"
                         sx={{
-                          backgroundColor: "#ffb703",
-                          color: "black",
+                          backgroundColor: "#2196F3",
+                          color: "white",
                           fontWeight: 500,
-                          fontSize: "0.7rem",
+                          fontSize: "0.85rem",
+                          height: 28,
                         }}
                       />
                     </Box>
@@ -429,12 +447,12 @@ const ClassesCompletedTable = ({
                         mb: 0.5,
                       }}
                     >
-                      <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                      <Typography variant="body2" sx={{ fontSize: "0.95rem" }}>
                         Course Progress
                       </Typography>
                       <Typography
                         variant="body2"
-                        sx={{ fontSize: "0.8rem", fontWeight: 500 }}
+                        sx={{ fontSize: "0.95rem", fontWeight: 500 }}
                       >
                         {progressPercentage.toFixed(0)}%
                       </Typography>
@@ -443,7 +461,7 @@ const ClassesCompletedTable = ({
                       variant="determinate"
                       value={progressPercentage}
                       sx={{
-                        height: 6,
+                        height: 8,
                         borderRadius: 3,
                         backgroundColor: "rgba(255, 255, 255, 0.2)",
                         "& .MuiLinearProgress-bar": {
@@ -480,8 +498,11 @@ const ClassesCompletedTable = ({
                     borderRadius: 1,
                   }}
                 >
-                  <StatusIcon sx={{ fontSize: 20 }} />
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  <StatusIcon sx={{ fontSize: 24 }} />
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 500, fontSize: "1rem" }}
+                  >
                     {statusText}
                   </Typography>
                 </Box>
@@ -495,7 +516,7 @@ const ClassesCompletedTable = ({
                 >
                   <Tooltip title="Copy to clipboard">
                     <IconButton
-                      size="small"
+                      size="medium"
                       onClick={handleCopyToClipboard}
                       sx={{
                         backgroundColor: "rgba(255, 255, 255, 0.15)",
@@ -505,13 +526,13 @@ const ClassesCompletedTable = ({
                         },
                       }}
                     >
-                      <ContentCopyIcon fontSize="small" />
+                      <ContentCopyIcon fontSize="medium" />
                     </IconButton>
                   </Tooltip>
 
                   <Tooltip title="Share via WhatsApp">
                     <IconButton
-                      size="small"
+                      size="medium"
                       onClick={handleWhatsAppShare}
                       sx={{
                         backgroundColor: "rgba(255, 255, 255, 0.15)",
@@ -521,13 +542,13 @@ const ClassesCompletedTable = ({
                         },
                       }}
                     >
-                      <WhatsAppIcon fontSize="small" />
+                      <WhatsAppIcon fontSize="medium" />
                     </IconButton>
                   </Tooltip>
 
                   <Tooltip title="Download as PDF">
                     <IconButton
-                      size="small"
+                      size="medium"
                       onClick={handlePdfDownload}
                       sx={{
                         backgroundColor: "rgba(255, 255, 255, 0.15)",
@@ -537,7 +558,7 @@ const ClassesCompletedTable = ({
                         },
                       }}
                     >
-                      <PictureAsPdfIcon fontSize="small" />
+                      <PictureAsPdfIcon fontSize="medium" />
                     </IconButton>
                   </Tooltip>
                 </Box>
@@ -563,17 +584,17 @@ const ClassesCompletedTable = ({
           <TableHead>
             <TableRow
               sx={{
-                backgroundColor: "#ffedc9",
+                backgroundColor: "#e3f2fd",
                 borderBottom: "2px solid",
-                borderColor: "divider",
+                borderColor: "#2196F3",
               }}
             >
               <TableCell
                 sx={{
-                  color: "#B21F62",
+                  color: "#3F51B5",
                   fontWeight: 600,
                   py: 1.5,
-                  fontSize: "0.9rem",
+                  fontSize: "1rem",
                   pl: 3,
                   width: "10%",
                 }}
@@ -582,10 +603,10 @@ const ClassesCompletedTable = ({
               </TableCell>
               <TableCell
                 sx={{
-                  color: "#B21F62",
+                  color: "#3F51B5",
                   fontWeight: 600,
                   py: 1.5,
-                  fontSize: "0.9rem",
+                  fontSize: "1rem",
                   width: "20%",
                 }}
               >
@@ -593,18 +614,18 @@ const ClassesCompletedTable = ({
                   sx={{
                     verticalAlign: "middle",
                     mr: 1,
-                    color: "#B21F62",
-                    fontSize: 18,
+                    color: "#3F51B5",
+                    fontSize: 20,
                   }}
                 />
                 Date
               </TableCell>
               <TableCell
                 sx={{
-                  color: "#B21F62",
+                  color: "#3F51B5",
                   fontWeight: 600,
                   py: 1.5,
-                  fontSize: "0.9rem",
+                  fontSize: "1rem",
                   width: "20%",
                 }}
               >
@@ -612,37 +633,38 @@ const ClassesCompletedTable = ({
                   sx={{
                     verticalAlign: "middle",
                     mr: 1,
-                    color: "#B21F62",
-                    fontSize: 18,
+                    color: "#3F51B5",
+                    fontSize: 20,
                   }}
                 />
                 Timings
               </TableCell>
               <TableCell
                 sx={{
-                  color: "#B21F62",
+                  color: "#3F51B5",
                   fontWeight: 600,
                   py: 1.5,
-                  fontSize: "0.9rem",
+                  fontSize: "1rem",
                   width: "15%",
+                  whiteSpace: "nowrap", // Prevent text wrapping
                 }}
               >
                 <HourglassEmptyIcon
                   sx={{
                     verticalAlign: "middle",
                     mr: 1,
-                    color: "#B21F62",
-                    fontSize: 18,
+                    color: "#3F51B5",
+                    fontSize: 20,
                   }}
                 />
                 Duration
               </TableCell>
               <TableCell
                 sx={{
-                  color: "#B21F62",
+                  color: "#3F51B5",
                   fontWeight: 600,
                   py: 1.5,
-                  fontSize: "0.9rem",
+                  fontSize: "1rem",
                   pr: 3,
                   width: "35%",
                 }}
@@ -651,8 +673,8 @@ const ClassesCompletedTable = ({
                   sx={{
                     verticalAlign: "middle",
                     mr: 1,
-                    color: "#B21F62",
-                    fontSize: 18,
+                    color: "#3F51B5",
+                    fontSize: 20,
                   }}
                 />
                 Lesson
@@ -671,10 +693,12 @@ const ClassesCompletedTable = ({
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   sx={{
                     backgroundColor:
-                      index % 2 === 0 ? "rgba(178, 31, 98, 0.04)" : "transparent",
+                      index % 2 === 0
+                        ? "rgba(33, 150, 243, 0.04)"
+                        : "transparent",
                     transition: "all 0.2s ease-in-out",
                     "&:hover": {
-                      backgroundColor: "rgba(178, 31, 98, 0.08)",
+                      backgroundColor: "rgba(33, 150, 243, 0.08)",
                     },
                     "&:last-child td": {
                       borderBottom: "none",
@@ -691,6 +715,7 @@ const ClassesCompletedTable = ({
                       borderBottom: "1px solid",
                       borderColor: "divider",
                       pl: 3,
+                      fontSize: "1rem",
                     }}
                   >
                     {index + 1}
@@ -702,6 +727,7 @@ const ClassesCompletedTable = ({
                       py: 2,
                       borderBottom: "1px solid",
                       borderColor: "divider",
+                      fontSize: "1rem",
                     }}
                   >
                     {formatDate(row.date)}
@@ -713,6 +739,8 @@ const ClassesCompletedTable = ({
                       py: 2,
                       borderBottom: "1px solid",
                       borderColor: "divider",
+                      fontSize: "1rem",
+                      whiteSpace: "nowrap", // Prevent text wrapping
                     }}
                   >
                     {row.time}
@@ -724,16 +752,18 @@ const ClassesCompletedTable = ({
                       py: 2,
                       borderBottom: "1px solid",
                       borderColor: "divider",
+                      fontSize: "1rem",
                     }}
                   >
                     <Chip
                       label={`${row.duration.toFixed(1)} hr`}
-                      size="small"
+                      size="medium"
                       sx={{
-                        backgroundColor: "rgba(178, 31, 98, 0.1)",
-                        color: "#B21F62",
+                        backgroundColor: "rgba(33, 150, 243, 0.1)",
+                        color: "#2196F3",
                         fontWeight: 500,
-                        fontSize: "0.75rem",
+                        fontSize: "0.9rem",
+                        height: 28,
                       }}
                     />
                   </TableCell>
@@ -745,6 +775,7 @@ const ClassesCompletedTable = ({
                       borderBottom: "1px solid",
                       borderColor: "divider",
                       pr: 3,
+                      fontSize: "1rem",
                     }}
                   >
                     {row.topic}
@@ -756,9 +787,9 @@ const ClassesCompletedTable = ({
             {classesData.length > 0 && (
               <TableRow
                 sx={{
-                  backgroundColor: "#B21F62",
+                  backgroundColor: "#2196F3",
                   "&:hover": {
-                    backgroundColor: "#9c1a53",
+                    backgroundColor: "#1E88E5",
                   },
                 }}
               >
@@ -770,7 +801,7 @@ const ClassesCompletedTable = ({
                     textAlign: "right",
                     border: "none",
                     py: 2,
-                    fontSize: "0.95rem",
+                    fontSize: "1.1rem",
                     pl: 3,
                   }}
                 >
@@ -782,7 +813,7 @@ const ClassesCompletedTable = ({
                     fontWeight: 700,
                     border: "none",
                     py: 2,
-                    fontSize: "1rem",
+                    fontSize: "1.1rem",
                   }}
                 >
                   {`${totalDuration.toFixed(1)} hr${
@@ -803,7 +834,11 @@ const ClassesCompletedTable = ({
 
         {classesData.length === 0 && (
           <Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontSize: "1.1rem" }}
+            >
               No classes recorded for this period
             </Typography>
           </Box>
@@ -819,7 +854,15 @@ const ClassesCompletedTable = ({
         <Alert
           onClose={() => setSnackbarOpen(false)}
           severity="success"
-          sx={{ width: "100%", backgroundColor: "#ffedc9", color: "#B21F62" }}
+          sx={{
+            width: "100%",
+            backgroundColor: "#e3f2fd",
+            color: "#2196F3",
+            fontSize: "1rem",
+            "& .MuiAlert-message": {
+              fontSize: "1rem",
+            },
+          }}
         >
           {snackbarMessage}
         </Alert>

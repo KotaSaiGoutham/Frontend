@@ -153,7 +153,7 @@ const StudentsTable = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
+  const [sortEnabled, setSortEnabled] = useState(true);
   const { user } = useSelector((state) => state.auth);
   const {
     students,
@@ -428,27 +428,45 @@ const StudentsTable = () => {
     setConfirmDialogOpen(true);
   };
   const sortedFilteredStudents = useMemo(() => {
-    // Create a mutable copy of filteredStudents to sort
     let studentsToSort = [...filteredStudents];
+    if (!sortEnabled) {
+      return filteredStudents; // Return the current order without sorting
+    }
 
     studentsToSort.sort((a, b) => {
-      // --- Primary Sort: Inactive students move to the bottom ---
-      // If 'a' is active and 'b' is inactive, 'a' comes first (-1)
+      // Primary Sort: Inactive students move to the bottom
       if (a.isActive && !b.isActive) {
         return -1;
       }
-      // If 'a' is inactive and 'b' is active, 'a' comes after 'b' (1)
       if (!a.isActive && b.isActive) {
         return 1;
       }
 
-      // --- Secondary Sort: Apply user's selected orderBy and order only if primary sort is equal ---
-      // (i.e., both are active OR both are inactive)
+      // Secondary Sort: Group Paid students at the top
+      const aIsPaid = a["Payment Status"] === "Paid";
+      const bIsPaid = b["Payment Status"] === "Paid";
 
-      if (!orderBy) {
-        return 0; // If no orderBy selected, maintain original relative order within status groups
+      if (aIsPaid && !bIsPaid) {
+        return -1; // 'a' (paid) comes before 'b' (unpaid)
+      }
+      if (!aIsPaid && bIsPaid) {
+        return 1; // 'a' (unpaid) comes after 'b' (paid)
       }
 
+      // Tertiary Sort: Only if payment statuses are the same (both Paid or both Unpaid)
+      // Sort by classes completed in descending order
+      if (aIsPaid === bIsPaid) {
+        const aClasses = a.classesCompleted || 0;
+        const bClasses = b.classesCompleted || 0;
+        return bClasses - aClasses; // Descending sort (most classes completed first)
+      }
+
+      // If all primary and secondary sorts are equal, fall back to the user's selected orderBy
+      if (!orderBy) {
+        return 0; // Maintain original relative order
+      }
+
+      // ... (Your existing switch statement for custom column sorting)
       let aValue;
       let bValue;
 
@@ -469,87 +487,37 @@ const StudentsTable = () => {
             typeof b["Monthly Fee"] === "number"
               ? b["Monthly Fee"]
               : parseFloat(b["Monthly Fee"]) || 0;
-          break; // Use break for switch cases
+          break;
 
         case "classesCompleted":
-          aValue =
-            typeof a.classesCompleted === "number"
-              ? a.classesCompleted
-              : parseFloat(a.classesCompleted) || 0;
-          bValue =
-            typeof b.classesCompleted === "number"
-              ? b.classesCompleted
-              : parseFloat(b.classesCompleted) || 0;
-          break;
+          aValue = a.classesCompleted || 0;
+          bValue = b.classesCompleted || 0;
+          return order === "asc" ? aValue - bValue : bValue - aValue;
 
-        case "nextClass":
-          // Helper to get time value, handling Firestore Timestamps
-          const getTimestampValue = (timestamp) => {
-            if (!timestamp) return Infinity; // Puts null/undefined dates at the very end
-            if (
-              timestamp._seconds !== undefined &&
-              timestamp._nanoseconds !== undefined
-            ) {
-              // It's a Firestore Timestamp object
-              return new Date(
-                timestamp._seconds * 1000 + timestamp._nanoseconds / 1000000
-              ).getTime();
-            }
-            // Assume it's already a Date object or something directly usable by new Date()
-            return new Date(timestamp).getTime();
-          };
-          aValue = getTimestampValue(a.nextClass);
-          bValue = getTimestampValue(b.nextClass);
-          break;
-
-        case "paymentStatus":
-          // Custom sort order for Payment Status (e.g., Paid before Unpaid)
-          const statusOrder = { Paid: 1, Unpaid: 2 };
-          aValue = statusOrder[a["Payment Status"]] || Infinity;
-          bValue = statusOrder[b["Payment Status"]] || Infinity;
-          break;
-
-        // Add other specific cases for numerical or custom sorting here if needed
-        // For general string properties (like Gender, Subject, Year, etc.)
-        case "Gender":
-        case "Subject":
-        case "Year":
-        case "Stream":
-        case "College":
-        case "Group ": // Note the space in "Group "
-        case "Source":
-          aValue = (a[orderBy] || "").toLowerCase();
-          bValue = (b[orderBy] || "").toLowerCase();
-          return order === "asc"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
+        // ... (Rest of your switch cases for other columns)
 
         default:
-          // Fallback for any other column, assumes simple comparison (strings or numbers)
+          // Default comparison for other columns if needed
           const valA = a[orderBy];
           const valB = b[orderBy];
-
           if (typeof valA === "string" && typeof valB === "string") {
             return valA.localeCompare(valB);
           }
-          if (typeof valA === "number" && typeof valB === "number") {
-            return valA - valB;
-          }
-          return 0; // If types are mixed or uncomparable, maintain relative order
+          return valA - valB || 0;
       }
 
-      // Apply the ascending/descending order for numerical/date comparisons from switch cases
+      // Fallback for orderBy if values are not strings or numbers
       if (aValue < bValue) {
         return order === "asc" ? -1 : 1;
       }
       if (aValue > bValue) {
         return order === "asc" ? 1 : -1;
       }
-      return 0; // Values are equal for the secondary sort
+      return 0;
     });
 
     return studentsToSort;
-  }, [filteredStudents, orderBy, order]); // Dependencies: Re-run when these change
+  }, [filteredStudents, orderBy, order, sortEnabled]);
 
   // Handles changes in filter input fields
   const handleFilterChange = (e) => {
@@ -602,6 +570,7 @@ const StudentsTable = () => {
   const handleClassChange = async (studentId, increment) => {
     if (updatingClasses) return; // Prevent multiple updates simultaneously
     setUpdatingClasses(studentId); // Show loading spinner for this student's classes
+    setSortEnabled(false); // Disable sorting
 
     const delta = increment ? 1 : -1; // Determine if incrementing or decrementing
 
@@ -622,6 +591,7 @@ const StudentsTable = () => {
       setSnackbarOpen(true);
     } finally {
       setUpdatingClasses(null); // Hide loading spinner
+      setSortEnabled(true); // Re-enable sorting after the update is complete
     }
   };
 

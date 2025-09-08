@@ -73,48 +73,65 @@ const Employees = () => {
     dispatch(fetchEmployees());
   }, [dispatch, navigate]);
 
-  useEffect(() => {
-    let tempEmployees = [...employees];
+ useEffect(() => {
+    let tempEmployees = [...employees];
 
-    if (filters.name) {
-      tempEmployees = tempEmployees.filter((employee) =>
-        employee.name.toLowerCase().includes(filters.name.toLowerCase())
-      );
-    }
-    if (filters.role) {
-      tempEmployees = tempEmployees.filter(
-        (employee) => employee.role === filters.role
-      );
-    }
-    if (filters.paymentStatus) {
-      const isPaid = filters.paymentStatus === "paid";
-      tempEmployees = tempEmployees.filter(
-        (employee) => employee.paid === isPaid
-      );
-    }
+    if (filters.name) {
+      tempEmployees = tempEmployees.filter((employee) =>
+        employee.name.toLowerCase().includes(filters.name.toLowerCase())
+      );
+    }
+    if (filters.role) {
+      tempEmployees = tempEmployees.filter(
+        (employee) => employee.role === filters.role
+      );
+    }
+    if (filters.paymentStatus) {
+      const isPaid = filters.paymentStatus === "paid";
+      tempEmployees = tempEmployees.filter(
+        (employee) => employee.paid === isPaid
+      );
+    }
 
-    if (sortConfig.key) {
-      tempEmployees.sort((a, b) => {
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
+    // Custom sort logic: Sort by 'paid' status first (paid employees on top),
+    // then by 'lastPaid' date for paid employees, and finally by other columns.
+    if (sortConfig.key) {
+      tempEmployees.sort((a, b) => {
+        // First, sort by paid status to keep paid employees on top
+        if (a.paid !== b.paid) {
+          return a.paid ? -1 : 1; // -1 for a, a.paid = true, a comes before b
+        }
 
-        // ✅ This check now applies to both name (string) and salary (number)
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          const comparison = aValue.localeCompare(bValue);
-          return sortConfig.direction === "asc" ? comparison : -comparison;
-        }
+        // If both are paid or both are unpaid, apply the user's sort
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
 
-        if (aValue < bValue) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    setFilteredEmployees(tempEmployees);
-  }, [filters, employees, sortConfig]);
+        // Handle string sorting (e.g., name)
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          const comparison = aValue.localeCompare(bValue);
+          return sortConfig.direction === "asc" ? comparison : -comparison;
+        }
+
+        // Handle number sorting (e.g., salary) and date sorting (lastPaid)
+        // For 'lastPaid', we want to sort in descending order by default for the latest date.
+        if (sortConfig.key === 'lastPaid') {
+          const dateA = aValue ? parseISO(aValue).getTime() : 0;
+          const dateB = bValue ? parseISO(bValue).getTime() : 0;
+          return sortConfig.direction === "asc" ? dateA - dateB : dateB - dateA;
+        }
+
+        // Fallback for other numerical values like salary
+        if (aValue < bValue) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    setFilteredEmployees(tempEmployees);
+  }, [filters, employees, sortConfig]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
