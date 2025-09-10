@@ -25,7 +25,7 @@ const getUserSubject = (user) => {
 
 // Try to get user info from localStorage on initial load
 const token = localStorage.getItem('token');
-const userId = localStorage.getItem('userId');
+const userId = localStorage.getItem('id');
 const userEmail = localStorage.getItem('userEmail');
 const isPhysics = localStorage.getItem('isPhysics') === 'true';
 const isChemistry = localStorage.getItem('isChemistry') === 'true';

@@ -51,17 +51,12 @@ const AddExpenditure = () => {
   });
 
   const { user } = useSelector((state) => state.auth);
-  console.log("user",user)
-
-  // --- Effect to Pre-fill Form for Editing ---
   useEffect(() => {
-    // If we are in "update" mode, set the form data with the existing record's values
     if (isUpdating && expenditureToEdit) {
       setFormData({
         purpose: expenditureToEdit.purpose || "",
         work: expenditureToEdit.work || "",
         amount: expenditureToEdit.amount || "",
-        // Ensure date is a valid Date object
         date: expenditureToEdit.date
           ? new Date(expenditureToEdit.date)
           : new Date(),
@@ -69,7 +64,6 @@ const AddExpenditure = () => {
     }
   }, [isUpdating, expenditureToEdit]);
 
-  // --- Handlers ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));

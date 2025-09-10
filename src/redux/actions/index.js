@@ -881,31 +881,34 @@ export const fetchPaymentHistory = (studentId) =>
 
     authRequired: true,
   });
+// A conceptual correction to your apiRequest utility or action
+// This ensures the promise is rejected when a failure occurs.
+
 export const addDemoClass = (demoClassData) =>
   apiRequest({
-    url: "/api/data/addDemoClass", // This URL now hits your Firebase-backed Express route
+    url: "/api/data/addDemoClass",
     method: "POST",
     data: demoClassData,
     onStart: ADD_DEMO_CLASS_REQUEST,
     onSuccess: (data, dispatch) => {
       dispatch({
         type: ADD_DEMO_CLASS_SUCCESS,
-        payload: data.demoClass, // The newly added demo class from backend response
+        payload: data.demoClass,
       });
       dispatch(fetchDemoClasses());
+      // On success, you're fine, the promise resolves.
     },
     onFailure: (error, dispatch) => {
       console.error("Error adding demo class:", error);
-      const errorMessage =
-        error.error || error.message || "Failed to add demo class";
-      // Handle authentication errors if needed
+      const errorMessage = error.error || error.message || "Failed to add demo class";
       dispatch({
         type: ADD_DEMO_CLASS_FAILURE,
         payload: { error: errorMessage },
       });
-      alert(`Failed to add demo class: ${errorMessage}`);
+      // The crucial part: re-throw the error to ensure the promise is rejected
+      throw new Error(errorMessage);
     },
-    authRequired: true, // Crucial as your backend routes are protected
+    authRequired: true,
   });
 
 // Action to Fetch Demo Classes
@@ -961,7 +964,6 @@ export const deleteDemoClass = (demoId) =>
         type: DELETE_DEMO_CLASS_SUCCESS,
         payload: demoId, // Pass the ID of the deleted demo to update the state
       });
-      console.log(`Demo class with ID ${demoId} deleted successfully.`);
     },
     onFailure: (error, dispatch) => {
       console.error(`Error deleting demo class ${demoId}:`, error);
@@ -1524,4 +1526,20 @@ export const updateEmployeeData = (employeeId, updatedData) =>
         },
       });
     },
+  });
+export const fetchStudentExamsByStudent = (studentId) =>
+  apiRequest({
+    url: `/api/data/getstudentexamsbyid?studentId=${studentId}`,
+    method: "GET",
+    onStart: FETCH_STUDENT_EXAMS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: FETCH_STUDENT_EXAMS_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_STUDENT_EXAMS_FAILURE,
+        payload: { error: error.message || "Failed to fetch student exams" },
+      });
+    },
+    authRequired: true,
   });

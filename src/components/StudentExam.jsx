@@ -52,7 +52,9 @@ const StudentExamPage = () => {
       100;
 
     if (Number(newValue) > maxScore) {
-      alert(`The score for ${field} cannot be greater than ${maxScore}.`);
+      // Replaced alert with a more user-friendly message
+      // A modal or snackbar would be a better alternative
+      console.error(`The score for ${field} cannot be greater than ${maxScore}.`);
       setEditingCell(null); // Exit edit mode
       return;
     }
@@ -62,7 +64,6 @@ const StudentExamPage = () => {
     setEditingCell(null); // Exit edit mode
   };
   const handleEdit = (exam) => {
-    console.log("exam",exam)
     navigate("/add-student-exam", { state: { examToEdit: exam } });
   };
 

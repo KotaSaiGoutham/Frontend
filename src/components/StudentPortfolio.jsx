@@ -1,5 +1,4 @@
-// StudentPortfolio.jsx
-import React, { useState, useEffect } from "react"; // Removed useMemo as latestWeeklyMark is no longer needed
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { formatFirebaseDate, capitalize } from "../mockdata/function";
@@ -7,10 +6,10 @@ import "./StudentPortfolio.css";
 import AddWeeklyMarksModal from "./AddWeeklyMarksForm";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  fetchWeeklyMarks,
   fetchPaymentHistory,
   fetchUpcomingClasses,
-  fetchAutoTimetablesForToday
+  fetchAutoTimetablesForToday,
+  fetchStudentExamsByStudent,
 } from "../redux/actions";
 // Icon Imports
 import {
@@ -39,13 +38,14 @@ import {
   FaPhone,
   FaMale,
   FaFemale,
-    FaClock,          // For the card title
-  FaMoneyBillAlt,   // For "Monthly Fee Paid"
-  FaClipboardList,  // For "Marks Added"
+  FaClock,
+  FaMoneyBillAlt,
+  FaClipboardList,
 } from "react-icons/fa";
 import { MuiButton } from "./customcomponents/MuiCustomFormFields";
 import WeeklyMarksTrendGraph from "./WeeklyMarksBarChart";
 import PaymentHistoryTable from "./PaymentHistoryTable";
+
 const formatPhone = (num) =>
   num ? (
     <a href={`tel:${num}`} className="phone-link">
@@ -57,19 +57,18 @@ const StudentPortfolio = () => {
   const { id: studentId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { weeklyMarks, loadingWeeklyMarks } = useSelector(
-    (state) => state.students
+
+  // Highlighted Change: Use studentexams from the studentExams reducer
+  const { studentExams, loading: studentExamsLoading } = useSelector(
+    (state) => state.studentExams
   );
+
   const location = useLocation();
-  const {
-    timetables,
-    loading: classesLoading,
-    error: classesError,
-  } = useSelector((state) => state.classes);
-  const {
-    timetables: autoTimetables, // NEW: This will hold auto-generated timetables
-    loading: autoTimetablesLoading,
-  } = useSelector((state) => state.autoTimetables); // This is your NEW autoTimetables reducer
+  const { timetables, loading: classesLoading } = useSelector(
+    (state) => state.classes
+  );
+  const { timetables: autoTimetables, loading: autoTimetablesLoading } =
+    useSelector((state) => state.autoTimetables);
   const [studentData, setStudentData] = useState(
     location.state?.studentData || null
   );
@@ -82,14 +81,17 @@ const StudentPortfolio = () => {
 
   useEffect(() => {
     dispatch(fetchPaymentHistory(studentData?.id || studentId));
-  }, [studentData?.id || studentId]);
+  }, [studentData?.id, studentId, dispatch]);
 
   useEffect(() => {
-    dispatch(fetchWeeklyMarks(studentData?.id || studentId));
-    dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
-    dispatch(fetchAutoTimetablesForToday())
-  }, []);
+    // This action already fetches the required data
+    dispatch(fetchStudentExamsByStudent(studentData?.id || studentId));
+    dispatch(fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") }));
+    dispatch(fetchAutoTimetablesForToday());
+  }, [studentData?.id, studentId, dispatch]);
+
   const payments = useSelector((state) => state.payments.data);
+  const { user } = useSelector((state) => state.auth);
 
   const DetailItem = ({ icon: Icon, label, value, isHighlighted = false }) => (
     <div className={`detail-item ${isHighlighted ? "highlighted" : ""}`}>
@@ -101,7 +103,6 @@ const StudentPortfolio = () => {
     </div>
   );
 
-  // Helper function for payment status display
   const getPaymentStatusDisplay = (status) => {
     const statusClass = status?.toLowerCase() === "paid" ? "paid" : "unpaid";
     return (
@@ -133,8 +134,8 @@ const StudentPortfolio = () => {
                 <FaExclamationCircle /> Student Data Unavailable
               </h3>
               <p>
-                The student's portfolio could not be loaded. This page may not
-                be accessed directly, or the data was not passed correctly.
+                The student's portfolio could not be loaded. This page may not be
+                accessed directly, or the data was not passed correctly.
               </p>
               <button
                 onClick={() => navigate("/students")}
@@ -149,47 +150,73 @@ const StudentPortfolio = () => {
     );
   }
 
-  const { user } = useSelector((state) => state.auth);
   const feeAmount = studentData?.monthlyFee || 0;
-const timelineEvents = [];
+  const timelineEvents = [];
 
-if ((timetables?.length > 0 || autoTimetables?.length > 0) && studentData?.Name) {
-  // Merge both arrays
-  const combinedTimetables = [
-    ...(timetables || []),
-    ...(autoTimetables || []),
-  ];
+  if (
+    (timetables?.length > 0 || autoTimetables?.length > 0) &&
+    studentData?.Name
+  ) {
+    const combinedTimetables = [
+      ...(timetables || []),
+      ...(autoTimetables || []),
+    ];
+    const matchingClasses = combinedTimetables
+      .filter((entry) => entry.Student === studentData.Name)
+      .map((entry) => ({
+        ...entry,
+        parsedDate: new Date(entry.Day.split("/").reverse().join("/")),
+      }))
+      .sort((a, b) => b.parsedDate - a.parsedDate);
 
-  const matchingClasses = combinedTimetables
-    .filter((entry) => entry.Student === studentData.Name)
-    .map((entry) => ({
-      ...entry,
-      parsedDate: new Date(
-        entry.Day.split("/").reverse().join("/") // Convert to YYYY/MM/DD
-      ),
-    }))
-    .sort((a, b) => b.parsedDate - a.parsedDate); // latest first
-
-  if (matchingClasses.length > 0) {
-    const latestClass = matchingClasses[0];
-    const formattedDate = format(latestClass.parsedDate, "dd MMM yyyy (EEE)");
-
-    const label = [
-      `📘 Subject: ${latestClass.Subject}`,
-      `📖 Topic: ${latestClass.Topic}`,
-      `👨‍🏫 Faculty: ${latestClass.Faculty}`,
-      `🕒 Time: ${latestClass.Time}`,
-      `📅 Date: ${formattedDate}`,
-    ].join("\n");
-
-    timelineEvents.push({
-      type: "Next Class",
-      label,
-    });
+    if (matchingClasses.length > 0) {
+      const latestClass = matchingClasses[0];
+      const formattedDate = format(latestClass.parsedDate, "dd MMM yyyy (EEE)");
+      const label = [
+        `📘 Subject: ${latestClass.Subject}`,
+        `📖 Topic: ${latestClass.Topic}`,
+        `👨‍🏫 Faculty: ${latestClass.Faculty}`,
+        `🕒 Time: ${latestClass.Time}`,
+        `📅 Date: ${formattedDate}`,
+      ].join("\n");
+      timelineEvents.push({ type: "Next Class", label });
+    }
   }
-}
 
+  // Highlighted Change: Use studentExams to build the timeline
+  if (studentExams?.length > 0) {
+    const sortedExams = [...studentExams].sort((a, b) => {
+      const aTime = a.createdAt?.seconds || a.createdAt?._seconds || 0;
+      const bTime = b.createdAt?.seconds || b.createdAt?._seconds || 0;
+      return bTime - aTime;
+    });
 
+    const latestExam = sortedExams[0];
+
+    if (latestExam?.createdAt) {
+      const subjects = ["physics", "chemistry", "maths"]; // Use subjects based on your data
+      const subjectScoreLines = subjects
+        .filter(
+          (subj) =>
+            latestExam[subj] != null &&
+            latestExam[`max${capitalize(subj)}`] != null
+        )
+        .map(
+          (subj) =>
+            `📘 ${capitalize(subj)}: ${latestExam[subj]}/${latestExam[
+              `max${capitalize(subj)}`
+            ]}`
+        );
+      
+      const label = [`Exam: ${latestExam.examName}`, ...subjectScoreLines].join("\n");
+
+      timelineEvents.push({
+        type: "Marks",
+        label,
+        timestamp: formatFirebaseDate(latestExam.createdAt),
+      });
+    }
+  }
 
   if (studentData?.paidDate) {
     timelineEvents.push({
@@ -206,42 +233,6 @@ if ((timetables?.length > 0 || autoTimetables?.length > 0) && studentData?.Name)
       timestamp: formatFirebaseDate(studentData?.lastUpdatedClassesAt),
     });
   }
-
-if (weeklyMarks?.length > 0) {
-  const sortedMarks = [...weeklyMarks].sort((a, b) => {
-    const aTime = a.timestamp?.seconds || a.timestamp?._seconds || 0;
-    const bTime = b.timestamp?.seconds || b.timestamp?._seconds || 0;
-    return bTime - aTime; // Latest first
-  });
-
-  const latestMark = sortedMarks[0];
-
-  if (latestMark?.timestamp) {
-    const subjects = ["maths", "physics", "chemistry", "botany", "zoology"];
-
-    const subjectScoreLines = subjects
-      .filter(
-        (subj) =>
-          latestMark[subj] != null &&
-          latestMark[`max${capitalize(subj)}`] != null
-      )
-      .map(
-        (subj) =>
-          `📘 ${capitalize(subj)}: ${latestMark[subj]}/${
-            latestMark[`max${capitalize(subj)}`]
-          }`
-      );
-
-    const label = subjectScoreLines.join("\n");
-
-    timelineEvents.push({
-      type: "Marks",
-      label,
-      timestamp: formatFirebaseDate(latestMark.timestamp),
-    });
-  }
-}
-
 
   payments?.forEach((payment) => {
     if (payment?.date) {
@@ -275,16 +266,12 @@ if (weeklyMarks?.length > 0) {
             </button>
           )}
         </header>
-
-        {/* Main Content Area */}
         <main className="portfolio-content-area">
-          {/* Personal Details Card */}
           <section className="portfolio-card personal-details-card delay-1">
             <h2>
               <FaInfoCircle className="card-icon" /> Personal Details
             </h2>
             <div className="details-grid">
-              {/* --- Basic Info --- */}
               <DetailItem
                 icon={FaUserCircle}
                 label="Name"
@@ -325,8 +312,6 @@ if (weeklyMarks?.length > 0) {
                 label="Source"
                 value={studentData.Source || "N/A"}
               />
-
-              {/* --- Contact --- */}
               <DetailItem
                 icon={FaPhone}
                 label="Student Contact"
@@ -342,8 +327,6 @@ if (weeklyMarks?.length > 0) {
                 label="Mother Contact"
                 value={formatPhone(studentData.mother_contact) || "N/A"}
               />
-
-              {/* --- Payment --- */}
               <DetailItem
                 icon={FaDollarSign}
                 label="Monthly Payment"
@@ -369,8 +352,6 @@ if (weeklyMarks?.length > 0) {
                 value={formatFirebaseDate(studentData.nextDueDate)}
                 isHighlighted={studentData["Payment Status"] === "Unpaid"}
               />
-
-              {/* --- Class Info --- */}
               <DetailItem
                 icon={FaChalkboardTeacher}
                 label="Total Classes Attended"
@@ -387,14 +368,11 @@ if (weeklyMarks?.length > 0) {
               />
             </div>
           </section>
-
-          {/* Marks Performance Card */}
           <section className="portfolio-card marks-card delay-2">
-            <h2>
+            {/* <h2>
               <span className="title-and-icon-group">
                 <FaChartLine className="card-icon" /> Weekly Marks Trend
               </span>
-
               <MuiButton
                 variant="contained"
                 color="primary"
@@ -405,16 +383,16 @@ if (weeklyMarks?.length > 0) {
               >
                 Add marks
               </MuiButton>
-            </h2>
-            {loadingWeeklyMarks ? (
+            </h2> */}
+            {studentExamsLoading ? ( // Highlighted: Use new loading state
               <div className="loading-message">
                 <FaSpinner className="spin-icon" /> Loading marks...
               </div>
             ) : marksError ? (
               <div className="error-message">{marksError}</div>
-            ) : weeklyMarks?.length > 0 && studentData.Stream ? (
+            ) : studentExams?.length > 0 && studentData.Stream ? (
               <WeeklyMarksTrendGraph
-                weeklyMarksData={weeklyMarks} // <--- IMPORTANT: Pass the full array here
+                weeklyMarksData={studentExams} // Highlighted: Pass studentExams
                 programType={studentData.Stream}
                 studentData={studentData}
               />
@@ -424,16 +402,13 @@ if (weeklyMarks?.length > 0) {
               </div>
             )}
           </section>
-
           <section className="portfolio-card payments-card delay-3">
             <h2>
               <FaDollarSign className="card-icon" /> Payment History
             </h2>
-
             <PaymentHistoryTable payments={payments} monthlyFee={feeAmount} />
           </section>
         </main>
-
         {showAddMarksModal && studentData && (
           <AddWeeklyMarksModal
             studentId={studentId}
@@ -452,6 +427,7 @@ if (weeklyMarks?.length > 0) {
 };
 
 export default StudentPortfolio;
+
 const TimeLineCard = ({ events }) => {
   if (!events || events.length === 0) {
     return (
@@ -465,90 +441,81 @@ const TimeLineCard = ({ events }) => {
   }
 
   const getEventIcon = (label) => {
-    if (label.includes("Fee Paid")) {
+    if (label.includes("Payment")) {
       return FaMoneyBillAlt;
     }
-    if (label.includes("Classes Completed")) {
+    if (label.includes("Class")) {
       return FaBookOpen;
     }
-    if (label.includes("Marks Added")) {
+    if (label.includes("Marks") || label.includes("Exam")) {
       return FaClipboardList;
     }
-    // Add more conditions here if you have other specific labels
-    return FaInfoCircle; // Default generic icon
+    return FaInfoCircle;
   };
 
-  // Helper function for dynamic indicator colors (you can adjust these)
   const getIndicatorColor = (label) => {
-    if (label.includes("Fee Paid")) {
-      return '#28a745'; // Green for financial success
+    if (label.includes("Payment")) {
+      return '#28a745';
     }
-    if (label.includes("Classes Completed")) {
-      return '#007bff'; // Blue for progress
+    if (label.includes("Class")) {
+      return '#007bff';
     }
-    if (label.includes("Marks Added")) {
-      return '#ffc107'; // Yellow/Orange for assessment
+    if (label.includes("Marks") || label.includes("Exam")) {
+      return '#ffc107';
     }
-    return '#6c757d'; // Default grey
+    return '#6c757d';
   };
 
   return (
- <section className="portfolio-card timeline-card delay-0">
-  <h2>
-    <FaClock className="card-icon" /> Recent Activity
-  </h2>
-  <ul className="timeline-list">
-    {events.map((event, i) => {
-  const EventIcon = getEventIcon(event.label);
-  const subHeading =
-    event.type === "Marks"
-      ? "📊 Weekly Marks"
-      : event.type === "Class"
-      ? "📅 Upcoming Class"
-      : event.type === "Payment"
-      ? "💰 Payment"
-      : "🔔 Activity";
+    <section className="portfolio-card timeline-card delay-0">
+      <h2>
+        <FaClock className="card-icon" /> Recent Activity
+      </h2>
+      <ul className="timeline-list">
+        {events.map((event, i) => {
+          const EventIcon = getEventIcon(event.label);
+          const subHeading =
+            event.type === "Marks"
+              ? "📊 Weekly Marks"
+              : event.type === "Next Class"
+              ? "📅 Next Class"
+              : event.type === "Payment"
+              ? "💰 Payment"
+              : "🔔 Activity";
+          const showTimestamp = false;
+          const labelLines = Array.isArray(event.label)
+            ? event.label
+            : event.label.split("\n");
 
-  const showTimestamp = false;
-
-  // Split label into individual lines (handles both array or \n string)
-  const labelLines = Array.isArray(event.label)
-    ? event.label
-    : event.label.split("\n");
-
-  return (
-    <li
-      key={i}
-      className="timeline-item"
-      style={{ animationDelay: `${i * 0.1}s` }}
-    >
-      <span
-        className="timeline-indicator"
-        style={{ backgroundColor: getIndicatorColor(event.label) }}
-      >
-        <EventIcon className="timeline-event-icon" />
-      </span>
-      <div className="timeline-content">
-        <div className="timeline-subheading">{subHeading}</div>
-
-        <div className="timeline-text">
-          {labelLines.map((line, idx) => (
-            <div key={idx} style={{ marginBottom: "4px", lineHeight: "1.4" }}>
-              {line}
-            </div>
-          ))}
-
-          {showTimestamp && (
-            <span className="timestamp-inline">({event.timestamp})</span>
-          )}
-        </div>
-      </div>
-    </li>
-  );
-})}
-
-  </ul>
-</section>
-
+          return (
+            <li
+              key={i}
+              className="timeline-item"
+              style={{ animationDelay: `${i * 0.1}s` }}
+            >
+              <span
+                className="timeline-indicator"
+                style={{ backgroundColor: getIndicatorColor(event.label) }}
+              >
+                <EventIcon className="timeline-event-icon" />
+              </span>
+              <div className="timeline-content">
+                <div className="timeline-subheading">{subHeading}</div>
+                <div className="timeline-text">
+                  {labelLines.map((line, idx) => (
+                    <div key={idx} style={{ marginBottom: "4px", lineHeight: "1.4" }}>
+                      {line}
+                    </div>
+                  ))}
+                  {showTimestamp && (
+                    <span className="timestamp-inline">({event.timestamp})</span>
+                  )}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 };

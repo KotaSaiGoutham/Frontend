@@ -231,7 +231,6 @@ const TimetablePage = () => {
   const combinedAndFilteredTimetables = useMemo(() => {
     // Combine manual and auto-generated timetables
     let combinedTimetables = [...manualTimetables, ...autoTimetables];
-    console.log("manualTimetables", manualTimetables);
 
     // --- Deduplication Logic ---
     const uniqueTimetables = new Map();
@@ -408,14 +407,12 @@ const TimetablePage = () => {
     canAccessAll,
     calculateDuration,
   ]);
-  console.log("combinedAndFilteredTimetables", combinedAndFilteredTimetables);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
 
   const handleFilterDurationChange = (e) => {
-    console.log("e.target.value", e.target.value);
     setFilterDurationType(e.target.value);
     setFilterDate(new Date());
   };
@@ -505,7 +502,6 @@ const TimetablePage = () => {
     }
     setSnackbarOpen(false);
   };
-  console.log("classesLoading", classesLoading, studentsLoading);
   if (classesLoading || studentsLoading || isGeneratingAuto) {
     return (
       <Fade in={true} timeout={1000}>
@@ -703,7 +699,6 @@ const TimetablePage = () => {
         // ------------------------------------------------------------------
         await dispatch(fetchUpcomingClasses({ date: dateStr }));
 
-        console.log(`Auto timetables saved via API for ${dateStr}`);
       } catch (err) {
         console.error("Error saving auto timetables:", err);
       }
@@ -717,7 +712,6 @@ const TimetablePage = () => {
       });
     }
   };
-  console.log("combinedAndFilteredTimetables", combinedAndFilteredTimetables);
   return (
     <Box
       sx={{

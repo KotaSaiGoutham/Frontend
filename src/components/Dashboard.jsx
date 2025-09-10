@@ -560,8 +560,6 @@ const Dashboard = () => {
         students,
         currentMonthPayments
       );
-      console.log("students", students);
-      console.log("currentMonthPayments", currentMonthPayments);
       setProcessedStudentActivity(processedStudents);
     }
   }, [students, payments]);

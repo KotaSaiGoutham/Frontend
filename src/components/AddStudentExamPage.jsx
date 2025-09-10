@@ -182,9 +182,9 @@ const StudentExamFormPage = () => {
       );
       return;
     }
-    const userId = localStorage.getItem("userId");
-
+const userId = localStorage.getItem("userId");
     const studentExamData = {
+      userId:userId,
       studentId: formData.studentId,
       studentName: formData.studentName,
       stream: formData.stream,
@@ -193,7 +193,7 @@ const StudentExamFormPage = () => {
       recordedBy: user.id,
       status: formData.status,
       topic: formData.topic,
-      subject:user.isPhysics?"Physics":user.isChemistry?"Chemistry":"Any"
+      Subject:user.isPhysics?"Physics":user.isChemistry?"Chemistry":"Any"
     };
 
     if (MARK_SCHEMES[formData.stream]) {
@@ -220,7 +220,6 @@ const StudentExamFormPage = () => {
           Date: new Date().toLocaleDateString("en-GB"),
         };
         await dispatch(addStudentExam(studentExamData));
-        await dispatch(addWeeklyMarks(formData.studentId, weeklyMarksData));
         showSnackbar("Exam data saved successfully!", "success");
       }
 
@@ -246,7 +245,6 @@ const StudentExamFormPage = () => {
     if (user?.isMaths && subj !== "Maths") return false;
     return true;
   });
-  console.log("user", user);
 
   const filteredTopicOptions = useMemo(() => {
     const subject = user.subject; // Depend only on formData.subject

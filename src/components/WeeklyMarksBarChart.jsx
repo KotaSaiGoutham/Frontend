@@ -1,23 +1,22 @@
-// WeeklyMarksTrendGraph.jsx
 import React from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
-  BarElement, // Required for bar charts
+  BarElement,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
-import { Bar } from "react-chartjs-2"; // Import Bar component for UI rendering
+import { Bar } from "react-chartjs-2";
 import { format, parseISO } from "date-fns";
 import { useSelector } from "react-redux";
 
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { MARK_SCHEMES } from "../mockdata/Options";
-// Register Chart.js components and datalabels plugin
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -28,7 +27,6 @@ ChartJS.register(
   Legend,
   ChartDataLabels
 );
-
 
 // Helper function (reused)
 const formatSubjectNameForDisplay = (subjectKey) => {
@@ -42,15 +40,6 @@ const formatSubjectNameForDisplay = (subjectKey) => {
   return formatted.trim();
 };
 
-/**
- * Determines a more vibrant color (Red, Yellow, Green, or Gray) based on the mark's percentage.
- * Adjusted for better visual reflection.
- * @param {number} mark - The actual mark obtained.
- * @param {number} maxScore - The maximum possible score.
- * @param {number} [baseAlpha=0.7] - Alpha value for the background color.
- * @param {number} [borderAlpha=1] - Alpha value for the border color.
- * @returns {{bgColor: string, borderColor: string}} An object containing background and border color strings.
- */
 const getColorByPercentage = (
   mark,
   maxScore,
@@ -58,33 +47,28 @@ const getColorByPercentage = (
   borderAlpha = 1
 ) => {
   if (mark === null || maxScore === null || maxScore === 0) {
-    // Return a neutral/gray color for missing or invalid data
     return {
-      bgColor: `rgba(180, 180, 180, ${baseAlpha})`, // Light gray
-      borderColor: `rgba(100, 100, 100, ${borderAlpha})`, // Darker gray
+      bgColor: `rgba(180, 180, 180, ${baseAlpha})`,
+      borderColor: `rgba(100, 100, 100, ${borderAlpha})`,
     };
   }
 
   const percentage = (mark / maxScore) * 100;
 
-  let r, g, b; // RGB components
+  let r, g, b;
 
   if (percentage < 50) {
-    // Brighter Red for less than 50%
     r = 220;
     g = 53;
-    b = 69; // Bootstrap 'danger' red
+    b = 69;
   } else if (percentage >= 50 && percentage < 75) {
-    // Vibrant Orange/Yellow for 50-74%
     r = 255;
     g = 193;
-    b = 7; // Bootstrap 'warning' yellow
+    b = 7;
   } else {
-    // percentage >= 75
-    // Strong Green for 75% and above
     r = 40;
     g = 167;
-    b = 69; // Bootstrap 'success' green
+    b = 69;
   }
 
   return {
@@ -103,33 +87,29 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
   const isPhysics = user?.isPhysics || false;
   const isChemistry = user?.isChemistry || false;
 
-  // 1. Sort the data by date (and then timestamp for stability) to ensure correct chronological order
+  // 1. Sort the data by examDate and createdAt (which replaces weekDate and timestamp)
   const sortedData = [...weeklyMarksData].sort((a, b) => {
-    const dateA = a.weekDate ? parseISO(a.weekDate).getTime() : 0;
-    const dateB = b.weekDate ? parseISO(b.weekDate).getTime() : 0;
-
-    // Primary sort by date
+    // Primary sort by examDate
+    const dateA = a.examDate ? parseISO(a.examDate).getTime() : 0;
+    const dateB = b.examDate ? parseISO(b.examDate).getTime() : 0;
     if (dateA !== dateB) {
       return dateA - dateB;
     }
-    // Secondary sort by timestamp if dates are identical (for consistent order)
-    const timestampA = a.timestamp
-      ? a.timestamp._seconds * 1000 + a.timestamp._nanoseconds / 1_000_000
-      : a.createdAt
-      ? new Date(a.createdAt).getTime()
+
+    // Secondary sort by createdAt timestamp for consistency
+    const timestampA = a.createdAt?.seconds
+      ? a.createdAt._seconds * 1000 + a.createdAt._nanoseconds / 1_000_000
       : 0;
-    const timestampB = b.timestamp
-      ? b.timestamp._seconds * 1000 + b.timestamp._nanoseconds / 1_000_000
-      : b.createdAt
-      ? new Date(b.createdAt).getTime()
+    const timestampB = b.createdAt?.seconds
+      ? b.createdAt._seconds * 1000 + b.createdAt._nanoseconds / 1_000_000
       : 0;
     return timestampA - timestampB;
   });
 
-  // 2. Extract unique labels (dates) for the X-axis (shared across all individual graphs)
+  // 2. Extract unique labels (exam dates) for the X-axis
   const labels = sortedData.map((entry) =>
-    entry.weekDate
-      ? format(parseISO(entry.weekDate), "MMM dd,yyyy")
+    entry.examDate
+      ? format(parseISO(entry.examDate), "MMM dd, yyyy")
       : "Unknown Date"
   );
 
@@ -148,10 +128,16 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
         if (
           key !== "id" &&
           key !== "userId" &&
-          key !== "weekDate" &&
+          key !== "examDate" &&
           key !== "recordedBy" &&
-          key !== "timestamp" &&
           key !== "createdAt" &&
+          key !== "studentId" && // Exclude these specific keys
+          key !== "studentName" &&
+          key !== "topic" &&
+          key !== "status" &&
+          key !== "stream" &&
+          key !== "Subject" &&
+          key !== "examName" &&
           !key.startsWith("max") &&
           typeof entry[key] === "number" &&
           entry.hasOwnProperty(
@@ -182,30 +168,22 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
 
   // --- Prepare Data for PDF Table ---
   const headerRow = [
-    "Week Date",
+    "Exam Name",
+    "Exam Date",
     ...subjectsToTrack.map((s) => formatSubjectNameForDisplay(s)),
   ];
 
-  const maxRow = ["Max"];
-  subjectsToTrack.forEach((subKey) => {
-    const display = formatSubjectNameForDisplay(subKey);
-    const maxScore =
-      effectiveProgramType && MARK_SCHEMES[effectiveProgramType]?.[display] != null
-        ? MARK_SCHEMES[effectiveProgramType][display]
-        : null;
-    maxRow.push(maxScore ?? "—");
-  });
-
   const bodyRows = sortedData.map((entry) => {
     const row = [
-      entry.weekDate ? format(parseISO(entry.weekDate), "dd/MM/yyyy") : "N/A",
+      entry.examName || "N/A",
+      entry.examDate ? format(parseISO(entry.examDate), "dd/MM/yyyy") : "N/A",
     ];
     subjectsToTrack.forEach((key) => row.push(entry[key] ?? "N/A"));
     return row;
   });
 
   // --- Prepare Array of Chart Data and Options for PDF (Subject-wise) ---
-  const pdfCharts = []; // This will hold all charts for the PDF
+  const pdfCharts = [];
 
   subjectsToTrack.forEach((subjectKey) => {
     const subjectDisplayName = formatSubjectNameForDisplay(subjectKey);
@@ -233,7 +211,7 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
     }
 
     const backgroundColors = dataForSubject.map(
-      (mark) => getColorByPercentage(mark, maxScore, 0.7, 1).bgColor // Adjusted alpha for PDF
+      (mark) => getColorByPercentage(mark, maxScore, 0.7, 1).bgColor
     );
     const borderColors = dataForSubject.map(
       (mark) => getColorByPercentage(mark, maxScore, 0.7, 1).borderColor
@@ -247,7 +225,7 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
           data: dataForSubject,
           backgroundColor: backgroundColors,
           borderColor: borderColors,
-          borderWidth: 1, // Thinner border for PDF charts
+          borderWidth: 1,
           datalabels: {
             anchor: "end",
             align: "top",
@@ -255,9 +233,9 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
             color: "#444",
             font: {
               weight: "bold",
-              size: 10, // Smaller font for marks in PDF
+              size: 10,
             },
-            formatter: function (value, context) {
+            formatter: function (value) {
               return value !== null ? value.toFixed(0) : "";
             },
             display: function (context) {
@@ -274,12 +252,12 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
     const chartOptions = {
       responsive: true,
       maintainAspectRatio: false,
-      animation: false, // No animation for PDF charts
+      animation: false,
       scales: {
         x: {
           title: {
             display: true,
-            text: "Week Date",
+            text: "Exam Date",
           },
           ticks: {
             maxRotation: 45,
@@ -292,7 +270,7 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
             display: true,
             text: "Marks Obtained",
           },
-          max: maxScore !== null ? maxScore * 1.1 : undefined, // Slightly more space above max mark
+          max: maxScore !== null ? maxScore * 1.1 : undefined,
           ticks: {
             callback: function (value) {
               if (Number.isInteger(value)) {
@@ -310,23 +288,23 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
         title: {
           display: true,
           text: `${subjectDisplayName} Marks Trend`,
-          font: { size: 14, weight: 'bold' }, // Smaller title for PDF charts
+          font: { size: 14, weight: 'bold' },
           color: '#333'
         },
         tooltip: {
-            callbacks: {
-                label: function(context) {
-                    const value = context.raw;
-                    const maxPossible = maxScore !== null ? ` / ${maxScore}` : "";
-                    return ` ${subjectDisplayName}: ${
-                      value !== null ? value : "N/A"
-                    }${maxPossible}`;
-                }
-            }
+          callbacks: {
+            label: function (context) {
+              const value = context.raw;
+              const maxPossible = maxScore !== null ? ` / ${maxScore}` : "";
+              return ` ${subjectDisplayName}: ${
+                value !== null ? value : "N/A"
+              }${maxPossible}`;
+            },
+          },
         },
         datalabels: {
-            display: true
-        }
+          display: true,
+        },
       },
     };
 
@@ -338,27 +316,24 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
 
   return (
     <div className="weekly-marks-trend-container">
-      {/* Download PDF Button - Now passes an array of charts */}
       {subjectsToTrack.length > 0 && (
         <div style={{ textAlign: "right", marginBottom: 20, paddingRight: 15 }}>
           <PdfDownloadButton
             title="Weekly Marks Report"
             headers={headerRow}
             rows={bodyRows}
-            summaryRow={maxRow}
             buttonLabel="Download Marks Report (PDF)"
             studentData={studentData}
             weekDate={
               sortedData.length > 0
-                ? parseISO(sortedData[sortedData.length - 1].weekDate)
+                ? parseISO(sortedData[sortedData.length - 1].examDate)
                 : new Date()
             }
-            charts={pdfCharts} // <--- NEW: Passing an array of charts
+            charts={pdfCharts}
           />
         </div>
       )}
 
-      {/* Render individual subject charts on the webpage */}
       {subjectsToTrack.length === 0 ? (
         <p>
           No subjects found to display individual trend graphs based on your
@@ -416,7 +391,7 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
                     weight: "bold",
                     size: 14,
                   },
-                  formatter: function (value, context) {
+                  formatter: function (value) {
                     return value !== null ? value.toFixed(0) : "";
                   },
                   display: function (context) {
@@ -455,12 +430,11 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
                 intersect: false,
                 callbacks: {
                   title: function (context) {
-                    return `Week: ${context[0].label}`;
+                    return `Exam Date: ${context[0].label}`;
                   },
                   label: function (context) {
                     const value = context.raw;
-                    const maxPossible =
-                      maxScore !== null ? ` / ${maxScore}` : "";
+                    const maxPossible = maxScore !== null ? ` / ${maxScore}` : "";
                     return ` ${subjectDisplayName}: ${
                       value !== null ? value : "N/A"
                     }${maxPossible}`;
@@ -468,14 +442,14 @@ const WeeklyMarksTrendGraph = ({ weeklyMarksData, programType, studentData }) =>
                 },
               },
               datalabels: {
-                  display: true,
-              }
+                display: true,
+              },
             },
             scales: {
               x: {
                 title: {
                   display: true,
-                  text: "Week Date",
+                  text: "Exam Date",
                   color: "#555",
                   font: {
                     weight: "bold",

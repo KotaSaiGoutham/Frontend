@@ -295,10 +295,6 @@ const ExpenditureDashboard = () => {
     const pendingStudents = filteredStudents.filter(
       (s) => !paidStudentIds.has(s.id)
     );
-    console.log(
-      "pendingStudents",
-      pendingStudents.reduce((sum, s) => sum + (s["Monthly Fee"] || 0), 0)
-    );
 
     return pendingStudents.reduce(
       (sum, s) => sum + (parseFloat(s["Monthly Fee"]) || 0),

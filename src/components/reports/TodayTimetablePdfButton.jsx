@@ -63,8 +63,6 @@ const calculateDuration = (timeString) => {
         }
       });
     }
-console.log("todayTimetables",todayTimetables)
-    // Format and sort the timetable data
     const filteredAndFormatted = todayTimetables.map(item => {
       const studentNameLower = item.Student?.toLowerCase();
       const subjectLower = item.Subject?.toLowerCase();

@@ -43,7 +43,6 @@ const HistoricalTables = ({ students }) => {
     error: autoTimetablesError,
     hasSavedToday: autoTimetablesHasSavedToday, // NEW: Track if auto-timetables were saved for today
   } = useSelector((state) => state.autoTimetables); // This is your NEW autoTimetables reducer
-  console.log("manualTimetables", manualTimetables);
   useEffect(() => {
     dispatch(fetchAutoTimetablesForToday(user?.id));
 
@@ -139,7 +138,6 @@ const HistoricalTables = ({ students }) => {
   }, [today, rawDailyClassesData]);
 
   const monthlyFeeData = useMemo(() => {
-    console.log("monthlyPayments",monthlyPayments)
     if (!monthlyPayments) return {};
 
     const data = {};

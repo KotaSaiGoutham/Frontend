@@ -280,7 +280,7 @@ const DemoClassesPage = () => {
               <CircularProgress />
             </Box>
           ) : error ? (
-            <Alert severity="error">{error}</Alert>
+  <Alert severity="error">{error.error || "An unexpected error occurred."}</Alert>
           ) : sortedFilteredDemoClasses.length > 0 ? (
             <TableContainer
               component={Paper}

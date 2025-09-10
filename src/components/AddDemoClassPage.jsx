@@ -57,8 +57,6 @@ const AddDemoClassPage = () => {
 
   // Get demoToEdit from the location state
   const demoToEdit = location.state?.demoToEdit;
-  console.log("demoToEdit", demoToEdit);
-
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -217,7 +215,7 @@ const handleDatePickerChange = (dateValue) => {
         setSnackbarMessage("Demo class updated successfully!");
       } else {
         // Add new demo class
-        await dispatch(addDemoClass(dataToSend)).unwrap();
+        await dispatch(addDemoClass(dataToSend));
         setSnackbarMessage("Demo class added successfully!");
       }
 

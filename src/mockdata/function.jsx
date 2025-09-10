@@ -19,7 +19,6 @@ import { Typography, CircularProgress, Box } from "@mui/material";
 import { keyframes } from "@mui/system"; // Import keyframes from MUI system
 import { v4 as uuidv4 } from 'uuid';
 export const sortAndFilterTimetableData = (data) => {
-  console.log("data",data)
   // Helper to parse time string into minutes from midnight
   const timeToMinutes = (timeStr) => {
     const [time, period] = timeStr.split(" ");
@@ -631,7 +630,6 @@ const getSlotKey = (dateObj, timeStr, name) => {
 
 
 export function generateTimetables({ students, dateStr, user }) {
-  console.log("selectedDate", dateStr);
   if (!dateStr) return [];
 
   const parsedDate = parse(dateStr, "dd/MM/yyyy", new Date());
@@ -705,7 +703,6 @@ export const formatFirestoreDate = (timestamp) => {
 
 // This function calculates the expected end date
 export const calculateExpectedEndDate = (startDate, classDays, totalClasses) => {
-  console.log("startDate", "classDays","totalClasses",startDate,classDays,totalClasses)
   if (!startDate || totalClasses === 0 || !classDays || classDays.length === 0) {
     return 'N/A';
   }
