@@ -589,12 +589,20 @@ export const allExamTableColumns = [
     hasSort: true,
     icon: FaCalendarAlt,
   },
+
   {
     id: "stream",
     label: "Stream",
     align: "center",
     hasSort: true,
     icon: FaFlask,
+  },
+  {
+    id: "topic",
+    label: "Topic",
+    align: "center",
+    hasSort: true,
+    icon: FaBook,
   },
   {
     id: "status",
@@ -645,8 +653,8 @@ export const getExamTableColumns = (user) => {
         "studentName",
         "examDate",
         "stream",
+        "topic",
         "status",
-        "total",
         "actions",
       ].includes(column.id)
     ) {

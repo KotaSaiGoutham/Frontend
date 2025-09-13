@@ -54,7 +54,9 @@ const StudentExamPage = () => {
     if (Number(newValue) > maxScore) {
       // Replaced alert with a more user-friendly message
       // A modal or snackbar would be a better alternative
-      console.error(`The score for ${field} cannot be greater than ${maxScore}.`);
+      console.error(
+        `The score for ${field} cannot be greater than ${maxScore}.`
+      );
       setEditingCell(null); // Exit edit mode
       return;
     }
@@ -242,30 +244,35 @@ const StudentExamPage = () => {
                         borderBottom: "1px solid #e0e0e0",
                       }}
                     >
-                      <TableCell
-                        align="center"
-                        sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
-                      >
-                        {index + 1}
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
-                      >
-                        {exam.studentName}
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
-                      >
+                      {/* 1. S.No */}
+                      <TableCell align="center"                         sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+>{index + 1}</TableCell>
+
+                      {/* 2. Student Name */}
+                      <TableCell align="center"                         sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+>{exam.studentName}</TableCell>
+
+                      {/* 3. Exam Date */}
+                      <TableCell align="center"                         sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+>
                         {new Date(exam.examDate).toLocaleDateString("en-GB")}
                       </TableCell>
+
+                      {/* 4. Stream */}
+                      <TableCell align="center"                         sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+>{exam.stream}</TableCell>
+
+                      {/* 5. Topic */}
                       <TableCell
                         align="center"
                         sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
                       >
-                        {exam.stream}
+                        {Array.isArray(exam.topic)
+                          ? exam.topic.join(", ")
+                          : exam.topic || "-"}
                       </TableCell>
+
+                      {/* 6. Status */}
                       <TableCell
                         align="center"
                         sx={{
@@ -283,6 +290,7 @@ const StudentExamPage = () => {
                         />
                       </TableCell>
 
+                      {/* Subject Columns (Physics, Chemistry, Maths) */}
                       {user.isPhysics && (
                         <TableCell align="center">
                           {editingCell?.examId === exam.id &&
@@ -298,14 +306,14 @@ const StudentExamPage = () => {
                               <TextField
                                 defaultValue={exam.physics || 0}
                                 type="number"
-                                size="small" // Changed to 'small'
+                                size="small"
                                 InputProps={{
                                   inputProps: {
                                     min: 0,
                                     max: exam.maxPhysics || 100,
                                   },
                                 }}
-                                sx={{ width: "70px" }} // Add a fixed width to make it smaller
+                                sx={{ width: "70px" }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") {
                                     handleSaveEdit(
@@ -341,7 +349,11 @@ const StudentExamPage = () => {
                                 gap: 1,
                               }}
                             >
-                              <Typography>{exam.physics || 0}</Typography>
+                              <Typography>
+                                {`${exam.physics || 0}/${
+                                  exam.maxPhysics || 100
+                                }`}
+                              </Typography>
                               <IconButton
                                 onClick={() =>
                                   handleStartEdit(exam.id, "physics")
@@ -355,7 +367,6 @@ const StudentExamPage = () => {
                         </TableCell>
                       )}
 
-                      {/* Chemistry Cell */}
                       {user.isChemistry && (
                         <TableCell align="center">
                           {editingCell?.examId === exam.id &&
@@ -371,14 +382,14 @@ const StudentExamPage = () => {
                               <TextField
                                 defaultValue={exam.chemistry || 0}
                                 type="number"
-                                size="small" // Changed to 'small'
+                                size="small"
                                 InputProps={{
                                   inputProps: {
                                     min: 0,
                                     max: exam.maxChemistry || 100,
                                   },
                                 }}
-                                sx={{ width: "70px" }} // Add a fixed width to make it smaller
+                                sx={{ width: "70px" }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") {
                                     handleSaveEdit(
@@ -414,7 +425,11 @@ const StudentExamPage = () => {
                                 gap: 1,
                               }}
                             >
-                              <Typography>{exam.chemistry || 0}</Typography>
+                              <Typography>
+                                {`${exam.chemistry || 0}/${
+                                  exam.maxChemistry || 100
+                                }`}
+                              </Typography>
                               <IconButton
                                 onClick={() =>
                                   handleStartEdit(exam.id, "chemistry")
@@ -427,18 +442,16 @@ const StudentExamPage = () => {
                           )}
                         </TableCell>
                       )}
-                      <TableCell
-                        align="center"
-                        sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
-                      >
-                        {(exam.maths || 0) +
-                          (exam.physics || 0) +
-                          (exam.chemistry || 0)}{" "}
-                        /{" "}
-                        {(exam.maxMaths || 0) +
-                          (exam.maxPhysics || 0) +
-                          (exam.maxChemistry || 0)}
-                      </TableCell>
+
+                      {user.isMaths && (
+                        <TableCell align="center">
+                          <Typography>{`${exam.maths || 0}/${
+                            exam.maxMaths || 100
+                          }`}</Typography>
+                        </TableCell>
+                      )}
+
+                      {/* 7. Actions */}
                       <TableCell align="center" sx={{ py: 1.5 }}>
                         <Box sx={{ display: "inline-flex", gap: 0.5 }}>
                           <ActionButtons

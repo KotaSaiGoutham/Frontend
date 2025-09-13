@@ -9,6 +9,7 @@ import {
   MuiInput,
   MuiSelect,
   MuiDatePicker,
+  MuiMultiSelectChip,
 } from "./customcomponents/MuiCustomFormFields";
 import {
   FaUser,
@@ -50,25 +51,27 @@ const StudentExamFormPage = () => {
     total: 0,
     examDate: format(new Date(), "yyyy-MM-dd"),
     status: "Pending",
-    topic: "",
+    topic: [],
   });
-
 
   useEffect(() => {
     if (examToEdit) {
-       const initialMarks = {};
-    let totalOutOf = 0;
+      const initialMarks = {};
+      let totalOutOf = 0;
 
-    const subjects = ["Physics", "Chemistry", "Maths"];
-    subjects.forEach((subject) => {
-      const maxKey = `max${subject}`;
-      const marksKey = subject.toLowerCase();
+      const subjects = ["Physics", "Chemistry", "Maths"];
+      subjects.forEach((subject) => {
+        const maxKey = `max${subject}`;
+        const marksKey = subject.toLowerCase();
 
-      if (examToEdit.hasOwnProperty(marksKey) && examToEdit.hasOwnProperty(maxKey)) {
-        initialMarks[subject] = examToEdit[marksKey];
-        totalOutOf += examToEdit[maxKey];
-      }
-    });
+        if (
+          examToEdit.hasOwnProperty(marksKey) &&
+          examToEdit.hasOwnProperty(maxKey)
+        ) {
+          initialMarks[subject] = examToEdit[marksKey];
+          totalOutOf += examToEdit[maxKey];
+        }
+      });
 
       setFormData({
         studentId: examToEdit.studentId,
@@ -76,11 +79,15 @@ const StudentExamFormPage = () => {
         subject: examToEdit.subject, // This ensures formData.subject is set correctly
         stream: examToEdit.stream,
         marks: initialMarks,
-        outOf: user.isPhysics?examToEdit?.maxPhysics:examToEdit?.maxChemistry,
+        outOf: user.isPhysics
+          ? examToEdit?.maxPhysics
+          : examToEdit?.maxChemistry,
         total: examToEdit.total,
         examDate: format(new Date(examToEdit.examDate), "yyyy-MM-dd"),
         status: examToEdit.status,
-        topic: examToEdit.topic,
+        topic: Array.isArray(examToEdit.topic)
+          ? examToEdit.topic
+          : [examToEdit.topic], // Ensure it's always an array
       });
     } else {
       // Logic for adding a new exam
@@ -98,12 +105,10 @@ const StudentExamFormPage = () => {
         total: 0,
         examDate: format(new Date(), "yyyy-MM-dd"),
         status: "Pending",
-        topic: "",
+        topic: [], // Initialize as an empty array
       });
     }
   }, [examToEdit, user]);
-
-
 
   const sortedStudents = [...students].sort((a, b) =>
     a.Name.localeCompare(b.Name)
@@ -140,10 +145,19 @@ const StudentExamFormPage = () => {
     }));
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+const handleInputChange = (e) => {
+  const { name, value } = e.target;
+  let updatedValue = value;
+  let updatedName = name;
+
+  // Manual check for the MuiMultiSelectChip
+  // The 'value' from a multi-select is an array, but the 'name' is undefined
+  if (Array.isArray(value) && name === undefined) {
+    updatedName = "topic"; // Hard-code the name for this specific input
+  }
+
+  setFormData((prev) => ({ ...prev, [updatedName]: updatedValue }));
+};
 
   const handleDatePickerChange = (date) => {
     setFormData((prev) => ({
@@ -182,9 +196,9 @@ const StudentExamFormPage = () => {
       );
       return;
     }
-const userId = localStorage.getItem("userId");
+    const userId = localStorage.getItem("userId");
     const studentExamData = {
-      userId:userId,
+      userId: userId,
       studentId: formData.studentId,
       studentName: formData.studentName,
       stream: formData.stream,
@@ -193,7 +207,11 @@ const userId = localStorage.getItem("userId");
       recordedBy: user.id,
       status: formData.status,
       topic: formData.topic,
-      Subject:user.isPhysics?"Physics":user.isChemistry?"Chemistry":"Any"
+      Subject: user.isPhysics
+        ? "Physics"
+        : user.isChemistry
+        ? "Chemistry"
+        : "Any",
     };
 
     if (MARK_SCHEMES[formData.stream]) {
@@ -247,20 +265,18 @@ const userId = localStorage.getItem("userId");
   });
 
   const filteredTopicOptions = useMemo(() => {
-    const subject = user.subject; // Depend only on formData.subject
-    if (!subject) return [{ value: "", label: "Select Topic" }];
+    const subject = user.subject;
+    if (!subject) return [];
     const filtered = topicOptions.filter((t) => t.subject === subject);
     if (filtered.length === 0)
-      return [{ value: "", label: "No Topics Available" }];
-    return [{ value: "", label: "Select Topic" }].concat(
-      filtered
-        .sort((a, b) => a.topic.localeCompare(b.topic))
-        .map((t) => ({
-          value: t.topic,
-          label: t.topic,
-        }))
-    );
-  }, [user.subject]); // The useMemo dependency is now only on formData.subject
+      return [{ value: "No Topics Available", label: "No Topics Available" }];
+    return filtered
+      .sort((a, b) => a.topic.localeCompare(b.topic))
+      .map((t) => ({
+        value: t.topic,
+        label: t.topic,
+      }));
+  }, [user.subject]);
 
   const isEditMode = !!examToEdit;
 
@@ -324,7 +340,7 @@ const userId = localStorage.getItem("userId");
                 name="examDate"
                 value={formData.examDate}
                 onChange={handleDatePickerChange}
-                minDate={startOfDay(new Date())}
+                // minDate={startOfDay(new Date())}
                 required
               />
               <MuiSelect
@@ -340,7 +356,7 @@ const userId = localStorage.getItem("userId");
                 ]}
                 required
               />
-              <MuiSelect
+              <MuiMultiSelectChip
                 label="Topic"
                 icon={FaLightbulb}
                 name="topic"
