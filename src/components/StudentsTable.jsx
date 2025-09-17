@@ -199,6 +199,13 @@ const StudentsTable = () => {
   const [studentToDelete, setStudentToDelete] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogAction, setDialogAction] = useState(null);
+  const [displayedStudents, setDisplayedStudents] = useState(filteredStudents);
+  useEffect(() => {
+    if (sortEnabled) {
+      setDisplayedStudents(filteredStudents);
+    }
+  }, [filteredStudents, sortEnabled]);
+
   const open = Boolean(anchorEl);
 
   const handleClick = (event, student) => {
@@ -428,10 +435,11 @@ const StudentsTable = () => {
     setConfirmDialogOpen(true);
   };
   const sortedFilteredStudents = useMemo(() => {
-    let studentsToSort = [...filteredStudents];
     if (!sortEnabled) {
-      return filteredStudents; // Return the current order without sorting
+      return displayedStudents;
     }
+
+    let studentsToSort = [...filteredStudents];
 
     studentsToSort.sort((a, b) => {
       // Primary Sort: Inactive students move to the bottom
@@ -517,7 +525,7 @@ const StudentsTable = () => {
     });
 
     return studentsToSort;
-  }, [filteredStudents, orderBy, order, sortEnabled]);
+  }, [filteredStudents, orderBy, order, sortEnabled, displayedStudents]);
 
   // Handles changes in filter input fields
   const handleFilterChange = (e) => {
@@ -568,16 +576,35 @@ const StudentsTable = () => {
     setOrderBy(property);
   };
   const handleClassChange = async (studentId, increment) => {
-    if (updatingClasses) return; // Prevent multiple updates simultaneously
-    setUpdatingClasses(studentId); // Show loading spinner for this student's classes
-    setSortEnabled(false); // Disable sorting
+    if (updatingClasses) return;
 
-    const delta = increment ? 1 : -1; // Determine if incrementing or decrementing
+    const student = students.find((s) => s.id === studentId);
+    if (!student) return;
+
+    const currentClasses = student.classesCompleted || 0;
+    const delta = increment ? 1 : -1;
+
+    if (!increment && currentClasses === 0) {
+      console.log("Cannot decrease classes below zero.");
+      setSnackbarMessage("Cannot decrease classes below zero.");
+      setSnackbarSeverity("warning");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    setUpdatingClasses(studentId);
+
+    // ✅ Temporarily disable sorting so row doesn't jump
+    setSortEnabled(false);
 
     try {
-      // Dispatch the action to update classes completed
       const updatedStudent = await dispatch(
         updateClassesCompleted(studentId, delta, user.name)
+      );
+
+      // ✅ Update displayedStudents manually so UI reflects the change
+      setDisplayedStudents((prev) =>
+        prev.map((s) => (s.id === studentId ? { ...s, ...updatedStudent } : s))
       );
 
       setSnackbarMessage(
@@ -590,8 +617,7 @@ const StudentsTable = () => {
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     } finally {
-      setUpdatingClasses(null); // Hide loading spinner
-      setSortEnabled(true); // Re-enable sorting after the update is complete
+      setUpdatingClasses(null);
     }
   };
 
