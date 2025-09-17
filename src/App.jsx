@@ -52,6 +52,9 @@ import StudentExam from "./components/StudentExam";
 import Analytics from "./components/Analytics";
 import AddStudentExamPage from "./components/AddStudentExamPage";
 import WeekSyllabusPage from "./components/WeekSyallabus";
+import RevisionProgramme from "./components/utils/revisionProgramme";
+import RevisionProgramDetails from "./components/utils/RevisionProgramDetails";
+import RevisionStudentsPage from "./components/revisionStudents/RevisionStudentsPage";
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get from Redux
   const token = localStorage.getItem("token"); // Also check localStorage for robustness on initial load
@@ -87,10 +90,15 @@ function App() {
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route
+                path="/revision-program/register"
+                element={<RevisionProgramme />}
+              />
+              <Route
+                path="/revision-program/details"
+                element={<RevisionProgramDetails />}
+              />
 
-              {/* Protected Routes - Nested structure */}
-              {/* The outer Route with AuthLayout and PrivateRoute ensures */}
-              {/* that all nested routes inherit the layout and require authentication. */}
               <Route
                 element={
                   <PrivateRoute>
@@ -98,23 +106,18 @@ function App() {
                   </PrivateRoute>
                 }
               >
-                {/* Individual protected routes inside the AuthLayout */}
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/students" element={<StudentsTable />} />
                 <Route path="/demo-classes" element={<DemoClassesPage />} />
-                   <Route path="/reports" element={<Reports />} />
+                <Route path="/reports" element={<Reports />} />
                 <Route path="/student-exams" element={<StudentExam />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/week-syllabus" element={<WeekSyllabusPage />} />
- 
-                  <Route
+                <Route
                   path="/add-student-exam"
                   element={<AddStudentExamPage />}
                 />
-                <Route
-                  path="/add-demo-class"
-                  element={<AddDemoClassPage />}
-                />{" "}
+                <Route path="/add-demo-class" element={<AddDemoClassPage />} />{" "}
                 {/* NEW ROUTE */}
                 <Route
                   path="/add-expenditure"
@@ -132,6 +135,10 @@ function App() {
                 <Route path="/add-student" element={<AddStudent />} />
                 <Route path="/add-employee" element={<AddEmployeePage />} />
                 <Route path="/add-timetable" element={<AddTimetablePage />} />
+                <Route
+                  path="/revision-students"
+                  element={<RevisionStudentsPage />}
+                />
               </Route>
 
               {/* Fallback Route: Redirects unhandled paths based on authentication status */}

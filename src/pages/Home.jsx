@@ -24,6 +24,7 @@ import SubjectCard from "./SubjectCard";
 import BenefitsSection from "./BenefitsSection";
 import Benefits from "./BenefitsSection";
 import StatsSection from "./StatsSection";
+import BannerPopup from "../components/customcomponents/BannerPopup";
 const faculties = [
   // {
   //   id: 1,
@@ -254,6 +255,7 @@ const Home = () => {
 
   return (
     <div className="home">
+      <BannerPopup/>
       <PhoneDialer />
       {/* Hero Section */}
       <FlashBanner />

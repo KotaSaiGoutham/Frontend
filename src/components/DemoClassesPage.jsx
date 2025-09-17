@@ -42,7 +42,7 @@ import { ActionButtons } from "./customcomponents/TableStatusSelect";
 import TableHeaders from "./students/TableHeaders";
 import { demoTableColumns } from "../mockdata/Options";
 
-const DemoClassesPage = () => {
+const DemoClassesPage = () => { 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 

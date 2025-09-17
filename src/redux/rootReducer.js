@@ -8,6 +8,7 @@ import demoClassReducer from "./reducers/demoClassReducer";
 import autoTimetablesReducer from "./reducers/autoTimetablesReducer";
 import { expenditureReducer } from "./reducers/expenditureReducer";
 import studentExamReducer from "./reducers/studentExamReducer";
+import studentProgramReducer from "./reducers/studentprogram";
 const rootReducer = combineReducers({
   auth: authReducer, // <-- Ensure your authReducer is assigned to the 'auth' key
   classes: classReducer,
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   autoTimetables: autoTimetablesReducer, // <--- This key MUST be 'demoClasses'
   expenditures: expenditureReducer,
   studentExams: studentExamReducer,
+  studentprogram: studentProgramReducer
 });
 
 export default rootReducer;

@@ -1,5 +1,8 @@
 import {
   API_REQUEST,
+  REVISION_PROGRAM_REGISTER_REQUEST,
+  REVISION_PROGRAM_REGISTER_SUCCESS,
+  REVISION_PROGRAM_REGISTER_FAILURE,
   FETCH_CLASSES_REQUEST,
   FETCH_CLASSES_SUCCESS,
   FETCH_CLASSES_FAILURE,
@@ -143,9 +146,21 @@ import {
   UPDATE_SYLLABUS_REQUEST,
   UPDATE_SYLLABUS_SUCCESS,
   UPDATE_SYLLABUS_FAILURE,
-    UPDATE_EMPLOYEE_REQUEST,
+  UPDATE_EMPLOYEE_REQUEST,
   UPDATE_EMPLOYEE_SUCCESS,
   UPDATE_EMPLOYEE_FAILURE,
+  DELETE_REVISION_STUDENT_REQUEST,
+  DELETE_REVISION_STUDENT_SUCCESS,
+  DELETE_REVISION_STUDENT_FAILURE,
+  FETCH_REVISION_STUDENTS_FAILURE,
+  FETCH_REVISION_STUDENTS_REQUEST,
+  FETCH_REVISION_STUDENTS_SUCCESS,
+  UPDATE_PAYMENT_STATUS_REQUEST,
+  UPDATE_PAYMENT_STATUS_SUCCESS,
+  UPDATE_PAYMENT_STATUS_FAILURE,
+    UPDATE_STUDENT_STATUS_REQUEST,
+  UPDATE_STUDENT_STATUS_SUCCESS,
+  UPDATE_STUDENT_STATUS_FAILURE,
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -158,6 +173,7 @@ import {
   generateMockStudentDemographics,
   generateMockPaymentStatus,
 } from "../../mockdata/mockdata";
+import { constructNow } from "date-fns";
 
 // --- 3. Generic API Request Action (Unchanged) ---
 export const apiRequest = ({
@@ -422,16 +438,6 @@ export const fetchStudents = () =>
       dispatch({
         type: FETCH_STUDENTS_SUCCESS,
         payload: studentsFromApi,
-      });
-
-      // Charts are generated using the actual fetched student data.
-      dispatch({
-        type: UPDATE_DASHBOARD_CHART_DATA,
-        payload: {
-          testResults: generateMockTestScores(), // This one is always mock
-          studentDemographics: generateMockStudentDemographics(studentsFromApi),
-          paymentStatus: generateMockPaymentStatus(studentsFromApi),
-        },
       });
     },
     onFailure: (error, dispatch) => {
@@ -711,7 +717,9 @@ export const addTimetableEntry = (timetableData) =>
         payload: data, // The response from the backend
       });
       // Optionally, refetch the entire timetable list to update UI immediately
-      dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
+      dispatch(
+        fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
+      );
     },
     onFailure: (error, dispatch) => {
       console.error("Error adding timetable entry:", error);
@@ -742,7 +750,9 @@ export const updateTimetableEntry = (timetableData) =>
         type: ADD_TIMETABLE_SUCCESS,
         payload: data,
       });
-      dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
+      dispatch(
+        fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
+      );
     },
     onFailure: (error, dispatch) => {
       console.error("Error updating timetable entry:", error);
@@ -799,7 +809,9 @@ export const deleteTimetable = (timetableId) =>
         payload: timetableId, // Send the ID of the deleted item for potential UI updates
       });
       // Re-fetch to update the list immediately after successful deletion
-      dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
+      dispatch(
+        fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
+      );
     },
     onFailure: (error, dispatch) => {
       console.error("Error deleting timetable entry:", error);
@@ -900,7 +912,8 @@ export const addDemoClass = (demoClassData) =>
     },
     onFailure: (error, dispatch) => {
       console.error("Error adding demo class:", error);
-      const errorMessage = error.error || error.message || "Failed to add demo class";
+      const errorMessage =
+        error.error || error.message || "Failed to add demo class";
       dispatch({
         type: ADD_DEMO_CLASS_FAILURE,
         payload: { error: errorMessage },
@@ -1024,7 +1037,9 @@ export const generateAndSaveTimetables = (timetablesToSave) =>
         payload: data.savedTimetables, // Backend should return saved data
       });
       // Crucial: Re-fetch existing classes to include the newly saved ones
-      dispatch(fetchUpcomingClasses({date :new Date().toLocaleDateString("en-GB")}));
+      dispatch(
+        fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
+      );
     },
     onFailure: (error, dispatch) => {
       console.error("Error saving generated timetables:", error);
@@ -1499,14 +1514,12 @@ export const updateWeeklySyllabus = (studentId, updatedLessons) =>
     },
   });
 
-
 export const updateEmployeeData = (employeeId, updatedData) =>
   apiRequest({
     url: `/api/data/employees/${employeeId}`, // The backend endpoint
     method: "PATCH", // Use PATCH for partial updates
     data: updatedData, // Send only the updated fields (e.g., { salary: 5000 } or { paid: true })
     onStart: UPDATE_EMPLOYEE_REQUEST, // ✅ make it same style as demo
-
 
     onSuccess: (data, dispatch) => {
       // Assuming your backend returns the updated employee object directly
@@ -1542,4 +1555,126 @@ export const fetchStudentExamsByStudent = (studentId) =>
       });
     },
     authRequired: true,
+  });
+// Updated the dispatched actions in the thunk
+export const addrevisionProgrammestudent = (studentData) =>
+  apiRequest({
+    url: "/api/auth/revisionprogramRegistertion",
+    method: "POST",
+    data: studentData,
+    onStart: REVISION_PROGRAM_REGISTER_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: REVISION_PROGRAM_REGISTER_SUCCESS,
+        payload: data,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error adding student:", error);
+      const errorMessage =
+        error.error || error.message || "Failed to add student";
+      if (error.status === 401 || error.status === 403) {
+        dispatch(
+          setAuthError(
+            "Authentication failed or session expired. Please log in again."
+          )
+        );
+      }
+      dispatch({
+        type: REVISION_PROGRAM_REGISTER_FAILURE,
+        payload: { error: errorMessage },
+      });
+    },
+    authRequired: false,
+  });
+export const fetchRevisionStudents = () =>
+  apiRequest({
+    url: "/api/data/revisionStudents",
+    method: "GET",
+    onStart: FETCH_REVISION_STUDENTS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      console.log("✅ fetched revision students", data);
+      const studentsFromApi = data || [];
+      dispatch({
+        type: FETCH_REVISION_STUDENTS_SUCCESS,
+        payload: studentsFromApi,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("❌ fetchRevisionStudents error:", error);
+      const errorMessage =
+        error.error || error.message || "Failed to fetch revision students";
+
+      // If authentication is required later, handle expired session
+      if (error.status === 401 || error.status === 403) {
+        dispatch(setAuthError("Session expired, please login again"));
+      }
+
+      dispatch({
+        type: FETCH_REVISION_STUDENTS_FAILURE,
+        payload: { error: errorMessage },
+      });
+    },
+    authRequired: false, // ✅ change to true if this route needs auth in future
+  });
+
+
+
+export const deleteRevisionStudent = (studentId) => (dispatch) =>
+  apiRequest({
+    url: `/api/data/revision/students/${studentId}`,
+    method: "DELETE",
+    onSuccess: () =>
+      dispatch({ type: DELETE_REVISION_STUDENT_SUCCESS, payload: studentId }),
+    onFailure: (error) =>
+      dispatch({
+        type: DELETE_REVISION_STUDENT_FAILURE,
+        payload: { error: error.message || "Failed to delete student" },
+      }),
+    authRequired: true,
+  });
+export const updatePaymentStatus = (studentId, installmentNumber, newStatus) =>
+  apiRequest({
+    url: "/api/data/updatePaymentStatus",
+    method: "PUT",
+    data: { studentId, installmentNumber, newStatus },
+    onStart: UPDATE_PAYMENT_STATUS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      // Dispatch success and pass the updated student ID, installment, and new status
+      dispatch({
+        type: UPDATE_PAYMENT_STATUS_SUCCESS,
+        payload: { studentId, installmentNumber, newStatus },
+      });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPDATE_PAYMENT_STATUS_FAILURE,
+        payload: { error: error.message },
+      });
+    },
+    authRequired: false,
+  });
+  // src/redux/actions/index.js (or similar)
+
+export const updateStudentStatus = (studentId, newStatus) =>
+  apiRequest({
+    url: "/api/data/updateStudentStatus",
+    method: "PUT",
+    data: { studentId, newStatus },
+    onStart: UPDATE_STUDENT_STATUS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_STUDENT_STATUS_SUCCESS,
+        payload: { studentId, newStatus },
+      });
+       dispatch(fetchRevisionStudents());
+      
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPDATE_STUDENT_STATUS_FAILURE,
+        payload: { error: error.message },
+      });
+    },
+    authRequired: false,
   });

@@ -216,6 +216,7 @@ export const DeleteButton = ({ onClick, size = 'medium' }) => (
 
 export const ActionButtons = ({ onEdit, onDelete, size = 'medium' }) => (
   <>
+  
     <EditButton onClick={onEdit} size={size} />
     <Divider 
       orientation="vertical" 

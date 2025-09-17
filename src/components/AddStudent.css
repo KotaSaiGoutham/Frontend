@@ -143,6 +143,12 @@
     margin-top: 2rem;
 }
 
+.add-student-button-group-center {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
 .add-student-primary-button,
 .add-student-secondary-button {
     padding: 0.8rem 1.5rem;

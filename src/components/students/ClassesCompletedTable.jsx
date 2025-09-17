@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import {
   Table,
   TableBody,
@@ -94,6 +95,9 @@ const ClassesCompletedTable = ({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
+  // Get user data from Redux store
+  const { user } = useSelector((state) => state.auth);
+
   const studentStartDate = normalizeTimestamp(student.startDate);
   const studentEndDate = normalizeTimestamp(student.endDate);
 
@@ -171,9 +175,60 @@ const ClassesCompletedTable = ({
     ? Math.min(100, (totalDuration / 12) * 100)
     : 100;
 
+  // Check if course is completed (100%)
+  const isCourseCompleted = progressPercentage === 100;
+
+  // Generate the easy-to-copy message with dynamic user data
+  const generateEasyCopyMessage = () => {
+    // Get subject from user data or fallback to student subject
+    const subject = user?.subject || student.Subject;
+
+    // Get payment number from user data or use default
+    const paymentNumber = user?.paymentNumber || "8019603679";
+
+    // Get name from user data or use default
+    const userName = user?.name || "B Karunakar Reddy";
+
+    // Function to get a time-based greeting
+    const getGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) {
+        return "Good morning";
+      }
+      if (hour < 18) {
+        return "Good afternoon";
+      }
+      return "Good evening";
+    };
+
+    return `Electron Academy
+
+Hi Sir/Madam, ${getGreeting()}.
+
+${
+  student.Name
+}'s 12 ${subject} classes* have been successfully completed from *${formatDate(
+      student.startDate
+    )} to ${formatDate(student.endDate)}*.
+
+Kindly request you to *transfer the fee for the next set of classes*.
+
+You can pay via *GPay or PhonePe* to:
+
+📱 ${paymentNumber}
+
+👤 ${userName}
+
+🏫 Electron Educational Academy
+
+For any suggestions or clarifications, feel free to call me back.
+
+Thank you 🙏`;
+  };
+
   // Handle copy to clipboard
   const handleCopyToClipboard = () => {
-    const textToCopy = generateShareText();
+    const textToCopy = generateEasyCopyMessage();
     navigator.clipboard
       .writeText(textToCopy)
       .then(() => {
@@ -187,7 +242,7 @@ const ClassesCompletedTable = ({
       });
   };
 
-  // Generate shareable text
+  // Generate shareable text for other functions
   const generateShareText = () => {
     const status = isPaymentCycleOngoing ? "In Progress" : "Completed";
     let text = `*${student.Name}'s Classes ${status}*\n`;
@@ -514,20 +569,35 @@ const ClassesCompletedTable = ({
                     gap: 1,
                   }}
                 >
-                  <Tooltip title="Copy to clipboard">
-                    <IconButton
-                      size="medium"
-                      onClick={handleCopyToClipboard}
-                      sx={{
-                        backgroundColor: "rgba(255, 255, 255, 0.15)",
-                        color: "white",
-                        "&:hover": {
-                          backgroundColor: "rgba(255, 255, 255, 0.25)",
-                        },
-                      }}
-                    >
-                      <ContentCopyIcon fontSize="medium" />
-                    </IconButton>
+                  <Tooltip
+                    title={
+                      isCourseCompleted
+                        ? "Copy payment request message"
+                        : "Complete course to enable copy"
+                    }
+                  >
+                    <span>
+                      <IconButton
+                        size="medium"
+                        onClick={handleCopyToClipboard}
+                        disabled={!isCourseCompleted}
+                        sx={{
+                          backgroundColor: isCourseCompleted
+                            ? "rgba(255, 255, 255, 0.15)"
+                            : "rgba(255, 255, 255, 0.05)",
+                          color: isCourseCompleted
+                            ? "white"
+                            : "rgba(255, 255, 255, 0.5)",
+                          "&:hover": {
+                            backgroundColor: isCourseCompleted
+                              ? "rgba(255, 255, 255, 0.25)"
+                              : "rgba(255, 255, 255, 0.05)",
+                          },
+                        }}
+                      >
+                        <ContentCopyIcon fontSize="medium" />
+                      </IconButton>
+                    </span>
                   </Tooltip>
 
                   <Tooltip title="Share via WhatsApp">

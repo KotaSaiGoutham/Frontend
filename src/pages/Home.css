@@ -1,6 +1,20 @@
 .home {
-    text-align: center;
-  }
+  text-align: center;
+  position: relative;
+}
+
+/* Prevent scrolling when popup is open */
+body.popup-open {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Make the clickable areas more visible during development */
+a[aria-label="Know More"],
+a[aria-label="Enroll Now"] {
+  border: 1px dashed red; /* Remove this in production */
+  background-color: rgba(255, 0, 0, 0.1); /* Remove this in production */
+}
   
  .hero {
   background: linear-gradient(135deg, #f8f8f8, #dcd9da);

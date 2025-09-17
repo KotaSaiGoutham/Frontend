@@ -1,100 +1,93 @@
-/* Navbar.css */
-
 /* --- AUTH BUTTONS CONTAINER --- */
 .auth-buttons {
     display: flex;
-    gap: 12px; /* Maintain gap between buttons */
+    gap: 12px;
     margin-left: 20px;
-    /* This gap ensures separation between login/signup and other nav links */
 }
 
 /* --- BOOK DEMO BUTTON (MOST PROMINENT CTA) --- */
 .book-btn {
     display: inline-block;
-    background-color: #DB1A66; /* Bright Pink for strong CTA */
-    color: #fff !important; /* White text for contrast */
+    background-color: #DB1A66;
+    color: #fff !important;
     padding: 12px 24px;
-    font-weight: 700; /* Make it bolder */
+    font-weight: 700;
     font-size: 16px;
     border-radius: 8px;
     text-decoration: none;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Add box-shadow to transition */
-    border: none; /* Ensure no default border */
-    box-shadow: 0 4px 15px rgba(219, 26, 102, 0.4); /* Stronger initial shadow */
-    /* Removed margin-left here, it will be handled by auth-buttons gap */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    box-shadow: 0 4px 15px rgba(219, 26, 102, 0.4);
 }
 
 .book-btn:hover {
-    background-color: #facc15; /* Yellow on hover */
-    color: #1e1e1e !important; /* Dark text on hover */
-    box-shadow: 0 6px 20px rgba(250, 204, 21, 0.6); /* More prominent shadow on hover */
+    background-color: #facc15;
+    color: #1e1e1e !important;
+    box-shadow: 0 6px 20px rgba(250, 204, 21, 0.6);
 }
 
-/* Optional: Active state for book-btn */
 .book-btn.active-btn {
-    background-color: #292551; /* Deep Navy when active */
+    background-color: #292551;
     color: #fff !important;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 /* --- LOGIN/SIGNUP/DASHBOARD/LOGOUT BUTTONS (Less prominent, but visible) --- */
 .auth-btn {
-    /* Base styles for Login, Sign Up, Dashboard, Logout */
-    background-color: transparent; /* Transparent background */
-    color: #f0f0f0 !important; /* White-ish text */
-    padding: 10px 18px; /* Slightly less padding than book-btn */
-    font-weight: 500; /* Lighter font-weight */
+    background-color: transparent;
+    color: #f0f0f0 !important;
+    padding: 10px 18px;
+    font-weight: 500;
     border-radius: 6px;
     text-decoration: none;
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-    border: 1px solid #f0f0f0; /* Subtle white-ish border */
-    box-shadow: none; /* No initial shadow */
+    border: 1px solid #f0f0f0;
+    box-shadow: none;
 }
 
 .auth-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* Slight white tint on hover */
-    color: #f0f0f0 !important; /* Keep text white-ish */
-    border-color: #f0f0f0; /* Keep border white-ish */
-    box-shadow: 0 1px 4px rgba(255, 255, 255, 0.2); /* Very subtle shadow on hover */
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #f0f0f0 !important;
+    border-color: #f0f0f0;
+    box-shadow: 0 1px 4px rgba(255, 255, 255, 0.2);
 }
 
-/* Specific style for logout button if needed (e.g., different border color) */
 .logout-btn {
-    border-color: #DB1A66; /* Pink border for logout */
+    border-color: #DB1A66;
     color: #f0f0f0 !important;
 }
 
 .logout-btn:hover {
-    background-color: #DB1A66; /* Pink background on hover */
+    background-color: #DB1A66;
     color: #fff !important;
     border-color: #DB1A66;
 }
 
-
-/* Optional: Active state for auth-btn */
 .auth-btn.active-btn {
-    background-color: #DB1A66; /* Pink when active */
+    background-color: #DB1A66;
     color: #ffffff !important;
     border-color: #DB1A66;
     box-shadow: 0 2px 8px rgba(219, 26, 102, 0.3);
 }
 
-
 /* --- Base Navbar Styles --- */
 html, body {
-    overflow-x: hidden; /* Prevent horizontal scroll on body */
+    overflow-x: hidden;
+}
+
+.navbar-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #292551;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #292551; /* Deep Navy */
     padding: 0px 24px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-left {
@@ -116,34 +109,29 @@ html, body {
     margin-left: 10px;
     font-size: 22px;
     font-weight: 600;
-    color: #F6A11F; /* Amber for title */
+    color: #F6A11F;
     text-decoration: none;
 }
 
 .navbar-right {
     display: flex;
     align-items: center;
-    /* Removed white-space: nowrap; to help with overflow */
 }
 
 .navbar-right a {
-    /* Base styles for all navigation links */
     margin-left: 24px;
     text-decoration: none;
     color: #f0f0f0;
     font-weight: 500;
     position: relative;
     transition: color 0.3s;
-    /* white-space: nowrap; // Consider removing or applying selectively if causing overflow */
 }
 
-/* Styles for active links (applied by NavLink's activeClassName="active-link") */
 .navbar-right a.active-link {
     color: #FCCD11;
     font-weight: 600;
 }
 
-/* Underline for normal and active links on hover */
 .navbar-right a::after {
     content: '';
     position: absolute;
@@ -164,33 +152,72 @@ html, body {
 }
 
 /* --- "Try it!" HIGHLIGHT --- */
-.navbar-right .try-it-highlight {
-    font-size: 0.7em;
-    font-weight: 700;
+/* Base styles for the program link on desktop */
+.program-highlight-link-desktop {
+    background: linear-gradient(135deg, #facc15 0%, #fbbf24 100%);
+    color: #1e1e1e !important;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-weight: 700 !important;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    animation: bounce-in 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards, pulse-border 2s infinite;
+    perspective: 1000px;
+}
+
+.program-highlight-link-desktop:hover {
+    transform: translateY(-5px) rotateX(5deg);
+    box-shadow: 0 10px 30px rgba(250, 204, 21, 0.8);
+    color: #1e1e1e !important;
+}
+
+.program-highlight-link-desktop::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0)
+    );
+    transform: rotate(30deg);
+    transition: all 0.5s ease;
+    z-index: -1;
+}
+
+.program-highlight-link-desktop:hover::before {
+    animation: shine 1s forwards;
+}
+
+.program-highlight-link-desktop.active-link {
+    background: linear-gradient(135deg, #db1a66 0%, #be185d 100%);
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(219, 26, 102, 0.4);
+}
+
+.program-highlight-link-desktop.active-link .try-it-highlight {
+    background-color: #facc15;
     color: #1e1e1e;
-    background-color: #FCCD11;
-    margin-left: 8px;
-    padding: 3px 8px;
-    border-radius: 12px;
-    animation: bounceAndFade 2.5s infinite ease-in-out;
-    transform-origin: bottom;
-    display: inline-block;
-    box-shadow: 0 2px 8px rgba(252, 205, 17, 0.4);
 }
 
-.navbar-right a:hover .try-it-highlight,
-.navbar-right a.active-link .try-it-highlight {
-    background-color: #DB1A66;
-    color: #ffffff;
-    box-shadow: 0 2px 10px rgba(219, 26, 102, 0.6);
-    animation: none;
-}
-
-@keyframes bounceAndFade {
-    0%, 100% { transform: translateY(0); opacity: 1; }
-    20% { transform: translateY(-5px); opacity: 1; }
-    50% { transform: translateY(0); opacity: 0.7; }
-    80% { transform: translateY(-2px); opacity: 0.9; }
+.try-it-highlight {
+    font-size: 0.75em;
+    font-weight: 800;
+    color: #1e1e1e;
+    background-color: #db1a66;
+    margin-left: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    animation: pulse 2s infinite;
+    box-shadow: 0 2px 8px rgba(219, 26, 102, 0.4);
 }
 
 /* --- MOBILE RESPONSIVE STYLES --- */
@@ -200,6 +227,50 @@ html, body {
     cursor: pointer;
     user-select: none;
     color: white;
+}
+
+/*
+ * Added and updated styles for mobile highlight
+ */
+.program-highlight-container-mobile {
+    display: none; /* Default to hidden */
+    text-align: center;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.program-highlight-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 90%;
+    white-space: normal;
+    font-size: 1em;
+    padding: 12px 15px;
+    margin: 0 auto;
+    text-decoration: none;
+    background: linear-gradient(135deg, #facc15 0%, #fbbf24 100%);
+    color: #1e1e1e !important;
+    border-radius: 8px;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);
+}
+
+.program-highlight-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(250, 204, 21, 0.6);
+}
+
+.program-highlight-link .try-it-highlight {
+    background-color: #db1a66;
+    color: #1e1e1e;
+    font-weight: 800;
+    margin-left: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    animation: pulse 2s infinite;
+    box-shadow: 0 2px 8px rgba(219, 26, 102, 0.4);
 }
 
 @media (max-width: 768px) {
@@ -226,7 +297,7 @@ html, body {
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         transition: transform 0.3s ease-out;
         transform: translateX(100%);
-        align-items: center; /* Center items in mobile menu */
+        align-items: center;
     }
 
     .navbar-right.active {
@@ -256,20 +327,14 @@ html, body {
         color: #FCCD11;
     }
 
-    /* Mobile specific styles for "Try it!" */
-    .navbar-right .try-it-highlight {
-        font-size: 0.8em;
-        margin-left: 8px;
-        padding: 4px 10px;
-        background-color: #FCCD11;
-        color: #1e1e1e;
-        animation: none;
+    /* Hide the desktop highlight on mobile */
+    .program-highlight-link-desktop {
+        display: none;
     }
 
-    .navbar-right a:hover .try-it-highlight,
-    .navbar-right a.active-link .try-it-highlight {
-        background-color: #DB1A66;
-        color: #ffffff;
+    /* Show the mobile highlight container */
+    .program-highlight-container-mobile {
+        display: block;
     }
 
     /* Mobile: Auth Buttons */
@@ -277,12 +342,12 @@ html, body {
         flex-direction: column;
         gap: 10px;
         margin: 20px 0;
-        width: 100%; /* Take full width of mobile menu */
-        align-items: center; /* Center buttons within mobile menu */
+        width: 100%;
+        align-items: center;
     }
 
     .auth-btn {
-        width: 80%; /* Make them a good width in the mobile menu */
+        width: 80%;
         text-align: center;
         background-color: transparent;
         color: #f0f0f0 !important;
@@ -307,23 +372,22 @@ html, body {
 
     /* Mobile: Book Demo Button */
     .navbar-right .book-btn {
-        margin-top: 10px; /* Space from other auth buttons */
+        margin-top: 10px;
         margin-bottom: 10px;
         padding: 14px 24px;
-        width: 80%; /* Consistent width with other auth buttons in mobile */
+        width: 80%;
         display: block;
         margin-left: auto;
         margin-right: auto;
         border-radius: 8px;
-        /* Mobile specific styles for book-btn */
-        background-color: #DB1A66; /* Keep pink on mobile */
+        background-color: #DB1A66;
         color: #fff !important;
         box-shadow: 0 4px 10px rgba(219, 26, 102, 0.4);
-        border: none; /* No border for book-btn */
+        border: none;
     }
 
     .navbar-right .book-btn:hover {
-        background-color: #facc15; /* Yellow on hover on mobile */
+        background-color: #facc15;
         color: #1e1e1e !important;
         box-shadow: 0 4px 10px rgba(250, 204, 21, 0.4);
     }
@@ -342,4 +406,32 @@ html, body {
         width: 120px;
         height: 50px;
     }
+}
+
+/*
+ * KEYFRAME ANIMATIONS
+ */
+
+@keyframes shine {
+    0% { transform: translateX(-100%) rotate(30deg); }
+    100% { transform: translateX(200%) rotate(30deg); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 2px 8px rgba(219, 26, 102, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 4px 12px rgba(219, 26, 102, 0.6); }
+    100% { transform: scale(1); box-shadow: 0 2px 8px rgba(219, 26, 102, 0.4); }
+}
+
+@keyframes bounce-in {
+    0% { transform: scale(0.8); opacity: 0; }
+    60% { transform: scale(1.1); opacity: 1; }
+    80% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+@keyframes pulse-border {
+    0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.4); }
+    50% { box-shadow: 0 0 15px 5px rgba(250, 204, 21, 0.8); }
+    100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.4); }
 }

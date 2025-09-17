@@ -13,7 +13,8 @@ import {
   FaChartBar,
   FaFileAlt,
   FaBookOpen,
-  FaListAlt
+  FaListAlt,
+  FaGraduationCap 
 } from "react-icons/fa";
 import "./Sidebar.css";
 
@@ -40,6 +41,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     { name: "Employees", path: "/employees", icon: <FaUsers /> },
 
     { name: "Analytics", path: "/analytics", icon: <FaChartBar /> },
+  { name: "JEE Mains(2026) students", path: "/revision-students", icon: <FaGraduationCap  /> },
+
   ];
 
   return (
