@@ -30,6 +30,9 @@ import {
   Cancel as FailedIcon,
   Schedule as RescheduledIcon,
   AccessAlarm as ScheduledIcon, // Use a valid icon here
+  CheckCircleOutline,
+  HighlightOff,
+  PendingOutlined,
 } from "@mui/icons-material";
 export const subjectOptions = [
   { value: "Physics", label: "Physics" },
@@ -756,3 +759,65 @@ export const exportTypeOptions = [
   { value: "pdf", label: "PDF" },
   { value: "excel", label: "Excel" },
 ];
+
+
+ export const revisionStudentsColumns = [
+    { id: "sno", label: "S.No" },
+    { id: "fullName", label: "Full Name" },
+    { id: "studentContactNumber", label: "Student Contact No." },
+    { id: "parentContactNumber", label: "Parent Contact No." },
+    { id: "courseAppliedFor", label: "Course" },
+    { id: "currentClass", label: "Class" },
+    { id: "subjects", label: "Subjects" },
+    { id: "batchPreference", label: "Batch Preference" },
+    { id: "registrationDate", label: "Registration Date" },
+    { id: "status", label: "Student Status" },
+    { id: "payment", label: "Payment Plan" },
+  ];
+
+  export const revisionStudentStatusConfig = {
+    Pending: {
+      label: "Pending",
+      icon: <PendingIcon fontSize="small" />,
+      backgroundColor: "#fff3cd",
+      color: "#664d03",
+    },
+    Success: {
+      label: "Success",
+      icon: <SuccessIcon fontSize="small" />,
+      backgroundColor: "#d1e7dd",
+      color: "#0f5132",
+    },
+    Failed: {
+      label: "Failed",
+      icon: <FailedIcon fontSize="small" />,
+      backgroundColor: "#f8d7da",
+      color: "#842029",
+    },
+    Rescheduled: {
+      label: "Rescheduled",
+      icon: <RescheduledIcon fontSize="small" />,
+      backgroundColor: "#cfe2ff",
+      color: "#052c65",
+    },
+  };
+  export const revisionStudentspaymentStatusConfig = {
+    Paid: {
+      label: "Paid",
+      backgroundColor: "#e8f5e9",
+      color: "#2e7d32",
+      icon: <CheckCircleOutline sx={{ fontSize: "1.1rem" }} />,
+    },
+    Pending: {
+      label: "Pending",
+      backgroundColor: "#fffde7",
+      color: "#fbc02d",
+      icon: <PendingOutlined sx={{ fontSize: "1.1rem" }} />,
+    },
+    Unpaid: {
+      label: "Unpaid",
+      backgroundColor: "#ffebee",
+      color: "#c62828",
+      icon: <HighlightOff sx={{ fontSize: "1.1rem" }} />,
+    },
+  };

@@ -1158,33 +1158,22 @@ export const fetchAutoTimetablesForToday = () =>
  */
 export const updateAutoTimetableEntry = (timetableData) =>
   apiRequest({
-    url: `/api/data/autoTimetables/update`, // New backend route
-    method: "POST", // Or PUT/PATCH if your API is RESTful
+    url: `/api/data/autoTimetables/update`,
+    method: "POST",
     data: timetableData,
     onStart: UPDATE_AUTOTIMETABLE_REQUEST,
     onSuccess: (data, dispatch) => {
-      dispatch({
-        type: UPDATE_AUTOTIMETABLE_SUCCESS,
-        payload: data,
-      });
-      dispatch(fetchAutoTimetablesForToday()); // Re-fetch to update the list
+      dispatch({ type: UPDATE_AUTOTIMETABLE_SUCCESS, payload: data });
     },
     onFailure: (error, dispatch) => {
       console.error("Error updating auto-generated timetable entry:", error);
-      const errorMessage =
-        error.error ||
-        error.message ||
-        "Failed to update auto-generated timetable entry.";
-      if (error.status === 401 || error.status === 403) {
-        dispatch(setAuthError("Authentication failed. Please log in again."));
-      }
-      dispatch({
-        type: UPDATE_AUTOTIMETABLE_FAILURE,
-        payload: { error: errorMessage },
-      });
+      const errorMessage = error.error || error.message || "Failed to update auto-generated timetable entry.";
+      if (error.status === 401 || error.status === 403) dispatch(setAuthError("Authentication failed. Please log in again."));
+      dispatch({ type: UPDATE_AUTOTIMETABLE_FAILURE, payload: { error: errorMessage } });
     },
     authRequired: true,
   });
+
 
 /**
  * Deletes an auto-generated timetable entry by its ID.
@@ -1200,7 +1189,6 @@ export const deleteAutoTimetable = (timetableId) =>
         type: DELETE_AUTOTIMETABLE_SUCCESS,
         payload: timetableId,
       });
-      dispatch(fetchAutoTimetablesForToday()); // Re-fetch to update the list
     },
     onFailure: (error, dispatch) => {
       console.error("Error deleting auto-generated timetable entry:", error);

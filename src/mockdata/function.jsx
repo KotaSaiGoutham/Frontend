@@ -666,7 +666,6 @@ export function generateTimetables({ students, dateStr, user }) {
       }
       
       generated.push({
-        id: student.id, // Generate a unique ID
         Student: student.Name,
         Topic: "", // Default to empty string
         Day: formattedDate,

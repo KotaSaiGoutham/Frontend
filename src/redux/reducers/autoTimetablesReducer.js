@@ -47,8 +47,18 @@ const autoTimetablesReducer = (state = initialAutoTimetablesState, action) => {
         timetables: action.payload,
         error: null,
       };
-
-    case UPDATE_AUTOTIMETABLE_SUCCESS:
+case UPDATE_AUTOTIMETABLE_SUCCESS:
+  // action.payload will be the entire updated timetable entry object
+  const updatedAutoTimetables = state.timetables.map((timetable) =>
+    // Find the timetable with the matching ID
+    timetable.id === action.payload.id ? action.payload : timetable
+  );
+  return {
+    ...state,
+    loading: false,
+    timetables: updatedAutoTimetables,
+    error: null,
+  };
     case UPDATE_AUTO_TIMETABLE_TOPIC_SUCCESS:
       const updatedTimetables = state.timetables.map((tt) =>
         tt.id === action.payload.id ? { ...tt, ...action.payload.updatedData } : tt

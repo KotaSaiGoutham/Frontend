@@ -43,7 +43,7 @@ import {
   PendingOutlined,
 } from "@mui/icons-material";
 import { keyframes, styled } from "@mui/material/styles";
-
+import { revisionStudentsColumns,revisionStudentStatusConfig,revisionStudentspaymentStatusConfig } from "../../mockdata/Options";
 // Import actions for fetching students and a new action for updating statuses
 import {
   fetchRevisionStudents,
@@ -51,13 +51,6 @@ import {
   updatePaymentStatus,
   updateStudentStatus,
 } from "../../redux/actions";
-import {
-  HourglassEmpty as PendingIcon,
-  CheckCircle as SuccessIcon,
-  Cancel as FailedIcon,
-  Schedule as RescheduledIcon,
-} from "@mui/icons-material";
-// Styled components for enhanced UI
 const GlowPaper = styled(Paper)(({ theme }) => ({
   background: "linear-gradient(145deg, #ffffff, #f5f5f5)",
   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
@@ -80,37 +73,6 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   "&.MuiTableRow-root": {
     position: "relative",
   },
-}));
-
-const ActionButton = styled(IconButton)(({ theme, colorvariant }) => ({
-  transition: "all 0.3s ease",
-  backgroundColor: colorvariant === "delete" ? "#ffebee" : "#e8f5e9",
-  color: colorvariant === "delete" ? "#f44336" : "#4caf50",
-  margin: "0 4px",
-  "&:hover": {
-    backgroundColor: colorvariant === "delete" ? "#ffcdd2" : "#c8e6c9",
-    transform: "scale(1.1)",
-  },
-}));
-
-const StatusChip = styled(Chip)(({ status }) => ({
-  fontWeight: "bold",
-  textTransform: "uppercase",
-  fontSize: "0.7rem",
-  ...(status === "Success" || status === "Active"
-    ? {
-        backgroundColor: "#e8f5e9",
-        color: "#2e7d32",
-      }
-    : status === "Failed" || status === "Inactive"
-    ? {
-        backgroundColor: "#ffebee",
-        color: "#c62828",
-      }
-    : {
-        backgroundColor: "#fffde7",
-        color: "#fbc02d",
-      }),
 }));
 
 const fadeIn = keyframes`
@@ -144,53 +106,9 @@ const bounce = keyframes`
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.2); }
 `;
-export const studentStatusConfig = {
-  Pending: {
-    label: "Pending",
-    icon: <PendingIcon fontSize="small" />,
-    backgroundColor: "#fff3cd",
-    color: "#664d03",
-  },
-  Success: {
-    label: "Success",
-    icon: <SuccessIcon fontSize="small" />,
-    backgroundColor: "#d1e7dd",
-    color: "#0f5132",
-  },
-  Failed: {
-    label: "Failed",
-    icon: <FailedIcon fontSize="small" />,
-    backgroundColor: "#f8d7da",
-    color: "#842029",
-  },
-  Rescheduled: {
-    label: "Rescheduled",
-    icon: <RescheduledIcon fontSize="small" />,
-    backgroundColor: "#cfe2ff",
-    color: "#052c65",
-  },
-};
 
-const paymentStatusConfig = {
-  Paid: {
-    label: "Paid",
-    backgroundColor: "#e8f5e9",
-    color: "#2e7d32",
-    icon: <CheckCircleOutline sx={{ fontSize: "1.1rem" }} />,
-  },
-  Pending: {
-    label: "Pending",
-    backgroundColor: "#fffde7",
-    color: "#fbc02d",
-    icon: <PendingOutlined sx={{ fontSize: "1.1rem" }} />,
-  },
-  Unpaid: {
-    label: "Unpaid",
-    backgroundColor: "#ffebee",
-    color: "#c62828",
-    icon: <HighlightOff sx={{ fontSize: "1.1rem" }} />,
-  },
-};
+
+
 
 const SkeletonRow = () => (
   <TableRow>
@@ -376,19 +294,6 @@ const RevisionStudentsPage = () => {
     handlePaymentStatusChange(studentId, installmentNumber, newStatus);
   };
 
-  const columns = [
-    { id: "sno", label: "S.No" },
-    { id: "fullName", label: "Full Name" },
-    { id: "studentContactNumber", label: "Student Contact No." },
-    { id: "parentContactNumber", label: "Parent Contact No." },
-    { id: "courseAppliedFor", label: "Course" },
-    { id: "currentClass", label: "Class" },
-    { id: "subjects", label: "Subjects" },
-    { id: "batchPreference", label: "Batch Preference" },
-    { id: "registrationDate", label: "Registration Date" },
-    { id: "status", label: "Student Status" },
-    { id: "payment", label: "Payment Plan" },
-  ];
 
   return (
     <Box
@@ -456,7 +361,7 @@ const RevisionStudentsPage = () => {
               <Table sx={{ minWidth: 1200 }} aria-label="students table">
                 <TableHead>
                   <TableRow>
-                    {columns.map((column) => (
+                    {revisionStudentsColumns.map((column) => (
                       <TableCell
                         key={column.id}
                         align="center"
@@ -500,7 +405,7 @@ const RevisionStudentsPage = () => {
               >
                 <TableHead>
                   <TableRow>
-                    {columns.map((column) => (
+                    {revisionStudentsColumns.map((column) => (
                       <TableCell
                         key={column.id}
                         align="center"
@@ -621,7 +526,7 @@ const RevisionStudentsPage = () => {
                                 e.target.value
                               )
                             }
-                            options={studentStatusConfig}
+                            options={revisionStudentStatusConfig}
                           />
                         </TableCell>
                         <TableCell align="center">
@@ -655,7 +560,7 @@ const RevisionStudentsPage = () => {
                       {student.status === "Success" && (
                         <TableRow>
                           <TableCell
-                            colSpan={columns.length}
+                            colSpan={revisionStudentsColumns.length}
                             sx={{ p: 0, border: 0 }}
                           >
                             <Collapse
@@ -697,7 +602,12 @@ const RevisionStudentsPage = () => {
                                       <TableCell sx={{ fontWeight: "bold" }}>
                                         Amount
                                       </TableCell>
-                                      <TableCell sx={{ fontWeight: "bold",textAlign:"center" }}>
+                                      <TableCell
+                                        sx={{
+                                          fontWeight: "bold",
+                                          textAlign: "center",
+                                        }}
+                                      >
                                         Status
                                       </TableCell>
                                       <TableCell sx={{ fontWeight: "bold" }}>
@@ -706,147 +616,157 @@ const RevisionStudentsPage = () => {
                                     </TableRow>
                                   </TableHead>
                                   <TableBody>
-                            {student.payments.map((payment) => (
-  <TableRow
-    key={payment.installment}
-    sx={{
-      "&:hover": {
-        backgroundColor: "#f0f4ff",
-      },
-      transition: "all 0.2s ease",
-    }}
-  >
-    <TableCell>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <Box
-          sx={{
-            width: 24,
-            height: 24,
-            borderRadius: "50%",
-            backgroundColor: "#e3f2fd",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mr: 1,
-            fontWeight: "bold",
-            color: "#1e88e5",
-          }}
-        >
-          {payment.installment}
-        </Box>
-        Installment #{payment.installment}
-      </Box>
-    </TableCell>
-    <TableCell>
-      {new Date(
-        payment.dueDate
-      ).toLocaleDateString("en-GB")}
-    </TableCell>
-    <TableCell>
-      <Box
-        sx={{
-          fontWeight: "bold",
-          color: "#1e3a8a",
-          display: "inline-flex",
-          alignItems: "center",
-        }}
-      >
-        ₹{payment.amount}
-      </Box>
-    </TableCell>
-    <TableCell>
-      {updatingPayment?.studentId ===
-      student.id &&
-      updatingPayment?.installmentNumber ===
-      payment.installment ? (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <CircularProgress
-            size={16}
-            sx={{ mr: 1 }}
-          />
-          Updating...
-        </Box>
-      ) : (
-        <TableStatusSelect
-          value={payment.status}
-          onChange={(e) =>
-            handlePaymentStatusChange(
-              student.id,
-              payment.installment,
-              e.target.value
-            )
-          }
-          options={paymentStatusConfig}
-        />
-      )}
-    </TableCell>
-    <TableCell>
-      <Tooltip
-        title={`Mark as ${
-          payment.status === "Paid"
-            ? "Unpaid"
-            : "Paid"
-        }`}
-        arrow
-      >
-        <FormControlLabel
-          control={
-            <Switch
-              checked={
-                payment.status === "Paid"
-              }
-              onChange={() =>
-                handlePaymentToggle(
-                  student.id,
-                  payment.installment,
-                  payment.status
-                )
-              }
-              disabled={
-                updatingPayment?.studentId ===
-                student.id &&
-                updatingPayment?.installmentNumber ===
-                payment.installment
-              }
-              color="success"
-            />
-          }
-          label={
-            payment.status === "Paid"
-              ? "Paid"
-              : "Unpaid"
-          }
-          sx={{
-            "& .MuiFormControlLabel-label":
-              {
-                fontSize: "0.8rem",
-                fontWeight: "bold",
-                color:
-                  payment.status === "Paid"
-                    ? "#2e7d32"
-                    : "#c62828",
-              },
-          }}
-        />
-      </Tooltip>
-      {payment.status === "Paid" && payment.paidDate && (
-        <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: 0.5 }}>
-          Paid on: {new Date(payment.paidDate).toLocaleDateString("en-GB")}
-        </Box>
-      )}
-    </TableCell>
-  </TableRow>
-))}
+                                    {student.payments.map((payment) => (
+                                      <TableRow
+                                        key={payment.installment}
+                                        sx={{
+                                          "&:hover": {
+                                            backgroundColor: "#f0f4ff",
+                                          },
+                                          transition: "all 0.2s ease",
+                                        }}
+                                      >
+                                        <TableCell>
+                                          <Box
+                                            sx={{
+                                              display: "flex",
+                                              alignItems: "center",
+                                            }}
+                                          >
+                                            <Box
+                                              sx={{
+                                                width: 24,
+                                                height: 24,
+                                                borderRadius: "50%",
+                                                backgroundColor: "#e3f2fd",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                mr: 1,
+                                                fontWeight: "bold",
+                                                color: "#1e88e5",
+                                              }}
+                                            >
+                                              {payment.installment}
+                                            </Box>
+                                            Installment #{payment.installment}
+                                          </Box>
+                                        </TableCell>
+                                        <TableCell>
+                                          {new Date(
+                                            payment.dueDate
+                                          ).toLocaleDateString("en-GB")}
+                                        </TableCell>
+                                        <TableCell>
+                                          <Box
+                                            sx={{
+                                              fontWeight: "bold",
+                                              color: "#1e3a8a",
+                                              display: "inline-flex",
+                                              alignItems: "center",
+                                            }}
+                                          >
+                                            ₹{payment.amount}
+                                          </Box>
+                                        </TableCell>
+                                        <TableCell>
+                                          {updatingPayment?.studentId ===
+                                            student.id &&
+                                          updatingPayment?.installmentNumber ===
+                                            payment.installment ? (
+                                            <Box
+                                              sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                              }}
+                                            >
+                                              <CircularProgress
+                                                size={16}
+                                                sx={{ mr: 1 }}
+                                              />
+                                              Updating...
+                                            </Box>
+                                          ) : (
+                                            <TableStatusSelect
+                                              value={payment.status}
+                                              onChange={(e) =>
+                                                handlePaymentStatusChange(
+                                                  student.id,
+                                                  payment.installment,
+                                                  e.target.value
+                                                )
+                                              }
+                                              options={revisionStudentspaymentStatusConfig}
+                                            />
+                                          )}
+                                        </TableCell>
+                                        <TableCell>
+                                          <Tooltip
+                                            title={`Mark as ${
+                                              payment.status === "Paid"
+                                                ? "Unpaid"
+                                                : "Paid"
+                                            }`}
+                                            arrow
+                                          >
+                                            <FormControlLabel
+                                              control={
+                                                <Switch
+                                                  checked={
+                                                    payment.status === "Paid"
+                                                  }
+                                                  onChange={() =>
+                                                    handlePaymentToggle(
+                                                      student.id,
+                                                      payment.installment,
+                                                      payment.status
+                                                    )
+                                                  }
+                                                  disabled={
+                                                    updatingPayment?.studentId ===
+                                                      student.id &&
+                                                    updatingPayment?.installmentNumber ===
+                                                      payment.installment
+                                                  }
+                                                  color="success"
+                                                />
+                                              }
+                                              label={
+                                                payment.status === "Paid"
+                                                  ? "Paid"
+                                                  : "Unpaid"
+                                              }
+                                              sx={{
+                                                "& .MuiFormControlLabel-label":
+                                                  {
+                                                    fontSize: "0.8rem",
+                                                    fontWeight: "bold",
+                                                    color:
+                                                      payment.status === "Paid"
+                                                        ? "#2e7d32"
+                                                        : "#c62828",
+                                                  },
+                                              }}
+                                            />
+                                          </Tooltip>
+                                          {payment.status === "Paid" &&
+                                            payment.paidDate && (
+                                              <Box
+                                                sx={{
+                                                  fontSize: "0.75rem",
+                                                  color: "text.secondary",
+                                                  mt: 0.5,
+                                                }}
+                                              >
+                                                Paid on:{" "}
+                                                {new Date(
+                                                  payment.paidDate
+                                                ).toLocaleDateString("en-GB")}
+                                              </Box>
+                                            )}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
                                   </TableBody>
                                 </Table>
                               </Box>

@@ -134,7 +134,7 @@ const TimetablePage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-  const [isDeleting, setIsDeleting] = useState(false); // For delete loading state
+  const [isDeleting, setIsDeleting] = useState(false); 
 
   const { currentUserFaculty, currentUserSubject, canAccessAll } =
     useMemo(() => {
@@ -164,33 +164,31 @@ const TimetablePage = () => {
   }, []);
 
   useEffect(() => {
-    const targetDate =
-      location.state?.date || new Date().toLocaleDateString("en-GB");
+    if (!user || !user.id || !students || students.length === 0) {
+      console.warn(
+        "User, students, or data is not ready for initial timetable generation."
+      );
+      return;
+    }
 
-    dispatch(fetchUpcomingClasses({ date: targetDate }));
-    if (user) {
-      if (location.state && location.state.date) {
-        // Parse the date from the state and set it
-        const dateFromState = parse(
-          location.state.date,
-          "dd/MM/yyyy",
-          new Date()
+    // Determine the date to use
+    let selectedDate;
+    if (location.state?.date) {
+      selectedDate = parse(location.state.date, "dd/MM/yyyy", new Date());
+      if (!isValid(selectedDate)) {
+        console.error(
+          "Invalid date from location.state. Falling back to today."
         );
-        if (isValid(dateFromState)) {
-          setFilterDate(dateFromState);
-          // Trigger the generation and saving of timetables for this date
-          handleDateChange(format(dateFromState, "yyyy-MM-dd"));
-        }
-      } else {
-        // If no date is passed, fetch auto timetables for today
-        dispatch(fetchAutoTimetablesForToday());
+        selectedDate = new Date();
       }
     } else {
-      console.warn(
-        "Effect 1: User or user.id is not available yet for fetching auto timetables. Will retry if user becomes available."
-      );
+      selectedDate = new Date();
     }
-  }, [dispatch, user, location.state]);
+
+    const dateStrForBackend = format(selectedDate, "yyyy-MM-dd");
+    setFilterDate(selectedDate);
+    handleDateChange(dateStrForBackend);
+  }, [dispatch, user, students, location.state]);
   const calculateDuration = useCallback((timeString) => {
     try {
       const [startTimeStr, endTimeStr] = timeString.split(" to ");
@@ -418,7 +416,6 @@ const TimetablePage = () => {
   };
 
   const handleAddTimetableClick = () => {
-    // This will still add to the manual timetables
     navigate("/add-timetable");
   };
 
@@ -632,26 +629,26 @@ const TimetablePage = () => {
     autoTimetablesLoading ||
     isGeneratingAuto ||
     isDeleting;
- const { sumHours, sumFee } = combinedAndFilteredTimetables.reduce(
-  (acc, item) => {
-    // Calculate duration safely
-    const duration = parseFloat(calculateDuration(item.Time));
-    if (!isNaN(duration)) {
-      acc.sumHours += duration;
-    }
-
-    // Extract fee, remove '₹', and convert to number
-    if (item.monthlyFeePerClass && item.monthlyFeePerClass !== "N/A") {
-      const feeValue = parseFloat(item.monthlyFeePerClass.replace("₹", ""));
-      // Multiply the fee by the duration and add to the sum
-      if (!isNaN(feeValue) && !isNaN(duration)) {
-        acc.sumFee += feeValue * duration;
+  const { sumHours, sumFee } = combinedAndFilteredTimetables.reduce(
+    (acc, item) => {
+      // Calculate duration safely
+      const duration = parseFloat(calculateDuration(item.Time));
+      if (!isNaN(duration)) {
+        acc.sumHours += duration;
       }
-    }
-    return acc;
-  },
-  { sumHours: 0, sumFee: 0 } // Initial accumulator values
-);
+
+      // Extract fee, remove '₹', and convert to number
+      if (item.monthlyFeePerClass && item.monthlyFeePerClass !== "N/A") {
+        const feeValue = parseFloat(item.monthlyFeePerClass.replace("₹", ""));
+        // Multiply the fee by the duration and add to the sum
+        if (!isNaN(feeValue) && !isNaN(duration)) {
+          acc.sumFee += feeValue * duration;
+        }
+      }
+      return acc;
+    },
+    { sumHours: 0, sumFee: 0 } // Initial accumulator values
+  );
   const missingTopicItems = combinedAndFilteredTimetables.filter(
     (item) => !item.Topic
   );
@@ -696,9 +693,6 @@ const TimetablePage = () => {
       try {
         const dateStrForBackend = format(selectedDate, "yyyy-MM-dd");
         await dispatch(saveOrFetchAutoTimetables(dateStrForBackend, generated));
-        // ------------------------------------------------------------------
-        await dispatch(fetchUpcomingClasses({ date: dateStr }));
-
       } catch (err) {
         console.error("Error saving auto timetables:", err);
       }
@@ -971,10 +965,6 @@ const TimetablePage = () => {
                           },
                         };
                         disableActions = false;
-                        tooltipEditTitle = "Past class";
-                        tooltipDeleteTitle = item.isAutoGenerated
-                          ? "Cannot delete past or auto-generated classes"
-                          : "Delete past class";
                         break;
 
                       case "running":
@@ -1013,20 +1003,6 @@ const TimetablePage = () => {
                           },
                         };
                         break;
-                    }
-
-                    if (
-                      item.isAutoGenerated &&
-                      ["futureToday", "future", "running"].includes(rowStatus)
-                    ) {
-                      tooltipDeleteTitle =
-                        "Cannot delete auto-generated classes";
-                    } else if (
-                      item.isAutoGenerated &&
-                      ["pastToday", "pastDay"].includes(rowStatus)
-                    ) {
-                      tooltipDeleteTitle =
-                        "Cannot delete past or auto-generated classes";
                     }
 
                     return (
@@ -1210,11 +1186,14 @@ const TimetablePage = () => {
 
                         <TableCell>{calculateDuration(item.Time)}</TableCell>
 
-                  <TableCell>
-  {item.monthlyFeePerClass !== "N/A"
-    ? `₹${parseFloat(item.monthlyFeePerClass) * parseInt(calculateDuration(item.Time))}`
-    : "N/A"}
-</TableCell>
+                        <TableCell>
+                          {item.monthlyFeePerClass !== "N/A"
+                            ? `₹${
+                                parseFloat(item.monthlyFeePerClass) *
+                                parseInt(calculateDuration(item.Time))
+                              }`
+                            : "N/A"}
+                        </TableCell>
 
                         <TableCell>
                           <Box
