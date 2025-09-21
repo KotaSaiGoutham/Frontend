@@ -15,10 +15,11 @@ import {
   Button as MuiButton,
   TextField,
   IconButton,
+  Tooltip,
 } from "@mui/material";
 
 import { FaGraduationCap, FaPlus, FaEdit, FaCheck } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   fetchStudentExams,
   deleteStudentExam,
@@ -29,6 +30,7 @@ import { examStatusConfig, getExamTableColumns } from "../mockdata/Options";
 import TableHeaders from "./students/TableHeaders";
 import TableStatusSelect from "./customcomponents/TableStatusSelect";
 import { DeleteConfirmationDialog } from "./customcomponents/Dialogs";
+
 const StudentExamPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -37,7 +39,14 @@ const StudentExamPage = () => {
   const { studentExams, loading, error } = useSelector(
     (state) => state.studentExams
   );
-  const [editingCell, setEditingCell] = useState(null); // { examId: '...', field: 'physics' }
+
+  const {
+    students,
+    loading: studentsLoading,
+    error: studentsError,
+  } = useSelector((state) => state.students);
+
+  const [editingCell, setEditingCell] = useState(null);
 
   const handleStartEdit = (examId, field) => {
     setEditingCell({ examId, field });
@@ -52,24 +61,24 @@ const StudentExamPage = () => {
       100;
 
     if (Number(newValue) > maxScore) {
-      // Replaced alert with a more user-friendly message
-      // A modal or snackbar would be a better alternative
       console.error(
         `The score for ${field} cannot be greater than ${maxScore}.`
       );
-      setEditingCell(null); // Exit edit mode
+      setEditingCell(null);
       return;
     }
 
     const updatedExam = { ...examToUpdate, [field]: Number(newValue) };
     dispatch(updateStudentExam(updatedExam));
-    setEditingCell(null); // Exit edit mode
+    setEditingCell(null);
+    // After a successful update, re-fetch to ensure the list is sorted correctly
+    dispatch(fetchStudentExams());
   };
+
   const handleEdit = (exam) => {
     navigate("/add-student-exam", { state: { examToEdit: exam } });
   };
 
-  // State and handlers for the custom delete dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
 
@@ -81,6 +90,8 @@ const StudentExamPage = () => {
   const handleConfirmDelete = () => {
     if (selectedExam) {
       dispatch(deleteStudentExam(selectedExam.id));
+      // After a successful delete, re-fetch the list
+      dispatch(fetchStudentExams());
     }
     setIsDeleteDialogOpen(false);
     setSelectedExam(null);
@@ -92,16 +103,18 @@ const StudentExamPage = () => {
   };
 
   const handleStatusChange = (examId, newStatus) => {
-    const examToUpdate = filteredExams.find((exam) => exam.id === examId);
+    const examToUpdate = filteredAndSortedExams.find((exam) => exam.id === examId);
     if (examToUpdate) {
       const updatedExam = { ...examToUpdate, status: newStatus };
       dispatch(updateStudentExam(updatedExam));
+      // After a successful update, re-fetch the list
+      dispatch(fetchStudentExams());
     }
   };
 
   useEffect(() => {
     dispatch(fetchStudentExams());
-  }, [dispatch]);
+  }, [dispatch]); // Initial fetch when the component mounts
 
   const [filters, setFilters] = useState({
     studentName: "",
@@ -113,22 +126,39 @@ const StudentExamPage = () => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
+const filteredAndSortedExams = [...studentExams]
+    .filter((exam) => {
+      const matchesName = exam.studentName
+        ?.toLowerCase()
+        .includes(filters.studentName.toLowerCase());
+      const matchesStream =
+        filters.stream === "" ||
+        exam.stream?.toLowerCase() === filters.stream.toLowerCase();
+      const matchesStatus =
+        filters.status === "" ||
+        exam.status?.toLowerCase() === filters.status.toLowerCase();
 
-  // Filtering logic
-  const filteredExams = studentExams.filter((exam) => {
-    const matchesName = exam.studentName
-      ?.toLowerCase()
-      .includes(filters.studentName.toLowerCase());
-    const matchesStream =
-      filters.stream === "" ||
-      exam.stream?.toLowerCase() === filters.stream.toLowerCase();
-    const matchesStatus =
-      filters.status === "" ||
-      exam.status?.toLowerCase() === filters.status.toLowerCase();
-    return matchesName && matchesStream && matchesStatus;
-  });
+      return matchesName && matchesStream && matchesStatus;
+    })
+    .sort((a, b) => {
+      // Primary sort: by date (descending)
+      const dateA = new Date(
+        a.createdAt._seconds * 1000 + a.createdAt._nanoseconds / 1000000
+      );
+      const dateB = new Date(
+        b.createdAt._seconds * 1000 + b.createdAt._nanoseconds / 1000000
+      );
+      const dateComparison = dateB - dateA;
 
-  // Data to display in the confirmation dialog
+      // If dates are the same, sort by studentName (alphabetical)
+      if (dateComparison === 0) {
+        const nameA = a.studentName.toLowerCase();
+        const nameB = b.studentName.toLowerCase();
+        return nameA.localeCompare(nameB);
+      }
+
+      return dateComparison;
+    });
   const dialogData = selectedExam
     ? {
         "Student Name": selectedExam.studentName,
@@ -220,7 +250,7 @@ const StudentExamPage = () => {
             <Alert severity="error">
               {error.message || "An unknown error occurred"}
             </Alert>
-          ) : filteredExams.length > 0 ? (
+          ) : filteredAndSortedExams.length > 0 ? (
             <TableContainer
               component={Paper}
               elevation={3}
@@ -232,237 +262,281 @@ const StudentExamPage = () => {
               <Table sx={{ minWidth: 1200 }} aria-label="student exams table">
                 <TableHeaders columns={getExamTableColumns(user)} />
                 <TableBody>
-                  {filteredExams.map((exam, index) => (
-                    <TableRow
-                      key={exam.id}
-                      sx={{
-                        "&:nth-of-type(odd)": { backgroundColor: "#fbfcfd" },
-                        "&:hover": {
-                          backgroundColor: "#eef7ff",
-                          cursor: "pointer",
-                        },
-                        borderBottom: "1px solid #e0e0e0",
-                      }}
-                    >
-                      {/* 1. S.No */}
-                      <TableCell align="center"                         sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
->{index + 1}</TableCell>
-
-                      {/* 2. Student Name */}
-                      <TableCell align="center"                         sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
->{exam.studentName}</TableCell>
-
-                      {/* 3. Exam Date */}
-                      <TableCell align="center"                         sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
->
-                        {new Date(exam.examDate).toLocaleDateString("en-GB")}
-                      </TableCell>
-
-                      {/* 4. Stream */}
-                      <TableCell align="center"                         sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
->{exam.stream}</TableCell>
-
-                      {/* 5. Topic */}
-                      <TableCell
-                        align="center"
-                        sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
-                      >
-                        {Array.isArray(exam.topic)
-                          ? exam.topic.join(", ")
-                          : exam.topic || "-"}
-                      </TableCell>
-
-                      {/* 6. Status */}
-                      <TableCell
-                        align="center"
+                  {filteredAndSortedExams.map((exam, index) => {
+                    const studentData = students.find(
+                      (s) => s.id === exam.studentId
+                    );
+                    return (
+                      <TableRow
+                        key={exam.id}
                         sx={{
-                          fontSize: "0.85rem",
-                          padding: "10px 8px",
-                          minWidth: 150,
+                          "&:nth-of-type(odd)": { backgroundColor: "#fbfcfd" },
+                          "&:hover": {
+                            backgroundColor: "#eef7ff",
+                            cursor: "pointer",
+                          },
+                          borderBottom: "1px solid #e0e0e0",
                         }}
                       >
-                        <TableStatusSelect
-                          value={exam.status || ""}
-                          onChange={(e) =>
-                            handleStatusChange(exam.id, e.target.value)
-                          }
-                          options={examStatusConfig}
-                        />
-                      </TableCell>
+                        {/* 1. S.No */}
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+                        >
+                          {index + 1}
+                        </TableCell>
 
-                      {/* Subject Columns (Physics, Chemistry, Maths) */}
-                      {user.isPhysics && (
-                        <TableCell align="center">
-                          {editingCell?.examId === exam.id &&
-                          editingCell?.field === "physics" ? (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 1,
+                        {/* 2. Student Name - Now a clickable link */}
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+                        >
+                          <Tooltip
+                            title={`Click to view details for ${exam.studentName}`}
+                          >
+                            <Link
+                              to={`/student/${exam.studentId}`}
+                              state={{ studentData: studentData }}
+                              style={{
+                                fontWeight: 500,
+                                color: "#34495e",
+                                textDecoration: "none",
+                                transition:
+                                  "color 0.2s ease, text-decoration 0.2s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.color = "#2980b9";
+                                e.currentTarget.style.textDecoration =
+                                  "underline";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.color = "#34495e";
+                                e.currentTarget.style.textDecoration = "none";
                               }}
                             >
-                              <TextField
-                                defaultValue={exam.physics || 0}
-                                type="number"
-                                size="small"
-                                InputProps={{
-                                  inputProps: {
-                                    min: 0,
-                                    max: exam.maxPhysics || 100,
-                                  },
+                              {exam.studentName}
+                            </Link>
+                          </Tooltip>
+                        </TableCell>
+
+                        {/* 3. Exam Date */}
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+                        >
+                          {new Date(exam.examDate).toLocaleDateString("en-GB")}
+                        </TableCell>
+
+                        {/* 4. Stream */}
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+                        >
+                          {exam.stream}
+                        </TableCell>
+
+                        {/* 5. Topic */}
+                        <TableCell
+                          align="center"
+                          sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+                        >
+                          {Array.isArray(exam.topic)
+                            ? exam.topic.join(", ")
+                            : exam.topic || "-"}
+                        </TableCell>
+
+                        {/* 6. Status */}
+                        <TableCell
+                          align="center"
+                          sx={{
+                            fontSize: "0.85rem",
+                            padding: "10px 8px",
+                            minWidth: 150,
+                          }}
+                        >
+                          <TableStatusSelect
+                            value={exam.status || ""}
+                            onChange={(e) =>
+                              handleStatusChange(exam.id, e.target.value)
+                            }
+                            options={examStatusConfig}
+                          />
+                        </TableCell>
+
+                        {/* Subject Columns (Physics, Chemistry, Maths) */}
+                        {user.isPhysics && (
+                          <TableCell align="center">
+                            {editingCell?.examId === exam.id &&
+                            editingCell?.field === "physics" ? (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: 1,
                                 }}
-                                sx={{ width: "70px" }}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
+                              >
+                                <TextField
+                                  defaultValue={exam.physics || 0}
+                                  type="number"
+                                  size="small"
+                                  InputProps={{
+                                    inputProps: {
+                                      min: 0,
+                                      max: exam.maxPhysics || 100,
+                                    },
+                                  }}
+                                  sx={{ width: "70px" }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      handleSaveEdit(
+                                        exam.id,
+                                        "physics",
+                                        e.target.value
+                                      );
+                                    }
+                                  }}
+                                />
+                                <IconButton
+                                  onClick={(e) =>
                                     handleSaveEdit(
                                       exam.id,
                                       "physics",
-                                      e.target.value
-                                    );
+                                      e.currentTarget.previousElementSibling.querySelector(
+                                        "input"
+                                      ).value
+                                    )
                                   }
+                                  size="small"
+                                  color="success"
+                                >
+                                  <FaCheck />
+                                </IconButton>
+                              </Box>
+                            ) : (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: 1,
                                 }}
-                              />
-                              <IconButton
-                                onClick={(e) =>
-                                  handleSaveEdit(
-                                    exam.id,
-                                    "physics",
-                                    e.currentTarget.previousElementSibling.querySelector(
-                                      "input"
-                                    ).value
-                                  )
-                                }
-                                size="small"
-                                color="success"
                               >
-                                <FaCheck />
-                              </IconButton>
-                            </Box>
-                          ) : (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 1,
-                              }}
-                            >
-                              <Typography>
-                                {`${exam.physics || 0}/${
-                                  exam.maxPhysics || 100
-                                }`}
-                              </Typography>
-                              <IconButton
-                                onClick={() =>
-                                  handleStartEdit(exam.id, "physics")
-                                }
-                                size="small"
-                              >
-                                <FaEdit />
-                              </IconButton>
-                            </Box>
-                          )}
-                        </TableCell>
-                      )}
+                                <Typography>
+                                  {`${exam.physics || 0}/${
+                                    exam.maxPhysics || 100
+                                  }`}
+                                </Typography>
+                                <IconButton
+                                  onClick={() =>
+                                    handleStartEdit(exam.id, "physics")
+                                  }
+                                  size="small"
+                                >
+                                  <FaEdit />
+                                </IconButton>
+                              </Box>
+                            )}
+                          </TableCell>
+                        )}
 
-                      {user.isChemistry && (
-                        <TableCell align="center">
-                          {editingCell?.examId === exam.id &&
-                          editingCell?.field === "chemistry" ? (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 1,
-                              }}
-                            >
-                              <TextField
-                                defaultValue={exam.chemistry || 0}
-                                type="number"
-                                size="small"
-                                InputProps={{
-                                  inputProps: {
-                                    min: 0,
-                                    max: exam.maxChemistry || 100,
-                                  },
+                        {user.isChemistry && (
+                          <TableCell align="center">
+                            {editingCell?.examId === exam.id &&
+                            editingCell?.field === "chemistry" ? (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: 1,
                                 }}
-                                sx={{ width: "70px" }}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
+                              >
+                                <TextField
+                                  defaultValue={exam.chemistry || 0}
+                                  type="number"
+                                  size="small"
+                                  InputProps={{
+                                    inputProps: {
+                                      min: 0,
+                                      max: exam.maxChemistry || 100,
+                                    },
+                                  }}
+                                  sx={{ width: "70px" }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      handleSaveEdit(
+                                        exam.id,
+                                        "chemistry",
+                                        e.target.value
+                                      );
+                                    }
+                                  }}
+                                />
+                                <IconButton
+                                  onClick={(e) =>
                                     handleSaveEdit(
                                       exam.id,
                                       "chemistry",
-                                      e.target.value
-                                    );
+                                      e.currentTarget.previousElementSibling.querySelector(
+                                        "input"
+                                      ).value
+                                    )
                                   }
+                                  size="small"
+                                  color="success"
+                                >
+                                  <FaCheck />
+                                </IconButton>
+                              </Box>
+                            ) : (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: 1,
                                 }}
-                              />
-                              <IconButton
-                                onClick={(e) =>
-                                  handleSaveEdit(
-                                    exam.id,
-                                    "chemistry",
-                                    e.currentTarget.previousElementSibling.querySelector(
-                                      "input"
-                                    ).value
-                                  )
-                                }
-                                size="small"
-                                color="success"
                               >
-                                <FaCheck />
-                              </IconButton>
-                            </Box>
-                          ) : (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 1,
-                              }}
-                            >
-                              <Typography>
-                                {`${exam.chemistry || 0}/${
-                                  exam.maxChemistry || 100
-                                }`}
-                              </Typography>
-                              <IconButton
-                                onClick={() =>
-                                  handleStartEdit(exam.id, "chemistry")
-                                }
-                                size="small"
-                              >
-                                <FaEdit />
-                              </IconButton>
-                            </Box>
-                          )}
-                        </TableCell>
-                      )}
+                                <Typography>
+                                  {`${exam.chemistry || 0}/${
+                                    exam.maxChemistry || 100
+                                  }`}
+                                </Typography>
+                                <IconButton
+                                  onClick={() =>
+                                    handleStartEdit(exam.id, "chemistry")
+                                  }
+                                  size="small"
+                                >
+                                  <FaEdit />
+                                </IconButton>
+                              </Box>
+                            )}
+                          </TableCell>
+                        )}
 
-                      {user.isMaths && (
-                        <TableCell align="center">
-                          <Typography>{`${exam.maths || 0}/${
-                            exam.maxMaths || 100
-                          }`}</Typography>
-                        </TableCell>
-                      )}
+                        {user.isMaths && (
+                          <TableCell align="center">
+                            <Typography>{`${exam.maths || 0}/${
+                              exam.maxMaths || 100
+                            }`}</Typography>
+                          </TableCell>
+                        )}
 
-                      {/* 7. Actions */}
-                      <TableCell align="center" sx={{ py: 1.5 }}>
-                        <Box sx={{ display: "inline-flex", gap: 0.5 }}>
-                          <ActionButtons
-                            onEdit={() => handleEdit(exam)}
-                            onDelete={() => handleDeleteClick(exam)}
-                            size="small"
-                          />
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        {/* 7. Actions */}
+                        <TableCell align="center" sx={{ py: 1.5 }}>
+                          <Box sx={{ display: "inline-flex", gap: 0.5 }}>
+                            <ActionButtons
+                              onEdit={() => handleEdit(exam)}
+                              onDelete={() => handleDeleteClick(exam)}
+                              size="small"
+                            />
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
