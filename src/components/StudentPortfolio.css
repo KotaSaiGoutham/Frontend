@@ -137,7 +137,149 @@ body {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     /* This card has individual animation delays via .delay-X classes */
 }
+.student-name-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
 
+.student-name-header .name-icon {
+  font-size: 28px;
+  color: #4f46e5;
+  margin-right: 12px;
+}
+
+.student-name-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  flex-grow: 1;
+}
+
+.student-status {
+  background: #10b981;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.details-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.details-section {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.details-section h2 {
+  display: flex;
+  align-items: center;
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.card-icon {
+  margin-right: 8px;
+  color: #4f46e5;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.detail-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detail-item.isHighlighted {
+  background: #eff6ff;
+  border-left: 3px solid #4f46e5;
+}
+
+.detail-icon {
+  margin-right: 12px;
+  color: #6b7280;
+  font-size: 18px;
+  margin-top: 2px;
+}
+
+.detail-content {
+  flex: 1;
+}
+
+.detail-label {
+  display: block;
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  font-size: 15px;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* Class Schedule Styling */
+.class-schedule .detail-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.schedule-item {
+  background: #f3f4f6;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .student-name-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .student-name-header h1 {
+    font-size: 24px;
+  }
+}
 /* Staggered card animations */
 .portfolio-card.delay-1 { animation: fadeInCard 0.8s ease-out forwards; animation-delay: 0.4s; }
 .portfolio-card.delay-2 { animation: fadeInCard 0.8s ease-out forwards; animation-delay: 0.6s; }
@@ -170,7 +312,7 @@ body {
 .personal-details-card .details-grid {
     display: grid;
     /* Use auto-fit for flexible columns based on content width */
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 3fr));
     gap: var(--spacing-md); /* Consistent gap between items */
 }
 

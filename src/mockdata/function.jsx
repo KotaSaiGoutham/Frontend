@@ -140,13 +140,8 @@ const ALL_PDF_COLUMNS = [
   { key: "paymentStatus", label: "Payment Status", dataKey: "Payment Status" },
 ];
 
-// --- 2. Updated getPdfTableHeaders function ---
-// This function now takes the `columnVisibility` state directly.
-export const getPdfTableHeaders = (columnVisibility, showSubjectColumn) => {
+export const getPdfTableHeaders = (columnVisibility) => {
   return ALL_PDF_COLUMNS.filter((col) => {
-    // Columns marked as not controllable are always included.
-    // Other columns are included if their visibility is true in the UI state.
-    // The 'subject' column also respects the global 'showSubjectColumn' flag.
     const isControllableAndVisible =
       (col.controllable === undefined || col.controllable) &&
       columnVisibility[col.key];
@@ -155,7 +150,7 @@ export const getPdfTableHeaders = (columnVisibility, showSubjectColumn) => {
 
     return (
       isAlwaysIncluded ||
-      (isControllableAndVisible && (!isSubjectColumn || showSubjectColumn))
+      (isControllableAndVisible && (!isSubjectColumn))
     );
   }).map((col) => col.label); // Return only the labels for jsPDF-AutoTable headers
 };
@@ -164,8 +159,7 @@ export const getPdfTableHeaders = (columnVisibility, showSubjectColumn) => {
 // This function also takes the `columnVisibility` state.
 export const getPdfTableRows = (
   students,
-  columnVisibility,
-  showSubjectColumn
+  columnVisibility
 ) => {
   // First, filter the columns that should be included in the PDF based on visibility
   const filteredColumnsForPdf = ALL_PDF_COLUMNS.filter((col) => {
@@ -177,7 +171,7 @@ export const getPdfTableRows = (
 
     return (
       isAlwaysIncluded ||
-      (isControllableAndVisible && (!isSubjectColumn || showSubjectColumn))
+      (isControllableAndVisible && (!isSubjectColumn))
     );
   });
 
@@ -473,7 +467,7 @@ export const getRecentStudentActivity = (students, currentMonthPayments) => {
   const paidStudentIds = new Set(currentMonthPayments?.map((p) => p.studentId));
 
   const enhancedStudents = students
-    .filter((student) => student.isActive && student.lastUpdatedClassesAt)
+    .filter((student) => student.isActive)
     .map((student) => {
       const isPaid = paidStudentIds.has(student.id);
       return {

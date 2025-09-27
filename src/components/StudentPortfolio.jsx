@@ -11,6 +11,7 @@ import {
   fetchAutoTimetablesForToday,
   fetchStudentExamsByStudent,
 } from "../redux/actions";
+import LectureMaterialsTable from "./LectureMaterialsTable";
 // Icon Imports
 import {
   FaUserCircle,
@@ -29,12 +30,9 @@ import {
   FaMoneyBillWave,
   FaArrowLeft,
   FaInfoCircle,
-  FaChartLine,
-  FaPlus,
   FaSpinner,
   FaCalendarDay,
   FaHistory,
-  FaWallet,
   FaPhone,
   FaMale,
   FaFemale,
@@ -86,7 +84,9 @@ const StudentPortfolio = () => {
   useEffect(() => {
     // This action already fetches the required data
     dispatch(fetchStudentExamsByStudent(studentData?.id || studentId));
-    dispatch(fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") }));
+    dispatch(
+      fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
+    );
     dispatch(fetchAutoTimetablesForToday());
   }, [studentData?.id, studentId, dispatch]);
 
@@ -134,8 +134,8 @@ const StudentPortfolio = () => {
                 <FaExclamationCircle /> Student Data Unavailable
               </h3>
               <p>
-                The student's portfolio could not be loaded. This page may not be
-                accessed directly, or the data was not passed correctly.
+                The student's portfolio could not be loaded. This page may not
+                be accessed directly, or the data was not passed correctly.
               </p>
               <button
                 onClick={() => navigate("/students")}
@@ -203,12 +203,14 @@ const StudentPortfolio = () => {
         )
         .map(
           (subj) =>
-            `📘 ${capitalize(subj)}: ${latestExam[subj]}/${latestExam[
-              `max${capitalize(subj)}`
-            ]}`
+            `📘 ${capitalize(subj)}: ${latestExam[subj]}/${
+              latestExam[`max${capitalize(subj)}`]
+            }`
         );
-      
-      const label = [`Exam: ${latestExam.examName}`, ...subjectScoreLines].join("\n");
+
+      const label = [`Exam: ${latestExam.examName}`, ...subjectScoreLines].join(
+        "\n"
+      );
 
       timelineEvents.push({
         type: "Marks",
@@ -251,121 +253,182 @@ const StudentPortfolio = () => {
       className="portfolio-page-container"
       style={{ display: "flex", gap: "20px" }}
     >
-      <div style={{ width: "70%" }}>
-        <header className="portfolio-header">
-          <div className="title-group">
-            <FaUserCircle className="header-icon" />
-            <h1>{studentData.Name || "Student"}'s Portfolio</h1>
-          </div>
-          {user.role === "student" && (
-            <button
-              onClick={() => navigate("/students")}
-              className="back-button"
-            >
-              <FaArrowLeft /> Back to Students List
-            </button>
-          )}
-        </header>
+      <div>
         <main className="portfolio-content-area">
           <section className="portfolio-card personal-details-card delay-1">
-            <h2>
-              <FaInfoCircle className="card-icon" /> Personal Details
-            </h2>
-            <div className="details-grid">
-              <DetailItem
-                icon={FaUserCircle}
-                label="Name"
-                value={studentData.Name || "N/A"}
-              />
-              <DetailItem
-                icon={FaTransgender}
-                label="Gender"
-                value={studentData.Gender || "N/A"}
-              />
-              <DetailItem
-                icon={FaBookOpen}
-                label="Subject"
-                value={studentData.Subject || "N/A"}
-              />
-              <DetailItem
-                icon={FaCalendarCheck}
-                label="Year"
-                value={studentData.Year || "N/A"}
-              />
-              <DetailItem
-                icon={FaGraduationCap}
-                label="Stream"
-                value={studentData.Stream || "N/A"}
-              />
-              <DetailItem
-                icon={FaUsers}
-                label="Group"
-                value={studentData["Group "] || "N/A"}
-              />
-              <DetailItem
-                icon={FaUniversity}
-                label="College"
-                value={studentData.College || "N/A"}
-              />
-              <DetailItem
-                icon={FaSearchDollar}
-                label="Source"
-                value={studentData.Source || "N/A"}
-              />
-              <DetailItem
-                icon={FaPhone}
-                label="Student Contact"
-                value={formatPhone(studentData.ContactNumber) || "N/A"}
-              />
-              <DetailItem
-                icon={FaMale}
-                label="Father Contact"
-                value={formatPhone(studentData.father_contact) || "N/A"}
-              />
-              <DetailItem
-                icon={FaFemale}
-                label="Mother Contact"
-                value={formatPhone(studentData.mother_contact) || "N/A"}
-              />
-              <DetailItem
-                icon={FaDollarSign}
-                label="Monthly Payment"
-                value={`₹${(
-                  +studentData["Monthly Fee"] || 0
-                ).toLocaleString()}`}
-                isHighlighted
-              />
-              <DetailItem
-                icon={FaMoneyBillWave}
-                label="Payment Status"
-                value={getPaymentStatusDisplay(studentData["Payment Status"])}
-                isHighlighted
-              />
-              <DetailItem
-                icon={FaHistory}
-                label="Previous Payment Date"
-                value={formatFirebaseDate(studentData.paidDate)}
-              />
-              <DetailItem
-                icon={FaCalendarDay}
-                label="Next Expected Payment Date"
-                value={formatFirebaseDate(studentData.nextDueDate)}
-                isHighlighted={studentData["Payment Status"] === "Unpaid"}
-              />
-              <DetailItem
-                icon={FaChalkboardTeacher}
-                label="Total Classes Attended"
-                value={studentData.classesCompleted || "N/A"}
-              />
-              <DetailItem
-                icon={FaCalendarAlt}
-                label="Next Class"
-                value={
-                  studentData.nextClass
-                    ? format(studentData.nextClass, "MMM dd, hh:mm a")
-                    : "N/A"
-                }
-              />
+            {studentData && studentId && studentData.admissionDate && (
+              <section className="portfolio-card delay-4">
+                <LectureMaterialsTable
+                  studentId={studentId}
+                    studentName={studentData.Name}   
+                  studentClassSchedule={studentData.classDateandTime}
+                  admissionDate={studentData.admissionDate}
+                />
+              </section>
+            )}
+
+            {/* Student Name Header */}
+            <div className="student-name-header">
+              <FaUserCircle className="name-icon" />
+              <h1>{studentData.Name || "N/A"}</h1>
+              <span className="student-status">
+                {studentData.isActive ? "Active" : "Inactive"}
+              </span>
+            </div>
+
+            <div className="details-sections">
+              {/* Personal Details Section */}
+              <div className="details-section">
+                <h2>
+                  <FaInfoCircle className="card-icon" /> Personal Details
+                </h2>
+                <div className="details-grid">
+                  <DetailItem
+                    icon={FaTransgender}
+                    label="Gender"
+                    value={studentData.Gender || "N/A"}
+                  />
+                  <DetailItem
+                    icon={FaBookOpen}
+                    label="Subject"
+                    value={studentData.Subject || "N/A"}
+                  />
+                  <DetailItem
+                    icon={FaCalendarCheck}
+                    label="Year"
+                    value={studentData.Year || "N/A"}
+                  />
+                  <DetailItem
+                    icon={FaGraduationCap}
+                    label="Stream"
+                    value={studentData.Stream || "N/A"}
+                  />
+                  <DetailItem
+                    icon={FaUsers}
+                    label="Group"
+                    value={studentData["Group "] || "N/A"}
+                  />
+                  <DetailItem
+                    icon={FaUniversity}
+                    label="College"
+                    value={studentData.College || "N/A"}
+                  />
+                  <DetailItem
+                    icon={FaSearchDollar}
+                    label="Source"
+                    value={studentData.Source || "N/A"}
+                  />
+                </div>
+              </div>
+
+              {/* Payment Details Section */}
+              <div className="details-section">
+                <h2>
+                  <FaMoneyBillWave className="card-icon" /> Payment Details
+                </h2>
+                <div className="details-grid">
+                  <DetailItem
+                    icon={FaDollarSign}
+                    label="Monthly Payment"
+                    value={`₹${(
+                      +studentData["Monthly Fee"] || 0
+                    ).toLocaleString()}`}
+                    isHighlighted
+                  />
+                  <DetailItem
+                    icon={FaMoneyBillWave}
+                    label="Payment Status"
+                    value={getPaymentStatusDisplay(
+                      studentData["Payment Status"]
+                    )}
+                    isHighlighted
+                  />
+                  <DetailItem
+                    icon={FaHistory}
+                    label="Previous Payment Date"
+                    value={formatFirebaseDate(studentData.paidDate)}
+                  />
+                  <DetailItem
+                    icon={FaCalendarDay}
+                    label="Next Expected Payment Date"
+                    value={formatFirebaseDate(studentData.nextDueDate)}
+                    isHighlighted={studentData["Payment Status"] === "Unpaid"}
+                  />
+                </div>
+              </div>
+
+              {/* Class Details Section */}
+              <div className="details-section">
+                <h2>
+                  <FaChalkboardTeacher className="card-icon" /> Class Details
+                </h2>
+                <div className="details-grid">
+                  <DetailItem
+                    icon={FaChalkboardTeacher}
+                    label="Total Classes Attended"
+                    value={studentData.classesCompleted || "N/A"}
+                  />
+                  <DetailItem
+                    icon={FaCalendarAlt}
+                    label="Next Class"
+                    value={
+                      studentData.nextClass
+                        ? format(studentData.nextClass, "MMM dd, hh:mm a")
+                        : "N/A"
+                    }
+                  />
+                  <div className="detail-item class-schedule">
+                    <div className="detail-icon">
+                      <FaClock />
+                    </div>
+                    <div className="detail-content">
+                      <span className="detail-label">Class Schedule</span>
+                      <div className="schedule-list">
+                        {studentData.classDateandTime &&
+                        studentData.classDateandTime.length > 0 ? (
+                          studentData.classDateandTime.map(
+                            (schedule, index) => (
+                              <span key={index} className="schedule-item">
+                                {schedule}
+                              </span>
+                            )
+                          )
+                        ) : (
+                          <span className="detail-value">No schedule set</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Details Section */}
+              <div className="details-section">
+                <h2>
+                  <FaPhone className="card-icon" /> Contact Details
+                </h2>
+                <div className="details-grid">
+                  <DetailItem
+                    icon={FaPhone}
+                    label="Student Contact"
+                    value={formatPhone(studentData.ContactNumber) || "N/A"}
+                  />
+                  <DetailItem
+                    icon={FaMale}
+                    label="Father Contact"
+                    value={
+                      formatPhone(studentData.FatherContactNumber) || "N/A"
+                    }
+                  />
+                  <DetailItem
+                    icon={FaFemale}
+                    label="Mother Contact"
+                    value={
+                      formatPhone(studentData.MotherContactNumber) || "N/A"
+                    }
+                  />
+                </div>
+              </div>
             </div>
           </section>
           <section className="portfolio-card marks-card delay-2">
@@ -402,6 +465,7 @@ const StudentPortfolio = () => {
               </div>
             )}
           </section>
+
           <section className="portfolio-card payments-card delay-3">
             <h2>
               <FaDollarSign className="card-icon" /> Payment History
@@ -418,8 +482,6 @@ const StudentPortfolio = () => {
             programType={studentData.Stream}
           />
         )}
-      </div>
-      <div style={{ width: "40%" }}>
         <TimeLineCard events={timelineEvents} />
       </div>
     </div>
@@ -455,15 +517,15 @@ const TimeLineCard = ({ events }) => {
 
   const getIndicatorColor = (label) => {
     if (label.includes("Payment")) {
-      return '#28a745';
+      return "#28a745";
     }
     if (label.includes("Class")) {
-      return '#007bff';
+      return "#007bff";
     }
     if (label.includes("Marks") || label.includes("Exam")) {
-      return '#ffc107';
+      return "#ffc107";
     }
-    return '#6c757d';
+    return "#6c757d";
   };
 
   return (
@@ -503,12 +565,17 @@ const TimeLineCard = ({ events }) => {
                 <div className="timeline-subheading">{subHeading}</div>
                 <div className="timeline-text">
                   {labelLines.map((line, idx) => (
-                    <div key={idx} style={{ marginBottom: "4px", lineHeight: "1.4" }}>
+                    <div
+                      key={idx}
+                      style={{ marginBottom: "4px", lineHeight: "1.4" }}
+                    >
                       {line}
                     </div>
                   ))}
                   {showTimestamp && (
-                    <span className="timestamp-inline">({event.timestamp})</span>
+                    <span className="timestamp-inline">
+                      ({event.timestamp})
+                    </span>
                   )}
                 </div>
               </div>

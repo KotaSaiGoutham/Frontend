@@ -31,31 +31,41 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
     const state = getState();
     const token = localStorage.getItem("token") || state.auth.token; // Get token from localStorage or Redux state
 
-    const headers = {
-      'Content-Type': 'application/json',
+    const config = {
+      method: method,
     };
 
     if (authRequired && token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      // Create headers object and set Authorization
+      config.headers = {
+        'Authorization': `Bearer ${token}`,
+      };
     } else if (authRequired && !token) {
       // If auth is required but no token, immediately dispatch auth error and reject
       const error = { message: "Authentication required, but no token found.", status: 401 };
       dispatch(setAuthError(error.message));
       dispatch({
-        type: onFailure || 'API_REQUEST_FAILURE', // Use generic failure if specific not provided
+        type: onFailure || 'API_REQUEST_FAILURE',
         payload: { error: error.message },
       });
-      deferred.reject(error); // Reject the promise immediately
-      return; // Stop processing this action
+      deferred.reject(error);
+      return;
     }
 
-    const config = {
-      method: method,
-      headers: headers,
-    };
-
+    // THIS IS THE CRITICAL CHANGE: Handle FormData vs. JSON
     if (data) {
-      config.body = JSON.stringify(data);
+      // Check if data is a FormData object (for file uploads)
+      if (data instanceof FormData) {
+        config.body = data;
+        // Do NOT set the 'Content-Type' header. The browser will handle it.
+      } else {
+        // If it's not FormData, assume it's a JSON payload
+        config.body = JSON.stringify(data);
+        if (!config.headers) {
+          config.headers = {};
+        }
+        config.headers['Content-Type'] = 'application/json';
+      }
     }
 
     const response = await fetch(`${BASE_API_URL}${url}`, config);
@@ -64,9 +74,11 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
     if (!response.ok) {
       let errorData;
       try {
-        errorData = await response.json(); // Try to parse JSON error
+        // Attempt to parse JSON error message from the response
+        errorData = await response.json(); 
       } catch (e) {
-        errorData = { message: response.statusText, status: response.status }; // Fallback for non-JSON error
+        // Fallback for non-JSON error responses
+        errorData = { message: response.statusText, status: response.status }; 
       }
 
       console.error(`API Error (${response.status}) on ${method} ${url}:`, errorData);
@@ -74,8 +86,8 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
       // Handle specific authentication errors (e.g., 401 Unauthorized, 403 Forbidden)
       if (response.status === 401 || response.status === 403) {
         dispatch(setAuthError(errorData.message || "Session expired please login again"));
-        dispatch({ type: LOGOUT }); // Dispatch logout to clear state and trigger redirect
-        localStorage.removeItem("token"); // Also clear from local storage
+        dispatch({ type: LOGOUT });
+        localStorage.removeItem("token");
       }
 
       if (onFailure) {
@@ -85,11 +97,11 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
             payload: { error: errorData.message || 'API request failed', status: response.status, rawError: errorData },
           });
         } else if (typeof onFailure === 'function') {
-          onFailure({ error: errorData, status: response.status }, dispatch); // Pass error and dispatch to callback
+          onFailure({ error: errorData, status: response.status }, dispatch);
         }
       }
-      deferred.reject(errorData); // Reject the promise with error data
-      return; // Stop further processing for this action
+      deferred.reject(errorData);
+      return;
     }
 
     const responseData = await response.json();
@@ -98,10 +110,10 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
       if (typeof onSuccess === 'string') {
         dispatch({ type: onSuccess, payload: responseData });
       } else if (typeof onSuccess === 'function') {
-        onSuccess(responseData, dispatch); // Pass data and dispatch to callback
+        onSuccess(responseData, dispatch);
       }
     }
-    deferred.resolve(responseData); // Resolve the promise with data
+    deferred.resolve(responseData);
 
   } catch (error) {
     console.error(`Network or unexpected error on ${method} ${url}:`, error);
@@ -114,7 +126,7 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
         onFailure({ error: { message: errorMessage } }, dispatch);
       }
     }
-    deferred.reject(error); // Reject the promise with the error
+    deferred.reject(error);
   }
 };
 

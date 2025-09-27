@@ -1,5 +1,8 @@
 import {
   API_REQUEST,
+  DELETE_LECTURE_MATERIAL_SUCCESS,
+  DELETE_LECTURE_MATERIAL_FAILURE,
+  DELETE_LECTURE_MATERIAL_REQUEST,
   REVISION_PROGRAM_REGISTER_REQUEST,
   REVISION_PROGRAM_REGISTER_SUCCESS,
   REVISION_PROGRAM_REGISTER_FAILURE,
@@ -161,6 +164,12 @@ import {
     UPDATE_STUDENT_STATUS_REQUEST,
   UPDATE_STUDENT_STATUS_SUCCESS,
   UPDATE_STUDENT_STATUS_FAILURE,
+    FETCH_LECTURE_MATERIALS_REQUEST,
+  FETCH_LECTURE_MATERIALS_SUCCESS,
+  FETCH_LECTURE_MATERIALS_FAILURE,
+  UPLOAD_LECTURE_MATERIAL_REQUEST,
+  UPLOAD_LECTURE_MATERIAL_SUCCESS,
+  UPLOAD_LECTURE_MATERIAL_FAILURE,
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -1665,4 +1674,56 @@ export const updateStudentStatus = (studentId, newStatus) =>
       });
     },
     authRequired: false,
+  });
+  export const fetchStudentLectureMaterials = (studentId) =>
+  apiRequest({
+    url: `/api/materials/getstudentmaterials/${studentId}`,
+    method: "GET",
+    onStart: FETCH_LECTURE_MATERIALS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: FETCH_LECTURE_MATERIALS_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_LECTURE_MATERIALS_FAILURE,
+        payload: { error: error.message || "Failed to fetch lecture materials" },
+      });
+    },
+    authRequired: true,
+  });
+
+// New action creator to upload a lecture material file
+export const uploadLectureMaterial = (studentId, classId, fileType, file) =>
+  apiRequest({
+    url: `/api/materials/upload/${studentId}/${classId}/${fileType}`,
+    method: "POST",
+    data: file, // The API request helper needs to handle formData
+    onStart: UPLOAD_LECTURE_MATERIAL_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: UPLOAD_LECTURE_MATERIAL_SUCCESS, payload: data });
+      dispatch(fetchStudentLectureMaterials(studentId)); // Refresh the data after a successful upload
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPLOAD_LECTURE_MATERIAL_FAILURE,
+        payload: { error: error.message || "Failed to upload file" },
+      });
+    },
+    authRequired: true,
+  });
+export const deleteLectureMaterial = (fileId, googleDriveId) =>
+  apiRequest({
+    url: `/api/materials/delete/${fileId}/${googleDriveId}`,
+    method: "DELETE",
+    onStart: DELETE_LECTURE_MATERIAL_REQUEST, // Optional: Add a request type if you want to show a loading state on deletion
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: DELETE_LECTURE_MATERIAL_SUCCESS, payload: fileId });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: DELETE_LECTURE_MATERIAL_FAILURE,
+        payload: { error: error.message || "Failed to delete file" },
+      });
+    },
+    authRequired: true,
   });

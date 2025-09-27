@@ -1,0 +1,560 @@
+/* Modern Lecture Materials Table - Refined Design */
+
+:root {
+  /* Modern Color Palette */
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --primary-dark: #5a67d8;
+  --primary-light: #e6efff;
+  
+  --success-gradient: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  --success-color: #4ecdc4;
+  --success-light: #e6f7f6;
+  
+  --warning-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  --warning-color: #ff9f43;
+  --warning-light: #fff4e6;
+  
+  --danger-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  --danger-color: #ff6b6b;
+  --danger-light: #ffe6e6;
+  
+  --info-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  --info-color: #54a0ff;
+  --info-light: #e6f3ff;
+  
+  /* Neutral Colors */
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+  --text-muted: #a0aec0;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7fafc;
+  --bg-tertiary: #edf2f7;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+   /* REVISED SUCCESS COLORS (Brighter Green) */
+  --success-color: #10b981; /* Tailwind Green-500 */
+  --success-light: #d1fae5; /* Tailwind Green-100 */
+  
+  /* REVISED WARNING COLORS (Clear Orange/Amber for Waiting/Urgent) */
+  --warning-color: #f59e0b; /* Tailwind Amber-500 */
+  --warning-light: #fffdf7; /* A very light off-white/cream */
+  
+    /* REVISED SUCCESS COLORS (Brighter Green) */
+  --success-color: #10b981; /* Tailwind Green-500 */
+  --success-light: #d1fae5; /* Tailwind Green-100 */
+  
+  /* REVISED WARNING COLORS (Clear Orange/Amber for Waiting/Urgent) */
+  --warning-color: #f59e0b; /* Tailwind Amber-500 */
+  --warning-light: #fffdf7; /* A very light off-white/cream */
+  
+  /* REVISED DANGER COLORS (Clear Red) */
+  --danger-color: #ef4444; /* Tailwind Red-500 */
+  --danger-light: #fee2e2; /* Tailwind Red-100 */
+  
+  /* REVISED INFO COLORS (Slightly deeper blue for Pending) */
+  --info-color: #3b82f6; /* Tailwind Blue-500 */
+  --info-light: #eff6ff; /* Tailwind Blue-100 */
+  --border-light: #f3f4f6; /* Lighter, cleaner background for borders/dividers */
+
+  /* REVISED DANGER COLORS (Clear Red) */
+}
+
+/* Base Container */
+.lecture-materials-container {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-primary);
+  padding: var(--space-8);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  max-width: 100%;
+  overflow-x: auto;
+  position: relative;
+}
+
+.lecture-materials-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+}
+
+/* Header */
+.materials-header {
+  font-size: 2rem;
+  font-weight: 700;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.header-icon {
+  background: var(--primary-gradient);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  color: white;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-lg);
+  transition: transform 0.3s ease;
+}
+
+.materials-header:hover .header-icon {
+    transform: rotate(10deg);
+}
+
+.materials-description {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-8);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* Table */
+.table-responsive {
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+    overflow-x: auto; 
+
+}
+
+.materials-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 1600px;
+  background: var(--bg-primary);
+}
+
+.materials-table th {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: var(--space-5) var(--space-4);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.materials-table td {
+  padding: var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle; /* Adjusted for better alignment */
+  transition: all 0.3s ease;
+}
+
+/* In LectureMaterialsTable.css */
+
+/* Define the width for consistency, and add the dotted border to the right of the file cells */
+.file-cell {
+  width: var(--file-cell-width);
+  /* The Key Change: Add a dotted divider to separate PPTs from Worksheets */
+  border-right: 2px dotted var(--border-color-light); 
+}
+
+/* Ensure worksheet cells don't inherit the dotted border */
+.worksheet-cell {
+  width: var(--file-cell-width);
+}
+
+.materials-table tbody tr td:nth-child(3) {
+    /* Targets PPT (Previous) cell to apply dotted border on its right */
+    border-right: 2px dotted var(--border-light); 
+}
+
+/* Clear the border on the right of the PPT (Current) column cell to make way for the divider */
+.materials-table tbody tr td:nth-child(4) {
+    /* Targets PPT (Current) cell to apply a heavier dotted border on its right */
+    border-right: 2px dotted var(--text-muted) !important; 
+}
+
+
+/* Clear the border on the right of the Worksheet column cell */
+.materials-table tbody tr td:nth-child(5) {
+    border-right: none !important;
+}
+
+
+/* Ensure the header also gets a divider after the PPT (Current) header */
+.materials-table th:nth-child(4) { 
+    /* Targets PPT (Current) HEADER to apply the dotted border */
+    border-right: 2px dotted var(--text-secondary); /* Use a darker color for the header divider */
+}
+
+/* Clear the border on the first worksheet header to ensure the dotted line is only on the PPT side */
+.materials-table th:nth-child(5) { 
+    border-left: none;
+}
+.material-row:hover {
+  background-color: var(--bg-secondary);
+}
+/* UNIFIED FILE INTERACTION BOX */
+.file-interaction-box {
+  width: 140px;
+  height: 100px; /* Adjusted height */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--border-color);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  background: var(--bg-primary);
+  margin: 0 auto; /* Center the box in the table cell */
+}
+
+.file-interaction-box.uploadable {
+  border-style: dashed;
+  border-color: var(--primary-color);
+  background: var(--primary-light);
+  cursor: pointer;
+}
+
+.file-interaction-box.uploadable:hover {
+  background: var(--bg-primary);
+  border-color: var(--primary-dark);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: var(--shadow-lg);
+}
+
+.file-interaction-box.completed {
+  background: var(--success-light);
+  border: 2px solid var(--success-color);
+  box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.1), var(--shadow-lg);
+}
+
+.file-interaction-box.locked {
+  border-style: solid;
+  border-color: var(--border-light);
+  background: var(--bg-tertiary);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* BOX CONTENT */
+.box-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+}
+
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+  width: 100%;
+  flex: 1;
+  justify-content: center;
+}
+
+.upload-icon {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  transition: transform 0.3s ease;
+}
+
+.upload-area:hover .upload-icon {
+  transform: scale(1.1);
+}
+
+.uploaded-file-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  flex: 1;
+  justify-content: center;
+}
+
+.upload-success-icon {
+  color: var(--success-color);
+  font-size: 1.5rem;
+}
+
+.file-name {
+  font-size: 0.7rem;
+  text-align: center;
+  word-break: break-all;
+  max-width: 100px;
+  line-height: 1.3;
+  color: var(--text-secondary);
+  font-weight: 500;
+  height: 2.6em; 
+  overflow: hidden;
+}
+
+.file-actions {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.file-action-btn {
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.3s ease;
+}
+
+.view-btn {
+  background: var(--primary-gradient);
+  color: white;
+}
+.view-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.delete-btn {
+  background: var(--danger-gradient);
+  color: white;
+}
+.delete-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.locked-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  text-align: center;
+  flex: 1;
+  justify-content: center;
+}
+
+/* ===================================================================
+ * WORKSHEET FLOW AND CONNECTOR STYLES (Light and Minimal Design)
+ * =================================================================== */
+
+.worksheet-linear-flow {
+  display: flex;
+  align-items: center;
+  /* Reduced min-height slightly for tighter layout */
+  min-height: 120px; 
+  gap: var(--space-2);
+}
+
+.flow-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* Reduced width to bring steps closer */
+  width: 100px; 
+  position: relative;
+  text-align: center;
+}
+
+/* The dotted line connector that runs under the arrow/badge */
+.flow-connector::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 0;
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
+.flow-arrow {
+  /* Use the arrow as a primary visual indicator, sitting on top of the line */
+  position: relative; 
+  z-index: 2; 
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-muted); /* Muted gray color when inactive */
+  margin-top: var(--space-4); 
+  background-color: var(--bg-primary); /* White background to 'cut' the dotted line cleanly */
+  padding: 0 var(--space-2);
+  transition: color 0.3s ease;
+}
+
+.flow-arrow.arrow-active {
+  color: var(--success-color); /* Bright green when active/completed */
+}
+
+
+/* --- REVISED STATUS BADGE (Styled for clarity and high contrast) --- */
+.status-badge {
+  padding: var(--space-1) var(--space-2); 
+  border-radius: var(--radius-md);
+  font-size: 0.7rem; 
+  font-weight: 600; 
+  white-space: nowrap;
+  transition: transform 0.2s ease;
+  
+  /* Positioning the badge above the line and centered */
+  position: absolute; 
+  top: 0; /* Positioned near the top of the connector area */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+}
+
+.status-badge:hover {
+  transform: translateX(-50%) scale(1.05);
+}
+
+/* WAITING: HIGH-CONTRAST AMBER/ORANGE for clear highlighting */
+.status-badge.status-waiting { 
+  background-color: var(--warning-color); 
+  color: white; 
+  border: 1px solid var(--warning-color);
+  box-shadow: 0 2px 4px -1px rgba(245, 158, 11, 0.4); 
+  font-weight: 700;
+}
+
+/* UPLOADED: Green for successful completion */
+.status-badge.status-uploaded { 
+  background-color: var(--success-light);
+  color: var(--success-color);
+  border: 1px solid var(--success-color);
+}
+
+/* PENDING/INFO: Blue for in-progress or informational status */
+.status-badge.status-pending { 
+  background-color: var(--info-light);
+  color: var(--info-color);
+  border: 1px solid var(--info-color);
+}
+
+/* URGENT/DANGER: Red for critical or failed status */
+.status-badge.status-urgent { 
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+}
+/* Loading & Error States */
+.loading-message, .error-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  border-radius: var(--radius-xl);
+  font-weight: 600;
+  margin: var(--space-8) 0;
+  text-align: center;
+}
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.upload-spinner {
+  color: var(--primary-color);
+  position: absolute;
+  bottom: 5px;
+}
+
+/* LectureMaterialsTable.css or relevant CSS file */
+
+.week-navigation {
+  display: flex; /* Arranges buttons horizontally */
+  justify-content: center; /* Centers the button group */
+  align-items: center;
+  gap: 15px; /* Space between buttons */
+  margin: 20px 0; /* Vertical spacing above and below the navigation */
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.week-navigation button {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+  background-color: #f9f9f9;
+  color: #333;
+  user-select: none; /* Prevents text selection on double click */
+}
+
+/* Style for the "This Week" button to make it stand out */
+.week-navigation button:nth-child(2) {
+  background-color: #007bff; /* Primary blue color */
+  color: white;
+  border-color: #007bff;
+}
+
+.week-navigation button:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.week-navigation button:nth-child(2):hover:not(:disabled) {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.week-navigation button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Optional: Style for disabled buttons if you add that functionality */
+.week-navigation button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

@@ -17,7 +17,6 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
   Paper,
   Box,
@@ -33,60 +32,38 @@ import {
   FormGroup, // <-- Import this
   Tooltip,
   Chip,
-  TableSortLabel,
   Dialog,
   DialogTitle,
   DialogActions,
   DialogContent,
   DialogContentText,
-  Badge,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
   Button,
+  Collapse,
 } from "@mui/material";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
 // Import ALL necessary icons from react-icons/fa
 import {
   isRecentPayment,
   formatFirestoreDate,
-  calculateExpectedEndDate,
 } from "../mockdata/function";
 import {
   FaSearch,
   FaEye,
   FaUserGraduate,
-  FaTransgender,
-  FaDollarSign,
-  FaBookOpen,
-  FaCalendarAlt,
+  FaColumns,
   FaCheckCircle,
   FaExclamationCircle,
   FaUsers,
-  FaHourglassHalf,
   FaIdCard,
   FaUserCircle,
   FaPlus,
   FaGraduationCap,
-  FaUniversity,
-  FaSearchDollar,
-  FaCalendarCheck,
-  FaArrowUp,
-  FaArrowDown,
   FaMinusCircle,
   FaPlusCircle,
-  FaPhone,
-  FaMoneyBillWave, // Icon for Monthly Fee
-  FaClipboardList, // Icon for Classes Completed
   FaUserCheck,
   FaUserTimes,
-  FaEllipsisV,
-  FaEdit,
-  FaTrashAlt,
-  FaCalendarTimes,
+  FaMinus,
 } from "react-icons/fa";
-// Assuming these are your custom components and mock data
 import { getPdfTableHeaders, getPdfTableRows } from "../mockdata/function";
 import {
   MuiButton,
@@ -117,10 +94,6 @@ import TableHeaders from "./students/TableHeaders";
 import { studentColumns } from "../mockdata/Options";
 import ClassesCompletedTable from "./students/ClassesCompletedTable";
 
-const MuiAlert = React.forwardRef(function MuiAlert(props, ref) {
-  return <Alert elevation={6} ref={ref} variant="filled" {...props} />;
-});
-
 const StudentsTable = () => {
   const [columnVisibility, setColumnVisibility] = useState({
     gender: false,
@@ -142,6 +115,21 @@ const StudentsTable = () => {
     status: false,
     actions: true,
   });
+  // Add this state at the top of your component
+  const [expandedSections, setExpandedSections] = useState({
+    header: true,
+    filters: true,
+    columns: false,
+    table: true,
+  });
+
+  // Toggle function
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
   const [animate, setAnimate] = useState(false);
   const handleColumnToggle = (columnName) => (event) => {
     setColumnVisibility((prevVisibility) => ({
@@ -434,98 +422,79 @@ const StudentsTable = () => {
     setNewStatus(!currentStatus); // If currently active, new status is inactive; if inactive, new status is active
     setConfirmDialogOpen(true);
   };
-  const sortedFilteredStudents = useMemo(() => {
-    if (!sortEnabled) {
-      return displayedStudents;
+// ...
+const sortedFilteredStudents = useMemo(() => {
+  if (!sortEnabled) {
+    return displayedStudents;
+  }
+
+  let studentsToSort = [...filteredStudents];
+
+  studentsToSort.sort((a, b) => {
+    // 1. Primary Sort: Inactive students move to the bottom
+    // We use a helper function to get the correct boolean value
+    const aIsActive = a.isActive;
+    const bIsActive = b.isActive;
+    if (aIsActive !== bIsActive) {
+      return aIsActive ? -1 : 1; // Active students before inactive
     }
 
-    let studentsToSort = [...filteredStudents];
+    // 2. Secondary Sort: Group Paid students at the top
+    const aIsPaid = a["Payment Status"] === "Paid";
+    const bIsPaid = b["Payment Status"] === "Paid";
 
-    studentsToSort.sort((a, b) => {
-      // Primary Sort: Inactive students move to the bottom
-      if (a.isActive && !b.isActive) {
-        return -1;
-      }
-      if (!a.isActive && b.isActive) {
-        return 1;
-      }
+    if (aIsPaid && !bIsPaid) {
+      return -1; // Paid 'a' comes before unpaid 'b'
+    }
+    if (!aIsPaid && bIsPaid) {
+      return 1; // Unpaid 'a' comes after paid 'b'
+    }
 
-      // Secondary Sort: Group Paid students at the top
-      const aIsPaid = a["Payment Status"] === "Paid";
-      const bIsPaid = b["Payment Status"] === "Paid";
-
-      if (aIsPaid && !bIsPaid) {
-        return -1; // 'a' (paid) comes before 'b' (unpaid)
-      }
-      if (!aIsPaid && bIsPaid) {
-        return 1; // 'a' (unpaid) comes after 'b' (paid)
+    // 3. Tertiary Sort: If both are Paid or both are Unpaid
+    if (aIsPaid === bIsPaid) {
+      // If both are PAID, sort by paidDate in descending order (latest first)
+      if (aIsPaid) {
+        const aPaidDate = a.paidDate?._seconds || 0;
+        const bPaidDate = b.paidDate?._seconds || 0;
+        return bPaidDate - aPaidDate; // Descending sort
       }
 
-      // Tertiary Sort: Only if payment statuses are the same (both Paid or both Unpaid)
-      // Sort by classes completed in descending order
-      if (aIsPaid === bIsPaid) {
-        const aClasses = a.classesCompleted || 0;
-        const bClasses = b.classesCompleted || 0;
-        return bClasses - aClasses; // Descending sort (most classes completed first)
-      }
+      // If both are UNPAID or all other status, fall back to classesCompleted
+      const aClasses = a.classesCompleted || 0;
+      const bClasses = b.classesCompleted || 0;
+      return bClasses - aClasses; // Descending sort
+    }
 
-      // If all primary and secondary sorts are equal, fall back to the user's selected orderBy
-      if (!orderBy) {
-        return 0; // Maintain original relative order
-      }
+    // If all primary and secondary sorts are equal, fall back to the user's selected orderBy
+    if (!orderBy) {
+      return 0; // Maintain original relative order
+    }
 
-      // ... (Your existing switch statement for custom column sorting)
-      let aValue;
-      let bValue;
+    // ... (Your existing switch statement for custom column sorting)
+    let aValue;
+    let bValue;
+    
+    switch (orderBy) {
+      case "name":
+        aValue = a.Name?.toLowerCase() || "";
+        bValue = b.Name?.toLowerCase() || "";
+        return order === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      // ... (Rest of your switch cases)
+      default:
+        // Default comparison logic
+        const valA = a[orderBy];
+        const valB = b[orderBy];
+        if (typeof valA === "string" && typeof valB === "string") {
+          return valA.localeCompare(valB);
+        }
+        return valA - valB || 0;
+    }
+  });
 
-      switch (orderBy) {
-        case "name":
-          aValue = a.Name?.toLowerCase() || "";
-          bValue = b.Name?.toLowerCase() || "";
-          return order === "asc"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-
-        case "monthlyFee":
-          aValue =
-            typeof a["Monthly Fee"] === "number"
-              ? a["Monthly Fee"]
-              : parseFloat(a["Monthly Fee"]) || 0;
-          bValue =
-            typeof b["Monthly Fee"] === "number"
-              ? b["Monthly Fee"]
-              : parseFloat(b["Monthly Fee"]) || 0;
-          break;
-
-        case "classesCompleted":
-          aValue = a.classesCompleted || 0;
-          bValue = b.classesCompleted || 0;
-          return order === "asc" ? aValue - bValue : bValue - aValue;
-
-        // ... (Rest of your switch cases for other columns)
-
-        default:
-          // Default comparison for other columns if needed
-          const valA = a[orderBy];
-          const valB = b[orderBy];
-          if (typeof valA === "string" && typeof valB === "string") {
-            return valA.localeCompare(valB);
-          }
-          return valA - valB || 0;
-      }
-
-      // Fallback for orderBy if values are not strings or numbers
-      if (aValue < bValue) {
-        return order === "asc" ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return order === "asc" ? 1 : -1;
-      }
-      return 0;
-    });
-
-    return studentsToSort;
-  }, [filteredStudents, orderBy, order, sortEnabled, displayedStudents]);
+  return studentsToSort;
+}, [filteredStudents, orderBy, order, sortEnabled, displayedStudents]);
 
   // Handles changes in filter input fields
   const handleFilterChange = (e) => {
@@ -640,12 +609,10 @@ const StudentsTable = () => {
     return "Students"; // Generic title
   };
 
-  const showSubjectColumn = user?.AllowAll;
-  const pdfHeaders = getPdfTableHeaders(columnVisibility, showSubjectColumn);
+  const pdfHeaders = getPdfTableHeaders(columnVisibility);
   const pdfRows = getPdfTableRows(
     sortedFilteredStudents,
     columnVisibility,
-    showSubjectColumn
   );
 
   if (isLoading) {
@@ -724,7 +691,7 @@ const StudentsTable = () => {
         p: 3,
         display: "flex",
         flexDirection: "column",
-        gap: 3,
+        gap: 2,
       }}
     >
       {/* Header Section */}
@@ -738,7 +705,7 @@ const StudentsTable = () => {
         <Paper
           elevation={6} // Increased elevation for more depth
           sx={{
-            p: 3,
+            p: 2,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -805,15 +772,19 @@ const StudentsTable = () => {
         unmountOnExit
         timeout={600}
       >
-        <Paper elevation={6} sx={{ p: 3, borderRadius: "12px" }}>
+        {/* Filters Section */}
+        <Paper elevation={6} sx={{ borderRadius: "12px", overflow: "hidden" }}>
           <Box
+            onClick={() => toggleSection("filters")}
             sx={{
+              p: 1.5,
+              cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              mb: 3,
-              flexWrap: "wrap",
-              gap: 2,
+              backgroundColor: expandedSections.filters ? "#f0f7ff" : "#f7f8fc",
+              transition: "background-color 0.3s ease",
+              "&:hover": { backgroundColor: "#e3f2fd" },
             }}
           >
             <Typography
@@ -832,101 +803,148 @@ const StudentsTable = () => {
                   fontSize: "1.8rem",
                   color: "#1976d2",
                 }}
-              />{" "}
+              />
               Filter Students
             </Typography>
-          </Box>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(3, 1fr)",
-                lg: "repeat(5, 1fr)",
-              },
-              gap: 2,
-            }}
-          >
-            <MuiInput
-              label="Student Name"
-              name="studentName"
-              value={filters.studentName}
-              onChange={handleFilterChange}
-              placeholder="Search by student name..."
-              icon={FaUserCircle}
-            />
-            {showSubjectColumn && (
-              <MuiSelect
-                label="Subject"
-                name="subject"
-                value={filters.subject}
-                onChange={handleFilterChange}
-                options={subjectOptions}
-                icon={FaBookOpen}
-              />
-            )}
 
-            <MuiSelect
-              label="Payment Status"
-              name="paymentStatus"
-              value={filters.paymentStatus}
-              onChange={handleFilterChange}
-              options={paymentStatusOptions}
-              icon={FaIdCard}
-            />
-            <MuiSelect
-              label="Gender"
-              name="gender"
-              value={filters.gender}
-              onChange={handleFilterChange}
-              options={genderOptions}
-              icon={FaUsers}
-            />
-            <MuiSelect
-              label="Stream"
-              name="stream"
-              value={filters.stream}
-              onChange={handleFilterChange}
-              options={streamOptions}
-              icon={FaGraduationCap}
-            />
+            <IconButton
+              size="small"
+              sx={{
+                border: "1px solid #ddd",
+                backgroundColor: "white",
+                "&:hover": { backgroundColor: "#f5f5f5" },
+              }}
+            >
+              {expandedSections.filters ? (
+                <FaMinus size={14} />
+              ) : (
+                <FaPlus size={14} />
+              )}
+            </IconButton>
           </Box>
+
+          <Collapse in={expandedSections.filters}>
+            <Box sx={{ p: 1, pt: 0, borderTop: "1px solid #eee" }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "repeat(2, 1fr)",
+                    md: "repeat(3, 1fr)",
+                    lg: "repeat(5, 1fr)",
+                  },
+                  gap: 2,
+                }}
+              >
+                <MuiInput
+                  label="Student Name"
+                  name="studentName"
+                  value={filters.studentName}
+                  onChange={handleFilterChange}
+                  placeholder="Search by student name..."
+                  icon={FaUserCircle}
+                />
+                <MuiSelect
+                  label="Payment Status"
+                  name="paymentStatus"
+                  value={filters.paymentStatus}
+                  onChange={handleFilterChange}
+                  options={paymentStatusOptions}
+                  icon={FaIdCard}
+                />
+                <MuiSelect
+                  label="Gender"
+                  name="gender"
+                  value={filters.gender}
+                  onChange={handleFilterChange}
+                  options={genderOptions}
+                  icon={FaUsers}
+                />
+                <MuiSelect
+                  label="Stream"
+                  name="stream"
+                  value={filters.stream}
+                  onChange={handleFilterChange}
+                  options={streamOptions}
+                  icon={FaGraduationCap}
+                />
+              </Box>
+            </Box>
+          </Collapse>
         </Paper>
       </Slide>
-      <Paper
-        elevation={6}
-        sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
-      >
-        <Box sx={{ mb: 2, display: "flex", flexWrap: "wrap", gap: 2 }}>
-          <Typography variant="h6" sx={{ width: "100%", mb: 1 }}>
-            Show/Hide Columns:
+      {/* Columns Control Section */}
+      <Paper elevation={6} sx={{ borderRadius: "12px", overflow: "hidden" }}>
+        <Box
+          onClick={() => toggleSection("columns")}
+          sx={{
+            p: 2,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: expandedSections.columns ? "#f0f7ff" : "#f7f8fc",
+            transition: "background-color 0.3s ease",
+            "&:hover": { backgroundColor: "#e3f2fd" },
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ display: "flex", alignItems: "center" }}
+          >
+            <FaColumns style={{ marginRight: "10px", color: "#1976d2" }} />
+            Show/Hide Columns
           </Typography>
-          <FormGroup row>
-            {Object.entries(columnVisibility).map(([key, isVisible]) => (
-              <FormControlLabel
-                key={key}
-                control={
-                  <Checkbox
-                    checked={isVisible}
-                    onChange={handleColumnToggle(key)}
-                    name={key}
-                  />
-                }
-                label={
-                  // Display human-readable names for labels
-                  key === "sNo"
-                    ? "S.No."
-                    : key === "contactNumber"
-                    ? "Contact No."
-                    : key
-                        .replace(/([A-Z])/g, " $1")
-                        .replace(/^./, (str) => str.toUpperCase())
-                }
-              />
-            ))}
-          </FormGroup>
+
+          <IconButton
+            size="small"
+            sx={{
+              border: "1px solid #ddd",
+              backgroundColor: "white",
+              "&:hover": { backgroundColor: "#f5f5f5" },
+            }}
+          >
+            {expandedSections.columns ? (
+              <FaMinus size={14} />
+            ) : (
+              <FaPlus size={14} />
+            )}
+          </IconButton>
         </Box>
+
+        <Collapse in={expandedSections.columns}>
+          <Box sx={{ p: 2, borderTop: "1px solid #eee" }}>
+            <FormGroup row sx={{ gap: 2 }}>
+              {Object.entries(columnVisibility).map(([key, isVisible]) => (
+                <FormControlLabel
+                  key={key}
+                  control={
+                    <Checkbox
+                      checked={isVisible}
+                      onChange={handleColumnToggle(key)}
+                      name={key}
+                    />
+                  }
+                  label={
+                    key === "sNo"
+                      ? "S.No."
+                      : key === "contactNumber"
+                      ? "Contact No."
+                      : key
+                          .replace(/([A-Z])/g, " $1")
+                          .replace(/^./, (str) => str.toUpperCase())
+                  }
+                  sx={{
+                    minWidth: "140px",
+                    m: 0,
+                    "& .MuiFormControlLabel-label": { fontSize: "0.9rem" },
+                  }}
+                />
+              ))}
+            </FormGroup>
+          </Box>
+        </Collapse>
       </Paper>
       {/* Students List Table */}
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
@@ -951,7 +969,6 @@ const StudentsTable = () => {
                   orderBy={orderBy}
                   handleSortRequest={handleSortRequest}
                   columnVisibility={columnVisibility}
-                  showSubjectColumn={showSubjectColumn}
                 />
                 <TableBody>
                   {sortedFilteredStudents.map((student, index) => (
@@ -1030,11 +1047,6 @@ const StudentsTable = () => {
                       {columnVisibility.gender && (
                         <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                           {student.Gender || "N/A"}
-                        </TableCell>
-                      )}
-                      {columnVisibility.subject && showSubjectColumn && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student.Subject || "N/A"}
                         </TableCell>
                       )}
                       {columnVisibility.year && (
