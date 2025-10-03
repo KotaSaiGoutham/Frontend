@@ -255,7 +255,7 @@ const Home = () => {
 
   return (
     <div className="home">
-      <BannerPopup/>
+      <BannerPopup />
       <PhoneDialer />
       {/* Hero Section */}
       <FlashBanner />
@@ -275,7 +275,7 @@ const Home = () => {
           <SubjectCard
             title="Chemistry"
             description="Dive deep into the science of substances"
-            imageSrc="https://www.svgrepo.com/show/62122/chemistry.svg"
+            imageSrc="chemistry_latest.png"
             altText="Chemistry Icon"
             redirectPath="/subjects/chemistry"
             delayClass="delay-2"
@@ -355,7 +355,7 @@ const Home = () => {
 
       <FacultyVideo faculties={faculties} />
 
-    <StatsSection />
+      <StatsSection />
 
       <Testimonials />
       <FAQSection />
@@ -374,4 +374,3 @@ const Home = () => {
 
 export default Home;
 // CountUpNumber.jsx
-

@@ -4,12 +4,11 @@ import { FaGraduationCap, FaRupeeSign, FaCalendarAlt } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import {
   fetchMonthlyPayments,
-  fetchClassUpdates,
   fetchAutoTimetablesForToday,
   fetchUpcomingClasses,
 } from "../../redux/actions";
 import { Box, Tooltip } from "@mui/material";
-import { BarChart } from "@mui/x-charts"; // Changed from LineChart to BarChart
+import { BarChart } from "@mui/x-charts";
 import {
   format,
   addDays,
@@ -18,7 +17,7 @@ import {
   isAfter,
   startOfMonth,
   endOfMonth,
-} from "date-fns"; // ⬅️ Add `isSameMonth` and `parseISO`
+} from "date-fns";
 import "./HistoricalTables.css";
 import { calculateQuartiles } from "../../mockdata/function";
 
@@ -33,23 +32,22 @@ const HistoricalTables = ({ students }) => {
   });
   const currentMonth = today.toLocaleDateString("en-US", { month: "short" });
   const {
-    timetables: manualTimetables, // Renamed from 'timetables' for clarity with autoTimetables
+    timetables: manualTimetables,
     loading: classesLoading,
     error: classesError,
   } = useSelector((state) => state.classes);
   const {
-    timetables: autoTimetables, // NEW: This will hold auto-generated timetables
+    timetables: autoTimetables,
     loading: autoTimetablesLoading,
     error: autoTimetablesError,
-    hasSavedToday: autoTimetablesHasSavedToday, // NEW: Track if auto-timetables were saved for today
-  } = useSelector((state) => state.autoTimetables); // This is your NEW autoTimetables reducer
+    hasSavedToday: autoTimetablesHasSavedToday,
+  } = useSelector((state) => state.autoTimetables);
   useEffect(() => {
     dispatch(fetchAutoTimetablesForToday(user?.id));
 
     dispatch(fetchUpcomingClasses());
 
     dispatch(fetchMonthlyPayments());
-    dispatch(fetchClassUpdates());
   }, [dispatch]);
 
   const { monthlyPayments } = useSelector((state) => state.expenditures);
@@ -122,9 +120,7 @@ const HistoricalTables = ({ students }) => {
     }
 
     return classCount;
-  }, [students, manualTimetables]); 
-
-  // ... (rest of the component code)
+  }, [students, manualTimetables]);
 
   const sevenDayClassesData = useMemo(() => {
     const data = [];
@@ -147,7 +143,7 @@ const HistoricalTables = ({ students }) => {
       const year = today.getFullYear();
       const monthStart = startOfMonth(new Date(year, index, 1));
 
-      // ✅ If this month is in the future → mark as "-"
+      // If this month is in the future → mark as "-"
       if (monthStart > today) {
         data[monthAbbr] = "-";
       } else {
@@ -171,7 +167,7 @@ const HistoricalTables = ({ students }) => {
       const monthStart = startOfMonth(new Date(year, index, 1));
       const monthEnd = endOfMonth(new Date(year, index, 1));
 
-      // ✅ If month is in the future → mark as "-"
+      // If month is in the future → mark as "-"
       if (monthStart > today) {
         data[monthAbbr] = "-";
         return;
@@ -232,7 +228,7 @@ const HistoricalTables = ({ students }) => {
       <div className="table-section">
         <div className="row-container">
           <div className="table-container">
-            <div className="table-card primary-card">
+            <div className="table-card primary-card fixed-table-card">
               <h3
                 className="table-heading clickable-heading"
                 onClick={handleNavigateToToday}
@@ -242,51 +238,54 @@ const HistoricalTables = ({ students }) => {
                 </span>
                 No of classes per day
               </h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                                       {" "}
-                    {sevenDayClassesData.map(({ date, dayAbbr }) => (
-                      <th
-                        key={dayAbbr}
-                        className={
-                          format(date, "yyyy-MM-dd") ===
-                          format(today, "yyyy-MM-dd")
-                            ? "highlight-cell pulse"
-                            : ""
-                        }
-                      >
-                        <span className="th-content">{dayAbbr}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    {sevenDayClassesData.map(
-                      ({ date, dayAbbr, count }, index) => (
-                        <td
-                          key={index}
-                          className={`clickable ${
+              {/* Scroll Wrapper */}
+              <div className="table-scroll-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      {" "}
+                      {sevenDayClassesData.map(({ date, dayAbbr }) => (
+                        <th
+                          key={dayAbbr}
+                          className={
                             format(date, "yyyy-MM-dd") ===
                             format(today, "yyyy-MM-dd")
-                              ? "highlight-cell"
+                              ? "highlight-cell pulse"
                               : ""
-                          }`}
-                          onClick={() => handleDateClick(date)}
+                          }
                         >
-                          <Tooltip
-                            title={`Click to view timetable for ${dayAbbr}`}
-                            placement="top"
+                          <span className="th-content">{dayAbbr}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      {sevenDayClassesData.map(
+                        ({ date, dayAbbr, count }, index) => (
+                          <td
+                            key={index}
+                            className={`clickable ${
+                              format(date, "yyyy-MM-dd") ===
+                              format(today, "yyyy-MM-dd")
+                                ? "highlight-cell"
+                                : ""
+                            }`}
+                            onClick={() => handleDateClick(date)}
                           >
-                            <span className="data-value">{count}</span>
-                          </Tooltip>
-                        </td>
-                      )
-                    )}
-                  </tr>
-                </tbody>
-              </table>
+                            <Tooltip
+                              title={`Click to view timetable for ${dayAbbr}`}
+                              placement="top"
+                            >
+                              <span className="data-value">{count}</span>
+                            </Tooltip>
+                          </td>
+                        )
+                      )}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
           <div className="chart-container-history">
@@ -302,9 +301,9 @@ const HistoricalTables = ({ students }) => {
                 yAxis={[
                   {
                     min: 0,
-                    max: q3Classes + q3Classes * 0.1, // A little buffer above Q3
-                    tickNumber: 3, // Show 3 ticks: min, median, max
-                    tickValues: [0, medianClasses, q3Classes], // Set specific tick values
+                    max: q3Classes + q3Classes * 0.1,
+                    tickNumber: 3,
+                    tickValues: [0, medianClasses, q3Classes],
                   },
                 ]}
                 series={[
@@ -325,48 +324,51 @@ const HistoricalTables = ({ students }) => {
       <div className="table-section">
         <div className="row-container">
           <div className="table-container">
-            <div className="table-card secondary-card">
+            <div className="table-card secondary-card fixed-table-card">
               <h3 className="table-heading">
                 <span className="heading-icon">
                   <FaRupeeSign />
                 </span>
                 Fee payment per month
               </h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    {Object.keys(monthlyFeeData).map((month) => (
-                      <th
-                        key={month}
-                        className={
-                          month === currentMonth ? "highlight-cell pulse" : ""
-                        }
-                      >
-                        <span className="th-content">{month}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    {Object.keys(monthlyFeeData).map((monthKey, index) => {
-                      const amount = monthlyFeeData[monthKey];
-                      return (
-                        <td
-                          key={index}
+              {/* Scroll Wrapper */}
+              <div className="table-scroll-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      {Object.keys(monthlyFeeData).map((month) => (
+                        <th
+                          key={month}
                           className={
-                            monthKey === currentMonth ? "highlight-cell" : ""
+                            month === currentMonth ? "highlight-cell pulse" : ""
                           }
                         >
-                          <span className="data-value">
-                            {amount.toLocaleString()}
-                          </span>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                </tbody>
-              </table>
+                          <span className="th-content">{month}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      {Object.keys(monthlyFeeData).map((monthKey, index) => {
+                        const amount = monthlyFeeData[monthKey];
+                        return (
+                          <td
+                            key={index}
+                            className={
+                              monthKey === currentMonth ? "highlight-cell" : ""
+                            }
+                          >
+                            <span className="data-value">
+                              {amount.toLocaleString()}
+                            </span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
           <div className="chart-container-history">
@@ -402,46 +404,49 @@ const HistoricalTables = ({ students }) => {
       <div className="table-section">
         <div className="row-container">
           <div className="table-container">
-            <div className="table-card tertiary-card">
+            <div className="table-card tertiary-card fixed-table-card">
               <h3 className="table-heading">
                 <span className="heading-icon">
                   <FaGraduationCap />
                 </span>
                 No of students per month
               </h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    {Object.keys(monthlyStudentData).map((month) => (
-                      <th
-                        key={month}
-                        className={
-                          month === currentMonth ? "highlight-cell pulse" : ""
-                        }
-                      >
-                        <span className="th-content">{month}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    {Object.values(monthlyStudentData).map((count, index) => {
-                      const monthKey = Object.keys(monthlyStudentData)[index];
-                      return (
-                        <td
-                          key={index}
+              {/* Scroll Wrapper */}
+              <div className="table-scroll-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      {Object.keys(monthlyStudentData).map((month) => (
+                        <th
+                          key={month}
                           className={
-                            monthKey === currentMonth ? "highlight-cell" : ""
+                            month === currentMonth ? "highlight-cell pulse" : ""
                           }
                         >
-                          <span className="data-value">{count}</span>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                </tbody>
-              </table>
+                          <span className="th-content">{month}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      {Object.values(monthlyStudentData).map((count, index) => {
+                        const monthKey = Object.keys(monthlyStudentData)[index];
+                        return (
+                          <td
+                            key={index}
+                            className={
+                              monthKey === currentMonth ? "highlight-cell" : ""
+                            }
+                          >
+                            <span className="data-value">{count}</span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
           <div className="chart-container-history">

@@ -1,3 +1,5 @@
+/* HistoricalTables.css */
+
 .historical-tables-container {
   padding: 15px;
   max-width: 1200px;
@@ -10,23 +12,32 @@
 .row-container {
   display: flex;
   gap: 15px;
-  width: 100%;
+  width: 105%;
   align-items: stretch;
 }
 
+/* MODIFIED: Uses flex: 1 to ensure the table takes up all available space */
 .table-container {
-  flex: 1;
-  min-width: 0;
+  flex: 1; 
+  min-width: 0; 
 }
 
-/* For the chart containers */
+/* MODIFIED: Fixed width for the chart column (300px) */
 .chart-container-history {
-  width: 35%;
+  width: 300px; 
   min-width: 300px;
   display: flex;
   align-items: stretch;
 }
 
+/* NEW/MODIFIED: Wrapper for conditional horizontal scroll */
+.table-scroll-wrapper {
+  overflow-x: auto; /* Scrollbar only appears if content overflows */
+  flex-grow: 1; 
+  padding-bottom: 5px; 
+}
+
+/* MODIFIED: The table-card must be a flex container */
 .table-card {
   border-radius: 12px;
   box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
@@ -34,7 +45,7 @@
   transition: all 0.3s ease;
   border: 1px solid transparent;
   position: relative;
-  overflow: hidden;
+  overflow: visible; 
   height: 200px;
   display: flex;
   flex-direction: column;
@@ -61,7 +72,7 @@
 }
 
 .table-heading {
-  font-size: 1.2rem; /* Increased from 1rem */
+  font-size: 1.2rem;
   font-weight: 600;
   margin: 0 0 12px 0;
   display: flex;
@@ -79,20 +90,21 @@
   margin-right: 6px;
   display: flex;
   align-items: center;
-  font-size: 1.1rem; /* Increased from 0.9rem */
+  font-size: 1.1rem;
 }
 
-/* Ensure table cells can expand to fit content */
+/* MODIFIED: Table enforces its full content width to enable scrolling on the wrapper */
 .data-table {
   table-layout: auto;
-  width: 100%;
+  width: max-content; 
+  min-width: 100%; 
 }
 
 .data-table th {
-  padding: 10px 8px; /* Increased padding */
+  padding: 10px 8px;
   text-align: center;
-  font-weight: 600; /* Increased from 500 */
-  font-size: 1rem; /* Increased from 0.8rem */
+  font-weight: 600;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   position: relative;
@@ -124,7 +136,7 @@
 }
 
 .data-table td {
-  padding: 10px 8px; /* Increased padding */
+  padding: 10px 8px;
   text-align: center;
   font-weight: 500;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -147,14 +159,14 @@
 
 .data-value {
   display: inline-block;
-  padding: 8px 12px; /* Increased padding */
+  padding: 8px 12px;
   border-radius: 6px;
   transition: all 0.3s ease;
-  min-width: 35px; /* Increased min-width */
+  min-width: 35px;
   position: relative;
   z-index: 1;
-  font-size: 1.3rem; /* Increased from 25px to rem units */
-  font-weight: 700; /* Increased from 600 */
+  font-size: 1.3rem;
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -194,7 +206,7 @@
 
 .highlight-cell .data-value {
   background: transparent;
-  font-size: 1.5rem; /* Increased from 1.1rem */
+  font-size: 1.5rem;
   font-weight: 800;
 }
 
@@ -206,7 +218,7 @@
   background: #4caf50;
   color: #ffffff;
   font-weight: 700;
-  font-size: 1rem; /* Increased from 0.8rem */
+  font-size: 1rem;
 }
 
 .total-column-cell {
@@ -222,7 +234,7 @@
 }
 
 .data-value-total {
-  font-size: 1.5rem; /* Increased from 1.1rem */
+  font-size: 1.5rem;
   font-weight: 800;
 }
 
@@ -274,6 +286,12 @@
     flex-direction: column;
   }
   
+  /* Table and chart both go to 100% width on smaller screens */
+  .table-container {
+    width: 100%;
+    min-width: auto;
+  }
+  
   .chart-container-history {
     width: 100%;
     min-width: auto;
@@ -281,21 +299,21 @@
   
   .data-table th,
   .data-table td {
-    padding: 8px 6px; /* Adjusted for tablet */
-    font-size: 0.9rem; /* Slightly smaller but still larger than before */
+    padding: 8px 6px;
+    font-size: 0.9rem;
   }
   
   .data-value {
-    font-size: 1.1rem; /* Adjusted for tablet */
+    font-size: 1.1rem;
     padding: 6px 10px;
   }
   
   .highlight-cell .data-value {
-    font-size: 1.3rem; /* Adjusted for tablet */
+    font-size: 1.3rem;
   }
   
   .data-value-total {
-    font-size: 1.3rem; /* Adjusted for tablet */
+    font-size: 1.3rem;
   }
 }
 
@@ -307,39 +325,39 @@
   .table-card {
     margin-bottom: 15px;
     padding: 12px;
-    height: auto; /* Allow height to adjust on mobile */
+    height: auto;
     min-height: auto;
   }
   
   .data-table {
-    font-size: 0.85rem; /* Increased base font */
+    font-size: 0.85rem;
   }
   
   .data-table th, 
   .data-table td {
-    padding: 8px 4px; /* Adjusted for mobile */
+    padding: 8px 4px;
   }
   
   .table-heading {
-    font-size: 1.1rem; /* Increased for mobile */
+    font-size: 1.1rem;
   }
   
   .data-value {
-    font-size: 1rem; /* Increased for mobile */
+    font-size: 1rem;
     padding: 5px 8px;
   }
   
   .highlight-cell .data-value {
-    font-size: 1.2rem; /* Increased for mobile */
+    font-size: 1.2rem;
   }
   
   .data-value-total {
-    font-size: 1.2rem; /* Increased for mobile */
+    font-size: 1.2rem;
   }
   
   .chart-card {
     padding: 12px;
-    height: 180px; /* Fixed height for mobile */
+    height: 180px;
   }
 }
 
