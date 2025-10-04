@@ -12,6 +12,11 @@ import {
   MuiMultiSelectChip,
 } from "./customcomponents/MuiCustomFormFields";
 import {
+  Box,
+  FormControlLabel, // <-- Import this
+  Checkbox, // <-- Import this
+} from "@mui/material";
+import {
   FaUser,
   FaGraduationCap,
   FaBook,
@@ -19,6 +24,7 @@ import {
   FaArrowLeft,
   FaCalendarAlt,
   FaLightbulb,
+  FaCheckSquare,
 } from "react-icons/fa";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -52,7 +58,15 @@ const StudentExamFormPage = () => {
     examDate: format(new Date(), "yyyy-MM-dd"),
     status: "Pending",
     topic: [],
+    testType: [], // New field for test types
   });
+
+  // Check if selected student is a revision program student
+  const isRevisionStudent = useMemo(() => {
+    if (!formData.studentId) return false;
+    const selectedStudent = students.find((s) => s.id === formData.studentId);
+    return selectedStudent?.isRevisionProgramJEEMains2026Student === true;
+  }, [formData.studentId, students]);
 
   useEffect(() => {
     if (examToEdit) {
@@ -76,7 +90,7 @@ const StudentExamFormPage = () => {
       setFormData({
         studentId: examToEdit.studentId,
         studentName: examToEdit.studentName,
-        subject: examToEdit.subject, // This ensures formData.subject is set correctly
+        subject: examToEdit.subject,
         stream: examToEdit.stream,
         marks: initialMarks,
         outOf: user.isPhysics
@@ -87,10 +101,10 @@ const StudentExamFormPage = () => {
         status: examToEdit.status,
         topic: Array.isArray(examToEdit.topic)
           ? examToEdit.topic
-          : [examToEdit.topic], // Ensure it's always an array
+          : [examToEdit.topic],
+        testType: examToEdit.testType || [], // Initialize testType from existing data
       });
     } else {
-      // Logic for adding a new exam
       setFormData({
         studentId: "",
         studentName: "",
@@ -105,7 +119,8 @@ const StudentExamFormPage = () => {
         total: 0,
         examDate: format(new Date(), "yyyy-MM-dd"),
         status: "Pending",
-        topic: [], // Initialize as an empty array
+        topic: [],
+        testType: [], // Initialize as empty array
       });
     }
   }, [examToEdit, user]);
@@ -142,22 +157,33 @@ const StudentExamFormPage = () => {
       marks: {},
       outOf,
       total: 0,
+      testType: [], // Reset test type when student changes
     }));
   };
 
-const handleInputChange = (e) => {
-  const { name, value } = e.target;
-  let updatedValue = value;
-  let updatedName = name;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    let updatedValue = value;
+    let updatedName = name;
 
-  // Manual check for the MuiMultiSelectChip
-  // The 'value' from a multi-select is an array, but the 'name' is undefined
-  if (Array.isArray(value) && name === undefined) {
-    updatedName = "topic"; // Hard-code the name for this specific input
-  }
+    if (Array.isArray(value) && name === undefined) {
+      updatedName = "topic";
+    }
 
-  setFormData((prev) => ({ ...prev, [updatedName]: updatedValue }));
-};
+    setFormData((prev) => ({ ...prev, [updatedName]: updatedValue }));
+  };
+
+  // Handle test type checkbox changes
+  const handleTestTypeChange = (testType) => {
+    setFormData((prev) => {
+      const currentTestTypes = prev.testType || [];
+      const updatedTestTypes = currentTestTypes.includes(testType)
+        ? currentTestTypes.filter((type) => type !== testType)
+        : [...currentTestTypes, testType];
+
+      return { ...prev, testType: updatedTestTypes };
+    });
+  };
 
   const handleDatePickerChange = (date) => {
     setFormData((prev) => ({
@@ -196,6 +222,7 @@ const handleInputChange = (e) => {
       );
       return;
     }
+
     const userId = localStorage.getItem("userId");
     const studentExamData = {
       userId: userId,
@@ -212,6 +239,8 @@ const handleInputChange = (e) => {
         : user.isChemistry
         ? "Chemistry"
         : "Any",
+      testType: formData.testType, // Add test type to backend data
+      isRevisionProgramJEEMains2026Student: isRevisionStudent, // Add revision program flag
     };
 
     if (MARK_SCHEMES[formData.stream]) {
@@ -332,6 +361,140 @@ const handleInputChange = (e) => {
               />
             </div>
 
+            {/* Test Type Checkboxes - Only for Revision Program Students */}
+            {/* Test Type Checkboxes - Only for Revision Program Students */}
+            {isRevisionStudent && (
+              <div
+                style={{
+                  marginTop: 20,
+                  background: "#f8f9fa",
+                  padding: "15px",
+                  borderRadius: "8px",
+                  borderLeft: "4px solid #1976d2",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "1.1rem",
+                    fontWeight: "600",
+                    color: "#292551",
+                    marginBottom: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <FaCheckSquare style={{ marginRight: 8 }} />
+                  Test Type (Revision Program)
+                </div>
+                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formData.testType.includes("weekendTest")}
+                        onChange={() => handleTestTypeChange("weekendTest")}
+                        name="weekendTest"
+                        sx={{
+                          p: 0.5,
+                          color: "#1976d2",
+                          "&.Mui-checked": {
+                            color: "#1976d2",
+                          },
+                        }}
+                      />
+                    }
+                    label="Weekend Test"
+                    sx={{
+                      m: 0,
+                      "& .MuiFormControlLabel-label": {
+                        fontSize: "0.85rem",
+                        color: "#4a4a4a",
+                        fontWeight: "500",
+                      },
+                      border: "1px solid #e0e0e0",
+                      borderRadius: "4px",
+                      backgroundColor: "white",
+                      p: 0.5,
+                      minWidth: "140px",
+                      "&:hover": {
+                        borderColor: "#1976d2",
+                        backgroundColor: "#f5f9ff",
+                      },
+                    }}
+                  />
+
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formData.testType.includes("cumulativeTest")}
+                        onChange={() => handleTestTypeChange("cumulativeTest")}
+                        name="cumulativeTest"
+                        sx={{
+                          p: 0.5,
+                          color: "#7b1fa2",
+                          "&.Mui-checked": {
+                            color: "#7b1fa2",
+                          },
+                        }}
+                      />
+                    }
+                    label="Cumulative Test"
+                    sx={{
+                      m: 0,
+                      "& .MuiFormControlLabel-label": {
+                        fontSize: "0.85rem",
+                        color: "#4a4a4a",
+                        fontWeight: "500",
+                      },
+                      border: "1px solid #e0e0e0",
+                      borderRadius: "4px",
+                      backgroundColor: "white",
+                      p: 0.5,
+                      minWidth: "140px",
+                      "&:hover": {
+                        borderColor: "#7b1fa2",
+                        backgroundColor: "#f9f5ff",
+                      },
+                    }}
+                  />
+
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formData.testType.includes("grandTest")}
+                        onChange={() => handleTestTypeChange("grandTest")}
+                        name="grandTest"
+                        sx={{
+                          p: 0.5,
+                          color: "#2e7d32",
+                          "&.Mui-checked": {
+                            color: "#2e7d32",
+                          },
+                        }}
+                      />
+                    }
+                    label="Grand Test"
+                    sx={{
+                      m: 0,
+                      "& .MuiFormControlLabel-label": {
+                        fontSize: "0.85rem",
+                        color: "#4a4a4a",
+                        fontWeight: "500",
+                      },
+                      border: "1px solid #e0e0e0",
+                      borderRadius: "4px",
+                      backgroundColor: "white",
+                      p: 0.5,
+                      minWidth: "140px",
+                      "&:hover": {
+                        borderColor: "#2e7d32",
+                        backgroundColor: "#f5fff5",
+                      },
+                    }}
+                  />
+                </Box>
+              </div>
+            )}
+
             {/* Exam Date + Status + Topic */}
             <div className="ats-form-grid" style={{ marginTop: 20 }}>
               <MuiDatePicker
@@ -340,7 +503,6 @@ const handleInputChange = (e) => {
                 name="examDate"
                 value={formData.examDate}
                 onChange={handleDatePickerChange}
-                // minDate={startOfDay(new Date())}
                 required
               />
               <MuiSelect

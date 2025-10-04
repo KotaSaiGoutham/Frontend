@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -16,6 +16,7 @@ import {
   TextField,
   IconButton,
   Tooltip,
+  Chip 
 } from "@mui/material";
 
 import { FaGraduationCap, FaPlus, FaEdit, FaCheck } from "react-icons/fa";
@@ -31,7 +32,7 @@ import TableHeaders from "./students/TableHeaders";
 import TableStatusSelect from "./customcomponents/TableStatusSelect";
 import { DeleteConfirmationDialog } from "./customcomponents/Dialogs";
 
-const StudentExamPage = () => {
+const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
@@ -103,7 +104,9 @@ const StudentExamPage = () => {
   };
 
   const handleStatusChange = (examId, newStatus) => {
-    const examToUpdate = filteredAndSortedExams.find((exam) => exam.id === examId);
+    const examToUpdate = filteredAndSortedExams.find(
+      (exam) => exam.id === examId
+    );
     if (examToUpdate) {
       const updatedExam = { ...examToUpdate, status: newStatus };
       dispatch(updateStudentExam(updatedExam));
@@ -126,39 +129,90 @@ const StudentExamPage = () => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
-const filteredAndSortedExams = [...studentExams]
-    .filter((exam) => {
-      const matchesName = exam.studentName
-        ?.toLowerCase()
-        .includes(filters.studentName.toLowerCase());
-      const matchesStream =
-        filters.stream === "" ||
-        exam.stream?.toLowerCase() === filters.stream.toLowerCase();
-      const matchesStatus =
-        filters.status === "" ||
-        exam.status?.toLowerCase() === filters.status.toLowerCase();
 
-      return matchesName && matchesStream && matchesStatus;
-    })
-    .sort((a, b) => {
-      // Primary sort: by date (descending)
-      const dateA = new Date(
+// Filter exams based on revision program flag and date range
+// Filter exams based on revision program flag and date range, with latest exams first
+const filteredAndSortedExams = useMemo(() => {
+  let filteredExams = [...studentExams];
+
+  // Revision program date range: 6th October 2025 to 21st January 2026
+  const revisionProgramStartDate = new Date('2025-10-06T00:00:00.000Z');
+  const revisionProgramEndDate = new Date('2026-01-21T23:59:59.999Z');
+
+  // Filter by revision program students if the flag is true
+  if (isRevisionProgramJEEMains2026Student && students && students.length > 0) {
+    // Create a Set of revision program student IDs for faster lookup
+    const revisionStudentIds = new Set(
+      students
+        .filter(student => student.isRevisionProgramJEEMains2026Student === true)
+        .map(student => student.id)
+    );
+
+    filteredExams = filteredExams.filter(exam => {
+      // Check if the exam belongs to a revision program student
+      const isRevisionStudent = exam.studentId && revisionStudentIds.has(exam.studentId) || 
+        (exam.studentName && students && students.find(
+          student => 
+            student.Name === exam.studentName && 
+            student.isRevisionProgramJEEMains2026Student === true
+        ));
+
+      if (!isRevisionStudent) {
+        return false;
+      }
+
+      // For revision students, only show exams from program start date to program end date
+      const examDate = new Date(exam.examDate);
+      return examDate >= revisionProgramStartDate && examDate <= revisionProgramEndDate;
+    });
+  }
+
+  // Apply user filters
+  filteredExams = filteredExams.filter((exam) => {
+    const matchesName = exam.studentName
+      ?.toLowerCase()
+      .includes(filters.studentName.toLowerCase());
+    const matchesStream =
+      filters.stream === "" ||
+      exam.stream?.toLowerCase() === filters.stream.toLowerCase();
+    const matchesStatus =
+      filters.status === "" ||
+      exam.status?.toLowerCase() === filters.status.toLowerCase();
+
+    return matchesName && matchesStream && matchesStatus;
+  });
+
+  // Sort the exams - LATEST EXAMS FIRST for all students
+  return filteredExams.sort((a, b) => {
+    // Primary sort: by exam date (descending - latest first)
+    const examDateA = new Date(a.examDate);
+    const examDateB = new Date(b.examDate);
+    const dateComparison = examDateB - examDateA; // Descending order
+
+    // If exam dates are the same, sort by creation date (descending - latest first)
+    if (dateComparison === 0) {
+      const createdDateA = new Date(
         a.createdAt._seconds * 1000 + a.createdAt._nanoseconds / 1000000
       );
-      const dateB = new Date(
+      const createdDateB = new Date(
         b.createdAt._seconds * 1000 + b.createdAt._nanoseconds / 1000000
       );
-      const dateComparison = dateB - dateA;
-
-      // If dates are the same, sort by studentName (alphabetical)
-      if (dateComparison === 0) {
+      const createdDateComparison = createdDateB - createdDateA; // Descending order
+      
+      // If creation dates are the same, sort by student name (alphabetical)
+      if (createdDateComparison === 0) {
         const nameA = a.studentName.toLowerCase();
         const nameB = b.studentName.toLowerCase();
         return nameA.localeCompare(nameB);
       }
+      
+      return createdDateComparison;
+    }
 
-      return dateComparison;
-    });
+    return dateComparison;
+  });
+}, [studentExams, students, isRevisionProgramJEEMains2026Student, filters]);
+
   const dialogData = selectedExam
     ? {
         "Student Name": selectedExam.studentName,
@@ -180,67 +234,72 @@ const filteredAndSortedExams = [...studentExams]
         gap: 3,
       }}
     >
-      {/* Header and other UI elements... */}
-      <Slide
-        direction="down"
-        in={true}
-        mountOnEnter
-        unmountOnExit
-        timeout={500}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            p: 3,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: "12px",
-          }}
+      {!isRevisionProgramJEEMains2026Student && (
+        <Slide
+          direction="down"
+          in={true}
+          mountOnEnter
+          unmountOnExit
+          timeout={500}
         >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <FaGraduationCap
-              style={{
-                marginRight: "15px",
-                fontSize: "2.5rem",
-                color: "#1976d2",
-              }}
-            />
-            <Box>
-              <Typography
-                variant="h4"
-                sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
-              >
-                Student Exams
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Manage and track student exam performance.
-              </Typography>
-            </Box>
-          </Box>
-          <MuiButton
-            variant="contained"
-            startIcon={<FaPlus />}
-            onClick={() => navigate("/add-student-exam")}
+          <Paper
+            elevation={6}
             sx={{
-              bgcolor: "#1976d2",
-              "&:hover": { bgcolor: "#1565c0" },
-              borderRadius: "8px",
-              px: 3,
-              py: 1.2,
-              minWidth: "180px",
+              p: 3,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderRadius: "12px",
             }}
           >
-            Add Exam Record
-          </MuiButton>
-        </Paper>
-      </Slide>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <FaGraduationCap
+                style={{
+                  marginRight: "15px",
+                  fontSize: "2.5rem",
+                  color: "#1976d2",
+                }}
+              />
+              <Box>
+                <Typography
+                  variant="h4"
+                  sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
+                >
+                  Student Exams
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  Manage and track student exam performance.
+                </Typography>
+              </Box>
+            </Box>
+            <MuiButton
+              variant="contained"
+              startIcon={<FaPlus />}
+              onClick={() => navigate("/add-student-exam")}
+              sx={{
+                bgcolor: "#1976d2",
+                "&:hover": { bgcolor: "#1565c0" },
+                borderRadius: "8px",
+                px: 3,
+                py: 1.2,
+                minWidth: "180px",
+              }}
+            >
+              Add Exam Record
+            </MuiButton>
+          </Paper>
+        </Slide>
+      )}
 
       {/* Table Section */}
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
         <Paper
           elevation={6}
-          sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
+          sx={{
+            p: !isRevisionProgramJEEMains2026Student ? 2 : 0.5,
+            overflowX: "auto",
+            borderRadius: "12px",
+          }}
         >
           {loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
@@ -287,37 +346,107 @@ const filteredAndSortedExams = [...studentExams]
                         </TableCell>
 
                         {/* 2. Student Name - Now a clickable link */}
-                        <TableCell
-                          align="center"
-                          sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
-                        >
-                          <Tooltip
-                            title={`Click to view details for ${exam.studentName}`}
-                          >
-                            <Link
-                              to={`/student/${exam.studentId}`}
-                              state={{ studentData: studentData }}
-                              style={{
-                                fontWeight: 500,
-                                color: "#34495e",
-                                textDecoration: "none",
-                                transition:
-                                  "color 0.2s ease, text-decoration 0.2s ease",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.color = "#2980b9";
-                                e.currentTarget.style.textDecoration =
-                                  "underline";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.color = "#34495e";
-                                e.currentTarget.style.textDecoration = "none";
-                              }}
-                            >
-                              {exam.studentName}
-                            </Link>
-                          </Tooltip>
-                        </TableCell>
+                <TableCell
+  align="center"
+  sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+>
+  <Tooltip
+    title={`Click to view details for ${exam.studentName}`}
+  >
+    <Box sx={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      gap: 1.5
+    }}>
+      <Link
+        to={`/student/${exam.studentId}`}
+        state={{ studentData: studentData }}
+        style={{
+          fontWeight: 500,
+          color: "#34495e",
+          textDecoration: "none",
+          transition: "color 0.2s ease, text-decoration 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = "#2980b9";
+          e.currentTarget.style.textDecoration = "underline";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = "#34495e";
+          e.currentTarget.style.textDecoration = "none";
+        }}
+      >
+        {exam.studentName}
+      </Link>
+      {exam.testType && exam.testType.length > 0 && (
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 0.5,
+          alignItems: 'center'
+        }}>
+          {exam.testType.includes('weekendTest') && (
+            <Chip
+              label="WT"
+              size="small"
+              variant="outlined"
+              sx={{
+                height: '20px',
+                fontSize: '0.65rem',
+                fontWeight: '700',
+                color: '#1976d2',
+                borderColor: '#1976d2',
+                backgroundColor: '#e3f2fd',
+                '& .MuiChip-label': {
+                  px: 0.5,
+                  py: 0.25
+                }
+              }}
+            />
+          )}
+          {exam.testType.includes('cumulativeTest') && (
+            <Chip
+              label="CT"
+              size="small"
+              variant="outlined"
+              sx={{
+                height: '20px',
+                fontSize: '0.65rem',
+                fontWeight: '700',
+                color: '#7b1fa2',
+                borderColor: '#7b1fa2',
+                backgroundColor: '#f3e5f5',
+                '& .MuiChip-label': {
+                  px: 0.5,
+                  py: 0.25
+                }
+              }}
+            />
+          )}
+          {exam.testType.includes('grandTest') && (
+            <Chip
+              label="GT"
+              size="small"
+              variant="outlined"
+              sx={{
+                height: '20px',
+                fontSize: '0.65rem',
+                fontWeight: '700',
+                color: '#2e7d32',
+                borderColor: '#2e7d32',
+                backgroundColor: '#e8f5e8',
+                '& .MuiChip-label': {
+                  px: 0.5,
+                  py: 0.25
+                }
+              }}
+            />
+          )}
+        </Box>
+      )}
+    </Box>
+  </Tooltip>
+</TableCell>
 
                         {/* 3. Exam Date */}
                         <TableCell
@@ -542,7 +671,9 @@ const filteredAndSortedExams = [...studentExams]
             </TableContainer>
           ) : (
             <Alert severity="info" sx={{ mt: 2 }}>
-              No exam records found matching your criteria.
+              {isRevisionProgramJEEMains2026Student
+                ? "No revision program exam records found matching your criteria."
+                : "No exam records found matching your criteria."}
             </Alert>
           )}
         </Paper>

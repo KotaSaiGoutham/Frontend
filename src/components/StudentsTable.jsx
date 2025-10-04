@@ -39,13 +39,12 @@ import {
   DialogContentText,
   Button,
   Collapse,
+  Drawer, // 👈 New: Import Drawer
+  Divider, // 👈 New: Import Divider for separation
 } from "@mui/material";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
 // Import ALL necessary icons from react-icons/fa
-import {
-  isRecentPayment,
-  formatFirestoreDate,
-} from "../mockdata/function";
+import { isRecentPayment, formatFirestoreDate } from "../mockdata/function";
 import {
   FaSearch,
   FaEye,
@@ -63,6 +62,7 @@ import {
   FaUserCheck,
   FaUserTimes,
   FaMinus,
+  FaFilter,
 } from "react-icons/fa";
 import { getPdfTableHeaders, getPdfTableRows } from "../mockdata/function";
 import {
@@ -94,7 +94,7 @@ import TableHeaders from "./students/TableHeaders";
 import { studentColumns } from "../mockdata/Options";
 import ClassesCompletedTable from "./students/ClassesCompletedTable";
 
-const StudentsTable = () => {
+const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const [columnVisibility, setColumnVisibility] = useState({
     gender: false,
     subject: false,
@@ -122,7 +122,10 @@ const StudentsTable = () => {
     columns: false,
     table: true,
   });
-
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const toggleDrawer = (open) => () => {
+    setIsDrawerOpen(open);
+  };
   // Toggle function
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -163,13 +166,17 @@ const StudentsTable = () => {
   const [newStatus, setNewStatus] = useState(null);
   const [studentsWithNextClass, setStudentsWithNextClass] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
-  const [filters, setFilters] = useState({
+  const initialFilters = {
+    // <-- Define initial filters state
     studentName: "",
     subject: "",
     paymentStatus: "",
     gender: "",
     stream: "",
-  });
+  };
+  const [filters, setFilters] = useState(initialFilters);
+  const [tempFilters, setTempFilters] = useState(initialFilters); // <-- New: Temporary filter state for the drawer
+
   const [isLoading, setIsLoading] = useState(true); // Combined loading state for initial data fetch
   const [error, setError] = useState(""); // Combined error message
   const [orderBy, setOrderBy] = useState(""); // Column to sort by
@@ -195,7 +202,20 @@ const StudentsTable = () => {
   }, [filteredStudents, sortEnabled]);
 
   const open = Boolean(anchorEl);
+  const handleApplyFilters = () => {
+    // This is where you would trigger your main data fetching/filtering logic
+    setFilters(tempFilters); // Apply the temporary filters to the main state
+    setIsDrawerOpen(false); // Close the drawer
+    console.log("Applying filters:", tempFilters);
+    // You would typically call a function here to fetch/update the student list
+  };
 
+  const handleClearFilters = () => {
+    setTempFilters(initialFilters); // Clear temporary state
+    setFilters(initialFilters); // Clear applied state
+    setIsDrawerOpen(false);
+    console.log("Filters cleared.");
+  };
   const handleClick = (event, student) => {
     setAnchorEl(event.currentTarget);
     setSelectedStudent(student);
@@ -422,87 +442,137 @@ const StudentsTable = () => {
     setNewStatus(!currentStatus); // If currently active, new status is inactive; if inactive, new status is active
     setConfirmDialogOpen(true);
   };
-// ...
-const sortedFilteredStudents = useMemo(() => {
-  if (!sortEnabled) {
-    return displayedStudents;
-  }
-
-  let studentsToSort = [...filteredStudents];
-
-  studentsToSort.sort((a, b) => {
-    // 1. Primary Sort: Inactive students move to the bottom
-    // We use a helper function to get the correct boolean value
-    const aIsActive = a.isActive;
-    const bIsActive = b.isActive;
-    if (aIsActive !== bIsActive) {
-      return aIsActive ? -1 : 1; // Active students before inactive
+  // ...
+  const sortedFilteredStudents = useMemo(() => {
+    if (!sortEnabled) {
+      return displayedStudents;
     }
 
-    // 2. Secondary Sort: Group Paid students at the top
-    const aIsPaid = a["Payment Status"] === "Paid";
-    const bIsPaid = b["Payment Status"] === "Paid";
+    // Filter students based on isRevisionProgramJEEMains2026Student prop
+    let studentsToSort = [...filteredStudents].filter((student) => {
+      if (isRevisionProgramJEEMains2026Student) {
+        // If prop is true, only include revision program students
+        return student.isRevisionProgramJEEMains2026Student === true;
+      } else {
+        // If prop is false or not provided, include non-revision students
+        // This includes students with false or undefined isRevisionProgramJEEMains2026Student
+        return student;
+      }
+    });
 
-    if (aIsPaid && !bIsPaid) {
-      return -1; // Paid 'a' comes before unpaid 'b'
-    }
-    if (!aIsPaid && bIsPaid) {
-      return 1; // Unpaid 'a' comes after paid 'b'
-    }
-
-    // 3. Tertiary Sort: If both are Paid or both are Unpaid
-    if (aIsPaid === bIsPaid) {
-      // If both are PAID, sort by paidDate in descending order (latest first)
-      if (aIsPaid) {
-        const aPaidDate = a.paidDate?._seconds || 0;
-        const bPaidDate = b.paidDate?._seconds || 0;
-        return bPaidDate - aPaidDate; // Descending sort
+    studentsToSort.sort((a, b) => {
+      // 1. Primary Sort: Inactive students move to the bottom
+      const aIsActive = a.isActive;
+      const bIsActive = b.isActive;
+      if (aIsActive !== bIsActive) {
+        return aIsActive ? -1 : 1; // Active students before inactive
       }
 
-      // If both are UNPAID or all other status, fall back to classesCompleted
-      const aClasses = a.classesCompleted || 0;
-      const bClasses = b.classesCompleted || 0;
-      return bClasses - aClasses; // Descending sort
-    }
+      // 2. Secondary Sort: Group Paid students at the top
+      const aIsPaid = a["Payment Status"] === "Paid";
+      const bIsPaid = b["Payment Status"] === "Paid";
 
-    // If all primary and secondary sorts are equal, fall back to the user's selected orderBy
-    if (!orderBy) {
-      return 0; // Maintain original relative order
-    }
+      if (aIsPaid && !bIsPaid) {
+        return -1; // Paid 'a' comes before unpaid 'b'
+      }
+      if (!aIsPaid && bIsPaid) {
+        return 1; // Unpaid 'a' comes after paid 'b'
+      }
 
-    // ... (Your existing switch statement for custom column sorting)
-    let aValue;
-    let bValue;
-    
-    switch (orderBy) {
-      case "name":
-        aValue = a.Name?.toLowerCase() || "";
-        bValue = b.Name?.toLowerCase() || "";
-        return order === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      // ... (Rest of your switch cases)
-      default:
-        // Default comparison logic
-        const valA = a[orderBy];
-        const valB = b[orderBy];
-        if (typeof valA === "string" && typeof valB === "string") {
-          return valA.localeCompare(valB);
+      // 3. Tertiary Sort: If both are Paid or both are Unpaid
+      if (aIsPaid === bIsPaid) {
+        // If both are PAID, sort by paidDate in descending order (latest first)
+        if (aIsPaid) {
+          const aPaidDate = a.paidDate?._seconds || 0;
+          const bPaidDate = b.paidDate?._seconds || 0;
+          return bPaidDate - aPaidDate; // Descending sort
         }
-        return valA - valB || 0;
-    }
-  });
 
-  return studentsToSort;
-}, [filteredStudents, orderBy, order, sortEnabled, displayedStudents]);
+        // If both are UNPAID or all other status, fall back to classesCompleted
+        const aClasses = a.classesCompleted || 0;
+        const bClasses = b.classesCompleted || 0;
+        return bClasses - aClasses; // Descending sort
+      }
+
+      // If all primary and secondary sorts are equal, fall back to the user's selected orderBy
+      if (!orderBy) {
+        return 0; // Maintain original relative order
+      }
+
+      // Custom column sorting
+      let aValue;
+      let bValue;
+
+      switch (orderBy) {
+        case "name":
+          aValue = a.Name?.toLowerCase() || "";
+          bValue = b.Name?.toLowerCase() || "";
+          return order === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+
+        case "isRevisionProgramJEEMains2026Student":
+          // Handle revision program flag sorting
+          aValue = a.isRevisionProgramJEEMains2026Student === true;
+          bValue = b.isRevisionProgramJEEMains2026Student === true;
+          return order === "asc"
+            ? aValue === bValue
+              ? 0
+              : aValue
+              ? -1
+              : 1
+            : aValue === bValue
+            ? 0
+            : aValue
+            ? 1
+            : -1;
+
+        // ... (Rest of your existing switch cases)
+        default:
+          // Default comparison logic
+          const valA = a[orderBy];
+          const valB = b[orderBy];
+
+          if (typeof valA === "string" && typeof valB === "string") {
+            return order === "asc"
+              ? valA.localeCompare(valB)
+              : valB.localeCompare(valA);
+          }
+          if (typeof valA === "boolean" && typeof valB === "boolean") {
+            return order === "asc"
+              ? valA === valB
+                ? 0
+                : valA
+                ? -1
+                : 1
+              : valA === valB
+              ? 0
+              : valA
+              ? 1
+              : -1;
+          }
+          return order === "asc" ? valA - valB || 0 : valB - valA || 0;
+      }
+    });
+
+    return studentsToSort;
+  }, [
+    filteredStudents,
+    orderBy,
+    order,
+    sortEnabled,
+    displayedStudents,
+    isRevisionProgramJEEMains2026Student,
+  ]); // Add isRevisionProgramJEEMains2026Student to dependencies
 
   // Handles changes in filter input fields
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters((prevFilters) => ({
+    setTempFilters((prevFilters) => ({
+      // <-- Change setFilters to setTempFilters
       ...prevFilters,
       [name]: value,
-    }));
+    })); // IMPORTANT: Don't trigger the main data filter useEffect here, wait for Apply Filters button!
   };
 
   // Handles closing the Snackbar notification
@@ -610,10 +680,7 @@ const sortedFilteredStudents = useMemo(() => {
   };
 
   const pdfHeaders = getPdfTableHeaders(columnVisibility);
-  const pdfRows = getPdfTableRows(
-    sortedFilteredStudents,
-    columnVisibility,
-  );
+  const pdfRows = getPdfTableRows(sortedFilteredStudents, columnVisibility);
 
   if (isLoading) {
     return (
@@ -694,228 +761,245 @@ const sortedFilteredStudents = useMemo(() => {
         gap: 2,
       }}
     >
-      {/* Header Section */}
-      <Slide
-        direction="down"
-        in={true}
-        mountOnEnter
-        unmountOnExit
-        timeout={500}
-      >
-        <Paper
-          elevation={6} // Increased elevation for more depth
+      {!isRevisionProgramJEEMains2026Student && (
+        <Box
           sx={{
-            p: 2,
+            backgroundColor: "#f7f8fc",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
+            flexDirection: "column",
             gap: 2,
-            borderRadius: "12px", // Rounded corners for consistency
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <FaUsers
-              style={{
-                marginRight: "15px",
-                fontSize: "2.5rem",
-                color: "#1976d2", // Primary blue color
-              }}
-            />
-            <Box>
-              <Typography
-                variant="h4"
-                component="h1"
-                sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }} // Darker text for headings
-              >
-                Students Overview
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Manage and filter your student records.
-              </Typography>
-            </Box>
-          </Box>
-          {sortedFilteredStudents.length > 0 && (
-            <PdfDownloadButton
-              title={getPdfTitle()}
-              headers={pdfHeaders} // ← now plain strings
-              rows={pdfRows} // ← now arrays, no [object Object]
-              buttonLabel="Download Students Data (PDF)"
-              filename="Student_Data.pdf"
-              reportDate={new Date()}
-            />
-          )}
-          <MuiButton
-            variant="contained"
-            startIcon={<FaPlus />}
-            onClick={() => navigate("/add-student")}
-            sx={{
-              bgcolor: "#1976d2", // Changed to primary blue
-              "&:hover": { bgcolor: "#1565c0" }, // Darker blue on hover
-              borderRadius: "8px",
-              px: 3,
-              py: 1.2,
-              minWidth: "180px",
-              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Subtle shadow
-            }}
-          >
-            Add New Student
-          </MuiButton>
-        </Paper>
-      </Slide>
-
-      {/* Filters Section */}
-      <Slide
-        direction="right"
-        in={true}
-        mountOnEnter
-        unmountOnExit
-        timeout={600}
-      >
-        {/* Filters Section */}
-        <Paper elevation={6} sx={{ borderRadius: "12px", overflow: "hidden" }}>
+          {/* Simplified Header Section */}
           <Box
-            onClick={() => toggleSection("filters")}
             sx={{
-              p: 1.5,
-              cursor: "pointer",
+              p: 2,
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              backgroundColor: expandedSections.filters ? "#f0f7ff" : "#f7f8fc",
-              transition: "background-color 0.3s ease",
-              "&:hover": { backgroundColor: "#e3f2fd" },
+              flexWrap: "wrap",
+              gap: 2,
+              backgroundColor: "white", // Use a clean background
+              borderRadius: "12px",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)", // Subtle shadow for depth
             }}
           >
-            <Typography
-              variant="h5"
-              component="h2"
+            {/* Title and Icon */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <FaUsers
+                style={{
+                  marginRight: "15px",
+                  fontSize: "2.5rem",
+                  color: "#1976d2",
+                }}
+              />
+              <Box>
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
+                >
+                  Students Overview
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  Manage and filter your student records.
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Action Buttons Group */}
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              {sortedFilteredStudents.length > 0 && (
+                <PdfDownloadButton
+                  title={getPdfTitle()}
+                  headers={pdfHeaders}
+                  rows={pdfRows}
+                  buttonLabel="Download Data (PDF)"
+                  filename="Student_Data.pdf"
+                  reportDate={new Date()}
+                />
+              )}
+              {/* Filters Button (Opens Drawer) */}
+              <MuiButton
+                variant="outlined"
+                startIcon={<FaFilter />}
+                onClick={toggleDrawer(true)}
+                sx={{
+                  borderRadius: "8px",
+                  px: 3,
+                  py: 1.2,
+                  minWidth: "120px",
+                  color: "#1976d2",
+                  borderColor: "#1976d2",
+                  "&:hover": {
+                    borderColor: "#1565c0",
+                    bgcolor: "rgba(25, 118, 210, 0.04)",
+                  },
+                }}
+              >
+                Options & Filters
+              </MuiButton>
+              {/* Add New Student Button */}
+              <MuiButton
+                variant="contained"
+                startIcon={<FaPlus />}
+                onClick={() => navigate("/add-student")}
+                sx={{
+                  bgcolor: "#1976d2",
+                  "&:hover": { bgcolor: "#1565c0" },
+                  borderRadius: "8px",
+                  px: 3,
+                  py: 1.2,
+                  minWidth: "180px",
+                  boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+                }}
+              >
+                Add New Student
+              </MuiButton>
+            </Box>
+          </Box>
+
+          {/* Filters and Columns Control Drawer */}
+          <Drawer
+            anchor="right"
+            open={isDrawerOpen}
+            onClose={toggleDrawer(false)}
+            PaperProps={{
+              sx: {
+                width: { xs: 300, sm: 360, md: 400 },
+                p: 2,
+                backgroundColor: "#f7f8fc",
+              },
+            }}
+          >
+            {/* Drawer Header */}
+            <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "space-between",
+                p: 1,
+                pb: 2,
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: "#292551",
+                  fontWeight: 700,
+                }}
+              >
+                <FaFilter
+                  style={{
+                    marginRight: "10px",
+                    fontSize: "1.8rem",
+                    color: "#1976d2",
+                  }}
+                />
+                Options & Filters {/* Updated Header */}
+              </Typography>
+              <IconButton onClick={toggleDrawer(false)}>
+                <CloseIcon size={16} />
+              </IconButton>
+            </Box>
+            <Divider sx={{ mb: 1 }} />
+
+            {/* --- DATA FILTERS SECTION --- */}
+            <Typography
+              variant="h6"
+              sx={{
                 color: "#292551",
                 fontWeight: 600,
+                mb: 1,
+                ml: 1,
+                display: "flex",
+                alignItems: "center",
               }}
             >
               <FaSearch
                 style={{
-                  marginRight: "10px",
-                  fontSize: "1.8rem",
+                  marginRight: "8px",
+                  fontSize: "1.2rem",
                   color: "#1976d2",
                 }}
               />
-              Filter Students
+              Data Filters
             </Typography>
-
-            <IconButton
-              size="small"
+            <Box
               sx={{
-                border: "1px solid #ddd",
-                backgroundColor: "white",
-                "&:hover": { backgroundColor: "#f5f5f5" },
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                p: 1,
               }}
             >
-              {expandedSections.filters ? (
-                <FaMinus size={14} />
-              ) : (
-                <FaPlus size={14} />
-              )}
-            </IconButton>
-          </Box>
-
-          <Collapse in={expandedSections.filters}>
-            <Box sx={{ p: 1, pt: 0, borderTop: "1px solid #eee" }}>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    sm: "repeat(2, 1fr)",
-                    md: "repeat(3, 1fr)",
-                    lg: "repeat(5, 1fr)",
-                  },
-                  gap: 2,
-                }}
-              >
-                <MuiInput
-                  label="Student Name"
-                  name="studentName"
-                  value={filters.studentName}
-                  onChange={handleFilterChange}
-                  placeholder="Search by student name..."
-                  icon={FaUserCircle}
-                />
-                <MuiSelect
-                  label="Payment Status"
-                  name="paymentStatus"
-                  value={filters.paymentStatus}
-                  onChange={handleFilterChange}
-                  options={paymentStatusOptions}
-                  icon={FaIdCard}
-                />
-                <MuiSelect
-                  label="Gender"
-                  name="gender"
-                  value={filters.gender}
-                  onChange={handleFilterChange}
-                  options={genderOptions}
-                  icon={FaUsers}
-                />
-                <MuiSelect
-                  label="Stream"
-                  name="stream"
-                  value={filters.stream}
-                  onChange={handleFilterChange}
-                  options={streamOptions}
-                  icon={FaGraduationCap}
-                />
-              </Box>
+              <MuiInput
+                label="Student Name"
+                name="studentName"
+                value={tempFilters.studentName}
+                onChange={handleFilterChange}
+                placeholder="Search by student name..."
+                icon={FaUserCircle}
+              />
+              <MuiSelect
+                label="Payment Status"
+                name="paymentStatus"
+                value={tempFilters.paymentStatus}
+                onChange={handleFilterChange}
+                options={paymentStatusOptions}
+                icon={FaIdCard}
+              />
+              <MuiSelect
+                label="Gender"
+                name="gender"
+                value={tempFilters.gender}
+                onChange={handleFilterChange}
+                options={genderOptions}
+                icon={FaUsers}
+              />
+              <MuiSelect
+                label="Stream"
+                name="stream"
+                value={tempFilters.stream}
+                onChange={handleFilterChange}
+                options={streamOptions}
+                icon={FaGraduationCap}
+              />
             </Box>
-          </Collapse>
-        </Paper>
-      </Slide>
-      {/* Columns Control Section */}
-      <Paper elevation={6} sx={{ borderRadius: "12px", overflow: "hidden" }}>
-        <Box
-          onClick={() => toggleSection("columns")}
-          sx={{
-            p: 2,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            backgroundColor: expandedSections.columns ? "#f0f7ff" : "#f7f8fc",
-            transition: "background-color 0.3s ease",
-            "&:hover": { backgroundColor: "#e3f2fd" },
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ display: "flex", alignItems: "center" }}
-          >
-            <FaColumns style={{ marginRight: "10px", color: "#1976d2" }} />
-            Show/Hide Columns
-          </Typography>
 
-          <IconButton
-            size="small"
-            sx={{
-              border: "1px solid #ddd",
-              backgroundColor: "white",
-              "&:hover": { backgroundColor: "#f5f5f5" },
-            }}
-          >
-            {expandedSections.columns ? (
-              <FaMinus size={14} />
-            ) : (
-              <FaPlus size={14} />
-            )}
-          </IconButton>
-        </Box>
-
-        <Collapse in={expandedSections.columns}>
-          <Box sx={{ p: 2, borderTop: "1px solid #eee" }}>
-            <FormGroup row sx={{ gap: 2 }}>
+            {/* --- COLUMN VISIBILITY SECTION (Updated for Professional Look) --- */}
+            <Divider sx={{ my: 3 }} />
+            <Typography
+              variant="h6"
+              sx={{
+                color: "#292551",
+                fontWeight: 600,
+                mb: 1,
+                ml: 1,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <FaColumns
+                style={{
+                  marginRight: "8px",
+                  fontSize: "1.2rem",
+                  color: "#1976d2",
+                }}
+              />
+              Show/Hide Columns
+            </Typography>
+            <Box
+              sx={{
+                p: 1,
+                overflowY: "auto",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr", // 2-column grid
+                gap: 1,
+              }}
+            >
               {Object.entries(columnVisibility).map(([key, isVisible]) => (
                 <FormControlLabel
                   key={key}
@@ -924,6 +1008,7 @@ const sortedFilteredStudents = useMemo(() => {
                       checked={isVisible}
                       onChange={handleColumnToggle(key)}
                       name={key}
+                      sx={{ p: 0.5 }} // Smaller padding for checkbox
                     />
                   }
                   label={
@@ -936,21 +1021,66 @@ const sortedFilteredStudents = useMemo(() => {
                           .replace(/^./, (str) => str.toUpperCase())
                   }
                   sx={{
-                    minWidth: "140px",
-                    m: 0,
-                    "& .MuiFormControlLabel-label": { fontSize: "0.9rem" },
+                    m: 0, // Remove outer margin
+                    // Inline professional styles for the label and control
+                    "& .MuiFormControlLabel-label": {
+                      fontSize: "0.85rem",
+                      color: "#4a4a4a",
+                    },
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                    backgroundColor: "white",
+                    p: 0.5,
+                    minWidth: "100%",
                   }}
                 />
               ))}
-            </FormGroup>
-          </Box>
-        </Collapse>
-      </Paper>
-      {/* Students List Table */}
+            </Box>
+
+            {/* --- ACTION BUTTONS (Footer of the Drawer) --- */}
+            <Box
+              sx={{
+                p: 1,
+                borderTop: "1px solid #eee",
+                pt: 2,
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 1,
+                marginTop: "auto",
+              }}
+            >
+              <MuiButton
+                variant="outlined"
+                onClick={handleClearFilters}
+                sx={{ flexGrow: 1 }}
+              >
+                Clear All
+              </MuiButton>
+              <MuiButton
+                variant="contained"
+                onClick={handleApplyFilters}
+                startIcon={<FaSearch />}
+                sx={{
+                  flexGrow: 1,
+                  bgcolor: "#1976d2",
+                  "&:hover": { bgcolor: "#1565c0" },
+                }}
+              >
+                Apply Changes
+              </MuiButton>
+            </Box>
+          </Drawer>
+        </Box>
+      )}
+
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
         <Paper
           elevation={6}
-          sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
+          sx={{
+            p: !isRevisionProgramJEEMains2026Student ? 2 : 0.5,
+            overflowX: "auto",
+            borderRadius: "12px",
+          }}
         >
           {sortedFilteredStudents.length > 0 ? (
             <TableContainer

@@ -1,0 +1,106 @@
+/* RevisionProgrammePage.css */
+
+/* Main Container: Sets up the two-column grid */
+.revision-programme-page-container {
+    margin: 20px auto; /* Center the content */
+    padding: 0 10px;
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* Form takes 2 parts, highlights take 1 part */
+    gap: 10px;
+    align-items: flex-start; /* Aligns content to the top */
+}
+
+/* Form Area Styles */
+.revision-form-area {
+    /* No specific styling needed here, your .dashboard-card handles the form */
+    min-width: 400px;
+}
+
+
+/* --- Program Highlights Styles --- */
+
+.registration-highlights-card {
+    /* Box Styling */
+    background-color: #ffffff; 
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e0e7ff; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    
+    /* Sticky Positioning to keep it in view next to the form */
+    position: sticky; 
+    top: 30px; /* Distance from the top of the viewport */
+}
+
+.highlights-title {
+    color: #007bff;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f4f8;
+    text-align: center;
+}
+
+.highlights-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.highlight-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #f7f9ff; /* Light blue background for contrast */
+    border-radius: 8px;
+}
+
+.highlight-icon {
+    color: #28a745; /* Green icon for emphasis */
+    font-size: 1.2rem;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.highlight-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.highlight-subtitle {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.highlight-detail {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #343a40;
+}
+
+.fee-note {
+    margin-top: 20px;
+    padding: 10px 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #007bff;
+    border-top: 1px dashed #e0e0e0;
+}
+
+/* Responsive adjustment for single-column layout on smaller screens */
+@media (max-width: 1000px) {
+    .revision-programme-page-container {
+        grid-template-columns: 1fr; /* Single column layout */
+        gap: 20px;
+    }
+    
+    .registration-highlights-card {
+        position: static; /* Disable sticky in single column */
+        top: auto;
+    }
+}

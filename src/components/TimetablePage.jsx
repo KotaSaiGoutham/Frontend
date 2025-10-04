@@ -97,7 +97,7 @@ import { useSelector, useDispatch } from "react-redux";
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 import { getDateFromTimetableItem } from "../mockdata/function";
 import ExcelDownloadButton from "./customcomponents/ExcelDownloadButton";
-const TimetablePage = () => {
+const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation(); // ✅ Add useLocation hook
@@ -134,7 +134,7 @@ const TimetablePage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-  const [isDeleting, setIsDeleting] = useState(false); 
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { currentUserFaculty, currentUserSubject, canAccessAll } =
     useMemo(() => {
@@ -226,7 +226,7 @@ const TimetablePage = () => {
     }
   }, []);
 
-  const combinedAndFilteredTimetables = useMemo(() => {
+ const combinedAndFilteredTimetables = useMemo(() => {
     // Combine manual and auto-generated timetables
     let combinedTimetables = [...manualTimetables, ...autoTimetables];
 
@@ -262,6 +262,43 @@ const TimetablePage = () => {
     } else if (!user) {
       permissionFilteredTimetables = [];
     }
+
+    // --- REVISED: Filter by Revision Program Students ---
+    if (isRevisionProgramJEEMains2026Student && students && students.length > 0) {
+      // Create a Set of revision program student IDs for faster lookup
+      const revisionStudentIds = new Set(
+        students
+          .filter(
+            (student) => student.isRevisionProgramJEEMains2026Student === true
+          )
+          .map((student) => student.id)
+      );
+
+      // Filter timetables to only include revision program students
+      permissionFilteredTimetables = permissionFilteredTimetables.filter(
+        (item) => {
+          // Check if the timetable item has a studentId that matches a revision program student
+          if (item.studentId && revisionStudentIds.has(item.studentId)) {
+            return true;
+          }
+
+          // Fallback: Check by student name if studentId is not available
+          if (item.Student && students) {
+            const matchingStudent = students.find(
+              (student) =>
+                student.Name === item.Student &&
+                student.isRevisionProgramJEEMains2026Student === true
+            );
+            return matchingStudent !== undefined;
+          }
+
+          return false;
+        }
+      );
+    } 
+    // REMOVED the else if condition - when isRevisionProgramJEEMains2026Student is false, 
+    // we don't filter anything (show all timetables including revision and regular students)
+    // --- END of Revision Program Filter ---
 
     let currentTimetables = [...permissionFilteredTimetables];
     const now = new Date();
@@ -404,7 +441,9 @@ const TimetablePage = () => {
     currentUserSubject,
     canAccessAll,
     calculateDuration,
+    isRevisionProgramJEEMains2026Student, // Add this to dependencies
   ]);
+  console.log("combinedAndFilteredTimetables", combinedAndFilteredTimetables);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -724,191 +763,198 @@ const TimetablePage = () => {
         </Box>
       )}
       {/* Header Card */}
-      <Slide
-        direction="down"
-        in={true}
-        mountOnEnter
-        unmountOnExit
-        timeout={500}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            p: 3,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
-            flexWrap: "wrap",
-            gap: 2, // Gap between main sections (icon/text and buttons)
-            borderRadius: "12px",
-          }}
+      {!isRevisionProgramJEEMains2026Student && (
+        <Slide
+          direction="down"
+          in={true}
+          mountOnEnter
+          unmountOnExit
+          timeout={500}
         >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <FaCalendarAlt
-              style={{
-                marginRight: "15px",
-                fontSize: "2.5rem",
-                color: "#1976d2",
-              }}
-            />
-            <Box>
-              <Typography
-                variant="h4"
-                component="h1"
-                sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
-              >
-                Timetable
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                View and manage your scheduled classes. Today is{" "}
-                <span className="current-date">
-                  {format(new Date(), "EEEE, MMMM dd,yyyy")}
-                </span>
-                .
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box
+          <Paper
+            elevation={6}
             sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" }, // Stack on small screens, row on larger
-              alignItems: { xs: "flex-start", sm: "center" }, // Align items at start/center
-              flexWrap: "wrap", // Allow buttons to wrap
-              gap: 2, // Gap between the buttons
-              ml: { xs: 0, sm: 2 }, // Add left margin on larger screens if needed
-              mt: { xs: 2, sm: 0 }, // Add top margin on small screens if wrapping
-            }}
-          >
-            {combinedAndFilteredTimetables.length > 0 && (
-              <Tooltip
-                title={tooltipMessage}
-                placement="top"
-                slotProps={{
-                  popper: {
-                    sx: {
-                      "& .MuiTooltip-tooltip": {
-                        backgroundColor: hasMissingTopics ? "#d32f2f" : "#333",
-                        color: "white",
-                        fontSize: "0.9rem",
-                        padding: "10px 15px",
-                        borderRadius: "6px",
-                        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-                        maxWidth: "350px",
-                        textAlign: "left",
-                        lineHeight: "1.4",
-                        fontWeight: hasMissingTopics ? "bold" : "normal",
-                      },
-                      "& .MuiTooltip-arrow": {
-                        color: hasMissingTopics ? "#d32f2f" : "#333",
-                      },
-                    },
-                  },
-                }}
-                arrow
-              >
-                <PdfDownloadButton
-                  title={getPdfTitle()}
-                  headers={getPdfTableHeaders()}
-                  rows={getPdfTableRows()}
-                  buttonLabel="Download Timetable (PDF)"
-                  filename={`Timetable_Report_${getTodayDateForFilename()}.pdf`}
-                  reportDate={new Date()}
-                  disabled={hasMissingTopics}
-                  totalHours={sumHours}
-                  totalFee={sumFee}
-                />
-              </Tooltip>
-            )}
-
-            <ExcelDownloadButton
-              data={students}
-              filename="Electron_Academy_Student_Report.xlsx"
-              buttonLabel="Download Weekly timtable with all sections"
-              buttonProps={{ variant: "contained", color: "success" }}
-              excelReportTitle={Exceltitle}
-            />
-
-            <MuiButton
-              variant="contained"
-              startIcon={<FaPlusCircle />}
-              onClick={handleAddTimetableClick}
-              sx={{
-                bgcolor: "#1976d2",
-                "&:hover": { bgcolor: "#1565c0" },
-                borderRadius: "8px",
-                px: 3,
-                py: 1.2,
-                minWidth: "180px",
-                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              Add Timetable
-            </MuiButton>
-          </Box>
-        </Paper>
-      </Slide>
-
-      <Slide
-        direction="right"
-        in={true}
-        mountOnEnter
-        unmountOnExit
-        timeout={600}
-      >
-        <Paper elevation={6} sx={{ p: 3, borderRadius: "12px" }}>
-          {" "}
-          <Box
-            sx={{
+              p: 3,
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              mb: 3,
+              borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
               flexWrap: "wrap",
-              gap: 2,
+              gap: 2, // Gap between main sections (icon/text and buttons)
+              borderRadius: "12px",
             }}
           >
-            <Typography
-              variant="h5"
-              component="h2"
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <FaCalendarAlt
+                style={{
+                  marginRight: "15px",
+                  fontSize: "2.5rem",
+                  color: "#1976d2",
+                }}
+              />
+              <Box>
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
+                >
+                  {isRevisionProgramJEEMains2026Student
+                    ? "JEE Mains 2026 Revision Program Timetable"
+                    : "Timetable"}
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  View and manage your scheduled classes. Today is{" "}
+                  <span className="current-date">
+                    {format(new Date(), "EEEE, MMMM dd,yyyy")}
+                  </span>
+                  .
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" }, // Stack on small screens, row on larger
+                alignItems: { xs: "flex-start", sm: "center" }, // Align items at start/center
+                flexWrap: "wrap", // Allow buttons to wrap
+                gap: 2, // Gap between the buttons
+                ml: { xs: 0, sm: 2 }, // Add left margin on larger screens if needed
+                mt: { xs: 2, sm: 0 }, // Add top margin on small screens if wrapping
+              }}
+            >
+              {combinedAndFilteredTimetables.length > 0 && (
+                <Tooltip
+                  title={tooltipMessage}
+                  placement="top"
+                  slotProps={{
+                    popper: {
+                      sx: {
+                        "& .MuiTooltip-tooltip": {
+                          backgroundColor: hasMissingTopics
+                            ? "#d32f2f"
+                            : "#333",
+                          color: "white",
+                          fontSize: "0.9rem",
+                          padding: "10px 15px",
+                          borderRadius: "6px",
+                          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+                          maxWidth: "350px",
+                          textAlign: "left",
+                          lineHeight: "1.4",
+                          fontWeight: hasMissingTopics ? "bold" : "normal",
+                        },
+                        "& .MuiTooltip-arrow": {
+                          color: hasMissingTopics ? "#d32f2f" : "#333",
+                        },
+                      },
+                    },
+                  }}
+                  arrow
+                >
+                  <PdfDownloadButton
+                    title={getPdfTitle()}
+                    headers={getPdfTableHeaders()}
+                    rows={getPdfTableRows()}
+                    buttonLabel="Download Timetable (PDF)"
+                    filename={`Timetable_Report_${getTodayDateForFilename()}.pdf`}
+                    reportDate={new Date()}
+                    disabled={hasMissingTopics}
+                    totalHours={sumHours}
+                    totalFee={sumFee}
+                  />
+                </Tooltip>
+              )}
+
+              <ExcelDownloadButton
+                data={students}
+                filename="Electron_Academy_Student_Report.xlsx"
+                buttonLabel="Download Weekly timtable with all sections"
+                buttonProps={{ variant: "contained", color: "success" }}
+                excelReportTitle={Exceltitle}
+              />
+
+              <MuiButton
+                variant="contained"
+                startIcon={<FaPlusCircle />}
+                onClick={handleAddTimetableClick}
+                sx={{
+                  bgcolor: "#1976d2",
+                  "&:hover": { bgcolor: "#1565c0" },
+                  borderRadius: "8px",
+                  px: 3,
+                  py: 1.2,
+                  minWidth: "180px",
+                  boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+                }}
+              >
+                Add Timetable
+              </MuiButton>
+            </Box>
+          </Paper>
+        </Slide>
+      )}
+
+      {!isRevisionProgramJEEMains2026Student && (
+        <Slide
+          direction="right"
+          in={true}
+          mountOnEnter
+          unmountOnExit
+          timeout={600}
+        >
+          <Paper elevation={6} sx={{ p: 3, borderRadius: "12px" }}>
+            {" "}
+            <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
-                color: "#292551", // Darker text for headings
-                fontWeight: 600,
+                justifyContent: "space-between",
+                mb: 3,
+                flexWrap: "wrap",
+                gap: 2,
               }}
             >
-              <FaFilter
-                style={{
-                  marginRight: "10px",
-                  fontSize: "1.8rem",
-                  color: "#1976d2",
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: "#292551", // Darker text for headings
+                  fontWeight: 600,
                 }}
-              />{" "}
-              Filters
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-            {/* Search Input */}
-            <Box
-              sx={{
-                flexGrow: 1,
-                minWidth: { xs: "100%", sm: "200px" },
-                maxWidth: { xs: "100%", sm: "350px" },
-              }}
-            >
-              <MuiInput
-                label="Search"
-                icon={FaSearch}
-                name="searchTerm"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="Search by faculty, subject, topic, student..."
-              />
+              >
+                <FaFilter
+                  style={{
+                    marginRight: "10px",
+                    fontSize: "1.8rem",
+                    color: "#1976d2",
+                  }}
+                />{" "}
+                Filters
+              </Typography>
             </Box>
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              {/* Search Input */}
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  minWidth: { xs: "100%", sm: "200px" },
+                  maxWidth: { xs: "100%", sm: "350px" },
+                }}
+              >
+                <MuiInput
+                  label="Search"
+                  icon={FaSearch}
+                  name="searchTerm"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder="Search by faculty, subject, topic, student..."
+                />
+              </Box>
 
-            {/* <Box sx={{ minWidth: { xs: "100%", sm: "150px" } }}>
+              {/* <Box sx={{ minWidth: { xs: "100%", sm: "150px" } }}>
               <MuiSelect
                 label="Show"
                 name="filterDurationType"
@@ -919,18 +965,19 @@ const TimetablePage = () => {
               />
             </Box> */}
 
-            <Box sx={{ minWidth: { xs: "100%", sm: "150px" } }}>
-              <MuiDatePicker
-                label="Specific Date"
-                icon={FaCalendarAlt}
-                name="filterDate"
-                value={format(filterDate, "yyyy-MM-dd")}
-                onChange={handleDateChange}
-              />
+              <Box sx={{ minWidth: { xs: "100%", sm: "150px" } }}>
+                <MuiDatePicker
+                  label="Specific Date"
+                  icon={FaCalendarAlt}
+                  name="filterDate"
+                  value={format(filterDate, "yyyy-MM-dd")}
+                  onChange={handleDateChange}
+                />
+              </Box>
             </Box>
-          </Box>
-        </Paper>
-      </Slide>
+          </Paper>
+        </Slide>
+      )}
 
       {/* Timetable Table with Slide animation */}
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
