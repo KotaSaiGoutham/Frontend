@@ -1,38 +1,46 @@
+// RevisionProgrammePage.jsx
+
 import React, { useState, useEffect } from "react";
 import {
   FaUserCircle,
   FaTransgender,
   FaPhone,
   FaEnvelope,
-  FaUserPlus,
   FaMapMarkerAlt,
-  FaGraduationCap,
-  FaClock,
   FaSchool,
   FaBook,
   FaChalkboardTeacher,
   FaUniversity,
   FaSearch,
   FaQuestionCircle,
-  FaPlus,
+  FaGraduationCap,
+  FaClock,
+  FaCalendarAlt,
+  FaMoneyBillAlt,
+  FaCheckCircle,
 } from "react-icons/fa";
-import { Link, useNavigate } from 'react-router-dom'; // Import Link and useNavigate
+import { useNavigate } from 'react-router-dom';
 
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+
+// Assuming these custom components are available
 import {
-  MuiButton,
   MuiInput,
   MuiSelect,
-} from "../customcomponents/MuiCustomFormFields";
-import "../AddStudent.css";
+} from "../customcomponents/MuiCustomFormFields"; 
+
+import "../AddStudent.css"; // Reuse your existing form CSS
+import "./RevisionProgrammePage.css"; // NEW CSS for the two-column layout
+
 import { useDispatch, useSelector } from "react-redux";
 import { genderOptions } from "../../mockdata/Options";
 import { addrevisionProgrammestudent } from "../../redux/actions";
 
+// --- Form Options (reused from your original code) ---
 const classOptions = [
   { value: "8th", label: "8th" },
   { value: "9th", label: "9th" },
@@ -91,10 +99,66 @@ const initialData = {
   howDidYouHearAboutUs: "",
   specialRequirements: "",
 };
+// -----------------------------------------------------------------
 
-const RevisionProgramme = () => {
+// --- Program Highlights Component (Integrated) ---
+const ProgramHighlights = () => {
+    // 5 essential highlights based on your program content
+    const highlights = [
+        { 
+            icon: <FaCalendarAlt />, 
+            title: "Program Dates", 
+            detail: "6th Oct 2025 – 21st Jan 2026 (90 Days)" 
+        },
+        { 
+            icon: <FaCheckCircle />, 
+            title: "Target Exam", 
+            detail: "JEE Main 2026" 
+        },
+        { 
+            icon: <FaChalkboardTeacher />, 
+            title: "Learning Style", 
+            detail: "100% Personalized 1-on-1 Classes" 
+        },
+        { 
+            icon: <FaClock />, 
+            title: "Daily Schedule", 
+            detail: "1 Hour Class (Mon-Sat)" 
+        },
+        { 
+            icon: <FaMoneyBillAlt />, 
+            title: "Fee Per Subject", 
+            detail: "₹70,000" 
+        },
+    ];
+
+    return (
+        <div className="registration-highlights-card">
+            <h3 className="highlights-title">Program Snapshot: JEE Main 2026</h3>
+            <div className="highlights-grid">
+                {highlights.map((item, index) => (
+                    <div className="highlight-item" key={index}>
+                        <div className="highlight-icon">{item.icon}</div>
+                        <div className="highlight-content">
+                            <p className="highlight-subtitle">{item.title}</p>
+                            <p className="highlight-detail"><strong>{item.detail}</strong></p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <p className="fee-note">
+                Payment is split into 2 installments: Oct 1st & Nov 15th, 2025.
+            </p>
+            {/* The button can be removed here since the registration form is visible next to it */}
+        </div>
+    );
+};
+// -----------------------------------------------------------------
+
+
+const RevisionProgrammePage = () => {
   const dispatch = useDispatch();
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const { addingStudent, error } = useSelector((state) => state.studentprogram);
 
@@ -118,213 +182,229 @@ const RevisionProgramme = () => {
   const handleDialogClose = () => {
     setDialogOpen(false);
     setFormData(initialData);
-            navigate('/'); // Redirect to login page
-
+    navigate('/'); // Redirect to homepage/dashboard
   };
 
-const handleSubmit = (e) => {
-  e.preventDefault();
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  if (
-    !formData.fullName ||
-    !formData.gender ||
-    !formData.studentContactNumber ||
-    !formData.parentContactNumber ||
-    !formData.currentClass ||
-    !formData.board ||
-    !formData.subjects ||
-    !formData.courseAppliedFor ||
-    !formData.batchPreference
-  ) {
-    alert("Please fill in all required fields.");
-    return;
-  }
+    if (
+      !formData.fullName ||
+      !formData.gender ||
+      !formData.studentContactNumber ||
+      !formData.parentContactNumber ||
+      !formData.currentClass ||
+      !formData.board ||
+      !formData.subjects ||
+      !formData.courseAppliedFor ||
+      !formData.batchPreference
+    ) {
+      alert("Please fill in all required fields.");
+      return;
+    }
 
-  // Define the two static payment installments
-  const paymentPlan = [
-    {
-      installment: 1,
-      dueDate: "2025-10-01T00:00:00.000Z", // October 1st, 2025
-      amount: 35000, // 35000 / 2
-      status: "Unpaid",
-    },
-    {
-      installment: 2,
-      dueDate: "2025-11-15T00:00:00.000Z", // November 15th, 2025
-      amount: 35000, // 35000 / 2
-      status: "Unpaid",
-    },
-  ];
+    // Define the two static payment installments
+    const paymentPlan = [
+      {
+        installment: 1,
+        dueDate: "2025-10-01T00:00:00.000Z", // October 1st, 2025
+        amount: 35000, 
+        status: "Unpaid",
+      },
+      {
+        installment: 2,
+        dueDate: "2025-11-15T00:00:00.000Z", // November 15th, 2025
+        amount: 35000, 
+        status: "Unpaid",
+      },
+    ];
 
-  // Dispatch the action with the new formData, including the payments array
-  dispatch(addrevisionProgrammestudent({
-    ...formData,
-    status:"Pending",
-    payments: paymentPlan,
-  }));
-};
+    // Dispatch the action with the new formData, including the payments array
+    dispatch(addrevisionProgrammestudent({
+      ...formData,
+      status:"Pending",
+      payments: paymentPlan,
+    }));
+  };
 
   return (
-    <div className="dashboard-card add-student-form-card">
-      <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        Student Details
-      </h2>
-      <form onSubmit={handleSubmit} className="add-student-form">
-        {/* Personal Details Section */}
-        <div className="add-student-form-section-title">Personal Details</div>
-        <div className="add-student-form-grid">
-          <MuiInput
-            label="Full Name"
-            icon={FaUserCircle}
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            required
-          />
-          <MuiSelect
-            label="Gender"
-            icon={FaTransgender}
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            options={genderOptions}
-            required
-          />
-          <MuiInput
-            label="Student Contact"
-            icon={FaPhone}
-            name="studentContactNumber"
-            value={formData.studentContactNumber}
-            onChange={handleChange}
-            required
-          />
-          <MuiInput
-            label="Email Address"
-            icon={FaEnvelope}
-            name="emailAddress"
-            value={formData.emailAddress}
-            onChange={handleChange}
-            type="email"
-          />
-          <MuiInput
-            label="Parent Contact"
-            icon={FaPhone}
-            name="parentContactNumber"
-            value={formData.parentContactNumber}
-            onChange={handleChange}
-            required
-          />
+    <div className="revision-programme-page-container">
+      {/* LEFT SIDE: The Registration Form */}
+      <div className="revision-form-area">
+        <div className="dashboard-card add-student-form-card">
+          <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+         Your 90-Day Success Story Starts Here! Enroll in JEE 2026 Revision Program
+          </h2>
+          <form onSubmit={handleSubmit} className="add-student-form">
+            {/* Personal Details Section */}
+            <div className="add-student-form-section-title">Personal Details</div>
+            <div className="add-student-form-grid">
+              <MuiInput
+                label="Full Name"
+                icon={FaUserCircle}
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                required
+              />
+              <MuiSelect
+                label="Gender"
+                icon={FaTransgender}
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                options={genderOptions}
+                required
+              />
+              <MuiInput
+                label="Student Contact"
+                icon={FaPhone}
+                name="studentContactNumber"
+                value={formData.studentContactNumber}
+                onChange={handleChange}
+                required
+              />
+              <MuiInput
+                label="Email Address"
+                icon={FaEnvelope}
+                name="emailAddress"
+                value={formData.emailAddress}
+                onChange={handleChange}
+                type="email"
+              />
+              <MuiInput
+                label="Parent Contact"
+                icon={FaPhone}
+                name="parentContactNumber"
+                value={formData.parentContactNumber}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            {/* Address Details Section */}
+            <div className="add-student-form-section-title">Address Details</div>
+            <div className="add-student-form-grid">
+              <MuiInput
+                label="City"
+                icon={FaMapMarkerAlt}
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+              />
+              <MuiInput
+                label="State"
+                icon={FaMapMarkerAlt}
+                name="state"
+                value={formData.state}
+                onChange={handleChange}
+              />
+            </div>
+            
+            {/* Academic Details Section */}
+            <div className="add-student-form-section-title">Academic Details</div>
+            <div className="add-student-form-grid">
+              <MuiSelect
+                label="Current Class"
+                icon={FaSchool}
+                name="currentClass"
+                value={formData.currentClass}
+                onChange={handleChange}
+                options={classOptions}
+                required
+              />
+              <MuiInput
+                label="School/College Name"
+                icon={FaUniversity}
+                name="schoolCollegeName"
+                value={formData.schoolCollegeName}
+                onChange={handleChange}
+              />
+              <MuiSelect
+                label="Board"
+                icon={FaBook}
+                name="board"
+                value={formData.board}
+                onChange={handleChange}
+                options={boardOptions}
+                required
+              />
+              <MuiSelect
+                label="Subjects"
+                icon={FaChalkboardTeacher}
+                name="subjects"
+                value={formData.subjects}
+                onChange={handleChange}
+                options={subjectOptions}
+                required
+              />
+            </div>
+            
+            {/* Course & Batch Section */}
+            <div className="add-student-form-section-title">Course Enrolled</div>
+            <div className="add-student-form-grid">
+              <MuiSelect
+                label="Course Applied For"
+                icon={FaGraduationCap}
+                name="courseAppliedFor"
+                value={formData.courseAppliedFor}
+                onChange={handleChange}
+                options={courseOptions}
+                required
+              />
+              <MuiSelect
+                label="Batch Preference"
+                icon={FaClock}
+                name="batchPreference"
+                value={formData.batchPreference}
+                onChange={handleChange}
+                options={batchOptions}
+                required
+              />
+            </div>
+            
+            {/* Additional Information Section */}
+            <div className="add-student-form-section-title">
+              Additional Information
+            </div>
+            <div className="add-student-form-grid">
+              <MuiSelect
+                label="How did you hear about us?"
+                icon={FaSearch}
+                name="howDidYouHearAboutUs"
+                value={formData.howDidYouHearAboutUs}
+                onChange={handleChange}
+                options={sourceOptions}
+              />
+              <MuiInput
+                label="Any special requirements"
+                icon={FaQuestionCircle}
+                name="specialRequirements"
+                value={formData.specialRequirements}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <div className="add-student-button-group-center">
+              <button
+                type="submit"
+                className="add-student-primary-button"
+                disabled={addingStudent}
+              >
+                {" "}
+                {addingStudent ? "Submitting..." : "Submit Registration"}
+              </button>
+            </div>
+          </form>
         </div>
-        {/* Address Details Section */}
-        <div className="add-student-form-section-title">Address Details</div>
-        <div className="add-student-form-grid">
-          <MuiInput
-            label="City"
-            icon={FaMapMarkerAlt}
-            name="city"
-            value={formData.city}
-            onChange={handleChange}
-          />
-          <MuiInput
-            label="State"
-            icon={FaMapMarkerAlt}
-            name="state"
-            value={formData.state}
-            onChange={handleChange}
-          />
-        </div>
-        {/* Academic Details Section */}
-        <div className="add-student-form-section-title">Academic Details</div>
-        <div className="add-student-form-grid">
-          <MuiSelect
-            label="Current Class"
-            icon={FaSchool}
-            name="currentClass"
-            value={formData.currentClass}
-            onChange={handleChange}
-            options={classOptions}
-            required
-          />
-          <MuiInput
-            label="School/College Name"
-            icon={FaUniversity}
-            name="schoolCollegeName"
-            value={formData.schoolCollegeName}
-            onChange={handleChange}
-          />
-          <MuiSelect
-            label="Board"
-            icon={FaBook}
-            name="board"
-            value={formData.board}
-            onChange={handleChange}
-            options={boardOptions}
-            required
-          />
-          <MuiSelect
-            label="Subjects"
-            icon={FaChalkboardTeacher}
-            name="subjects"
-            value={formData.subjects}
-            onChange={handleChange}
-            options={subjectOptions}
-            required
-          />
-        </div>
-        {/* Course & Batch Section */}
-        <div className="add-student-form-section-title">Course Enrolled</div>
-        <div className="add-student-form-grid">
-          <MuiSelect
-            label="Course Applied For"
-            icon={FaGraduationCap}
-            name="courseAppliedFor"
-            value={formData.courseAppliedFor}
-            onChange={handleChange}
-            options={courseOptions}
-            required
-          />
-          <MuiSelect
-            label="Batch Preference"
-            icon={FaClock}
-            name="batchPreference"
-            value={formData.batchPreference}
-            onChange={handleChange}
-            options={batchOptions}
-            required
-          />
-        </div>
-        {/* Additional Information Section */}
-        <div className="add-student-form-section-title">
-          Additional Information
-        </div>
-        <div className="add-student-form-grid">
-          <MuiSelect
-            label="How did you hear about us?"
-            icon={FaSearch}
-            name="howDidYouHearAboutUs"
-            value={formData.howDidYouHearAboutUs}
-            onChange={handleChange}
-            options={sourceOptions}
-          />
-          <MuiInput
-            label="Any special requirements"
-            icon={FaQuestionCircle}
-            name="specialRequirements"
-            value={formData.specialRequirements}
-            onChange={handleChange}
-          />
-        </div>
-        <div className="add-student-button-group-center">
-          <button
-            type="submit"
-            className="add-student-primary-button"
-            disabled={addingStudent}
-          >
-            {" "}
-            {addingStudent ? "Submitting..." : "Submit"}
-          </button>
-        </div>
-      </form>
+      </div>
+      
+      {/* RIGHT SIDE: The 5-Point Highlight Box */}
+      <div className="revision-highlights-area">
+        <ProgramHighlights />
+      </div>
+
+      {/* Submission Dialog (Same as original) */}
       <Dialog
         open={dialogOpen}
         onClose={handleDialogClose}
@@ -340,6 +420,7 @@ const handleSubmit = (e) => {
           },
         }}
       >
+        {/* ... Dialog Content remains the same ... */}
         <DialogTitle
           sx={{
             backgroundColor: "#4caf50",
@@ -444,34 +525,8 @@ const handleSubmit = (e) => {
                 color: "#555",
               }}
             >
-              Thank you for joining our revision program. Our team will contact
-              you shortly with further details.
+              Thank you for joining our revision program
             </p>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                background: "#f1f8e9",
-                padding: "12px 16px",
-                borderRadius: "8px",
-                marginTop: "10px",
-                width: "100%",
-                animation: "fadeIn 0.5s ease-out 0.4s both",
-              }}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="#689f38"
-                style={{ marginRight: "10px", flexShrink: 0 }}
-              >
-                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM12.5 7H11V13L16.2 16.2L17 15L12.5 12.2V7Z" />
-              </svg>
-              <span style={{ fontSize: "14px", color: "#33691e" }}>
-                You'll receive a confirmation call within 24 hours
-              </span>
-            </div>
           </div>
         </DialogContent>
         <DialogActions
@@ -509,4 +564,4 @@ const handleSubmit = (e) => {
   );
 };
 
-export default RevisionProgramme;
+export default RevisionProgrammePage;

@@ -55,6 +55,7 @@ import WeekSyllabusPage from "./components/WeekSyallabus";
 import RevisionProgramme from "./components/utils/revisionProgramme";
 import RevisionProgramDetails from "./components/utils/RevisionProgramDetails";
 import RevisionStudentsPage from "./components/revisionStudents/RevisionStudentsPage";
+import RevisionRegistratedStudents from "./components/revisionStudents/RevisionRegistratedStudents";
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get from Redux
   const token = localStorage.getItem("token"); // Also check localStorage for robustness on initial load
@@ -138,6 +139,10 @@ function App() {
                 <Route
                   path="/revision-students"
                   element={<RevisionStudentsPage />}
+                />
+                <Route
+                  path="/revision-registrated-students"
+                  element={<RevisionRegistratedStudents />}
                 />
               </Route>
 

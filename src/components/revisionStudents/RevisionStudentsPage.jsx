@@ -39,6 +39,7 @@ import {
   CalendarMonth,
   Class,
   CurrencyRupee,
+  HowToReg 
 } from "@mui/icons-material";
 import { keyframes, styled } from "@mui/material/styles";
 import {
@@ -55,7 +56,8 @@ import {
 import StudentsTable from "../StudentsTable";
 import TimetablePage from "../TimetablePage";
 import StudentExamPage from "../StudentExam";
-
+import RevisionClassesPage from "./RevisionClassesPage";
+import RevisionRegistratedStudents from "./RevisionRegistratedStudents";
 const GlowPaper = styled(Paper)(({ theme }) => ({
   background: "linear-gradient(145deg, #ffffff, #f5f5f5)",
   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
@@ -108,6 +110,8 @@ const navItems = [
   { id: "classes", label: "Classes", icon: <Class /> },
   { id: "marks", label: "Marks", icon: <Class /> },
   { id: "fee_details", label: "Fee Details", icon: <CurrencyRupee /> },
+  { id: "registered_students", label: "Registered Students", icon: <HowToReg  /> },
+
 ];
 
 const RevisionStudentsPage = () => {
@@ -133,16 +137,7 @@ const RevisionStudentsPage = () => {
       case "marks":
         return <StudentExamPage isRevisionProgramJEEMains2026Student={revisionFlag} />;
       case "classes":
-        return (
-          <GlowPaper sx={{ p: 4, textAlign: "center", mt: 4, minHeight: 300 }}>
-            <Typography variant="h5" color="text.secondary">
-              Revision Program Classes
-            </Typography>
-            <Typography variant="body1" color="text.hint" mt={1}>
-              JEE Mains 2026 Revision Program classes management.
-            </Typography>
-          </GlowPaper>
-        );
+               return <RevisionClassesPage isRevisionProgramJEEMains2026Student={revisionFlag} />;
       case "fee_details":
         return (
           <GlowPaper sx={{ p: 4, textAlign: "center", mt: 4, minHeight: 300 }}>
@@ -154,6 +149,8 @@ const RevisionStudentsPage = () => {
             </Typography>
           </GlowPaper>
         );
+        case "registered_students":
+        return <RevisionRegistratedStudents />;
       default:
         return <StudentsTable isRevisionProgramJEEMains2026Student={revisionFlag} />;
     }

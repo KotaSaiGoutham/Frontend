@@ -70,6 +70,7 @@ import {
   Button,
   TableFooter,
   Stack,
+  Chip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -226,7 +227,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     }
   }, []);
 
- const combinedAndFilteredTimetables = useMemo(() => {
+  const combinedAndFilteredTimetables = useMemo(() => {
     // Combine manual and auto-generated timetables
     let combinedTimetables = [...manualTimetables, ...autoTimetables];
 
@@ -295,8 +296,8 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
           return false;
         }
       );
-    } 
-    // REMOVED the else if condition - when isRevisionProgramJEEMains2026Student is false, 
+    }
+    // REMOVED the else if condition - when isRevisionProgramJEEMains2026Student is false,
     // we don't filter anything (show all timetables including revision and regular students)
     // --- END of Revision Program Filter ---
 
@@ -388,9 +389,11 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
       const matchedStudent = studentSubjectDataMap.get(lookupKey);
       let monthlyFeePerClass = "N/A";
       let studentId = null;
+      let isRevisionStudent = false;
 
       if (matchedStudent) {
         studentId = matchedStudent.id;
+        isRevisionStudent = matchedStudent.isRevisionProgramJEEMains2026Student;
         let feeToUse = 0;
         if (
           typeof matchedStudent.monthlyFee === "number" &&
@@ -411,8 +414,9 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
       return {
         ...item,
-        monthlyFeePerClass: monthlyFeePerClass,
+        monthlyFeePerClass:isRevisionStudent?"1000": monthlyFeePerClass,
         studentId: studentId,
+        isRevisionStudent: isRevisionStudent,
       };
     });
 
@@ -709,7 +713,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const Exceltitle = `Electron Academy ${subject} class details ${current?.month} ${current?.year}`;
   // ✅ Define a function for date change
   // TimetablePage.jsx
-
+  console.log("combinedAndFilteredTimetables", combinedAndFilteredTimetables);
   const handleDateChange = async (dateString) => {
     if (!dateString) {
       // Handle case where date is cleared
@@ -1100,6 +1104,14 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                           }}
                         >
                           {item.Student}
+                          {(item.isRevisionStudent && !isRevisionProgramJEEMains2026Student) &&  (
+                            <Chip
+                              size="small"
+                              label="Revision"
+                              color="warning"
+                              sx={{ marginLeft: 1, height: "20px" }}
+                            />
+                          )}
                         </TableCell>
                         <TableCell align="center">
                           <Box

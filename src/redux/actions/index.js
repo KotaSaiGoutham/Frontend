@@ -170,6 +170,12 @@ import {
   UPLOAD_LECTURE_MATERIAL_REQUEST,
   UPLOAD_LECTURE_MATERIAL_SUCCESS,
   UPLOAD_LECTURE_MATERIAL_FAILURE,
+    FETCH_REVISION_CLASSES_REQUEST,
+  FETCH_REVISION_CLASSES_SUCCESS,
+  FETCH_REVISION_CLASSES_FAILURE,
+  UPDATE_CLASS_ATTENDANCE_REQUEST,
+  UPDATE_CLASS_ATTENDANCE_SUCCESS,
+  UPDATE_CLASS_ATTENDANCE_FAILURE,
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -1724,6 +1730,66 @@ export const deleteLectureMaterial = (fileId, googleDriveId) =>
         type: DELETE_LECTURE_MATERIAL_FAILURE,
         payload: { error: error.message || "Failed to delete file" },
       });
+    },
+    authRequired: true,
+  });
+  export const fetchRevisionClasses = (subject) =>
+  apiRequest({
+    url: `/api/data/revisionClasses?subject=${subject}`,
+    method: "GET",
+    onStart: FETCH_REVISION_CLASSES_REQUEST,
+   onSuccess: (data, dispatch) => {
+      // If data is empty (meaning API returned []), use mock data for testing UI
+      const mockClasses = [
+        // Class for Physics students
+        { id: 'C20251006P1', date: '06.10.2025', day: 'Monday', subject: 'Physics', lesson: 'MOMENTUM', track: 'Track 1', attendance: [{ studentId: 'S_PHY_1', status: 'Present' }] },
+        // Class for Chemistry students
+        { id: 'C20251006C1', date: '06.10.2025', day: 'Monday', subject: 'Chemistry', lesson: 'REDOX REACTIONS', track: 'Track 2', attendance: [] },
+        // Class for ALL students
+        { id: 'C20251007E1', date: '07.10.2025', day: 'Tuesday', subject: 'All', lesson: 'WEEKLY TEST', track: 'All Tracks', attendance: [{ studentId: 'S_ALL_1', status: 'Absent' }] },
+      ];
+      
+      const payload = (data && data.length > 0) ? data : mockClasses.filter(c => subject === 'All' || c.subject === subject);
+      
+      dispatch({
+        type: FETCH_REVISION_CLASSES_SUCCESS,
+        payload: payload, // Use mock data if API is empty
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching revision classes:", error);
+      dispatch({
+        type: FETCH_REVISION_CLASSES_FAILURE,
+        payload: { error: error.message || "Failed to fetch revision classes" },
+      });
+    },
+    authRequired: true,
+  });
+
+// Action to Update Class Attendance
+export const updateClassAttendance = (classId, attendanceData) =>
+  apiRequest({
+    url: `/api/data/revisionClasses/${classId}/attendance`,
+    method: "PUT",
+    data: { attendance: attendanceData },
+    onStart: UPDATE_CLASS_ATTENDANCE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_CLASS_ATTENDANCE_SUCCESS,
+        payload: data.updatedClass, // Backend returns the updated class
+      });
+      // Optionally re-fetch the list to refresh the UI, or update the state directly in the reducer
+      // dispatch(fetchRevisionClasses("All")); 
+    },
+    onFailure: (error, dispatch) => {
+      console.error(`Error updating attendance for class ${classId}:`, error);
+      const errorMessage =
+        error.error || error.message || "Failed to update attendance";
+      dispatch({
+        type: UPDATE_CLASS_ATTENDANCE_FAILURE,
+        payload: { error: errorMessage },
+      });
+      throw new Error(errorMessage); // Ensure promise rejection for component feedback
     },
     authRequired: true,
   });
