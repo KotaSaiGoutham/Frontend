@@ -161,16 +161,16 @@ import {
   UPDATE_PAYMENT_STATUS_REQUEST,
   UPDATE_PAYMENT_STATUS_SUCCESS,
   UPDATE_PAYMENT_STATUS_FAILURE,
-    UPDATE_STUDENT_STATUS_REQUEST,
+  UPDATE_STUDENT_STATUS_REQUEST,
   UPDATE_STUDENT_STATUS_SUCCESS,
   UPDATE_STUDENT_STATUS_FAILURE,
-    FETCH_LECTURE_MATERIALS_REQUEST,
+  FETCH_LECTURE_MATERIALS_REQUEST,
   FETCH_LECTURE_MATERIALS_SUCCESS,
   FETCH_LECTURE_MATERIALS_FAILURE,
   UPLOAD_LECTURE_MATERIAL_REQUEST,
   UPLOAD_LECTURE_MATERIAL_SUCCESS,
   UPLOAD_LECTURE_MATERIAL_FAILURE,
-    FETCH_REVISION_CLASSES_REQUEST,
+  FETCH_REVISION_CLASSES_REQUEST,
   FETCH_REVISION_CLASSES_SUCCESS,
   FETCH_REVISION_CLASSES_FAILURE,
   UPDATE_CLASS_ATTENDANCE_REQUEST,
@@ -195,11 +195,12 @@ export const apiRequest = ({
   url,
   method = "GET",
   data = null,
+  params = null, // ADD THIS LINE
   onSuccess,
   onFailure,
   onStart,
   authRequired = true,
-  timeout = 120000, // Add a timeout, e.g., 2 minutes (in milliseconds)
+  timeout = 120000,
 }) => {
   let deferred = {};
   const promise = new Promise((resolve, reject) => {
@@ -208,10 +209,19 @@ export const apiRequest = ({
   });
   return {
     type: API_REQUEST,
-    payload: { url, method, data, onSuccess, onFailure, onStart, authRequired },
+    payload: {
+      url,
+      method,
+      data,
+      params, // ADD THIS LINE
+      onSuccess,
+      onFailure,
+      onStart,
+      authRequired,
+    },
     meta: { deferred },
     promise,
-    timeout, // Add this line
+    timeout,
   };
 };
 
@@ -1182,13 +1192,19 @@ export const updateAutoTimetableEntry = (timetableData) =>
     },
     onFailure: (error, dispatch) => {
       console.error("Error updating auto-generated timetable entry:", error);
-      const errorMessage = error.error || error.message || "Failed to update auto-generated timetable entry.";
-      if (error.status === 401 || error.status === 403) dispatch(setAuthError("Authentication failed. Please log in again."));
-      dispatch({ type: UPDATE_AUTOTIMETABLE_FAILURE, payload: { error: errorMessage } });
+      const errorMessage =
+        error.error ||
+        error.message ||
+        "Failed to update auto-generated timetable entry.";
+      if (error.status === 401 || error.status === 403)
+        dispatch(setAuthError("Authentication failed. Please log in again."));
+      dispatch({
+        type: UPDATE_AUTOTIMETABLE_FAILURE,
+        payload: { error: errorMessage },
+      });
     },
     authRequired: true,
   });
-
 
 /**
  * Deletes an auto-generated timetable entry by its ID.
@@ -1621,8 +1637,6 @@ export const fetchRevisionStudents = () =>
     authRequired: false, // ✅ change to true if this route needs auth in future
   });
 
-
-
 export const deleteRevisionStudent = (studentId) => (dispatch) =>
   apiRequest({
     url: `/api/data/revision/students/${studentId}`,
@@ -1657,7 +1671,7 @@ export const updatePaymentStatus = (studentId, installmentNumber, newStatus) =>
     },
     authRequired: false,
   });
-  // src/redux/actions/index.js (or similar)
+// src/redux/actions/index.js (or similar)
 
 export const updateStudentStatus = (studentId, newStatus) =>
   apiRequest({
@@ -1670,8 +1684,7 @@ export const updateStudentStatus = (studentId, newStatus) =>
         type: UPDATE_STUDENT_STATUS_SUCCESS,
         payload: { studentId, newStatus },
       });
-       dispatch(fetchRevisionStudents());
-      
+      dispatch(fetchRevisionStudents());
     },
     onFailure: (error, dispatch) => {
       dispatch({
@@ -1681,7 +1694,7 @@ export const updateStudentStatus = (studentId, newStatus) =>
     },
     authRequired: false,
   });
-  export const fetchStudentLectureMaterials = (studentId) =>
+export const fetchStudentLectureMaterials = (studentId) =>
   apiRequest({
     url: `/api/materials/getstudentmaterials/${studentId}`,
     method: "GET",
@@ -1692,7 +1705,9 @@ export const updateStudentStatus = (studentId, newStatus) =>
     onFailure: (error, dispatch) => {
       dispatch({
         type: FETCH_LECTURE_MATERIALS_FAILURE,
-        payload: { error: error.message || "Failed to fetch lecture materials" },
+        payload: {
+          error: error.message || "Failed to fetch lecture materials",
+        },
       });
     },
     authRequired: true,
@@ -1733,31 +1748,35 @@ export const deleteLectureMaterial = (fileId, googleDriveId) =>
     },
     authRequired: true,
   });
-  export const fetchRevisionClasses = (subject) =>
-  apiRequest({
-    url: `/api/data/revisionClasses?subject=${subject}`,
+export const fetchRevisionClasses = (requestParams = {}) => { // Rename to avoid conflict
+  console.log("🔍 fetchRevisionClasses called with:", requestParams);
+  
+  return apiRequest({
+    url: `/api/data/revisionClasses`,
     method: "GET",
+    params: { // Use requestParams instead of params
+      cursorDate: requestParams.cursorDate, // FIX: Use requestParams
+      direction: requestParams.direction    // FIX: Use requestParams
+    },
     onStart: FETCH_REVISION_CLASSES_REQUEST,
-   onSuccess: (data, dispatch) => {
-      // If data is empty (meaning API returned []), use mock data for testing UI
-      const mockClasses = [
-        // Class for Physics students
-        { id: 'C20251006P1', date: '06.10.2025', day: 'Monday', subject: 'Physics', lesson: 'MOMENTUM', track: 'Track 1', attendance: [{ studentId: 'S_PHY_1', status: 'Present' }] },
-        // Class for Chemistry students
-        { id: 'C20251006C1', date: '06.10.2025', day: 'Monday', subject: 'Chemistry', lesson: 'REDOX REACTIONS', track: 'Track 2', attendance: [] },
-        // Class for ALL students
-        { id: 'C20251007E1', date: '07.10.2025', day: 'Tuesday', subject: 'All', lesson: 'WEEKLY TEST', track: 'All Tracks', attendance: [{ studentId: 'S_ALL_1', status: 'Absent' }] },
-      ];
-      
-      const payload = (data && data.length > 0) ? data : mockClasses.filter(c => subject === 'All' || c.subject === subject);
-      
-      dispatch({
-        type: FETCH_REVISION_CLASSES_SUCCESS,
-        payload: payload, // Use mock data if API is empty
-      });
-    },
+    onSuccess: (data, dispatch) => {
+      console.log("✅ API Response:", data);
+      dispatch({
+        type: FETCH_REVISION_CLASSES_SUCCESS,
+        payload: {
+          classes: data.classes || [],
+          hasMore: data.hasMore !== undefined ? data.hasMore : false,
+          hasPrevious: data.hasPrevious !== undefined ? data.hasPrevious : false,
+          nextCursor: data.nextCursor || null,
+          prevCursor: data.prevCursor || null,
+          append: requestParams.direction === 'next', // FIX: Use requestParams
+          prepend: requestParams.direction === 'prev', // FIX: Use requestParams
+          replace: !requestParams.direction // FIX: Use requestParams
+        },
+      });
+    },
     onFailure: (error, dispatch) => {
-      console.error("Error fetching revision classes:", error);
+      console.error("❌ Error fetching revision classes:", error);
       dispatch({
         type: FETCH_REVISION_CLASSES_FAILURE,
         payload: { error: error.message || "Failed to fetch revision classes" },
@@ -1765,31 +1784,28 @@ export const deleteLectureMaterial = (fileId, googleDriveId) =>
     },
     authRequired: true,
   });
-
-// Action to Update Class Attendance
-export const updateClassAttendance = (classId, attendanceData) =>
+};
+export const updateStudentAttendance = (classId, studentId, status) =>
   apiRequest({
-    url: `/api/data/revisionClasses/${classId}/attendance`,
-    method: "PUT",
-    data: { attendance: attendanceData },
+    url: `/api/data/revisionClasses/${classId}/attendance/${studentId}`,
+    method: "PATCH",
+    data: { status },
     onStart: UPDATE_CLASS_ATTENDANCE_REQUEST,
     onSuccess: (data, dispatch) => {
       dispatch({
         type: UPDATE_CLASS_ATTENDANCE_SUCCESS,
-        payload: data.updatedClass, // Backend returns the updated class
+        payload: data.updatedClass,
       });
-      // Optionally re-fetch the list to refresh the UI, or update the state directly in the reducer
-      // dispatch(fetchRevisionClasses("All")); 
     },
     onFailure: (error, dispatch) => {
-      console.error(`Error updating attendance for class ${classId}:`, error);
+      console.error(`Error updating attendance:`, error);
       const errorMessage =
         error.error || error.message || "Failed to update attendance";
       dispatch({
         type: UPDATE_CLASS_ATTENDANCE_FAILURE,
         payload: { error: errorMessage },
       });
-      throw new Error(errorMessage); // Ensure promise rejection for component feedback
+      throw new Error(errorMessage);
     },
     authRequired: true,
   });

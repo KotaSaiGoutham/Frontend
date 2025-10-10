@@ -11,51 +11,79 @@ const initialState = {
   classes: [],
   loading: false,
   error: null,
+  hasMore: true,
+   nextCursor: null,  // FIX: Added nextCursor
+  prevCursor: null,  // FIX: Added prevCursor
+  hasPrevious: false,
+  loadingMore: false,
+};
+
+// Helper function to parse and compare dates (DD.MM.YY)
+const parseDate = (dateStr) => {
+  if (!dateStr) return 0;
+  const [day, month, year] = dateStr.split('.');
+  // Assumes current century (20xx)
+  return new Date(`20${year}`, month - 1, day);
 };
 
 const classScheduleReducer = (state = initialState, action) => {
   switch (action.type) {
-    // --- FETCH CLASSES ---
     case FETCH_REVISION_CLASSES_REQUEST:
       return {
         ...state,
-        loading: true,
+        loading: !action.payload?.isLoadingMore,
+        loadingMore: action.payload?.isLoadingMore || false,
         error: null,
       };
+    
     case FETCH_REVISION_CLASSES_SUCCESS:
+      let updatedClasses;
+      
+      if (action.payload.append) {
+        updatedClasses = [...state.classes, ...action.payload.classes];
+      } else if (action.payload.prepend) {
+        updatedClasses = [...action.payload.classes, ...state.classes];
+      } else {
+        updatedClasses = action.payload.classes;
+      }
+      
+      // Remove duplicates
+      const uniqueClasses = updatedClasses.reduce((acc, current) => {
+        const exists = acc.find(item => item.id === current.id);
+        return exists ? acc : [...acc, current];
+      }, []);
+      
+      // Sort by date
+      uniqueClasses.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+
       return {
         ...state,
         loading: false,
-        classes: action.payload, // Replace classes with the fetched array
+        loadingMore: false,
+        classes: uniqueClasses,
+        hasMore: action.payload.hasMore !== undefined ? action.payload.hasMore : false,
+        hasPrevious: action.payload.hasPrevious !== undefined ? action.payload.hasPrevious : false,
+        nextCursor: action.payload.nextCursor || null,  // FIX: Store nextCursor
+        prevCursor: action.payload.prevCursor || null,  // FIX: Store prevCursor
         error: null,
       };
+    
     case FETCH_REVISION_CLASSES_FAILURE:
       return {
         ...state,
         loading: false,
+        loadingMore: false,
         error: action.payload.error,
       };
 
-    // --- UPDATE ATTENDANCE ---
-    case UPDATE_CLASS_ATTENDANCE_REQUEST:
-      // Optional: Handle a temporary loading state for the specific class if needed
-      return state; 
     case UPDATE_CLASS_ATTENDANCE_SUCCESS:
-      // Replace the old version of the updated class in the array
-      const updatedClass = action.payload;
       return {
         ...state,
-        // Map through the existing classes and replace the one that matches the ID
         classes: state.classes.map((cls) =>
-          cls.id === updatedClass.id ? updatedClass : cls
+          cls.id === action.payload.id ? action.payload : cls
         ),
-        // We do not set loading to false here, as it was never set to true, 
-        // to avoid flashing the UI. The component handles its own saving state.
-        error: null, 
+        error: null,
       };
-    case UPDATE_CLASS_ATTENDANCE_FAILURE:
-      // Log error, but UI handles the error message via the component state (`saveMessage`)
-      return state;
 
     default:
       return state;
