@@ -1383,6 +1383,7 @@ export const fetchStudentExams = () =>
   });
 
 // Add Exam
+// In your addStudentExam action
 export const addStudentExam = (examData) =>
   apiRequest({
     url: "/api/data/addStudentExam",
@@ -1390,17 +1391,39 @@ export const addStudentExam = (examData) =>
     data: examData,
     onStart: ADD_STUDENT_EXAM_REQUEST,
     onSuccess: (data, dispatch) => {
-      dispatch({ type: ADD_STUDENT_EXAM_SUCCESS, payload: data.exam });
+      dispatch({ 
+        type: ADD_STUDENT_EXAM_SUCCESS, 
+        payload: data.exam 
+      });
+      
+      // Update revision classes state with exam data
+      dispatch({
+        type: "UPDATE_REVISION_CLASS_EXAM_SUCCESS",
+        payload: {
+          classId: examData.classId,
+          examData: {
+            studentId: examData.studentId,
+            studentName: examData.studentName,
+            physics: examData.physics || 0,
+            chemistry: examData.chemistry || 0,
+            maths: examData.maths || 0,
+            total: examData.total || 0,
+            subject: examData.Subject,
+          }
+        }
+      });
+      
+      return data;
     },
     onFailure: (error, dispatch) => {
       dispatch({
         type: ADD_STUDENT_EXAM_FAILURE,
         payload: { error: error.message || "Failed to add student exam" },
       });
+      throw error;
     },
   });
-
-// Update Exam
+// Update updateStudentExam to include classId
 export const updateStudentExam = (examData) =>
   apiRequest({
     url: `/api/data/studentexams/${examData.id}`,
@@ -1408,15 +1431,40 @@ export const updateStudentExam = (examData) =>
     data: examData,
     onStart: UPDATE_STUDENT_EXAM_REQUEST,
     onSuccess: (data, dispatch) => {
-      dispatch({ type: UPDATE_STUDENT_EXAM_SUCCESS, payload: data });
+      dispatch({ 
+        type: UPDATE_STUDENT_EXAM_SUCCESS, 
+        payload: data 
+      });
+      
+      // Also update the revision classes state if classId exists
+      if (examData.classId) {
+        dispatch({
+          type: "UPDATE_REVISION_CLASS_EXAM_SUCCESS",
+          payload: {
+            classId: examData.classId,
+            studentId: examData.studentId,
+            examData: {
+              physics: examData.physics,
+              chemistry: examData.chemistry,
+              maths: examData.maths,
+              total: examData.total,
+              subject: examData.Subject,
+            }
+          }
+        });
+      }
+      
+      return data;
     },
     onFailure: (error, dispatch) => {
       dispatch({
         type: UPDATE_STUDENT_EXAM_FAILURE,
         payload: { error: error.message || "Failed to update student exam" },
       });
+      throw error;
     },
   });
+
 
 // Delete Exam
 export const deleteStudentExam = (examId) =>

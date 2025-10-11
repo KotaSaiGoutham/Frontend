@@ -20,8 +20,6 @@ import {
   IconButton,
   Fade,
   Button,
-  Checkbox,
-  FormControlLabel,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -38,6 +36,7 @@ import {
   Edit,
   Check,
   Close,
+  Comment,
 } from "@mui/icons-material";
 import {
   fetchRevisionClasses,
@@ -66,12 +65,41 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   },
 }));
 
+// Track-based highlighting components with better colors
+const Track1Highlight = styled(Box)({
+  background: "linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%)",
+  borderLeft: "4px solid #3b82f6",
+  padding: "8px 12px",
+  borderRadius: "8px",
+  width: "100%",
+  border: "1px solid #dbeafe",
+});
+
+const Track2Highlight = styled(Box)({
+  background: "linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%)",
+  borderLeft: "4px solid #f59e0b",
+  padding: "8px 12px",
+  borderRadius: "8px",
+  width: "100%",
+  border: "1px solid #fef3c7",
+});
+
+const BothTracksHighlight = styled(Box)({
+  background: "linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%)",
+  borderLeft: "4px solid #8b5cf6",
+  padding: "8px 12px",
+  borderRadius: "8px",
+  width: "100%",
+  border: "1px solid #e0e7ff",
+});
+
 const PaginationButton = styled(Button)(({ theme }) => ({
   background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
   color: "white",
   fontWeight: 600,
-  padding: "10px 20px",
+  padding: "8px 16px",
   borderRadius: "8px",
+  fontSize: "0.8rem",
   "&:hover": {
     background: "linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)",
     transform: "translateY(-1px)",
@@ -89,9 +117,9 @@ const HeaderCell = styled(TableCell)(({ theme }) => ({
   background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
   color: "white",
   fontWeight: 700,
-  fontSize: "0.875rem",
+  fontSize: "0.75rem",
   borderRight: "1px solid #475569",
-  padding: "12px 8px",
+  padding: "8px 4px",
   "&:first-of-type": {
     borderTopLeftRadius: "8px",
   },
@@ -157,11 +185,28 @@ const DisabledRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const ATTENDANCE_STATUSES = ["Present", "Absent", "Late"];
+// Updated attendance statuses with short codes
+const ATTENDANCE_STATUSES = [
+  { value: "Present", label: "Present", color: "#10b981" },
+  {
+    value: "Absent",
+    label: "Absent",
+    fullLabel: "Student Absent",
+    color: "#ef4444",
+  },
+  { value: "Late", label: "Late", color: "#f59e0b" },
+  { value: "TutorAbsent", label: "TutorAbsent", color: "#6b7280" },
+  { value: "Cancelled", label: "Cancelled", color: "#8b5cf6" },
+  { value: "Rescheduled", label: "Rescheduled", color: "#06b6d4" },
+];
+
 const colorMap = {
   Present: "#10b981",
   Absent: "#ef4444",
   Late: "#f59e0b",
+  TutorAbsent: "#6b7280",
+  Cancelled: "#8b5cf6",
+  Rescheduled: "#06b6d4",
 };
 
 const RevisionClassesPage = () => {
@@ -173,6 +218,16 @@ const RevisionClassesPage = () => {
   const [examDialogOpen, setExamDialogOpen] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
   const [studentExamStatus, setStudentExamStatus] = useState({});
+  const [editingExam, setEditingExam] = useState({});
+  const [examMarks, setExamMarks] = useState({});
+  const [examData, setExamData] = useState({});
+  const [remarks, setRemarks] = useState({});
+  const [remarksDialog, setRemarksDialog] = useState({
+    open: false,
+    classId: null,
+    studentId: null,
+    currentRemarks: "",
+  });
 
   const dispatch = useDispatch();
   const {
@@ -199,7 +254,6 @@ const RevisionClassesPage = () => {
 
   const todayDate = getTodayDate();
 
-  // Memoize revision students calculation
   const revisionStudents = useMemo(() => {
     return allStudents
       .filter(
@@ -218,7 +272,21 @@ const RevisionClassesPage = () => {
           .join("")
           .toUpperCase(),
       }))
-      .sort((a, b) => a.studentName.localeCompare(b.studentName));
+      .sort((a, b) => {
+        const orderMap = {
+          otHokETYUPbD3kbTKErH: 1, // Gagan
+          JlRBFEvbLvVjNhVOkSla: 2, // Amal
+          erVmrIuhSSHoDuXDgGCu: 3, // Ananya
+          zHw0H5G85sF7jZxAvZT0: 4, // Sriya.JEE
+          Cbkj6tPKF2il8VgQvcjS: 5, // Nithya
+          bciCHijYj4f3b0dOU28s: 6, // Navya
+        };
+
+        const aOrder = orderMap[a.id] || 999;
+        const bOrder = orderMap[b.id] || 999;
+
+        return aOrder - bOrder;
+      });
   }, [allStudents]);
 
   // Get attendance status from Redux state
@@ -234,21 +302,197 @@ const RevisionClassesPage = () => {
     [classes]
   );
 
-  const getExamStatus = useCallback(
-    (classItem, studentId) => {
-      if (!classItem.isExam) return null;
-      const status = studentExamStatus[`${classItem.id}_${studentId}`];
+  // Get remarks for attendance
+  const getRemarks = useCallback(
+    (classId, studentId) => {
+      return remarks[`${classId}_${studentId}`] || "";
+    },
+    [remarks]
+  );
 
-      // FIX: Ensure we return a string or null, never an object
-      if (typeof status === "object") {
-        console.error("Invalid exam status object:", status);
-        return null;
+  // Handle remarks change
+  const handleRemarksChange = (classId, studentId, remark) => {
+    setRemarks((prev) => ({
+      ...prev,
+      [`${classId}_${studentId}`]: remark,
+    }));
+  };
+
+  // Open remarks dialog
+  const handleOpenRemarksDialog = (classId, studentId) => {
+    setRemarksDialog({
+      open: true,
+      classId,
+      studentId,
+      currentRemarks: getRemarks(classId, studentId),
+    });
+  };
+
+  // Close remarks dialog
+  const handleCloseRemarksDialog = () => {
+    setRemarksDialog({
+      open: false,
+      classId: null,
+      studentId: null,
+      currentRemarks: "",
+    });
+  };
+
+  // Save remarks
+  const handleSaveRemarks = () => {
+    const { classId, studentId, currentRemarks } = remarksDialog;
+    if (classId && studentId) {
+      handleRemarksChange(classId, studentId, currentRemarks);
+    }
+    handleCloseRemarksDialog();
+  };
+
+  const handleEditExam = (classId, studentId, existingData = null) => {
+    const examKey = `${classId}_${studentId}`;
+    setEditingExam((prev) => ({ ...prev, [examKey]: true }));
+
+    if (existingData) {
+      setExamMarks((prev) => ({
+        ...prev,
+        [examKey]: {
+          physics: existingData.physics || "",
+          chemistry: existingData.chemistry || "",
+          maths: existingData.maths || "",
+        },
+      }));
+    }
+  };
+
+  const handleExamMarkChange = (classId, studentId, subject, value) => {
+    const examKey = `${classId}_${studentId}`;
+    setExamMarks((prev) => ({
+      ...prev,
+      [examKey]: {
+        ...(prev[examKey] || {}),
+        [subject]: value,
+      },
+    }));
+  };
+
+  const handleSaveExam = async (classItem, studentId) => {
+    const examKey = `${classItem.id}_${studentId}`;
+    const marks = examMarks[examKey] || {};
+    const cellKey = `${classItem.id}_${studentId}`;
+
+    // Get marks based on user role
+    const physicsMarks = user?.isPhysics ? Number(marks.physics) || 0 : 0;
+    const chemistryMarks = user?.isChemistry ? Number(marks.chemistry) || 0 : 0;
+    const mathsMarks = user?.isMaths ? Number(marks.maths) || 0 : 0;
+
+    // Validate marks
+    if (physicsMarks > 100 || chemistryMarks > 100 || mathsMarks > 100) {
+      setSaveMessage({
+        text: "Marks cannot exceed 100 for any subject",
+        severity: "error",
+      });
+      setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 3000);
+      return;
+    }
+
+    // Calculate total
+    const total = physicsMarks + chemistryMarks + mathsMarks;
+
+    const examDataToSave = {
+      classId: classItem.id,
+      studentId: studentId,
+      studentName:
+        revisionStudents.find((s) => s.id === studentId)?.studentName ||
+        "Unknown",
+      examDate: new Date(
+        classItem.date.split(".").reverse().join("-")
+      ).toISOString(),
+      examName: classItem.exam || "Revision Exam",
+      status: "Present",
+      topic: [classItem.exam || "General"],
+      testType: getTestTypeFromExam(classItem.exam),
+      isRevisionProgramJEEMains2026Student: true,
+      Subject: user?.isPhysics
+        ? "Physics"
+        : user?.isChemistry
+        ? "Chemistry"
+        : user?.isMaths
+        ? "Maths"
+        : "General",
+      total: total,
+      physics: physicsMarks,
+      chemistry: chemistryMarks,
+      maths: mathsMarks,
+    };
+
+    try {
+      setSavingState((prev) => ({ ...prev, [cellKey]: true }));
+
+      // Check if exam already exists in our local state
+      const existingExam = examData[examKey];
+
+      let result;
+      if (existingExam) {
+        // Update existing exam - pass the studentexam ID if available
+        examDataToSave.id = existingExam.examRecordId || existingExam.id;
+        result = await dispatch(updateStudentExam(examDataToSave));
+      } else {
+        // Add new exam
+        result = await dispatch(addStudentExam(examDataToSave));
       }
 
-      return status || null;
-    },
-    [studentExamStatus]
-  );
+      // Update local exam data state
+      setExamData((prev) => ({
+        ...prev,
+        [examKey]: {
+          ...examDataToSave,
+          examRecordId: result?.exam?.id || existingExam?.examRecordId,
+        },
+      }));
+
+      setSaveMessage({
+        text: `Exam marks ${existingExam ? "updated" : "saved"} successfully!`,
+        severity: "success",
+      });
+
+      // Clear editing state
+      setEditingExam((prev) => {
+        const newState = { ...prev };
+        delete newState[examKey];
+        return newState;
+      });
+
+      setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 2000);
+    } catch (error) {
+      console.error("Error saving exam:", error);
+      setSaveMessage({
+        text: "Failed to save exam marks",
+        severity: "error",
+      });
+      setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 4000);
+    } finally {
+      setTimeout(() => {
+        setSavingState((prev) => {
+          const newState = { ...prev };
+          delete newState[cellKey];
+          return newState;
+        });
+      }, 500);
+    }
+  };
+
+  const handleCancelExam = (classId, studentId) => {
+    const examKey = `${classId}_${studentId}`;
+    setEditingExam((prev) => {
+      const newState = { ...prev };
+      delete newState[examKey];
+      return newState;
+    });
+    setExamMarks((prev) => {
+      const newState = { ...prev };
+      delete newState[examKey];
+      return newState;
+    });
+  };
 
   // Memoize students for each class
   const getStudentsForClass = useCallback(
@@ -350,12 +594,9 @@ const RevisionClassesPage = () => {
       setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 2000);
     } catch (error) {
       console.error("Error updating exam status:", error);
-
-      // FIX: Make sure we're not trying to render the error object
       const errorMessage = error?.message || "Failed to update exam status";
-
       setSaveMessage({
-        text: errorMessage, // Use string, not error object
+        text: errorMessage,
         severity: "error",
       });
       setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 4000);
@@ -407,6 +648,11 @@ const RevisionClassesPage = () => {
   // Flatten classes for rendering
   const flattenedClasses = useMemo(() => {
     return classes.flatMap((classItem) => {
+      // Always include exams and revision dates regardless of students
+      if (classItem.isExam || classItem.exam || classItem.revisionDate) {
+        return [classItem];
+      }
+      // For regular classes, check if there are students
       const classStudents = getStudentsForClass(classItem);
       return classStudents.length > 0 ? [classItem] : [];
     });
@@ -414,19 +660,49 @@ const RevisionClassesPage = () => {
 
   // Fetch initial classes on mount
   useEffect(() => {
+    const loadExamData = () => {
+      if (!classes || classes.length === 0) return;
+
+      const examDataMap = {};
+
+      classes.forEach((classItem) => {
+        if (classItem.isExam || classItem.exam) {
+          // Check if class has examData from Redux
+          if (classItem.examData && Array.isArray(classItem.examData)) {
+            classItem.examData.forEach((exam) => {
+              const examKey = `${classItem.id}_${exam.studentId}`;
+              examDataMap[examKey] = {
+                examRecordId: exam.examRecordId,
+                physics: exam.physics || 0,
+                chemistry: exam.chemistry || 0,
+                maths: exam.maths || 0,
+                total: exam.total || 0,
+                subject: exam.subject,
+              };
+            });
+          }
+        }
+      });
+
+      setExamData(examDataMap);
+    };
+
+    loadExamData();
+  }, [classes]);
+
+  useEffect(() => {
     if (classes.length === 0 && !loading) {
       handleRefresh();
     }
   }, [dispatch]);
 
-  // Determine row type and content
   const getRowTypeAndContent = (classItem) => {
-    if (classItem.isExam) {
+    if (classItem.isExam || classItem.exam) {
       return {
         type: "exam",
-        content: classItem.exam,
-        color: "#fff3cd",
-        badgeColor: "linear-gradient(135deg, #ffc107, #ff8f00)",
+        content: classItem.exam || "Exam",
+        color: "#f3e5f5", // Very Light Lavender/Purple background
+        badgeColor: "linear-gradient(135deg, #9c27b0, #6a1b9a)", // Deep Purple/Violet gradient
       };
     } else if (classItem.revisionDate) {
       return {
@@ -450,30 +726,91 @@ const RevisionClassesPage = () => {
     }
   };
 
+  // Render content with track-based highlighting
+  const renderContentWithTrackHighlight = (classItem, content) => {
+    if (classItem.revisionDate || classItem.isExam) {
+      return (
+        <Typography
+          variant="body2"
+          sx={{ fontSize: "0.8rem", fontWeight: 500 }}
+        >
+          {content}
+        </Typography>
+      );
+    }
+
+    if (classItem.track1 && !classItem.track2) {
+      return (
+        <Track1Highlight>
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "0.8rem", fontWeight: 600, color: "#1e40af" }}
+          >
+            {content}
+          </Typography>
+        </Track1Highlight>
+      );
+    } else if (classItem.track2 && !classItem.track1) {
+      return (
+        <Track2Highlight>
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "0.8rem", fontWeight: 600, color: "#78350f" }}
+          >
+            {content}
+          </Typography>
+        </Track2Highlight>
+      );
+    } else if (classItem.track1 && classItem.track2) {
+      return (
+        <BothTracksHighlight>
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "0.8rem", fontWeight: 600, color: "#3730a3" }}
+          >
+            {content}
+          </Typography>
+        </BothTracksHighlight>
+      );
+    } else {
+      return (
+        <Typography
+          variant="body2"
+          sx={{ fontSize: "0.8rem", fontWeight: 500 }}
+        >
+          {content}
+        </Typography>
+      );
+    }
+  };
+
   return (
     <Fade in timeout={800}>
-      <StyledPaper sx={{ p: 3, mt: 3 }}>
+      <StyledPaper sx={{ p: 2, mt: 2 }}>
         {/* Header */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            mb: 3,
+            mb: 2,
           }}
         >
           <Box>
             <Typography
-              variant="h4"
-              sx={{ fontWeight: 700, color: "#1e293b", mb: 1 }}
+              variant="h5"
+              sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}
             >
               Revision Classes & Exams
             </Typography>
-            <Typography variant="body1" sx={{ color: "#64748b" }}>
+            <Typography
+              variant="body2"
+              sx={{ color: "#64748b", fontSize: "0.8rem" }}
+            >
               Today: {todayDate}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
             <Tooltip title="Refresh to Current Classes" arrow>
               <IconButton
                 onClick={handleRefresh}
@@ -481,22 +818,25 @@ const RevisionClassesPage = () => {
                 sx={{
                   background: "#f1f5f9",
                   "&:hover": { background: "#e2e8f0" },
+                  padding: "6px",
                 }}
               >
-                <Refresh color="action" />
+                <Refresh fontSize="small" />
               </IconButton>
             </Tooltip>
             <PaginationButton
               onClick={handlePreviousClasses}
               disabled={loading || !hasPreviousFromRedux}
               startIcon={<NavigateBefore />}
+              size="small"
             >
-              Previous
+              Prev
             </PaginationButton>
             <PaginationButton
               onClick={handleNextClasses}
               disabled={loading || !hasMore}
               endIcon={<NavigateNext />}
+              size="small"
             >
               Next
             </PaginationButton>
@@ -507,7 +847,7 @@ const RevisionClassesPage = () => {
         {saveMessage.text && (
           <Alert
             severity={saveMessage.severity}
-            sx={{ mb: 2, borderRadius: "8px" }}
+            sx={{ mb: 2, borderRadius: "8px", fontSize: "0.8rem" }}
           >
             {saveMessage.text}
           </Alert>
@@ -519,13 +859,16 @@ const RevisionClassesPage = () => {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              py: 8,
+              py: 6,
             }}
           >
-            <CircularProgress size={60} sx={{ color: "#3b82f6" }} />
+            <CircularProgress size={40} sx={{ color: "#3b82f6" }} />
           </Box>
         ) : error ? (
-          <Alert severity="error" sx={{ borderRadius: "8px" }}>
+          <Alert
+            severity="error"
+            sx={{ borderRadius: "8px", fontSize: "0.8rem" }}
+          >
             Error loading classes: {error}
           </Alert>
         ) : (
@@ -537,98 +880,105 @@ const RevisionClassesPage = () => {
                 background: "white",
                 overflow: "auto",
                 mb: 2,
+                maxHeight: "calc(100vh - 200px)",
               }}
             >
               <Table
                 stickyHeader
                 aria-label="attendance-table"
-                sx={{ minWidth: 1200 }}
+                sx={{ minWidth: 800 }}
+                size="small"
               >
                 <TableHead>
                   <TableRow>
-                    <HeaderCell sx={{ width: "140px", textAlign: "center" }}>
+                    <HeaderCell sx={{ width: "100px", textAlign: "center" }}>
                       <Box
                         sx={{
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: 1,
+                          gap: 0.5,
                         }}
                       >
-                        <CalendarToday sx={{ fontSize: 18 }} />
-                        Date & Day
+                        <CalendarToday sx={{ fontSize: 16 }} />
+                        <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                          Date & Day
+                        </Typography>
                       </Box>
                     </HeaderCell>
-                    <HeaderCell sx={{ width: "400px" }}>
+                    <HeaderCell sx={{ width: "250px" }}>
                       <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                       >
-                        <Book sx={{ fontSize: 18 }} />
-                        Lesson/Topic/Exam
+                        <Book sx={{ fontSize: 16 }} />
+                        <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                          Lesson/Topic/Exam
+                        </Typography>
                       </Box>
                     </HeaderCell>
-                    {revisionStudents.map((student) => (
-                      <HeaderCell
-                        key={student.id}
-                        sx={{
-                          width: "120px",
-                          textAlign: "center",
-                          minWidth: "120px",
-                        }}
-                      >
-                        <Tooltip title={student.studentName} arrow>
-                          <Box sx={{ p: 0.5 }}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                                padding: "6px 8px",
-                                background: "rgba(59, 130, 246, 0.1)",
-                                borderRadius: "8px",
-                                border: "1px solid rgba(59, 130, 246, 0.2)",
-                              }}
-                            >
-                              <Box
-                                sx={{
-                                  width: 28,
-                                  height: 28,
-                                  borderRadius: "6px",
-                                  background:
-                                    "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  color: "white",
-                                  fontWeight: 700,
-                                  fontSize: "0.75rem",
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {student.initials}
-                              </Box>
-                              <Box sx={{ minWidth: 0, flex: 1 }}>
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    fontWeight: 600,
-                                    color: "white",
-                                    display: "block",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                    fontSize: "0.75rem",
-                                    lineHeight: 1.2,
-                                  }}
-                                >
-                                  {student.studentName.split(" ")[0]}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Box>
-                        </Tooltip>
-                      </HeaderCell>
-                    ))}
+{revisionStudents.map((student) => (
+  <HeaderCell
+    key={student.id}
+    sx={{
+      width: "120px",
+      textAlign: "center",
+      minWidth: "120px",
+      maxWidth: "120px",
+      padding: "6px 4px",
+    }}
+  >
+    <Tooltip title={`${student.studentName} • ${student.track}`} arrow placement="top">
+      <Box sx={{ p: 0.5 }}>
+        <Box
+          sx={{
+            background: 
+               "linear-gradient(135deg, #fef3c7, #fffbeb)",
+            border: 
+               "1px solid #f59e0b",
+            borderRadius: "8px",
+            padding: "6px 4px",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              width: 26,
+              height: 26,
+              borderRadius: "6px",
+              background: 
+                 "#f59e0b",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontWeight: 700,
+              fontSize: "0.7rem",
+              margin: "0 auto 4px auto",
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            {student.initials}
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 600,
+              color: "#78350f",
+              fontSize: "0.7rem",
+              display: "block",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {student.studentName.split(" ")[0]}
+          </Typography>
+        </Box>
+      </Box>
+    </Tooltip>
+  </HeaderCell>
+))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -637,7 +987,6 @@ const RevisionClassesPage = () => {
                       const isToday = classItem.date === todayDate;
                       const rowInfo = getRowTypeAndContent(classItem);
 
-                      // For revision dates, show disabled row
                       if (classItem.revisionDate) {
                         return (
                           <DisabledRow key={classItem.id}>
@@ -647,22 +996,28 @@ const RevisionClassesPage = () => {
                                 color: "#6c757d",
                                 fontWeight: 500,
                                 borderRight: "1px solid #e9ecef",
+                                padding: "6px 4px",
                               }}
                             >
                               <Box>
                                 <Typography
-                                  variant="body2"
+                                  variant="caption"
                                   sx={{
                                     fontWeight: 700,
                                     color: "#6c757d",
-                                    fontSize: "0.9rem",
+                                    fontSize: "0.75rem",
                                   }}
                                 >
                                   {classItem.date}
                                 </Typography>
                                 <Typography
                                   variant="caption"
-                                  sx={{ color: "#6c757d", fontWeight: 400 }}
+                                  sx={{
+                                    color: "#6c757d",
+                                    fontWeight: 400,
+                                    fontSize: "0.7rem",
+                                    display: "block",
+                                  }}
                                 >
                                   {classItem.dayOfWeek}
                                   {isToday && " • Today"}
@@ -674,7 +1029,8 @@ const RevisionClassesPage = () => {
                                 color: "#6c757d",
                                 fontWeight: 600,
                                 borderRight: "1px solid #e9ecef",
-                                fontSize: "0.9rem",
+                                fontSize: "0.75rem",
+                                padding: "6px 4px",
                               }}
                             >
                               <Box
@@ -684,7 +1040,7 @@ const RevisionClassesPage = () => {
                                   justifyContent: "space-between",
                                 }}
                               >
-                                <Typography variant="body2">
+                                <Typography variant="caption">
                                   Revision Day
                                 </Typography>
                                 <Chip
@@ -694,8 +1050,8 @@ const RevisionClassesPage = () => {
                                     background: rowInfo.badgeColor,
                                     color: "white",
                                     fontWeight: 600,
-                                    fontSize: "0.65rem",
-                                    height: "20px",
+                                    fontSize: "0.55rem",
+                                    height: "18px",
                                   }}
                                 />
                               </Box>
@@ -705,14 +1061,17 @@ const RevisionClassesPage = () => {
                                 key={student.id}
                                 sx={{
                                   textAlign: "center",
-                                  padding: "8px 4px",
+                                  padding: "4px 2px",
                                   borderRight: "1px solid #e9ecef",
                                   color: "#6c757d",
                                 }}
                               >
                                 <Typography
                                   variant="caption"
-                                  sx={{ fontStyle: "italic" }}
+                                  sx={{
+                                    fontStyle: "italic",
+                                    fontSize: "0.7rem",
+                                  }}
                                 >
                                   No Attendance
                                 </Typography>
@@ -722,7 +1081,6 @@ const RevisionClassesPage = () => {
                         );
                       }
 
-                      // For regular classes and exams
                       return (
                         <StudentRow
                           key={classItem.id}
@@ -736,15 +1094,17 @@ const RevisionClassesPage = () => {
                               color: isToday ? "#60a5fa" : "#64748b",
                               fontWeight: isToday ? 700 : 500,
                               borderRight: "1px solid #f1f5f9",
+                              padding: "6px 4px",
                             }}
                           >
                             <Box>
                               <Typography
-                                variant="body2"
+                                variant="caption"
                                 sx={{
                                   fontWeight: 700,
                                   color: isToday ? "#1e40af" : "#1e293b",
-                                  fontSize: "0.9rem",
+                                  fontSize: "0.75rem",
+                                  display: "block",
                                 }}
                               >
                                 {classItem.date}
@@ -754,6 +1114,8 @@ const RevisionClassesPage = () => {
                                 sx={{
                                   color: isToday ? "#1e40af" : "#64748b",
                                   fontWeight: isToday ? 600 : 400,
+                                  fontSize: "0.7rem",
+                                  display: "block",
                                 }}
                               >
                                 {classItem.dayOfWeek}
@@ -762,14 +1124,15 @@ const RevisionClassesPage = () => {
                             </Box>
                           </TableCell>
 
-                          {/* Content Cell */}
+                          {/* Lesson/Topic Cell */}
                           <TableCell
                             sx={{
                               color: "#475569",
                               fontWeight: 600,
                               borderRight: "1px solid #f1f5f9",
-                              fontSize: "0.9rem",
+                              fontSize: "0.75rem",
                               background: rowInfo.color,
+                              padding: "6px 4px",
                             }}
                           >
                             <Box
@@ -777,51 +1140,28 @@ const RevisionClassesPage = () => {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "space-between",
+                                gap: 0.5,
                               }}
                             >
-                              <Typography variant="body2">
-                                {rowInfo.content}
-                              </Typography>
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                }}
-                              >
-                                {classItem.isExam && (
-                                  <Tooltip title="Edit Exam Details">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() =>
-                                        handleOpenExamDialog(classItem)
-                                      }
-                                      sx={{ color: "#ffc107" }}
-                                    >
-                                      <Edit fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
+                              <Box sx={{ flex: 1 }}>
+                                {renderContentWithTrackHighlight(
+                                  classItem,
+                                  rowInfo.content
                                 )}
-                                <Chip
-                                  label={
-                                    classItem.isExam
-                                      ? "Exam"
-                                      : classItem.track1 && classItem.track2
-                                      ? "Both"
-                                      : classItem.track1
-                                      ? "1st Year"
-                                      : "2nd Year"
-                                  }
-                                  size="small"
-                                  sx={{
-                                    background: rowInfo.badgeColor,
-                                    color: "white",
-                                    fontWeight: 600,
-                                    fontSize: "0.65rem",
-                                    height: "20px",
-                                  }}
-                                />
                               </Box>
+                              {classItem.isExam && (
+                                <Tooltip title="Edit Exam Details">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      handleOpenExamDialog(classItem)
+                                    }
+                                    sx={{ color: "#ffc107", padding: "2px" }}
+                                  >
+                                    <Edit fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
                             </Box>
                           </TableCell>
 
@@ -829,178 +1169,358 @@ const RevisionClassesPage = () => {
                           {revisionStudents.map((student) => {
                             const cellKey = `${classItem.id}_${student.id}`;
                             const isSaving = savingState[cellKey];
+                            const currentRemarks = getRemarks(
+                              classItem.id,
+                              student.id
+                            );
 
-                            // For exam dates, show exam status controls
-                            if (classItem.isExam) {
-                              const examStatus = getExamStatus(
-                                classItem,
-                                student.id
-                              );
+                            if (classItem.isExam || classItem.exam) {
+                              const examKey = `${classItem.id}_${student.id}`;
+                              const isEditing = editingExam[examKey];
+                              const marks = examMarks[examKey] || {};
+                              const savedExam = examData[examKey];
+
                               return (
                                 <TableCell
                                   key={student.id}
                                   sx={{
                                     textAlign: "center",
-                                    padding: "8px 4px",
+                                    padding: "4px 2px",
                                     borderRight: "1px solid #f1f5f9",
                                     position: "relative",
                                   }}
                                 >
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      justifyContent: "center",
-                                      gap: 1,
-                                    }}
-                                  >
-                                    <Tooltip title="Mark Present">
-                                      <IconButton
-                                        size="small"
-                                        onClick={() =>
-                                          handleExamStatusChange(
-                                            classItem,
-                                            student.id,
-                                            "Present"
-                                          )
-                                        }
-                                        sx={{
-                                          color:
-                                            examStatus === "Present"
-                                              ? "#10b981"
-                                              : "#ccc",
-                                        }}
-                                      >
-                                        <Check />
-                                      </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title="Mark Absent">
-                                      <IconButton
-                                        size="small"
-                                        onClick={() =>
-                                          handleExamStatusChange(
-                                            classItem,
-                                            student.id,
-                                            "Absent"
-                                          )
-                                        }
-                                        sx={{
-                                          color:
-                                            examStatus === "Absent"
-                                              ? "#ef4444"
-                                              : "#ccc",
-                                        }}
-                                      >
-                                        <Close />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </Box>
-                                  {examStatus && (
-                                    <Typography
-                                      variant="caption"
+                                  {isEditing ? (
+                                    <Box
                                       sx={{
-                                        display: "block",
-                                        mt: 0.5,
-                                        fontWeight: 600,
-                                        color:
-                                          examStatus === "Present"
-                                            ? "#10b981"
-                                            : "#ef4444",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 0.5,
                                       }}
                                     >
-                                      {/* FIX: Ensure examStatus is always a string */}
-                                      {typeof examStatus === "string"
-                                        ? examStatus
-                                        : String(examStatus)}
-                                    </Typography>
+                                      {user?.isPhysics && (
+                                        <TextField
+                                          size="small"
+                                          type="number"
+                                          label="Physics"
+                                          value={marks.physics || ""}
+                                          onChange={(e) =>
+                                            handleExamMarkChange(
+                                              classItem.id,
+                                              student.id,
+                                              "physics",
+                                              e.target.value
+                                            )
+                                          }
+                                          inputProps={{ min: 0, max: 100 }}
+                                          sx={{
+                                            width: "100%",
+                                            "& .MuiInputBase-input": {
+                                              fontSize: "0.7rem",
+                                              padding: "4px 8px",
+                                            },
+                                          }}
+                                        />
+                                      )}
+                                      {user?.isChemistry && (
+                                        <TextField
+                                          size="small"
+                                          type="number"
+                                          label="Chemistry"
+                                          value={marks.chemistry || ""}
+                                          onChange={(e) =>
+                                            handleExamMarkChange(
+                                              classItem.id,
+                                              student.id,
+                                              "chemistry",
+                                              e.target.value
+                                            )
+                                          }
+                                          inputProps={{ min: 0, max: 100 }}
+                                          sx={{
+                                            width: "100%",
+                                            "& .MuiInputBase-input": {
+                                              fontSize: "0.7rem",
+                                              padding: "4px 8px",
+                                            },
+                                          }}
+                                        />
+                                      )}
+                                      {user?.isMaths && (
+                                        <TextField
+                                          size="small"
+                                          type="number"
+                                          label="Maths"
+                                          value={marks.maths || ""}
+                                          onChange={(e) =>
+                                            handleExamMarkChange(
+                                              classItem.id,
+                                              student.id,
+                                              "maths",
+                                              e.target.value
+                                            )
+                                          }
+                                          inputProps={{ min: 0, max: 100 }}
+                                          sx={{
+                                            width: "100%",
+                                            "& .MuiInputBase-input": {
+                                              fontSize: "0.7rem",
+                                              padding: "4px 8px",
+                                            },
+                                          }}
+                                        />
+                                      )}
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          gap: 0.5,
+                                          justifyContent: "center",
+                                        }}
+                                      >
+                                        <Tooltip title="Save Marks">
+                                          <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                              handleSaveExam(
+                                                classItem,
+                                                student.id
+                                              )
+                                            }
+                                            disabled={isSaving}
+                                            sx={{
+                                              color: "#10b981",
+                                              padding: "2px",
+                                            }}
+                                          >
+                                            {isSaving ? (
+                                              <CircularProgress size={16} />
+                                            ) : (
+                                              <Check fontSize="small" />
+                                            )}
+                                          </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Cancel">
+                                          <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                              handleCancelExam(
+                                                classItem.id,
+                                                student.id
+                                              )
+                                            }
+                                            disabled={isSaving}
+                                            sx={{
+                                              color: "#ef4444",
+                                              padding: "2px",
+                                            }}
+                                          >
+                                            <Close fontSize="small" />
+                                          </IconButton>
+                                        </Tooltip>
+                                      </Box>
+                                    </Box>
+                                  ) : savedExam ? (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 0.5,
+                                      }}
+                                    >
+                                      <Box sx={{ flex: 1 }}>
+                                        <Typography
+                                          variant="caption"
+                                          sx={{
+                                            fontWeight: 600,
+                                            fontSize: "0.65rem",
+                                            display: "block",
+                                          }}
+                                        >
+                                          {user?.isPhysics &&
+                                            `Physics:${savedExam.physics || 0}`}
+                                          {user?.isChemistry &&
+                                            `Chemistry:${
+                                              savedExam.chemistry || 0
+                                            }`}
+                                          {user?.isMaths &&
+                                            `Maths:${savedExam.maths || 0}`}
+                                        </Typography>
+                                        <Typography
+                                          variant="caption"
+                                          sx={{
+                                            fontWeight: 700,
+                                            color: "#1976d2",
+                                            fontSize: "0.7rem",
+                                            display: "block",
+                                          }}
+                                        >
+                                          T:{savedExam.total || 0}
+                                        </Typography>
+                                      </Box>
+                                      <Tooltip title="Edit Marks">
+                                        <IconButton
+                                          size="small"
+                                          onClick={() =>
+                                            handleEditExam(
+                                              classItem.id,
+                                              student.id,
+                                              savedExam
+                                            )
+                                          }
+                                          sx={{
+                                            color: "#f59e0b",
+                                            padding: "2px",
+                                          }}
+                                        >
+                                          <Edit fontSize="small" />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Box>
+                                  ) : (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 0.5,
+                                      }}
+                                    >
+                                      <Tooltip title="Add Marks">
+                                        <IconButton
+                                          size="small"
+                                          onClick={() =>
+                                            handleEditExam(
+                                              classItem.id,
+                                              student.id
+                                            )
+                                          }
+                                          sx={{
+                                            color: "#3b82f6",
+                                            padding: "2px",
+                                          }}
+                                        >
+                                          <Edit fontSize="small" />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Box>
                                   )}
                                 </TableCell>
                               );
                             }
 
-                            // For regular classes, show attendance dropdown
+                            // For regular classes, show attendance dropdown with remarks
                             const currentStatus = getAttendanceStatus(
                               classItem.id,
                               student.id
                             );
+                            const statusConfig = ATTENDANCE_STATUSES.find(
+                              (status) => status.value === currentStatus
+                            );
+
                             return (
                               <TableCell
                                 key={student.id}
                                 sx={{
                                   textAlign: "center",
-                                  padding: "8px 4px",
+                                  padding: "4px 2px",
                                   borderRight: "1px solid #f1f5f9",
                                   position: "relative",
                                 }}
                               >
-                                <FormControl
-                                  size="small"
-                                  sx={{ width: "100%", minWidth: "120px" }}
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 0.5,
+                                    alignItems: "center",
+                                  }}
                                 >
-                                  <Select
-                                    value={currentStatus}
-                                    onChange={(e) =>
-                                      handleAttendanceChange(
-                                        classItem.id,
-                                        student.id,
-                                        e.target.value
-                                      )
-                                    }
-                                    disabled={isSaving}
-                                    sx={{
-                                      borderRadius: "8px",
-                                      fontWeight: 600,
-                                      width: "100%",
-                                      "& .MuiSelect-select": {
-                                        padding: "8px 12px",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                      },
-                                      ...(currentStatus === "Present" && {
-                                        background: "rgba(16, 185, 129, 0.1)",
-                                        color: "#065f46",
-                                      }),
-                                      ...(currentStatus === "Absent" && {
-                                        background: "rgba(239, 68, 68, 0.1)",
-                                        color: "#7f1d1d",
-                                      }),
-                                      ...(currentStatus === "Late" && {
-                                        background: "rgba(245, 158, 11, 0.1)",
-                                        color: "#78350f",
-                                      }),
-                                    }}
+                                  <FormControl
+                                    size="small"
+                                    sx={{ width: "100%" }}
                                   >
-                                    {ATTENDANCE_STATUSES.map((status) => (
-                                      <MenuItem
-                                        key={status}
-                                        value={status}
-                                        sx={{
-                                          fontWeight: 600,
-                                          color: colorMap[status],
+                                    <Select
+                                      value={currentStatus}
+                                      onChange={(e) =>
+                                        handleAttendanceChange(
+                                          classItem.id,
+                                          student.id,
+                                          e.target.value
+                                        )
+                                      }
+                                      disabled={isSaving}
+                                      sx={{
+                                        borderRadius: "4px",
+                                        fontWeight: 600,
+                                        width: "100%",
+                                        fontSize: "0.7rem",
+                                        height: "28px",
+                                        "& .MuiSelect-select": {
+                                          padding: "4px 8px",
+                                          display: "flex",
+                                          alignItems: "center",
                                           justifyContent: "center",
-                                          padding: "8px 16px",
-                                        }}
-                                      >
-                                        {status}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </FormControl>
-                                {isSaving && (
-                                  <Box
-                                    sx={{
-                                      position: "absolute",
-                                      top: "50%",
-                                      left: "50%",
-                                      transform: "translate(-50%, -50%)",
-                                    }}
-                                  >
-                                    <CircularProgress
-                                      size={20}
-                                      sx={{ color: colorMap[currentStatus] }}
-                                    />
-                                  </Box>
-                                )}
+                                        },
+                                        ...(currentStatus && {
+                                          background: `${colorMap[currentStatus]}15`,
+                                          color: colorMap[currentStatus],
+                                          border: `1px solid ${colorMap[currentStatus]}30`,
+                                        }),
+                                      }}
+                                      renderValue={(value) => {
+                                        const status = ATTENDANCE_STATUSES.find(
+                                          (s) => s.value === value
+                                        );
+                                        return status ? status.label : value;
+                                      }}
+                                    >
+                                      {ATTENDANCE_STATUSES.map((status) => (
+                                        <MenuItem
+                                          key={status.value}
+                                          value={status.value}
+                                          sx={{
+                                            fontWeight: 600,
+                                            color: status.color,
+                                            justifyContent: "center",
+                                            padding: "6px 12px",
+                                            fontSize: "0.7rem",
+                                          }}
+                                        >
+                                          {status.label}
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </FormControl>
+
+                                  {/* <Tooltip title={currentRemarks || "Add remarks"} arrow>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleOpenRemarksDialog(classItem.id, student.id)}
+                                      sx={{ 
+                                        color: currentRemarks ? "#3b82f6" : "#94a3b8", 
+                                        padding: "2px",
+                                        background: currentRemarks ? "rgba(59, 130, 246, 0.1)" : "transparent",
+                                      }}
+                                    >
+                                      <Comment fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip> */}
+
+                                  {isSaving && (
+                                    <Box
+                                      sx={{
+                                        position: "absolute",
+                                        top: "50%",
+                                        left: "50%",
+                                        transform: "translate(-50%, -50%)",
+                                      }}
+                                    >
+                                      <CircularProgress
+                                        size={16}
+                                        sx={{ color: colorMap[currentStatus] }}
+                                      />
+                                    </Box>
+                                  )}
+                                </Box>
                               </TableCell>
                             );
                           })}
@@ -1015,11 +1535,14 @@ const RevisionClassesPage = () => {
                       >
                         <Typography
                           variant="h6"
-                          sx={{ color: "#64748b", mb: 1 }}
+                          sx={{ color: "#64748b", mb: 1, fontSize: "0.9rem" }}
                         >
                           No classes scheduled
                         </Typography>
-                        <Typography variant="body2" sx={{ color: "#94a3b8" }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "#94a3b8", fontSize: "0.8rem" }}
+                        >
                           There are no classes scheduled in the selected period.
                         </Typography>
                       </TableCell>
@@ -1038,16 +1561,19 @@ const RevisionClassesPage = () => {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Exam Details</DialogTitle>
-          <DialogContent>
+          <DialogTitle sx={{ fontSize: "1rem", padding: "16px 16px 8px" }}>
+            Exam Details
+          </DialogTitle>
+          <DialogContent sx={{ padding: "8px 16px" }}>
             {selectedExam && (
-              <Box sx={{ pt: 2 }}>
+              <Box sx={{ pt: 1 }}>
                 <TextField
                   fullWidth
                   label="Exam Name"
                   value={selectedExam.exam || ""}
                   margin="dense"
                   disabled
+                  size="small"
                 />
                 <TextField
                   fullWidth
@@ -1055,6 +1581,7 @@ const RevisionClassesPage = () => {
                   value={selectedExam.date}
                   margin="dense"
                   disabled
+                  size="small"
                 />
                 <TextField
                   fullWidth
@@ -1062,15 +1589,36 @@ const RevisionClassesPage = () => {
                   value={selectedExam.dayOfWeek}
                   margin="dense"
                   disabled
+                  size="small"
                 />
-                {/* Add more exam details fields as needed */}
               </Box>
             )}
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseExamDialog}>Close</Button>
+          <DialogActions sx={{ padding: "8px 16px 16px" }}>
+            <Button onClick={handleCloseExamDialog} size="small">
+              Close
+            </Button>
           </DialogActions>
         </Dialog>
+
+        {/* <Dialog open={remarksDialog.open} onClose={handleCloseRemarksDialog} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ fontSize: "1rem", padding: "16px 16px 8px" }}>Add Remarks</DialogTitle>
+          <DialogContent sx={{ padding: "8px 16px" }}>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              value={remarksDialog.currentRemarks}
+              onChange={(e) => setRemarksDialog(prev => ({ ...prev, currentRemarks: e.target.value }))}
+              placeholder="Enter remarks for this attendance..."
+              size="small"
+            />
+          </DialogContent>
+          <DialogActions sx={{ padding: "8px 16px 16px" }}>
+            <Button onClick={handleCloseRemarksDialog} size="small">Cancel</Button>
+            <Button onClick={handleSaveRemarks} variant="contained" size="small">Save Remarks</Button>
+          </DialogActions>
+        </Dialog> */}
       </StyledPaper>
     </Fade>
   );

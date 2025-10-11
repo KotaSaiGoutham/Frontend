@@ -85,7 +85,7 @@ import {
   toggleStudentActiveStatus,
   deleteStudent,
   fetchAutoTimetablesForToday,
-  fetchClassUpdates,
+  // fetchClassUpdates,
 } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
@@ -269,7 +269,7 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
   useEffect(() => {
     dispatch(fetchStudents());
-    dispatch(fetchClassUpdates());
+    // dispatch(fetchClassUpdates());
     dispatch(
       fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
     );
