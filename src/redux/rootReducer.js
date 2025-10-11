@@ -11,6 +11,7 @@ import studentExamReducer from "./reducers/studentExamReducer";
 import studentProgramReducer from "./reducers/studentprogram";
 import { lectureMaterialsReducer } from "./reducers/lectureReducer";
 import classScheduleReducer from "./reducers/classScheduleReducer";
+import revisionExamsReducer from "./reducers/revisionExamsReducer";
 const rootReducer = combineReducers({
   auth: authReducer, // <-- Ensure your authReducer is assigned to the 'auth' key
   classes: classReducer,
@@ -24,6 +25,8 @@ const rootReducer = combineReducers({
   studentprogram: studentProgramReducer,
   lectureMaterials: lectureMaterialsReducer, // Add the new reducer
     classSchedule: classScheduleReducer,   // <-- ADD THIS NEW REDUCER
+
+  revisionExams: revisionExamsReducer, // Add this line
 
 });
 

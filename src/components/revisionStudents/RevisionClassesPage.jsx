@@ -255,39 +255,102 @@ const RevisionClassesPage = () => {
   const todayDate = getTodayDate();
 
   const revisionStudents = useMemo(() => {
-    return allStudents
-      .filter(
-        (student) => student.isRevisionProgramJEEMains2026Student === true
-      )
-      .map((student) => ({
-        ...student,
-        track:
-          student.Year?.toLowerCase().includes("1st year") ||
-          student.Year?.toLowerCase().includes("12th class")
-            ? "Track 1"
-            : "Track 2",
-        studentName: student.Name,
-        initials: student.Name.split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase(),
-      }))
+    // Get all revision students from both subjects
+    const allRevisionStudents = allStudents.filter(
+      (student) => student.isRevisionProgramJEEMains2026Student === true
+    );
+
+    // Common student names (these students take both Physics and Chemistry)
+    const commonStudentNames = [
+      "Gagan",
+      "Amal",
+      "Ananya",
+      "Sriya Jee",
+      "Sriya.JEE",
+    ];
+
+    // Physics-only student names
+    const physicsOnlyNames = ["Nithya", "Navya"];
+
+    // Filter students based on user role
+    let filteredStudents = allRevisionStudents.filter((student) => {
+      const studentName = student.Name || student.studentName || "";
+
+      if (user?.isPhysics) {
+        // Physics users see common students + physics-only students
+        return (
+          commonStudentNames.some((name) =>
+            studentName.toLowerCase().includes(name.toLowerCase())
+          ) ||
+          physicsOnlyNames.some((name) =>
+            studentName.toLowerCase().includes(name.toLowerCase())
+          )
+        );
+      } else if (user?.isChemistry) {
+        // Chemistry users only see common students
+        return commonStudentNames.some((name) =>
+          studentName.toLowerCase().includes(name.toLowerCase())
+        );
+      }
+      return false;
+    });
+
+    // Map and sort students with consistent naming
+    return filteredStudents
+      .map((student) => {
+        const studentName = student.Name || student.studentName || "";
+        let normalizedName = studentName;
+
+        // Normalize names for consistent display
+        if (studentName.toLowerCase().includes("sriya")) {
+          normalizedName = "Sriya JEE";
+        }
+
+        const isCommonStudent = commonStudentNames.some((name) =>
+          studentName.toLowerCase().includes(name.toLowerCase())
+        );
+
+        return {
+          ...student,
+          track:
+            student.Year?.toLowerCase().includes("1st year") ||
+            student.Year?.toLowerCase().includes("12th class")
+              ? "Track 1"
+              : "Track 2",
+          studentName: normalizedName,
+          originalName: studentName, // Keep original for reference
+          initials: normalizedName
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase(),
+          isCommonStudent: isCommonStudent,
+        };
+      })
       .sort((a, b) => {
-        const orderMap = {
-          otHokETYUPbD3kbTKErH: 1, // Gagan
-          JlRBFEvbLvVjNhVOkSla: 2, // Amal
-          erVmrIuhSSHoDuXDgGCu: 3, // Ananya
-          zHw0H5G85sF7jZxAvZT0: 4, // Sriya.JEE
-          Cbkj6tPKF2il8VgQvcjS: 5, // Nithya
-          bciCHijYj4f3b0dOU28s: 6, // Navya
+        // Sort by name order instead of ID
+        const nameOrder = {
+          gagan: 1,
+          amal: 2,
+          ananya: 3,
+          sriya: 4,
+          nithya: 5,
+          navya: 6,
         };
 
-        const aOrder = orderMap[a.id] || 999;
-        const bOrder = orderMap[b.id] || 999;
+        const aName = a.studentName.toLowerCase();
+        const bName = b.studentName.toLowerCase();
+
+        const aOrder = Object.keys(nameOrder).find((key) => aName.includes(key))
+          ? nameOrder[Object.keys(nameOrder).find((key) => aName.includes(key))]
+          : 999;
+        const bOrder = Object.keys(nameOrder).find((key) => bName.includes(key))
+          ? nameOrder[Object.keys(nameOrder).find((key) => bName.includes(key))]
+          : 999;
 
         return aOrder - bOrder;
       });
-  }, [allStudents]);
+  }, [allStudents, user]);
 
   // Get attendance status from Redux state
   const getAttendanceStatus = useCallback(
@@ -349,6 +412,9 @@ const RevisionClassesPage = () => {
 
   const handleEditExam = (classId, studentId, existingData = null) => {
     const examKey = `${classId}_${studentId}`;
+
+    console.log("Editing exam:", examKey, "Existing data:", existingData);
+
     setEditingExam((prev) => ({ ...prev, [examKey]: true }));
 
     if (existingData) {
@@ -360,11 +426,22 @@ const RevisionClassesPage = () => {
           maths: existingData.maths || "",
         },
       }));
+    } else {
+      // Initialize empty marks if no existing data
+      setExamMarks((prev) => ({
+        ...prev,
+        [examKey]: {
+          physics: "",
+          chemistry: "",
+          maths: "",
+        },
+      }));
     }
   };
 
   const handleExamMarkChange = (classId, studentId, subject, value) => {
     const examKey = `${classId}_${studentId}`;
+
     setExamMarks((prev) => ({
       ...prev,
       [examKey]: {
@@ -374,35 +451,40 @@ const RevisionClassesPage = () => {
     }));
   };
 
-  const handleSaveExam = async (classItem, studentId) => {
-    const examKey = `${classItem.id}_${studentId}`;
+  const handleSaveExam = async (classItem, student) => {
+    const examKey = `${classItem.id}_${student.id}`;
     const marks = examMarks[examKey] || {};
-    const cellKey = `${classItem.id}_${studentId}`;
+    const cellKey = `${classItem.id}_${student.id}`;
 
-    // Get marks based on user role
-    const physicsMarks = user?.isPhysics ? Number(marks.physics) || 0 : 0;
-    const chemistryMarks = user?.isChemistry ? Number(marks.chemistry) || 0 : 0;
-    const mathsMarks = user?.isMaths ? Number(marks.maths) || 0 : 0;
+    const isCommonStudent = student.isCommonStudent;
 
-    // Validate marks
-    if (physicsMarks > 100 || chemistryMarks > 100 || mathsMarks > 100) {
-      setSaveMessage({
-        text: "Marks cannot exceed 100 for any subject",
-        severity: "error",
-      });
-      setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 3000);
-      return;
+    // Get marks based on user role and student type
+    let physicsMarks = 0,
+      chemistryMarks = 0,
+      mathsMarks = 0;
+
+    if (isCommonStudent) {
+      // For common students, both subjects can be entered regardless of user role
+      physicsMarks = Number(marks.physics) || 0;
+      chemistryMarks = Number(marks.chemistry) || 0;
+      mathsMarks = Number(marks.maths) || 0;
+    } else {
+      // For single-subject students, only their subject
+      if (user?.isPhysics) physicsMarks = Number(marks.physics) || 0;
+      if (user?.isChemistry) chemistryMarks = Number(marks.chemistry) || 0;
+      if (user?.isMaths) mathsMarks = Number(marks.maths) || 0;
     }
 
-    // Calculate total
-    const total = physicsMarks + chemistryMarks + mathsMarks;
+    // Calculate total based on student type
+    const total = isCommonStudent
+      ? physicsMarks + chemistryMarks + mathsMarks
+      : physicsMarks + chemistryMarks + mathsMarks;
 
     const examDataToSave = {
       classId: classItem.id,
-      studentId: studentId,
-      studentName:
-        revisionStudents.find((s) => s.id === studentId)?.studentName ||
-        "Unknown",
+      studentId: student.id,
+      studentName: student.studentName,
+      originalStudentName: student.originalName,
       examDate: new Date(
         classItem.date.split(".").reverse().join("-")
       ).toISOString(),
@@ -422,6 +504,7 @@ const RevisionClassesPage = () => {
       physics: physicsMarks,
       chemistry: chemistryMarks,
       maths: mathsMarks,
+      isCommonStudent: isCommonStudent,
     };
 
     try {
@@ -431,23 +514,30 @@ const RevisionClassesPage = () => {
       const existingExam = examData[examKey];
 
       let result;
-      if (existingExam) {
-        // Update existing exam - pass the studentexam ID if available
-        examDataToSave.id = existingExam.examRecordId || existingExam.id;
+      if (existingExam && existingExam.examRecordId) {
+        // Update existing exam
+        examDataToSave.id = existingExam.examRecordId;
+        console.log("Updating exam with ID:", existingExam.examRecordId);
         result = await dispatch(updateStudentExam(examDataToSave));
       } else {
         // Add new exam
+        console.log("Adding new exam");
         result = await dispatch(addStudentExam(examDataToSave));
       }
 
       // Update local exam data state
-      setExamData((prev) => ({
-        ...prev,
-        [examKey]: {
-          ...examDataToSave,
-          examRecordId: result?.exam?.id || existingExam?.examRecordId,
-        },
-      }));
+      if (result) {
+        setExamData((prev) => ({
+          ...prev,
+          [examKey]: {
+            ...examDataToSave,
+            examRecordId:
+              result?.exam?.id ||
+              existingExam?.examRecordId ||
+              result?.exam?.examRecordId,
+          },
+        }));
+      }
 
       setSaveMessage({
         text: `Exam marks ${existingExam ? "updated" : "saved"} successfully!`,
@@ -658,7 +748,7 @@ const RevisionClassesPage = () => {
     });
   }, [classes, getStudentsForClass]);
 
-  // Fetch initial classes on mount
+  // Fetch initial classes on mount and load exam data
   useEffect(() => {
     const loadExamData = () => {
       if (!classes || classes.length === 0) return;
@@ -670,20 +760,24 @@ const RevisionClassesPage = () => {
           // Check if class has examData from Redux
           if (classItem.examData && Array.isArray(classItem.examData)) {
             classItem.examData.forEach((exam) => {
+              // Use studentId consistently to match the JSX
               const examKey = `${classItem.id}_${exam.studentId}`;
               examDataMap[examKey] = {
-                examRecordId: exam.examRecordId,
+                examRecordId: exam.examRecordId || exam.id,
                 physics: exam.physics || 0,
                 chemistry: exam.chemistry || 0,
                 maths: exam.maths || 0,
                 total: exam.total || 0,
                 subject: exam.subject,
+                studentName: exam.studentName,
+                studentId: exam.studentId,
               };
             });
           }
         }
       });
 
+      console.log("Loaded exam data:", examDataMap);
       setExamData(examDataMap);
     };
 
@@ -695,6 +789,13 @@ const RevisionClassesPage = () => {
       handleRefresh();
     }
   }, [dispatch]);
+
+  // Debug useEffect to track state changes
+  useEffect(() => {
+    console.log("Current editingExam state:", editingExam);
+    console.log("Current examMarks state:", examMarks);
+    console.log("Current examData state:", examData);
+  }, [editingExam, examMarks, examData]);
 
   const getRowTypeAndContent = (classItem) => {
     if (classItem.isExam || classItem.exam) {
@@ -916,69 +1017,71 @@ const RevisionClassesPage = () => {
                         </Typography>
                       </Box>
                     </HeaderCell>
-{revisionStudents.map((student) => (
-  <HeaderCell
-    key={student.id}
-    sx={{
-      width: "120px",
-      textAlign: "center",
-      minWidth: "120px",
-      maxWidth: "120px",
-      padding: "6px 4px",
-    }}
-  >
-    <Tooltip title={`${student.studentName} • ${student.track}`} arrow placement="top">
-      <Box sx={{ p: 0.5 }}>
-        <Box
-          sx={{
-            background: 
-               "linear-gradient(135deg, #fef3c7, #fffbeb)",
-            border: 
-               "1px solid #f59e0b",
-            borderRadius: "8px",
-            padding: "6px 4px",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <Box
-            sx={{
-              width: 26,
-              height: 26,
-              borderRadius: "6px",
-              background: 
-                 "#f59e0b",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              fontWeight: 700,
-              fontSize: "0.7rem",
-              margin: "0 auto 4px auto",
-              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            {student.initials}
-          </Box>
-          <Typography
-            variant="caption"
-            sx={{
-              fontWeight: 600,
-              color: "#78350f",
-              fontSize: "0.7rem",
-              display: "block",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {student.studentName.split(" ")[0]}
-          </Typography>
-        </Box>
-      </Box>
-    </Tooltip>
-  </HeaderCell>
-))}
+                    {revisionStudents.map((student) => (
+                      <HeaderCell
+                        key={student.id}
+                        sx={{
+                          width: "120px",
+                          textAlign: "center",
+                          minWidth: "120px",
+                          maxWidth: "120px",
+                          padding: "6px 4px",
+                        }}
+                      >
+                        <Tooltip
+                          title={`${student.studentName} • ${student.track}`}
+                          arrow
+                          placement="top"
+                        >
+                          <Box sx={{ p: 0.5 }}>
+                            <Box
+                              sx={{
+                                background:
+                                  "linear-gradient(135deg, #fef3c7, #fffbeb)",
+                                border: "1px solid #f59e0b",
+                                borderRadius: "8px",
+                                padding: "6px 4px",
+                                position: "relative",
+                                overflow: "hidden",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: "6px",
+                                  background: "#f59e0b",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "white",
+                                  fontWeight: 700,
+                                  fontSize: "0.7rem",
+                                  margin: "0 auto 4px auto",
+                                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                                }}
+                              >
+                                {student.initials}
+                              </Box>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontWeight: 600,
+                                  color: "#78350f",
+                                  fontSize: "0.7rem",
+                                  display: "block",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {student.studentName.split(" ")[0]}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Tooltip>
+                      </HeaderCell>
+                    ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1198,7 +1301,9 @@ const RevisionClassesPage = () => {
                                         gap: 0.5,
                                       }}
                                     >
-                                      {user?.isPhysics && (
+                                      {/* For common students, show both Physics and Chemistry inputs */}
+                                      {(student.isCommonStudent ||
+                                        user?.isPhysics) && (
                                         <TextField
                                           size="small"
                                           type="number"
@@ -1222,7 +1327,8 @@ const RevisionClassesPage = () => {
                                           }}
                                         />
                                       )}
-                                      {user?.isChemistry && (
+                                      {(student.isCommonStudent ||
+                                        user?.isChemistry) && (
                                         <TextField
                                           size="small"
                                           type="number"
@@ -1281,10 +1387,7 @@ const RevisionClassesPage = () => {
                                           <IconButton
                                             size="small"
                                             onClick={() =>
-                                              handleSaveExam(
-                                                classItem,
-                                                student.id
-                                              )
+                                              handleSaveExam(classItem, student)
                                             }
                                             disabled={isSaving}
                                             sx={{
@@ -1336,14 +1439,15 @@ const RevisionClassesPage = () => {
                                             display: "block",
                                           }}
                                         >
-                                          {user?.isPhysics &&
-                                            `Physics:${savedExam.physics || 0}`}
-                                          {user?.isChemistry &&
-                                            `Chemistry:${
-                                              savedExam.chemistry || 0
-                                            }`}
+                                          {/* Show marks based on student type and user role */}
+                                          {(student.isCommonStudent ||
+                                            user?.isPhysics) &&
+                                            `P:${savedExam.physics || 0}`}
+                                          {(student.isCommonStudent ||
+                                            user?.isChemistry) &&
+                                            ` C:${savedExam.chemistry || 0}`}
                                           {user?.isMaths &&
-                                            `Maths:${savedExam.maths || 0}`}
+                                            ` M:${savedExam.maths || 0}`}
                                         </Typography>
                                         <Typography
                                           variant="caption"
@@ -1354,7 +1458,29 @@ const RevisionClassesPage = () => {
                                             display: "block",
                                           }}
                                         >
-                                          T:{savedExam.total || 0}
+                                          Total:
+                                          {(() => {
+                                            let total = 0;
+
+                                            if (
+                                              student.isCommonStudent ||
+                                              user?.isPhysics
+                                            ) {
+                                              total += savedExam.physics || 0;
+                                            }
+                                            if (
+                                              student.isCommonStudent ||
+                                              user?.isChemistry
+                                            ) {
+                                              total += savedExam.chemistry || 0;
+                                            }
+                                            if (user?.isMaths) {
+                                              total += savedExam.maths || 0;
+                                            }
+
+                                            return total;
+                                          })()}
+                                          /{student.isCommonStudent ? 200 : 100}
                                         </Typography>
                                       </Box>
                                       <Tooltip title="Edit Marks">
@@ -1491,20 +1617,6 @@ const RevisionClassesPage = () => {
                                     </Select>
                                   </FormControl>
 
-                                  {/* <Tooltip title={currentRemarks || "Add remarks"} arrow>
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handleOpenRemarksDialog(classItem.id, student.id)}
-                                      sx={{ 
-                                        color: currentRemarks ? "#3b82f6" : "#94a3b8", 
-                                        padding: "2px",
-                                        background: currentRemarks ? "rgba(59, 130, 246, 0.1)" : "transparent",
-                                      }}
-                                    >
-                                      <Comment fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip> */}
-
                                   {isSaving && (
                                     <Box
                                       sx={{
@@ -1600,25 +1712,6 @@ const RevisionClassesPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-
-        {/* <Dialog open={remarksDialog.open} onClose={handleCloseRemarksDialog} maxWidth="sm" fullWidth>
-          <DialogTitle sx={{ fontSize: "1rem", padding: "16px 16px 8px" }}>Add Remarks</DialogTitle>
-          <DialogContent sx={{ padding: "8px 16px" }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              value={remarksDialog.currentRemarks}
-              onChange={(e) => setRemarksDialog(prev => ({ ...prev, currentRemarks: e.target.value }))}
-              placeholder="Enter remarks for this attendance..."
-              size="small"
-            />
-          </DialogContent>
-          <DialogActions sx={{ padding: "8px 16px 16px" }}>
-            <Button onClick={handleCloseRemarksDialog} size="small">Cancel</Button>
-            <Button onClick={handleSaveRemarks} variant="contained" size="small">Save Remarks</Button>
-          </DialogActions>
-        </Dialog> */}
       </StyledPaper>
     </Fade>
   );

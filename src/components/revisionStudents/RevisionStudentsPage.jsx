@@ -58,6 +58,8 @@ import TimetablePage from "../TimetablePage";
 import StudentExamPage from "../StudentExam";
 import RevisionClassesPage from "./RevisionClassesPage";
 import RevisionRegistratedStudents from "./RevisionRegistratedStudents";
+import RevisionExamsPage from "./RevisionExamsPage";
+import RevisionFeeManagement from "./RevisionFeeManagement";
 const GlowPaper = styled(Paper)(({ theme }) => ({
   background: "linear-gradient(145deg, #ffffff, #f5f5f5)",
   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
@@ -110,7 +112,7 @@ const navItems = [
   { id: "classes", label: "Classes", icon: <Class /> },
   { id: "marks", label: "Marks", icon: <Class /> },
   { id: "fee_details", label: "Fee Details", icon: <CurrencyRupee /> },
-  { id: "registered_students", label: "Registered Students", icon: <HowToReg  /> },
+  // { id: "registered_students", label: "Registered Students", icon: <HowToReg  /> },
 
 ];
 
@@ -135,19 +137,12 @@ const RevisionStudentsPage = () => {
       case "timetables":
         return <TimetablePage isRevisionProgramJEEMains2026Student={revisionFlag} />;
       case "marks":
-        return <StudentExamPage isRevisionProgramJEEMains2026Student={revisionFlag} />;
+        return <RevisionExamsPage />;
       case "classes":
                return <RevisionClassesPage isRevisionProgramJEEMains2026Student={revisionFlag} />;
       case "fee_details":
         return (
-          <GlowPaper sx={{ p: 4, textAlign: "center", mt: 4, minHeight: 300 }}>
-            <Typography variant="h5" color="text.secondary">
-              Revision Program Fee Details
-            </Typography>
-            <Typography variant="body1" color="text.hint" mt={1}>
-              JEE Mains 2026 Revision Program fee details management.
-            </Typography>
-          </GlowPaper>
+          <RevisionFeeManagement/>
         );
         case "registered_students":
         return <RevisionRegistratedStudents />;

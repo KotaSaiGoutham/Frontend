@@ -1,0 +1,52 @@
+// Add to your students reducer or create a new revisionFeeReducer
+import {
+
+  UPDATE_REVISION_FEE_FAILURE,
+  UPDATE_REVISION_FEE_SUCCESS,
+  UPDATE_REVISION_FEE_REQUEST
+} from "../types";
+const initialState = {
+  revisionStudents: [],
+  loading: false,
+  error: null,
+  updateLoading: false,
+  updateError: null
+};
+
+export const revisionFeeReducer = (state = initialState, action) => {
+  switch (action.type) {    
+    case UPDATE_REVISION_FEE_REQUEST:
+      return {
+        ...state,
+        updateLoading: true,
+        updateError: null
+      };
+    
+    case UPDATE_REVISION_FEE_SUCCESS:
+      const updatedStudents = state.revisionStudents.map(student => 
+        student.id === action.payload.studentId 
+          ? { 
+              ...student, 
+              revisionProgramFee: action.payload.data 
+            } 
+          : student
+      );
+      
+      return {
+        ...state,
+        updateLoading: false,
+        revisionStudents: updatedStudents,
+        updateError: null
+      };
+    
+    case UPDATE_REVISION_FEE_FAILURE:
+      return {
+        ...state,
+        updateLoading: false,
+        updateError: action.payload.error
+      };
+    
+    default:
+      return state;
+  }
+};

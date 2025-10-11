@@ -172,10 +172,15 @@ import {
   UPLOAD_LECTURE_MATERIAL_FAILURE,
   FETCH_REVISION_CLASSES_REQUEST,
   FETCH_REVISION_CLASSES_SUCCESS,
-  FETCH_REVISION_CLASSES_FAILURE,
   UPDATE_CLASS_ATTENDANCE_REQUEST,
   UPDATE_CLASS_ATTENDANCE_SUCCESS,
   UPDATE_CLASS_ATTENDANCE_FAILURE,
+  FETCH_REVISION_EXAMS_REQUEST,
+  FETCH_REVISION_EXAMS_SUCCESS,
+  FETCH_REVISION_CLASSES_FAILURE,
+  UPDATE_REVISION_FEE_FAILURE,
+  UPDATE_REVISION_FEE_SUCCESS,
+  UPDATE_REVISION_FEE_REQUEST
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -1382,8 +1387,6 @@ export const fetchStudentExams = () =>
     },
   });
 
-// Add Exam
-// In your addStudentExam action
 export const addStudentExam = (examData) =>
   apiRequest({
     url: "/api/data/addStudentExam",
@@ -1391,29 +1394,34 @@ export const addStudentExam = (examData) =>
     data: examData,
     onStart: ADD_STUDENT_EXAM_REQUEST,
     onSuccess: (data, dispatch) => {
+      console.log("Add exam response:", data); // Debug log
+      
       dispatch({ 
         type: ADD_STUDENT_EXAM_SUCCESS, 
         payload: data.exam 
       });
       
-      // Update revision classes state with exam data
-      dispatch({
-        type: "UPDATE_REVISION_CLASS_EXAM_SUCCESS",
-        payload: {
-          classId: examData.classId,
-          examData: {
-            studentId: examData.studentId,
-            studentName: examData.studentName,
-            physics: examData.physics || 0,
-            chemistry: examData.chemistry || 0,
-            maths: examData.maths || 0,
-            total: examData.total || 0,
-            subject: examData.Subject,
+      // Also update the revision classes state if classId exists
+      if (examData.classId) {
+        dispatch({
+          type: "ADD_REVISION_CLASS_EXAM_SUCCESS",
+          payload: {
+            classId: examData.classId,
+            examData: {
+              studentId: examData.studentId,
+              studentName: examData.studentName,
+              examRecordId: data.exam.id || data.exam.examRecordId, // Handle both cases
+              physics: examData.physics || 0,
+              chemistry: examData.chemistry || 0,
+              maths: examData.maths || 0,
+              total: examData.total || 0,
+              subject: examData.Subject,
+            }
           }
-        }
-      });
+        });
+      }
       
-      return data;
+      return data; // Return the entire response
     },
     onFailure: (error, dispatch) => {
       dispatch({
@@ -1857,3 +1865,58 @@ export const updateStudentAttendance = (classId, studentId, status) =>
     },
     authRequired: true,
   });
+
+export const fetchRevisionExams = (requestParams = {}) => {
+  console.log("🔍 fetchRevisionExams called");
+  
+  return apiRequest({
+    url: `/api/data/revisionExams`,
+    method: "GET",
+    params: {},
+    onStart: FETCH_REVISION_EXAMS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      console.log("✅ API Response:", data);
+      dispatch({
+        type: FETCH_REVISION_EXAMS_SUCCESS,
+        payload: {
+          exams: data.exams || [],
+        },
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("❌ Error fetching revision exams:", error);
+      dispatch({
+        type: FETCH_REVISION_EXAMS_FAILURE,
+        payload: { error: error.message || "Failed to fetch revision exams" },
+      });
+    },
+    authRequired: true,
+  });
+};
+
+
+
+// Update revision fee installment
+export const updateRevisionFee = (studentId, installmentData) => 
+  apiRequest({
+    url: `/api/data/revision-fee/${studentId}`,
+    method: "PUT",
+    data: installmentData,
+    onStart: UPDATE_REVISION_FEE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_REVISION_FEE_SUCCESS,
+        payload: { studentId, data: data.data }
+      });
+      return data;
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error updating revision fee:", error);
+      dispatch({
+        type: UPDATE_REVISION_FEE_FAILURE,
+        payload: { error: error.error || error.message || "Failed to update fee" }
+      });
+    },
+    authRequired: true,
+  });
+
