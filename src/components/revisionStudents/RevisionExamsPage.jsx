@@ -712,8 +712,7 @@ const RevisionExamsPage = () => {
       </Box>
     );
   };
-
-  const renderExamTable = (examsList, title) => {
+const renderExamTable = (examsList, title) => {
     return (
       <Box sx={{ mb: 4 }}>
         <Typography
@@ -737,7 +736,8 @@ const RevisionExamsPage = () => {
                 <HeaderCell sx={{ width: "60px", textAlign: "center" }}>
                   S.No.
                 </HeaderCell>
-                <HeaderCell sx={{ width: "100px", textAlign: "center" }}>
+                {/* FIX: Combined Date and Day into one HeaderCell */}
+                <HeaderCell sx={{ width: "180px", textAlign: "center" }}>
                   <Box
                     sx={{
                       display: "flex",
@@ -747,12 +747,10 @@ const RevisionExamsPage = () => {
                     }}
                   >
                     <CalendarToday sx={{ fontSize: 14 }} />
-                    <span>Date</span>
+                    <span>Date & Day</span>
                   </Box>
                 </HeaderCell>
-                <HeaderCell sx={{ width: "80px", textAlign: "center" }}>
-                  Day
-                </HeaderCell>
+                {/* REMOVED: Separate Day HeaderCell */}
                 <HeaderCell sx={{ width: "200px", textAlign: "center" }}>
                   Type of Exam
                 </HeaderCell>
@@ -767,31 +765,16 @@ const RevisionExamsPage = () => {
                     }}
                   >
                     <StudentBadge>
-                      <Box
-                        sx={{
-                          width: 20,
-                          height: 20,
-                          borderRadius: "4px",
-                          background: "#f59e0b",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "white",
-                          fontWeight: 700,
-                          fontSize: "0.6rem",
-                          margin: "0 auto 2px auto",
-                        }}
-                      >
-                        {student.initials}
-                      </Box>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontWeight: 600,
-                          color: "#78350f",
-                          fontSize: "0.65rem",
-                        }}
-                      >
+                       <Typography
+                      variant="body1" // Use body1 for larger text base
+                      sx={{
+                        fontWeight: 900, // Extra bold
+                          color: "#78350f",
+
+                        fontSize: "1rem", // Significantly larger font size
+                        p: 0.5, // Padding for space
+                      }}
+                    >
                         {student.shortName}
                       </Typography>
                     </StudentBadge>
@@ -807,19 +790,14 @@ const RevisionExamsPage = () => {
                       "linear-gradient(135deg, #334155 0%, #475569 100%)",
                   }}
                 ></HeaderCell>
-                <HeaderCell
+                <HeaderCell // This is the combined Date & Day column
                   sx={{
                     background:
                       "linear-gradient(135deg, #334155 0%, #475569 100%)",
                   }}
                 ></HeaderCell>
-                <HeaderCell
-                  sx={{
-                    background:
-                      "linear-gradient(135deg, #334155 0%, #475569 100%)",
-                  }}
-                ></HeaderCell>
-                <HeaderCell
+                {/* REMOVED: The second empty HeaderCell for the old 'Day' column */}
+                <HeaderCell // This is the Type of Exam column
                   sx={{
                     background:
                       "linear-gradient(135deg, #334155 0%, #475569 100%)",
@@ -871,6 +849,7 @@ const RevisionExamsPage = () => {
                           {index + 1}
                         </Typography>
                       </TableCell>
+                      {/* FIX: Combined Date and Day content in one Cell */}
                       <TableCell
                         sx={{
                           textAlign: "center",
@@ -878,36 +857,33 @@ const RevisionExamsPage = () => {
                           borderRight: "1px solid #f1f5f9",
                         }}
                       >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            fontWeight: 700,
-                            color: isToday ? "#1e40af" : "#1e293b",
-                            fontSize: "0.75rem",
-                          }}
-                        >
-                          {examItem.date}
-                        </Typography>
+                        <Box>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 700,
+                              color: isToday ? "#1e40af" : "#1e293b",
+                              fontSize: "0.75rem",
+                              display: "block",
+                            }}
+                          >
+                            {examItem.date}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: isToday ? "#1e40af" : "#64748b",
+                              fontWeight: isToday ? 600 : 400,
+                              fontSize: "0.7rem",
+                              display: "block",
+                            }}
+                          >
+                            {examItem.dayOfWeek}
+                            {isToday && " • Today"}
+                          </Typography>
+                        </Box>
                       </TableCell>
-                      <TableCell
-                        sx={{
-                          textAlign: "center",
-                          padding: "8px 4px",
-                          borderRight: "1px solid #f1f5f9",
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: isToday ? "#1e40af" : "#64748b",
-                            fontWeight: isToday ? 600 : 400,
-                            fontSize: "0.7rem",
-                          }}
-                        >
-                          {examItem.dayOfWeek}
-                          {isToday && " • Today"}
-                        </Typography>
-                      </TableCell>
+                      {/* REMOVED: Separate Day TableCell */}
                       <TableCell
                         sx={{
                           padding: "8px 4px",
@@ -986,8 +962,9 @@ const RevisionExamsPage = () => {
               ) : (
                 <TableRow>
                   <TableCell
+                    // FIX: Colspan reduced by 1 because one column was removed
                     colSpan={
-                      4 +
+                      3 + // S.No., Date/Day, Type of Exam
                       revisionStudents.reduce(
                         (total, student) =>
                           total + (student.isCommonStudent ? 2 : 1),
@@ -1010,7 +987,7 @@ const RevisionExamsPage = () => {
         </TableContainer>
       </Box>
     );
-  };
+};
 
   return (
     <Fade in timeout={800}>
