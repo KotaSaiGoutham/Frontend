@@ -19,6 +19,8 @@ import {
   TextField,
   Tabs,
   Tab,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
@@ -60,9 +62,9 @@ const HeaderCell = styled(TableCell)(({ theme }) => ({
   background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
   color: "white",
   fontWeight: 700,
-  fontSize: "0.75rem",
+  fontSize: "0.9rem", // Slightly reduced
   borderRight: "1px solid #475569",
-  padding: "8px 4px",
+  padding: "10px 8px", // Slightly reduced
   textAlign: "center",
   "&:first-of-type": {
     borderTopLeftRadius: "8px",
@@ -75,15 +77,15 @@ const HeaderCell = styled(TableCell)(({ theme }) => ({
 
 const SubjectHeaderCell = styled(HeaderCell)(({ theme }) => ({
   background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-  minWidth: "60px",
-  fontSize: "0.7rem",
+  minWidth: "70px", // Slightly reduced
+  fontSize: "0.8rem", // Slightly reduced
 }));
 
 const StudentHeaderGroup = styled(TableRow)(({ theme }) => ({
   "& > th": {
     background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
     borderRight: "1px solid #475569",
-    padding: "4px",
+    padding: "6px", // Slightly reduced
   },
 }));
 
@@ -181,18 +183,19 @@ const SubjectCell = styled(TableCell)(({ examtype, isediting }) => {
 
   return {
     textAlign: "center",
-    padding: "0px",
+    padding: "6px", // Slightly reduced
     borderRight: `1px solid ${getBorderColor()}`,
     backgroundColor: getCellBackgroundColor(),
     transition: "all 0.2s ease-in-out",
+    minHeight: "50px", // Slightly reduced
   };
 });
 
 const StudentBadge = styled(Box)(({ theme }) => ({
   background: "linear-gradient(135deg, #fef3c7, #fffbeb)",
   border: "1px solid #f59e0b",
-  borderRadius: "6px",
-  padding: "4px 2px",
+  borderRadius: "6px", // Slightly reduced
+  padding: "6px 4px", // Slightly reduced
   textAlign: "center",
 }));
 
@@ -231,12 +234,12 @@ const ExamTypeBadge = styled(Box)(({ examtype }) => {
 
   return {
     ...style,
-    borderRadius: "6px",
-    padding: "2px 8px",
+    borderRadius: "6px", // Slightly reduced
+    padding: "3px 10px", // Slightly reduced
     display: "inline-block",
-    fontSize: "0.7rem",
+    fontSize: "0.8rem", // Slightly reduced
     fontWeight: 600,
-    marginLeft: "8px",
+    marginLeft: "10px", // Slightly reduced
   };
 });
 
@@ -250,6 +253,7 @@ const RevisionExamsPage = () => {
   const [examMarks, setExamMarks] = useState({});
   const [examData, setExamData] = useState({});
   const [activeTab, setActiveTab] = useState(0);
+  const [globalEditMode, setGlobalEditMode] = useState(false); // Global edit mode state
 
   const dispatch = useDispatch();
   const { exams, loading, error } = useSelector((state) => state.revisionExams);
@@ -270,7 +274,7 @@ const RevisionExamsPage = () => {
   // Student configuration based on your screenshot
   const studentConfig = useMemo(
     () => [
-       {
+      {
         id: "gagan",
         name: "Gagan",
         shortName: "Gagan",
@@ -284,13 +288,6 @@ const RevisionExamsPage = () => {
         initials: "A",
         isCommon: true,
       },
-         {
-        id: "ananya",
-        name: "Ananya",
-        shortName: "Ananya",
-        initials: "A",
-        isCommon: true,
-      },
       {
         id: "sriya",
         name: "Sriya JEE",
@@ -298,7 +295,14 @@ const RevisionExamsPage = () => {
         initials: "S",
         isCommon: true,
       },
-  
+      {
+        id: "ananya",
+        name: "Ananya",
+        shortName: "Ananya",
+        initials: "A",
+        isCommon: true,
+      },
+
       {
         id: "nithya",
         name: "Nithya",
@@ -363,6 +367,8 @@ const RevisionExamsPage = () => {
   };
 
   const handleEditExam = (examId, studentId, subject, existingData = null) => {
+    if (!globalEditMode) return; // Only allow editing if global edit mode is enabled
+
     const examKey = `${examId}_${studentId}_${subject}`;
     setEditingExam((prev) => ({ ...prev, [examKey]: true }));
 
@@ -561,6 +567,16 @@ const RevisionExamsPage = () => {
     await dispatch(fetchRevisionExams());
   };
 
+  // Toggle global edit mode
+  const handleGlobalEditToggle = () => {
+    setGlobalEditMode(!globalEditMode);
+    // Clear all editing states when turning off edit mode
+    if (globalEditMode) {
+      setEditingExam({});
+      setExamMarks({});
+    }
+  };
+
   useEffect(() => {
     const loadExamData = () => {
       if (!exams || exams.length === 0) return;
@@ -593,13 +609,14 @@ const RevisionExamsPage = () => {
     };
 
     loadExamData();
-  }, [exams]); // Re-run when exams changee
+  }, [exams]);
 
   useEffect(() => {
     if (exams.length === 0 && !loading) {
       handleRefresh();
     }
   }, [dispatch, exams.length, loading]);
+
   const renderSubjectMarks = (examItem, student, subject) => {
     const examKey = `${examItem.id}_${student.id}`;
     const subjectKey = `${examItem.id}_${student.id}_${subject}`;
@@ -615,7 +632,7 @@ const RevisionExamsPage = () => {
 
     if (isEditing) {
       return (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, p: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1 }}>
           <TextField
             size="small"
             type="number"
@@ -632,15 +649,15 @@ const RevisionExamsPage = () => {
               min: 0,
               max: 100,
               style: {
-                fontSize: "0.7rem",
-                padding: "2px 4px",
-                width: "40px",
+                fontSize: "0.9rem", // Slightly reduced
+                padding: "6px", // Slightly reduced
+                width: "50px", // Slightly reduced
                 textAlign: "center",
               },
             }}
             sx={{
-              width: "60px",
-              "& .MuiInputBase-root": { height: "28px" },
+              width: "70px", // Slightly reduced
+              "& .MuiInputBase-root": { height: "36px" }, // Slightly reduced
             }}
             autoFocus
           />
@@ -650,10 +667,10 @@ const RevisionExamsPage = () => {
                 size="small"
                 onClick={() => handleSaveExam(examItem, student, subject)}
                 disabled={isSaving}
-                sx={{ color: "#10b981", padding: "1px" }}
+                sx={{ color: "#10b981", padding: "3px" }} // Slightly reduced
               >
                 {isSaving ? (
-                  <CircularProgress size={14} />
+                  <CircularProgress size={18} /> // Slightly reduced
                 ) : (
                   <Check fontSize="small" />
                 )}
@@ -666,7 +683,7 @@ const RevisionExamsPage = () => {
                   handleCancelExam(examItem.id, student.id, subject)
                 }
                 disabled={isSaving}
-                sx={{ color: "#ef4444", padding: "1px" }}
+                sx={{ color: "#ef4444", padding: "3px" }} // Slightly reduced
               >
                 <Close fontSize="small" />
               </IconButton>
@@ -676,7 +693,7 @@ const RevisionExamsPage = () => {
       );
     }
 
-    // Show marks and edit icon when NOT in editing mode
+    // Show marks and edit icon when NOT in editing mode (only if global edit mode is enabled)
     return (
       <Box
         sx={{
@@ -685,35 +702,39 @@ const RevisionExamsPage = () => {
           justifyContent: "center",
           gap: 0.5,
           p: 0.5,
+          minHeight: "45px", // Slightly reduced
         }}
       >
         <Typography
-          variant="caption"
+          variant="body1"
           sx={{
             fontWeight: 600,
-            fontSize: "0.75rem",
-            minWidth: "20px",
+            fontSize: "1rem", // Slightly reduced
+            minWidth: "25px", // Slightly reduced
             textAlign: "center",
             color: subjectMark > 0 ? "#1e293b" : "#64748b",
           }}
         >
           {subjectMark > 0 ? subjectMark : "-"}
         </Typography>
-        <Tooltip title={`Edit ${subject} marks`}>
-          <IconButton
-            size="small"
-            onClick={() =>
-              handleEditExam(examItem.id, student.id, subject, savedExam)
-            }
-            sx={{ color: "#3b82f6", padding: "2px" }}
-          >
-            <Edit fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        {globalEditMode && (
+          <Tooltip title={`Edit ${subject} marks`}>
+            <IconButton
+              size="small"
+              onClick={() =>
+                handleEditExam(examItem.id, student.id, subject, savedExam)
+              }
+              sx={{ color: "#3b82f6", padding: "3px" }} // Slightly reduced
+            >
+              <Edit fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
     );
   };
-const renderExamTable = (examsList, title) => {
+
+  const renderExamTable = (examsList, title) => {
     return (
       <Box sx={{ mb: 4 }}>
         <Typography
@@ -734,10 +755,9 @@ const renderExamTable = (examsList, title) => {
             <TableHead>
               {/* First header row - Student names spanning both P and C columns */}
               <StudentHeaderGroup>
-                <HeaderCell sx={{ width: "60px", textAlign: "center" }}>
+                <HeaderCell sx={{ width: "70px", textAlign: "center" }}>
                   S.No.
                 </HeaderCell>
-                {/* FIX: Combined Date and Day into one HeaderCell */}
                 <HeaderCell sx={{ width: "180px", textAlign: "center" }}>
                   <Box
                     sx={{
@@ -747,18 +767,18 @@ const renderExamTable = (examsList, title) => {
                       gap: 0.5,
                     }}
                   >
-                    <CalendarToday sx={{ fontSize: 14 }} />
+                    <CalendarToday sx={{ fontSize: 16 }} />{" "}
+                    {/* Slightly reduced */}
                     <span>Date & Day</span>
                   </Box>
                 </HeaderCell>
-                {/* REMOVED: Separate Day HeaderCell */}
-                <HeaderCell sx={{ width: "200px", textAlign: "center" }}>
+                <HeaderCell sx={{ width: "220px", textAlign: "center" }}>
                   Type of Exam
                 </HeaderCell>
                 {revisionStudents.map((student) => (
                   <HeaderCell
                     key={student.id}
-                    colSpan={student.isCommonStudent ? 2 : 1} // Only 1 column for non-common students
+                    colSpan={student.isCommonStudent ? 2 : 1}
                     sx={{
                       textAlign: "center",
                       background:
@@ -766,15 +786,14 @@ const renderExamTable = (examsList, title) => {
                     }}
                   >
                     <StudentBadge>
-                       <Typography
-                      variant="body1" // Use body1 for larger text base
-                      sx={{
-                        fontWeight: 900, // Extra bold
-                          color: "#78350f",
-
-                        fontSize: "1rem", // Significantly larger font size
-                      }}
-                    >
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontWeight: 900,
+                          color: "#78350f",
+                          fontSize: "0.95rem", // Slightly reduced
+                        }}
+                      >
                         {student.shortName}
                       </Typography>
                     </StudentBadge>
@@ -790,14 +809,13 @@ const renderExamTable = (examsList, title) => {
                       "linear-gradient(135deg, #334155 0%, #475569 100%)",
                   }}
                 ></HeaderCell>
-                <HeaderCell // This is the combined Date & Day column
+                <HeaderCell
                   sx={{
                     background:
                       "linear-gradient(135deg, #334155 0%, #475569 100%)",
                   }}
                 ></HeaderCell>
-                {/* REMOVED: The second empty HeaderCell for the old 'Day' column */}
-                <HeaderCell // This is the Type of Exam column
+                <HeaderCell
                   sx={{
                     background:
                       "linear-gradient(135deg, #334155 0%, #475569 100%)",
@@ -805,14 +823,12 @@ const renderExamTable = (examsList, title) => {
                 ></HeaderCell>
                 {revisionStudents.map((student) => (
                   <React.Fragment key={student.id}>
-                    {/* For common students, show both P and C columns */}
                     {student.isCommonStudent ? (
                       <>
                         <SubjectHeaderCell>P</SubjectHeaderCell>
                         <SubjectHeaderCell>C</SubjectHeaderCell>
                       </>
                     ) : (
-                      /* For non-common students, show only P column */
                       <SubjectHeaderCell>P</SubjectHeaderCell>
                     )}
                   </React.Fragment>
@@ -834,47 +850,46 @@ const renderExamTable = (examsList, title) => {
                       <TableCell
                         sx={{
                           textAlign: "center",
-                          padding: "8px 4px",
+                          padding: "8px 6px", // Slightly reduced
                           borderRight: "1px solid #f1f5f9",
                         }}
                       >
                         <Typography
-                          variant="caption"
+                          variant="body1"
                           sx={{
                             fontWeight: 600,
                             color: "#475569",
-                            fontSize: "0.75rem",
+                            fontSize: "0.9rem", // Slightly reduced
                           }}
                         >
                           {index + 1}
                         </Typography>
                       </TableCell>
-                      {/* FIX: Combined Date and Day content in one Cell */}
                       <TableCell
                         sx={{
                           textAlign: "center",
-                          padding: "8px 4px",
+                          padding: "8px 6px", // Slightly reduced
                           borderRight: "1px solid #f1f5f9",
                         }}
                       >
                         <Box>
                           <Typography
-                            variant="caption"
+                            variant="body1"
                             sx={{
                               fontWeight: 700,
                               color: isToday ? "#1e40af" : "#1e293b",
-                              fontSize: "0.75rem",
+                              fontSize: "0.9rem", // Slightly reduced
                               display: "block",
                             }}
                           >
                             {examItem.date}
                           </Typography>
                           <Typography
-                            variant="caption"
+                            variant="body2"
                             sx={{
                               color: isToday ? "#1e40af" : "#64748b",
                               fontWeight: isToday ? 600 : 400,
-                              fontSize: "0.7rem",
+                              fontSize: "0.8rem", // Slightly reduced
                               display: "block",
                             }}
                           >
@@ -883,18 +898,17 @@ const renderExamTable = (examsList, title) => {
                           </Typography>
                         </Box>
                       </TableCell>
-                      {/* REMOVED: Separate Day TableCell */}
                       <TableCell
                         sx={{
-                          padding: "8px 4px",
+                          padding: "8px 6px", // Slightly reduced
                           borderRight: "1px solid #f1f5f9",
                         }}
                       >
                         <Box sx={{ display: "flex", alignItems: "center" }}>
                           <Typography
-                            variant="body2"
+                            variant="body1"
                             sx={{
-                              fontSize: "0.8rem",
+                              fontSize: "0.9rem", // Slightly reduced
                               fontWeight: 600,
                               color: "#475569",
                             }}
@@ -909,7 +923,6 @@ const renderExamTable = (examsList, title) => {
                       </TableCell>
                       {revisionStudents.map((student) => (
                         <React.Fragment key={student.id}>
-                          {/* For common students, show both Physics and Chemistry columns */}
                           {student.isCommonStudent ? (
                             <>
                               <SubjectCell
@@ -942,7 +955,6 @@ const renderExamTable = (examsList, title) => {
                               </SubjectCell>
                             </>
                           ) : (
-                            /* For non-common students, show only Physics column */
                             <SubjectCell
                               examtype={examType}
                               isediting={
@@ -962,9 +974,8 @@ const renderExamTable = (examsList, title) => {
               ) : (
                 <TableRow>
                   <TableCell
-                    // FIX: Colspan reduced by 1 because one column was removed
                     colSpan={
-                      3 + // S.No., Date/Day, Type of Exam
+                      3 +
                       revisionStudents.reduce(
                         (total, student) =>
                           total + (student.isCommonStudent ? 2 : 1),
@@ -974,8 +985,8 @@ const renderExamTable = (examsList, title) => {
                     sx={{ py: 4, textAlign: "center" }}
                   >
                     <Typography
-                      variant="body2"
-                      sx={{ color: "#64748b", fontSize: "0.85rem" }}
+                      variant="body1"
+                      sx={{ color: "#64748b", fontSize: "0.9rem" }} // Slightly reduced
                     >
                       No {title.toLowerCase()} found
                     </Typography>
@@ -987,7 +998,7 @@ const renderExamTable = (examsList, title) => {
         </TableContainer>
       </Box>
     );
-};
+  };
 
   return (
     <Fade in timeout={800}>
@@ -1009,16 +1020,37 @@ const renderExamTable = (examsList, title) => {
             </Typography>
             <Typography
               variant="body1"
-              sx={{ color: "#64748b", fontSize: "0.9rem" }}
+              sx={{ color: "#64748b", fontSize: "0.9rem" }} // Slightly reduced
             >
               Today: {todayDate}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+            {/* Global Edit Mode Toggle */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={globalEditMode}
+                  onChange={handleGlobalEditToggle}
+                  color="primary"
+                  size="small"
+                />
+              }
+              label={
+                <Typography
+                  variant="body1"
+                  sx={{ fontSize: "0.9rem", fontWeight: 600 }}
+                >
+                  {globalEditMode ? "Edit Mode ON" : "Edit Mode OFF"}
+                </Typography>
+              }
+              sx={{ mr: 2 }}
+            />
             <Tooltip title="Refresh Exams" arrow>
               <IconButton
                 onClick={handleRefresh}
                 disabled={loading}
+                size="medium"
                 sx={{
                   background: "#f1f5f9",
                   "&:hover": { background: "#e2e8f0" },
@@ -1034,7 +1066,7 @@ const renderExamTable = (examsList, title) => {
         {saveMessage.text && (
           <Alert
             severity={saveMessage.severity}
-            sx={{ mb: 2, borderRadius: "8px" }}
+            sx={{ mb: 2, borderRadius: "8px", fontSize: "0.9rem" }} // Slightly reduced
           >
             {saveMessage.text}
           </Alert>
@@ -1052,8 +1084,12 @@ const renderExamTable = (examsList, title) => {
             <CircularProgress size={50} sx={{ color: "#3b82f6" }} />
           </Box>
         ) : error ? (
-          <Alert severity="error" sx={{ borderRadius: "8px" }}>
-            Error loading exams: {error}
+          <Alert
+            severity="error"
+            sx={{ borderRadius: "8px", fontSize: "0.9rem" }}
+          >
+            {" "}
+            // Slightly reduced Error loading exams: {error}
           </Alert>
         ) : (
           <>
@@ -1066,7 +1102,7 @@ const renderExamTable = (examsList, title) => {
                 borderColor: "divider",
                 "& .MuiTab-root": {
                   fontWeight: 600,
-                  fontSize: "0.9rem",
+                  fontSize: "0.9rem", // Slightly reduced
                   textTransform: "none",
                   minWidth: "auto",
                   px: 3,

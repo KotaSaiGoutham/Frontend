@@ -255,7 +255,7 @@ const Home = () => {
 
   return (
     <div className="home">
-      <BannerPopup />
+      {/* <BannerPopup /> */}
       <PhoneDialer />
       {/* Hero Section */}
       <FlashBanner />

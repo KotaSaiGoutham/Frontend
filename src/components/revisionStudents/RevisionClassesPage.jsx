@@ -270,9 +270,9 @@ const RevisionClassesPage = () => {
     const commonStudentNames = [
       "Gagan",
       "Amal",
-      "Ananya",
       "Sriya Jee",
       "Sriya.JEE",
+      "Ananya",
     ];
 
     // Physics-only student names
@@ -338,8 +338,8 @@ const RevisionClassesPage = () => {
         const nameOrder = {
           gagan: 1,
           amal: 2,
-          ananya: 3,
           sriya: 4,
+          ananya: 3,
           nithya: 5,
           navya: 6,
         };
@@ -1024,28 +1024,28 @@ const RevisionClassesPage = () => {
                       </Box>
                     </HeaderCell>
                     {revisionStudents.map((student) => (
-                <HeaderCell
-                                    key={student.id}
-                                    sx={{
-                                      textAlign: "center",
-                                      background:
-                                        "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-                                    }}
-                                  >
-                                    <StudentBadge>
-                                       <Typography
-                                      variant="body1" // Use body1 for larger text base
-                                      sx={{
-                                        fontWeight: 900, // Extra bold
-                                          color: "#78350f",
-                
-                                        fontSize: "1rem", // Significantly larger font size
-                                      }}
-                                    >
-                                        {student.studentName}
-                                      </Typography>
-                                    </StudentBadge>
-                                  </HeaderCell>
+                      <HeaderCell
+                        key={student.id}
+                        sx={{
+                          textAlign: "center",
+                          background:
+                            "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+                        }}
+                      >
+                        <StudentBadge>
+                          <Typography
+                            variant="body1" // Use body1 for larger text base
+                            sx={{
+                              fontWeight: 900, // Extra bold
+                              color: "#78350f",
+
+                              fontSize: "1rem", // Significantly larger font size
+                            }}
+                          >
+                            {student.studentName}
+                          </Typography>
+                        </StudentBadge>
+                      </HeaderCell>
                     ))}
                   </TableRow>
                 </TableHead>
