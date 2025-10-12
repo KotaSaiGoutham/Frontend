@@ -87,27 +87,106 @@ const StudentHeaderGroup = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const ExamRow = styled(TableRow)(({ istoday }) => ({
-  backgroundColor: istoday ? "#fff3cd" : "#fff",
-  borderLeft: istoday ? "4px solid #3b82f6" : "none",
-  borderBottom: "1px solid #f1f5f9",
-  transition: "all 0.3s ease-in-out",
-  animation: istoday ? "pulseHighlight 2s ease-in-out infinite" : "none",
-  "&:hover": {
-    backgroundColor: istoday ? "#ffeaa7" : "#f8f9fa",
-  },
-  "@keyframes pulseHighlight": {
-    "0%": {
-      boxShadow: "0 0 0 0 rgba(59, 130, 246, 0.3)",
+// Updated ExamRow with different colors based on exam type
+const ExamRow = styled(TableRow)(({ istoday, examtype }) => {
+  // Define background colors based on exam type
+  const getBackgroundColor = () => {
+    if (istoday) return "#fff3cd"; // Highlight today's exams
+
+    switch (examtype) {
+      case "weekend":
+        return "#f0f9ff"; // Light blue for weekend tests
+      case "cumulative":
+        return "#f0fdf4"; // Light green for cumulative tests
+      case "grand":
+        return "#fef7ff"; // Light purple for grand tests
+      default:
+        return "#fff"; // White for others
+    }
+  };
+
+  const getBorderColor = () => {
+    if (istoday) return "#3b82f6"; // Blue border for today
+
+    switch (examtype) {
+      case "weekend":
+        return "#0ea5e9"; // Blue border for weekend
+      case "cumulative":
+        return "#10b981"; // Green border for cumulative
+      case "grand":
+        return "#8b5cf6"; // Purple border for grand
+      default:
+        return "none";
+    }
+  };
+
+  return {
+    backgroundColor: getBackgroundColor(),
+    borderLeft: istoday ? `4px solid ${getBorderColor()}` : "none",
+    borderBottom: "1px solid #f1f5f9",
+    transition: "all 0.3s ease-in-out",
+    animation: istoday ? "pulseHighlight 2s ease-in-out infinite" : "none",
+    "&:hover": {
+      backgroundColor: istoday
+        ? "#ffeaa7"
+        : examtype === "weekend"
+        ? "#e0f2fe"
+        : examtype === "cumulative"
+        ? "#dcfce7"
+        : examtype === "grand"
+        ? "#f3e8ff"
+        : "#f8f9fa",
     },
-    "70%": {
-      boxShadow: "0 0 0 6px rgba(59, 130, 246, 0)",
+    "@keyframes pulseHighlight": {
+      "0%": {
+        boxShadow: "0 0 0 0 rgba(59, 130, 246, 0.3)",
+      },
+      "70%": {
+        boxShadow: "0 0 0 6px rgba(59, 130, 246, 0)",
+      },
+      "100%": {
+        boxShadow: "0 0 0 0 rgba(59, 130, 246, 0)",
+      },
     },
-    "100%": {
-      boxShadow: "0 0 0 0 rgba(59, 130, 246, 0)",
-    },
-  },
-}));
+  };
+});
+
+// Styled cell for subject marks with exam type colors
+const SubjectCell = styled(TableCell)(({ examtype, isediting }) => {
+  const getCellBackgroundColor = () => {
+    switch (examtype) {
+      case "weekend":
+        return isediting ? "#e0f2fe" : "#f0f9ff"; // Light blue
+      case "cumulative":
+        return isediting ? "#dcfce7" : "#f0fdf4"; // Light green
+      case "grand":
+        return isediting ? "#f3e8ff" : "#fef7ff"; // Light purple
+      default:
+        return isediting ? "#f1f5f9" : "#fff"; // Default
+    }
+  };
+
+  const getBorderColor = () => {
+    switch (examtype) {
+      case "weekend":
+        return "#bae6fd"; // Light blue border
+      case "cumulative":
+        return "#bbf7d0"; // Light green border
+      case "grand":
+        return "#e9d5ff"; // Light purple border
+      default:
+        return "#f1f5f9"; // Default border
+    }
+  };
+
+  return {
+    textAlign: "center",
+    padding: "0px",
+    borderRight: `1px solid ${getBorderColor()}`,
+    backgroundColor: getCellBackgroundColor(),
+    transition: "all 0.2s ease-in-out",
+  };
+});
 
 const StudentBadge = styled(Box)(({ theme }) => ({
   background: "linear-gradient(135deg, #fef3c7, #fffbeb)",
@@ -116,6 +195,50 @@ const StudentBadge = styled(Box)(({ theme }) => ({
   padding: "4px 2px",
   textAlign: "center",
 }));
+
+// Badge for exam type in the exam name cell
+const ExamTypeBadge = styled(Box)(({ examtype }) => {
+  const getBadgeStyle = () => {
+    switch (examtype) {
+      case "weekend":
+        return {
+          background: "linear-gradient(135deg, #e0f2fe, #f0f9ff)",
+          color: "#0369a1",
+          border: "1px solid #bae6fd",
+        };
+      case "cumulative":
+        return {
+          background: "linear-gradient(135deg, #dcfce7, #f0fdf4)",
+          color: "#047857",
+          border: "1px solid #bbf7d0",
+        };
+      case "grand":
+        return {
+          background: "linear-gradient(135deg, #f3e8ff, #faf5ff)",
+          color: "#7c3aed",
+          border: "1px solid #e9d5ff",
+        };
+      default:
+        return {
+          background: "linear-gradient(135deg, #f1f5f9, #f8fafc)",
+          color: "#475569",
+          border: "1px solid #e2e8f0",
+        };
+    }
+  };
+
+  const style = getBadgeStyle();
+
+  return {
+    ...style,
+    borderRadius: "6px",
+    padding: "2px 8px",
+    display: "inline-block",
+    fontSize: "0.7rem",
+    fontWeight: 600,
+    marginLeft: "8px",
+  };
+});
 
 const RevisionExamsPage = () => {
   const [savingState, setSavingState] = useState({});
@@ -212,19 +335,31 @@ const RevisionExamsPage = () => {
     });
   }, [allStudents, studentConfig]);
 
-  const { weekendExams, cumulativeExams, grandTestExams } = useMemo(() => {
-    const weekend = exams.filter((exam) => exam.exam?.includes("Weekend"));
-    const cumulative = exams.filter((exam) =>
-      exam.exam?.includes("Cumulative")
-    );
-    const grand = exams.filter((exam) => exam.exam?.includes("Grand"));
+  const { weekendExams, cumulativeExams, grandTestExams, allExams } =
+    useMemo(() => {
+      const weekend = exams.filter((exam) => exam.exam?.includes("Weekend"));
+      const cumulative = exams.filter((exam) =>
+        exam.exam?.includes("Cumulative")
+      );
+      const grand = exams.filter((exam) => exam.exam?.includes("Grand"));
+      const all = [...exams]; // All exams combined
 
-    return {
-      weekendExams: weekend,
-      cumulativeExams: cumulative,
-      grandTestExams: grand,
-    };
-  }, [exams]);
+      return {
+        weekendExams: weekend,
+        cumulativeExams: cumulative,
+        grandTestExams: grand,
+        allExams: all,
+      };
+    }, [exams]);
+
+  // Helper function to determine exam type
+  const getExamType = (examName) => {
+    if (!examName) return "other";
+    if (examName.includes("Weekend")) return "weekend";
+    if (examName.includes("Cumulative")) return "cumulative";
+    if (examName.includes("Grand")) return "grand";
+    return "other";
+  };
 
   const handleEditExam = (examId, studentId, subject, existingData = null) => {
     const examKey = `${examId}_${studentId}_${subject}`;
@@ -249,10 +384,12 @@ const RevisionExamsPage = () => {
 
   const handleExamMarkChange = (examId, studentId, subject, value) => {
     const examKey = `${examId}_${studentId}_${subject}`;
+    // Ensure value is between 0 and 100
+    const validatedValue = Math.min(100, Math.max(0, Number(value) || 0));
     setExamMarks((prev) => ({
       ...prev,
       [examKey]: {
-        [subject]: value,
+        [subject]: validatedValue,
       },
     }));
   };
@@ -313,34 +450,59 @@ const RevisionExamsPage = () => {
       setSavingState((prev) => ({ ...prev, [cellKey]: true }));
 
       let result;
-      if (existingExam && existingExam.examRecordId) {
+
+      // Check if we have an existing exam record ID
+      const hasExistingRecord = existingExam && existingExam.examRecordId;
+
+      if (hasExistingRecord) {
+        // Update existing exam
         examDataToSave.id = existingExam.examRecordId;
         result = await dispatch(updateStudentExam(examDataToSave));
       } else {
+        // Add new exam
         result = await dispatch(addStudentExam(examDataToSave));
       }
 
+      // CRITICAL FIX: Immediately exit editing mode and show marks + edit icon
       if (result) {
+        const updatedExamData = {
+          examRecordId:
+            result.exam?.id ||
+            result.exam?.examRecordId ||
+            existingExam?.examRecordId,
+          physics: physicsMarks,
+          chemistry: chemistryMarks,
+          maths: mathsMarks,
+          total: total,
+          subject: examDataToSave.Subject,
+          studentName: student.studentName,
+          studentId: student.id,
+        };
+
+        // Update local state immediately
         setExamData((prev) => ({
           ...prev,
-          [examKey]: {
-            ...examDataToSave,
-            examRecordId:
-              result?.exam?.id ||
-              existingExam?.examRecordId ||
-              result?.exam?.examRecordId,
-          },
+          [examKey]: updatedExamData,
         }));
+
+        // Show success message
+        setSaveMessage({
+          text: `${subject.charAt(0).toUpperCase() + subject.slice(1)} marks ${
+            hasExistingRecord ? "updated" : "saved"
+          } successfully!`,
+          severity: "success",
+        });
       }
 
-      setSaveMessage({
-        text: `${
-          subject.charAt(0).toUpperCase() + subject.slice(1)
-        } marks saved successfully!`,
-        severity: "success",
+      // FIXED: Immediately exit editing mode regardless of result
+      setEditingExam((prev) => {
+        const newState = { ...prev };
+        delete newState[subjectKey];
+        return newState;
       });
 
-      setEditingExam((prev) => {
+      // Clear the marks input
+      setExamMarks((prev) => {
         const newState = { ...prev };
         delete newState[subjectKey];
         return newState;
@@ -350,25 +512,35 @@ const RevisionExamsPage = () => {
     } catch (error) {
       console.error("Error saving exam:", error);
       setSaveMessage({ text: "Failed to save exam marks", severity: "error" });
+
+      // FIXED: Also exit editing mode on error
+      setEditingExam((prev) => {
+        const newState = { ...prev };
+        delete newState[subjectKey];
+        return newState;
+      });
+
       setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 4000);
     } finally {
-      setTimeout(() => {
-        setSavingState((prev) => {
-          const newState = { ...prev };
-          delete newState[cellKey];
-          return newState;
-        });
-      }, 500);
+      // FIXED: Clear saving state
+      setSavingState((prev) => {
+        const newState = { ...prev };
+        delete newState[cellKey];
+        return newState;
+      });
     }
   };
 
   const handleCancelExam = (examId, studentId, subject) => {
     const examKey = `${examId}_${studentId}_${subject}`;
+
+    // FIXED: Immediately exit editing mode and show marks + edit icon
     setEditingExam((prev) => {
       const newState = { ...prev };
       delete newState[examKey];
       return newState;
     });
+
     setExamMarks((prev) => {
       const newState = { ...prev };
       delete newState[examKey];
@@ -391,38 +563,42 @@ const RevisionExamsPage = () => {
   useEffect(() => {
     const loadExamData = () => {
       if (!exams || exams.length === 0) return;
+
       const examDataMap = {};
+      console.log("Loading exam data from exams:", exams);
 
       exams.forEach((examItem) => {
         if (examItem.examData && Array.isArray(examItem.examData)) {
-          examItem.examData.forEach((exam) => {
-            const examKey = `${examItem.id}_${exam.studentId}`;
+          examItem.examData.forEach((examRecord) => {
+            const examKey = `${examItem.id}_${examRecord.studentId}`;
+
+            // Use the exam record's 'id' field as examRecordId
             examDataMap[examKey] = {
-              examRecordId: exam.examRecordId || exam.id,
-              physics: exam.physics || 0,
-              chemistry: exam.chemistry || 0,
-              maths: exam.maths || 0,
-              total: exam.total || 0,
-              subject: exam.subject,
-              studentName: exam.studentName,
-              studentId: exam.studentId,
+              examRecordId: examRecord.id, // This is the key field
+              physics: examRecord.physics || 0,
+              chemistry: examRecord.chemistry || 0,
+              maths: examRecord.maths || 0,
+              total: examRecord.total || 0,
+              subject: examRecord.subject,
+              studentName: examRecord.studentName,
+              studentId: examRecord.studentId,
             };
           });
         }
       });
 
+      console.log("Final loaded exam data map:", examDataMap);
       setExamData(examDataMap);
     };
 
     loadExamData();
-  }, [exams]);
+  }, [exams]); // Re-run when exams changee
 
   useEffect(() => {
     if (exams.length === 0 && !loading) {
       handleRefresh();
     }
-  }, [dispatch]);
-
+  }, [dispatch, exams.length, loading]);
   const renderSubjectMarks = (examItem, student, subject) => {
     const examKey = `${examItem.id}_${student.id}`;
     const subjectKey = `${examItem.id}_${student.id}_${subject}`;
@@ -431,7 +607,9 @@ const RevisionExamsPage = () => {
     const savedExam = examData[examKey];
     const cellKey = `${examItem.id}_${student.id}_${subject}`;
     const isSaving = savingState[cellKey];
+    const examType = getExamType(examItem.exam);
 
+    // Get the saved mark for this subject
     const subjectMark = savedExam ? savedExam[subject] || 0 : 0;
 
     if (isEditing) {
@@ -497,6 +675,7 @@ const RevisionExamsPage = () => {
       );
     }
 
+    // Show marks and edit icon when NOT in editing mode
     return (
       <Box
         sx={{
@@ -514,6 +693,7 @@ const RevisionExamsPage = () => {
             fontSize: "0.75rem",
             minWidth: "20px",
             textAlign: "center",
+            color: subjectMark > 0 ? "#1e293b" : "#64748b",
           }}
         >
           {subjectMark > 0 ? subjectMark : "-"}
@@ -665,8 +845,14 @@ const RevisionExamsPage = () => {
               {examsList.length > 0 ? (
                 examsList.map((examItem, index) => {
                   const isToday = examItem.date === todayDate;
+                  const examType = getExamType(examItem.exam);
+
                   return (
-                    <ExamRow key={examItem.id} istoday={isToday}>
+                    <ExamRow
+                      key={examItem.id}
+                      istoday={isToday}
+                      examtype={examType}
+                    >
                       <TableCell
                         sx={{
                           textAlign: "center",
@@ -728,60 +914,69 @@ const RevisionExamsPage = () => {
                           borderRight: "1px solid #f1f5f9",
                         }}
                       >
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontSize: "0.8rem",
-                            fontWeight: 600,
-                            color: "#475569",
-                          }}
-                        >
-                          {examItem.exam}
-                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontSize: "0.8rem",
+                              fontWeight: 600,
+                              color: "#475569",
+                            }}
+                          >
+                            {examItem.exam}
+                          </Typography>
+                          <ExamTypeBadge examtype={examType}>
+                            {examType.charAt(0).toUpperCase() +
+                              examType.slice(1)}
+                          </ExamTypeBadge>
+                        </Box>
                       </TableCell>
                       {revisionStudents.map((student) => (
                         <React.Fragment key={student.id}>
                           {/* For common students, show both Physics and Chemistry columns */}
                           {student.isCommonStudent ? (
                             <>
-                              <TableCell
-                                sx={{
-                                  textAlign: "center",
-                                  padding: "0px",
-                                  borderRight: "1px solid #f1f5f9",
-                                }}
+                              <SubjectCell
+                                examtype={examType}
+                                isediting={
+                                  editingExam[
+                                    `${examItem.id}_${student.id}_physics`
+                                  ]
+                                }
                               >
                                 {renderSubjectMarks(
                                   examItem,
                                   student,
                                   "physics"
                                 )}
-                              </TableCell>
-                              <TableCell
-                                sx={{
-                                  textAlign: "center",
-                                  padding: "0px",
-                                  borderRight: "1px solid #f1f5f9",
-                                }}
+                              </SubjectCell>
+                              <SubjectCell
+                                examtype={examType}
+                                isediting={
+                                  editingExam[
+                                    `${examItem.id}_${student.id}_chemistry`
+                                  ]
+                                }
                               >
                                 {renderSubjectMarks(
                                   examItem,
                                   student,
                                   "chemistry"
                                 )}
-                              </TableCell>
+                              </SubjectCell>
                             </>
                           ) : (
                             /* For non-common students, show only Physics column */
-                            <TableCell
-                              sx={{
-                                textAlign: "center",
-                                padding: "0px",
-                                borderRight: "1px solid #f1f5f9",
-                              }}
+                            <SubjectCell
+                              examtype={examType}
+                              isediting={
+                                editingExam[
+                                  `${examItem.id}_${student.id}_physics`
+                                ]
+                              }
                             >
                               {renderSubjectMarks(examItem, student, "physics")}
-                            </TableCell>
+                            </SubjectCell>
                           )}
                         </React.Fragment>
                       ))}
@@ -816,6 +1011,7 @@ const RevisionExamsPage = () => {
       </Box>
     );
   };
+
   return (
     <Fade in timeout={800}>
       <StyledPaper sx={{ p: 3 }}>
@@ -901,15 +1097,17 @@ const RevisionExamsPage = () => {
                 },
               }}
             >
+              <Tab label={`All Exams (${allExams.length})`} />
               <Tab label={`Weekend Exams (${weekendExams.length})`} />
               <Tab label={`Cumulative Exams (${cumulativeExams.length})`} />
               <Tab label={`Grand Tests (${grandTestExams.length})`} />
             </Tabs>
 
-            {activeTab === 0 && renderExamTable(weekendExams, "Weekend Exams")}
-            {activeTab === 1 &&
+            {activeTab === 0 && renderExamTable(allExams, "All Exams")}
+            {activeTab === 1 && renderExamTable(weekendExams, "Weekend Exams")}
+            {activeTab === 2 &&
               renderExamTable(cumulativeExams, "Cumulative Exams")}
-            {activeTab === 2 && renderExamTable(grandTestExams, "Grand Tests")}
+            {activeTab === 3 && renderExamTable(grandTestExams, "Grand Tests")}
           </>
         )}
       </StyledPaper>

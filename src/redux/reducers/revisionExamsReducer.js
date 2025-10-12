@@ -58,7 +58,8 @@ const revisionExamsReducer = (state = initialState, action) => {
         error: action.payload.error,
       };
 
-    case ADD_REVISION_EXAM_SUCCESS: {
+    // Handle adding exam data to revision class
+    case "ADD_REVISION_CLASS_EXAM_SUCCESS": {
       const { classId, examData } = action.payload;
       return {
         ...state,
@@ -71,13 +72,19 @@ const revisionExamsReducer = (state = initialState, action) => {
             
             let updatedExamData;
             if (studentIndex >= 0) {
+              // Update existing entry
               updatedExamData = [...existingExamData];
               updatedExamData[studentIndex] = { 
                 ...updatedExamData[studentIndex], 
-                ...examData 
+                ...examData,
+                id: examData.examRecordId || updatedExamData[studentIndex].id // Preserve ID
               };
             } else {
-              updatedExamData = [...existingExamData, examData];
+              // Add new entry
+              updatedExamData = [...existingExamData, {
+                ...examData,
+                id: examData.examRecordId // Set ID for new entry
+              }];
             }
             
             return {
@@ -90,7 +97,8 @@ const revisionExamsReducer = (state = initialState, action) => {
       };
     }
 
-    case UPDATE_REVISION_EXAM_SUCCESS: {
+    // Handle updating exam data in revision class
+    case "UPDATE_REVISION_CLASS_EXAM_SUCCESS": {
       const { classId, studentId, examData } = action.payload;
       return {
         ...state,
@@ -99,7 +107,12 @@ const revisionExamsReducer = (state = initialState, action) => {
             const existingExamData = exam.examData || [];
             const updatedExamData = existingExamData.map(e => 
               e.studentId === studentId 
-                ? { ...e, ...examData }
+                ? { 
+                    ...e, 
+                    ...examData,
+                    // Preserve the ID
+                    id: e.id
+                  }
                 : e
             );
             

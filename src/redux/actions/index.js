@@ -1387,6 +1387,8 @@ export const fetchStudentExams = () =>
     },
   });
 
+// redux/actions - Fixed addStudentExam and updateStudentExam
+
 export const addStudentExam = (examData) =>
   apiRequest({
     url: "/api/data/addStudentExam",
@@ -1394,15 +1396,15 @@ export const addStudentExam = (examData) =>
     data: examData,
     onStart: ADD_STUDENT_EXAM_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("Add exam response:", data); // Debug log
+      console.log("Add exam response:", data);
       
       dispatch({ 
         type: ADD_STUDENT_EXAM_SUCCESS, 
         payload: data.exam 
       });
       
-      // Also update the revision classes state if classId exists
-      if (examData.classId) {
+      // CRITICAL: Also update the revision classes state
+      if (examData.classId && data.exam) {
         dispatch({
           type: "ADD_REVISION_CLASS_EXAM_SUCCESS",
           payload: {
@@ -1410,7 +1412,7 @@ export const addStudentExam = (examData) =>
             examData: {
               studentId: examData.studentId,
               studentName: examData.studentName,
-              examRecordId: data.exam.id || data.exam.examRecordId, // Handle both cases
+              examRecordId: data.exam.id, // Use the returned ID
               physics: examData.physics || 0,
               chemistry: examData.chemistry || 0,
               maths: examData.maths || 0,
@@ -1421,7 +1423,8 @@ export const addStudentExam = (examData) =>
         });
       }
       
-      return data; // Return the entire response
+      // Return the entire response so component can access it
+      return data;
     },
     onFailure: (error, dispatch) => {
       dispatch({
@@ -1431,7 +1434,7 @@ export const addStudentExam = (examData) =>
       throw error;
     },
   });
-// Update updateStudentExam to include classId
+
 export const updateStudentExam = (examData) =>
   apiRequest({
     url: `/api/data/studentexams/${examData.id}`,
@@ -1439,12 +1442,14 @@ export const updateStudentExam = (examData) =>
     data: examData,
     onStart: UPDATE_STUDENT_EXAM_REQUEST,
     onSuccess: (data, dispatch) => {
+      console.log("Update exam response:", data);
+      
       dispatch({ 
         type: UPDATE_STUDENT_EXAM_SUCCESS, 
         payload: data 
       });
       
-      // Also update the revision classes state if classId exists
+      // CRITICAL: Also update the revision classes state
       if (examData.classId) {
         dispatch({
           type: "UPDATE_REVISION_CLASS_EXAM_SUCCESS",
@@ -1462,6 +1467,7 @@ export const updateStudentExam = (examData) =>
         });
       }
       
+      // Return the response
       return data;
     },
     onFailure: (error, dispatch) => {
@@ -1472,6 +1478,7 @@ export const updateStudentExam = (examData) =>
       throw error;
     },
   });
+
 
 
 // Delete Exam

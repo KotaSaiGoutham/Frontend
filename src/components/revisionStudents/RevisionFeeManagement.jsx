@@ -18,12 +18,13 @@ import {
   Chip,
   Tooltip,
   IconButton,
-  Fade
+  Fade,
+  TableFooter, 
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Refresh, Payment } from '@mui/icons-material';
 import { updateRevisionFee } from '../../redux/actions';
-import { fetchStudents } from '../../redux/actions'; // Import your existing fetchStudents
+import { fetchStudents } from '../../redux/actions';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
@@ -60,21 +61,48 @@ const HeaderCell = styled(TableCell)(({ theme }) => ({
   },
 }));
 
+const FooterCell = styled(TableCell)(({ theme }) => ({
+    fontWeight: 700,
+    fontSize: "0.9rem",
+    backgroundColor: theme.palette.grey[100],
+    borderTop: `2px solid ${theme.palette.grey[300]}`,
+    textAlign: "center",
+    padding: "12px 8px",
+}));
+
 const RevisionFeeManagement = () => {
   const dispatch = useDispatch();
   const { students, loading, error } = useSelector(state => state.students);
   const { user } = useSelector(state => state.auth);
   const [updatingStudent, setUpdatingStudent] = useState(null);
 
-  const revisionStudents = useMemo(() => {
-    if (!students || students.length === 0) return [];
+  // Helper to calculate total paid for a single student
+  const calculateStudentTotalPaid = (student) => {
+    const fee = student.revisionProgramFee;
+    if (!fee || !fee.installments) return 0;
+    
+    let total = 0;
+    
+    const inst1 = fee.installments.installment1;
+    if (inst1?.status === 'paid') {
+        total += inst1.paidAmount || inst1.amount || 0;
+    }
+    
+    const inst2 = fee.installments.installment2;
+    if (inst2?.status === 'paid') {
+        total += inst2.paidAmount || inst2.amount || 0;
+    }
+    
+    return total;
+  };
 
-    // Get all revision students from both subjects
+  const { revisionStudents, totalFeeSum, totalPaidSum } = useMemo(() => {
+    if (!students || students.length === 0) return { revisionStudents: [], totalFeeSum: 0, totalPaidSum: 0 };
+
     const allRevisionStudents = students.filter(
       (student) => student.isRevisionProgramJEEMains2026Student === true
     );
 
-    // Common student names (these students take both Physics and Chemistry)
     const commonStudentNames = [
       "Gagan",
       "Amal",
@@ -83,42 +111,38 @@ const RevisionFeeManagement = () => {
       "Sriya.JEE",
     ];
 
-    // Physics-only student names
     const physicsOnlyNames = ["Nithya", "Navya"];
 
-    // Filter students based on user role
+    let calculatedTotalPaidSum = 0;
+    const FULL_FEE = 70000;
+
     let filteredStudents = allRevisionStudents.filter((student) => {
       const studentName = student.Name || student.studentName || "";
 
+      let includeStudent = false;
+
       if (user?.isPhysics) {
-        // Physics users see common students + physics-only students
-        return (
-          commonStudentNames.some((name) =>
-            studentName.toLowerCase().includes(name.toLowerCase())
-          ) ||
-          physicsOnlyNames.some((name) =>
-            studentName.toLowerCase().includes(name.toLowerCase())
-          )
+        includeStudent = commonStudentNames.some((name) =>
+          studentName.toLowerCase().includes(name.toLowerCase())
+        ) || physicsOnlyNames.some((name) =>
+          studentName.toLowerCase().includes(name.toLowerCase())
         );
       } else if (user?.isChemistry) {
-        // Chemistry users only see common students
-        return commonStudentNames.some((name) =>
+        includeStudent = commonStudentNames.some((name) =>
           studentName.toLowerCase().includes(name.toLowerCase())
         );
       } else if (user?.AllowAll) {
-        // AllowAll users see all revision students
-        return true;
+        includeStudent = true;
       }
-      return false;
+      
+      return includeStudent;
     });
 
-    // Map and sort students with consistent naming
-    return filteredStudents
+    const mappedStudents = filteredStudents
       .map((student) => {
         const studentName = student.Name || student.studentName || "";
         let normalizedName = studentName;
 
-        // Normalize names for consistent display
         if (studentName.toLowerCase().includes("sriya")) {
           normalizedName = "Sriya JEE";
         }
@@ -126,6 +150,9 @@ const RevisionFeeManagement = () => {
         const isCommonStudent = commonStudentNames.some((name) =>
           studentName.toLowerCase().includes(name.toLowerCase())
         );
+
+        const studentTotalPaid = calculateStudentTotalPaid(student);
+        calculatedTotalPaidSum += studentTotalPaid;
 
         return {
           ...student,
@@ -137,10 +164,10 @@ const RevisionFeeManagement = () => {
             .join("")
             .toUpperCase(),
           isCommonStudent: isCommonStudent,
+          totalPaid: studentTotalPaid,
         };
       })
       .sort((a, b) => {
-        // Sort by name order
         const nameOrder = {
           gagan: 1,
           amal: 2,
@@ -162,28 +189,52 @@ const RevisionFeeManagement = () => {
 
         return aOrder - bOrder;
       });
+
+    const calculatedTotalFeeSum = mappedStudents.length * FULL_FEE;
+
+    return {
+      revisionStudents: mappedStudents,
+      totalFeeSum: calculatedTotalFeeSum,
+      totalPaidSum: calculatedTotalPaidSum,
+    };
   }, [students, user]);
 
   const handleInstallmentToggle = async (studentId, installment, currentStatus) => {
     setUpdatingStudent(studentId);
     
+    // Find the student object from the original students array
+    const studentToUpdate = students.find(s => s.id === studentId);
+    if (!studentToUpdate) {
+        setUpdatingStudent(null);
+        return;
+    }
+    
+    const currentInstallments = studentToUpdate.revisionProgramFee?.installments || {};
     const newStatus = currentStatus === 'paid' ? 'unpaid' : 'paid';
+    const amount = 35000;
+
+    // Create the update data in the format your backend expects
     const updateData = {
-      [installment]: {
-        status: newStatus,
-        ...(newStatus === 'paid' && { 
-          paidDate: new Date().toISOString(),
-          paidAmount: 35000
-        })
-      }
+        [installment]: {
+            status: newStatus,
+            ...(newStatus === 'paid' ? { 
+                paidDate: new Date().toISOString(),
+                paidAmount: amount 
+            } : {
+                paidDate: null,
+                paidAmount: 0
+            })
+        }
     };
 
     try {
-      // Update the fee
+      console.log('Sending update data:', updateData);
       await dispatch(updateRevisionFee(studentId, updateData));
       
-      // Refresh students data to get the updated state
-      await dispatch(fetchStudents());
+      // Refresh after a short delay to ensure update is processed
+      setTimeout(() => {
+        dispatch(fetchStudents());
+      }, 1000);
       
     } catch (error) {
       console.error('Error updating installment:', error);
@@ -214,17 +265,6 @@ const RevisionFeeManagement = () => {
     }
   };
 
-  const calculateTotalPaid = (student) => {
-    const fee = student.revisionProgramFee;
-    if (!fee || !fee.installments) return 0;
-    
-    let total = 0;
-    if (fee.installments.installment1?.status === 'paid') total += 35000;
-    if (fee.installments.installment2?.status === 'paid') total += 35000;
-    
-    return total;
-  };
-
   const getStatusChip = (status) => {
     return status === 'paid' 
       ? <Chip label="Paid" color="success" size="small" />
@@ -238,6 +278,19 @@ const RevisionFeeManagement = () => {
     return student.revisionProgramFee.installments[installment]?.status || 'unpaid';
   };
 
+  const formatDateDDMMYYYY = (dateString) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    
+    // Get day, month, year with leading zeros
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -246,10 +299,43 @@ const RevisionFeeManagement = () => {
     );
   }
 
+  const percentagePaid = totalFeeSum > 0 
+    ? ((totalPaidSum / totalFeeSum) * 100).toFixed(1) 
+    : 0;
+
   return (
     <Fade in timeout={800}>
       <Box sx={{ p: 3 }}>
   
+        <Box sx={{ mb: 3 }}>
+          <Card variant="outlined" sx={{ bgcolor: '#f0f9ff', borderColor: '#bae6fd' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: "#0c4a6e" }} gutterBottom>
+                Overall Financial Summary
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="body1" color="textSecondary">Total Fee Due</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "#1e293b" }}>
+                    ₹{totalFeeSum.toLocaleString()}
+                  </Typography>
+                </Box>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="body1" color="textSecondary">Total Amount Paid</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: totalPaidSum === totalFeeSum ? '#10b981' : totalPaidSum > 0 ? '#f59e0b' : '#ef4444' }}>
+                    ₹{totalPaidSum.toLocaleString()}
+                  </Typography>
+                </Box>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="body1" color="textSecondary">Payment Completion</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: totalPaidSum === totalFeeSum ? '#10b981' : '#3b82f6' }}>
+                    {percentagePaid}%
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
 
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
@@ -257,8 +343,6 @@ const RevisionFeeManagement = () => {
           </Alert>
         )}
 
-
-        {/* Students Table */}
         <StyledPaper>
           <Box sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -284,26 +368,25 @@ const RevisionFeeManagement = () => {
                     <HeaderCell>Student Name</HeaderCell>
                     <HeaderCell>Total Fee</HeaderCell>
                     <HeaderCell>Total Paid</HeaderCell>
-                    <HeaderCell>Installment 1</HeaderCell>
-                    <HeaderCell>Installment 2</HeaderCell>
+                    <HeaderCell>Installment 1 (₹35,000)</HeaderCell>
+                    <HeaderCell>Installment 2 (₹35,000)</HeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {revisionStudents.map((student) => {
-                    const totalPaid = calculateTotalPaid(student);
-                    const paymentInfo = getPaymentInfo(student);
+                    const totalPaid = student.totalPaid;
                     const installment1Status = getInstallmentStatus(student, 'installment1');
                     const installment2Status = getInstallmentStatus(student, 'installment2');
                     
                     return (
                       <TableRow key={student.id} hover>
                         <TableCell>
-                          <Typography variant="body2" sx={{ fontWeight: 600,textAlign:'center' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, textAlign:'center' }}>
                             {student.studentName}
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" sx={{ fontWeight: 600,textAlign:'center' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, textAlign:'center' }}>
                             ₹70,000
                           </Typography>
                         </TableCell>
@@ -336,9 +419,9 @@ const RevisionFeeManagement = () => {
                             />
                           </Box>
                           {student.revisionProgramFee?.installments?.installment1?.paidDate && (
-                           <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.5 }}>
-  Paid: {formatDateDDMMYYYY(student.revisionProgramFee.installments.installment1.paidDate)}
-</Typography>
+                            <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.5 }}>
+                              Paid: {formatDateDDMMYYYY(student.revisionProgramFee.installments.installment1.paidDate)}
+                            </Typography>
                           )}
                         </TableCell>
                         
@@ -359,15 +442,43 @@ const RevisionFeeManagement = () => {
                           </Box>
                           {student.revisionProgramFee?.installments?.installment2?.paidDate && (
                             <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.5 }}>
-                              Paid: {new Date(student.revisionProgramFee.installments.installment2.paidDate).toLocaleDateString()}
+                              Paid: {formatDateDDMMYYYY(student.revisionProgramFee.installments.installment2.paidDate)}
                             </Typography>
                           )}
                         </TableCell>
-
                       </TableRow>
                     );
                   })}
                 </TableBody>
+
+                <TableFooter>
+                    <TableRow>
+                        <FooterCell>Total ({revisionStudents.length} Students)</FooterCell>
+                        <FooterCell>
+                            ₹{totalFeeSum.toLocaleString()}
+                        </FooterCell>
+                        <FooterCell>
+                            <Box>
+                                <Typography 
+                                    sx={{ 
+                                        fontWeight: 700,
+                                        color: totalPaidSum === totalFeeSum ? '#10b981' : totalPaidSum > 0 ? '#f59e0b' : '#ef4444'
+                                    }}
+                                >
+                                    ₹{totalPaidSum.toLocaleString()}
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                                    ({percentagePaid}% Paid)
+                                </Typography>
+                            </Box>
+                        </FooterCell>
+                        <FooterCell colSpan={2} sx={{textAlign: 'left'}}>
+                            <Typography variant="body2" color="textSecondary">
+                                Click the switch to toggle payment status.
+                            </Typography>
+                        </FooterCell>
+                    </TableRow>
+                </TableFooter>
               </Table>
             </TableContainer>
 
@@ -386,17 +497,3 @@ const RevisionFeeManagement = () => {
 };
 
 export default RevisionFeeManagement;
-
-// Date formatting helper function
-const formatDateDDMMYYYY = (dateString) => {
-  if (!dateString) return '';
-  
-  const date = new Date(dateString);
-  
-  // Get day, month, year with leading zeros
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-  const year = date.getFullYear();
-  
-  return `${day}/${month}/${year}`;
-};
