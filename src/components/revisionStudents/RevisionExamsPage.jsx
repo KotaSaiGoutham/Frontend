@@ -270,6 +270,13 @@ const RevisionExamsPage = () => {
   // Student configuration based on your screenshot
   const studentConfig = useMemo(
     () => [
+       {
+        id: "gagan",
+        name: "Gagan",
+        shortName: "Gagan",
+        initials: "G",
+        isCommon: true,
+      },
       {
         id: "amal",
         name: "Amal",
@@ -277,11 +284,11 @@ const RevisionExamsPage = () => {
         initials: "A",
         isCommon: true,
       },
-      {
-        id: "gagan",
-        name: "Gagan",
-        shortName: "Gagan",
-        initials: "G",
+         {
+        id: "ananya",
+        name: "Ananya",
+        shortName: "Ananya",
+        initials: "A",
         isCommon: true,
       },
       {
@@ -291,13 +298,7 @@ const RevisionExamsPage = () => {
         initials: "S",
         isCommon: true,
       },
-      {
-        id: "ananya",
-        name: "Ananya",
-        shortName: "Ananya",
-        initials: "A",
-        isCommon: true,
-      },
+  
       {
         id: "nithya",
         name: "Nithya",
@@ -772,7 +773,6 @@ const renderExamTable = (examsList, title) => {
                           color: "#78350f",
 
                         fontSize: "1rem", // Significantly larger font size
-                        p: 0.5, // Padding for space
                       }}
                     >
                         {student.shortName}

@@ -74,7 +74,13 @@ const Track1Highlight = styled(Box)({
   width: "100%",
   border: "1px solid #dbeafe",
 });
-
+const StudentBadge = styled(Box)(({ theme }) => ({
+  background: "linear-gradient(135deg, #fef3c7, #fffbeb)",
+  border: "1px solid #f59e0b",
+  borderRadius: "6px",
+  padding: "4px 2px",
+  textAlign: "center",
+}));
 const Track2Highlight = styled(Box)({
   background: "linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%)",
   borderLeft: "4px solid #f59e0b",
@@ -1018,69 +1024,28 @@ const RevisionClassesPage = () => {
                       </Box>
                     </HeaderCell>
                     {revisionStudents.map((student) => (
-                      <HeaderCell
-                        key={student.id}
-                        sx={{
-                          width: "120px",
-                          textAlign: "center",
-                          minWidth: "120px",
-                          maxWidth: "120px",
-                          padding: "6px 4px",
-                        }}
-                      >
-                        <Tooltip
-                          title={`${student.studentName} • ${student.track}`}
-                          arrow
-                          placement="top"
-                        >
-                          <Box sx={{ p: 0.5 }}>
-                            <Box
-                              sx={{
-                                background:
-                                  "linear-gradient(135deg, #fef3c7, #fffbeb)",
-                                border: "1px solid #f59e0b",
-                                borderRadius: "8px",
-                                padding: "6px 4px",
-                                position: "relative",
-                                overflow: "hidden",
-                              }}
-                            >
-                              <Box
-                                sx={{
-                                  width: 26,
-                                  height: 26,
-                                  borderRadius: "6px",
-                                  background: "#f59e0b",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  color: "white",
-                                  fontWeight: 700,
-                                  fontSize: "0.7rem",
-                                  margin: "0 auto 4px auto",
-                                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                                }}
-                              >
-                                {student.initials}
-                              </Box>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  fontWeight: 600,
-                                  color: "#78350f",
-                                  fontSize: "0.7rem",
-                                  display: "block",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {student.studentName.split(" ")[0]}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Tooltip>
-                      </HeaderCell>
+                <HeaderCell
+                                    key={student.id}
+                                    sx={{
+                                      textAlign: "center",
+                                      background:
+                                        "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+                                    }}
+                                  >
+                                    <StudentBadge>
+                                       <Typography
+                                      variant="body1" // Use body1 for larger text base
+                                      sx={{
+                                        fontWeight: 900, // Extra bold
+                                          color: "#78350f",
+                
+                                        fontSize: "1rem", // Significantly larger font size
+                                      }}
+                                    >
+                                        {student.studentName}
+                                      </Typography>
+                                    </StudentBadge>
+                                  </HeaderCell>
                     ))}
                   </TableRow>
                 </TableHead>
