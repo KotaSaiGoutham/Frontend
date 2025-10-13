@@ -78,7 +78,7 @@ const HeaderCell = styled(TableCell)(({ theme }) => ({
 const SubjectHeaderCell = styled(HeaderCell)(({ theme }) => ({
   background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
   minWidth: "70px", // Slightly reduced
-  fontSize: "0.8rem", // Slightly reduced
+  fontSize: "1.2 rem", // Slightly reduced
 }));
 
 const StudentHeaderGroup = styled(TableRow)(({ theme }) => ({
@@ -734,227 +734,196 @@ const RevisionExamsPage = () => {
     );
   };
 
-  const renderExamTable = (examsList, title) => {
-    return (
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          variant="h6"
-          sx={{ mb: 2, fontWeight: 700, color: "#1e293b" }}
-        >
-          {title} ({examsList.length})
-        </Typography>
-        <TableContainer
-          sx={{
-            border: "1px solid #e2e8f0",
-            borderRadius: "8px",
-            background: "white",
-            overflow: "auto",
-          }}
-        >
-          <Table size="small">
-            <TableHead>
-              {/* First header row - Student names spanning both P and C columns */}
-              <StudentHeaderGroup>
-                <HeaderCell sx={{ width: "70px", textAlign: "center" }}>
-                  S.No.
+const renderExamTable = (examsList, title) => {
+  return (
+    <Box sx={{ mb: 4 }}>
+      <Typography
+        variant="h6"
+        sx={{ mb: 2, fontWeight: 700, color: "#1e293b" }}
+      >
+        {title} ({examsList.length})
+      </Typography>
+      <TableContainer
+        sx={{
+          border: "1px solid #e2e8f0",
+          borderRadius: "8px",
+          background: "white",
+          overflow: "auto",
+        }}
+      >
+        <Table size="small">
+          <TableHead>
+            {/* First header row - Main headers merged with blank cells below */}
+            <StudentHeaderGroup>
+              <HeaderCell 
+                rowSpan={2} // Merge with the cell below
+                sx={{ 
+                  width: "70px", 
+                  textAlign: "center",
+                  verticalAlign: "middle"
+                }}
+              >
+                S.No.
+              </HeaderCell>
+              <HeaderCell 
+                rowSpan={2} // Merge with the cell below
+                sx={{ 
+                  width: "180px", 
+                  textAlign: "center",
+                  verticalAlign: "middle"
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 0.5,
+                  }}
+                >
+                  <CalendarToday sx={{ fontSize: 16 }} />
+                  <span>Date & Day</span>
+                </Box>
+              </HeaderCell>
+              <HeaderCell 
+                rowSpan={2} // Merge with the cell below
+                sx={{ 
+                  width: "220px", 
+                  textAlign: "center",
+                  verticalAlign: "middle"
+                }}
+              >
+                Type of Exam
+              </HeaderCell>
+              {revisionStudents.map((student) => (
+                <HeaderCell
+                  key={student.id}
+                  colSpan={student.isCommonStudent ? 2 : 1}
+                  sx={{
+                    textAlign: "center",
+                    background:
+                      "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+                  }}
+                >
+                  <StudentBadge>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: 900,
+                        color: "#78350f",
+                        fontSize: "0.95rem",
+                      }}
+                    >
+                      {student.shortName}
+                    </Typography>
+                  </StudentBadge>
                 </HeaderCell>
-                <HeaderCell sx={{ width: "180px", textAlign: "center" }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 0.5,
-                    }}
+              ))}
+            </StudentHeaderGroup>
+
+            {/* Second header row - Only subject columns (P and C) for each student */}
+            <TableRow>
+              {/* No cells for S.No., Date & Day, Type of Exam since they're merged above */}
+              {revisionStudents.map((student) => (
+                <React.Fragment key={student.id}>
+                  {student.isCommonStudent ? (
+                    <>
+                      <SubjectHeaderCell>P</SubjectHeaderCell>
+                      <SubjectHeaderCell>C</SubjectHeaderCell>
+                    </>
+                  ) : (
+                    <SubjectHeaderCell>P</SubjectHeaderCell>
+                  )}
+                </React.Fragment>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {examsList.length > 0 ? (
+              examsList.map((examItem, index) => {
+                const isToday = examItem.date === todayDate;
+                const examType = getExamType(examItem.exam);
+
+                return (
+                  <ExamRow
+                    key={examItem.id}
+                    istoday={isToday}
+                    examtype={examType}
                   >
-                    <CalendarToday sx={{ fontSize: 16 }} />{" "}
-                    {/* Slightly reduced */}
-                    <span>Date & Day</span>
-                  </Box>
-                </HeaderCell>
-                <HeaderCell sx={{ width: "220px", textAlign: "center" }}>
-                  Type of Exam
-                </HeaderCell>
-                {revisionStudents.map((student) => (
-                  <HeaderCell
-                    key={student.id}
-                    colSpan={student.isCommonStudent ? 2 : 1}
-                    sx={{
-                      textAlign: "center",
-                      background:
-                        "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-                    }}
-                  >
-                    <StudentBadge>
+                    <TableCell
+                      sx={{
+                        textAlign: "center",
+                        padding: "8px 6px",
+                        borderRight: "1px solid #f1f5f9",
+                      }}
+                    >
                       <Typography
                         variant="body1"
                         sx={{
-                          fontWeight: 900,
-                          color: "#78350f",
-                          fontSize: "0.95rem", // Slightly reduced
+                          fontWeight: 600,
+                          color: "#475569",
+                          fontSize: "0.9rem",
                         }}
                       >
-                        {student.shortName}
+                        {index + 1}
                       </Typography>
-                    </StudentBadge>
-                  </HeaderCell>
-                ))}
-              </StudentHeaderGroup>
-
-              {/* Second header row - Subject columns (P and C) for each student */}
-              <TableRow>
-                <HeaderCell
-                  sx={{
-                    background:
-                      "linear-gradient(135deg, #334155 0%, #475569 100%)",
-                  }}
-                ></HeaderCell>
-                <HeaderCell
-                  sx={{
-                    background:
-                      "linear-gradient(135deg, #334155 0%, #475569 100%)",
-                  }}
-                ></HeaderCell>
-                <HeaderCell
-                  sx={{
-                    background:
-                      "linear-gradient(135deg, #334155 0%, #475569 100%)",
-                  }}
-                ></HeaderCell>
-                {revisionStudents.map((student) => (
-                  <React.Fragment key={student.id}>
-                    {student.isCommonStudent ? (
-                      <>
-                        <SubjectHeaderCell>P</SubjectHeaderCell>
-                        <SubjectHeaderCell>C</SubjectHeaderCell>
-                      </>
-                    ) : (
-                      <SubjectHeaderCell>P</SubjectHeaderCell>
-                    )}
-                  </React.Fragment>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {examsList.length > 0 ? (
-                examsList.map((examItem, index) => {
-                  const isToday = examItem.date === todayDate;
-                  const examType = getExamType(examItem.exam);
-
-                  return (
-                    <ExamRow
-                      key={examItem.id}
-                      istoday={isToday}
-                      examtype={examType}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        textAlign: "center",
+                        padding: "8px 6px",
+                        borderRight: "1px solid #f1f5f9",
+                      }}
                     >
-                      <TableCell
-                        sx={{
-                          textAlign: "center",
-                          padding: "8px 6px", // Slightly reduced
-                          borderRight: "1px solid #f1f5f9",
-                        }}
-                      >
+                      <Box>
                         <Typography
                           variant="body1"
                           sx={{
-                            fontWeight: 600,
-                            color: "#475569",
-                            fontSize: "0.9rem", // Slightly reduced
+                            fontWeight: 700,
+                            color: isToday ? "#1e40af" : "#1e293b",
+                            fontSize: "0.9rem",
+                            display: "block",
                           }}
                         >
-                          {index + 1}
+                          {examItem.date}
                         </Typography>
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          textAlign: "center",
-                          padding: "8px 6px", // Slightly reduced
-                          borderRight: "1px solid #f1f5f9",
-                        }}
-                      >
-                        <Box>
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              fontWeight: 700,
-                              color: isToday ? "#1e40af" : "#1e293b",
-                              fontSize: "0.9rem", // Slightly reduced
-                              display: "block",
-                            }}
-                          >
-                            {examItem.date}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: isToday ? "#1e40af" : "#64748b",
-                              fontWeight: isToday ? 600 : 400,
-                              fontSize: "0.8rem", // Slightly reduced
-                              display: "block",
-                            }}
-                          >
-                            {examItem.dayOfWeek}
-                            {isToday && " • Today"}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          padding: "8px 6px", // Slightly reduced
-                          borderRight: "1px solid #f1f5f9",
-                        }}
-                      >
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              fontSize: "0.9rem", // Slightly reduced
-                              fontWeight: 600,
-                              color: "#475569",
-                            }}
-                          >
-                            {examItem.exam}
-                          </Typography>
-                          <ExamTypeBadge examtype={examType}>
-                            {examType.charAt(0).toUpperCase() +
-                              examType.slice(1)}
-                          </ExamTypeBadge>
-                        </Box>
-                      </TableCell>
-                      {revisionStudents.map((student) => (
-                        <React.Fragment key={student.id}>
-                          {student.isCommonStudent ? (
-                            <>
-                              <SubjectCell
-                                examtype={examType}
-                                isediting={
-                                  editingExam[
-                                    `${examItem.id}_${student.id}_physics`
-                                  ]
-                                }
-                              >
-                                {renderSubjectMarks(
-                                  examItem,
-                                  student,
-                                  "physics"
-                                )}
-                              </SubjectCell>
-                              <SubjectCell
-                                examtype={examType}
-                                isediting={
-                                  editingExam[
-                                    `${examItem.id}_${student.id}_chemistry`
-                                  ]
-                                }
-                              >
-                                {renderSubjectMarks(
-                                  examItem,
-                                  student,
-                                  "chemistry"
-                                )}
-                              </SubjectCell>
-                            </>
-                          ) : (
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: isToday ? "#1e40af" : "#64748b",
+                            fontWeight: isToday ? 600 : 400,
+                            fontSize: "0.8rem",
+                            display: "block",
+                          }}
+                        >
+                          {examItem.dayOfWeek}
+                          {isToday && " • Today"}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        padding: "8px 6px",
+                        borderRight: "1px solid #f1f5f9",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontSize: "0.9rem",
+                            fontWeight: 600,
+                            color: "#475569",
+                          }}
+                        >
+                          {examItem.exam}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    {revisionStudents.map((student) => (
+                      <React.Fragment key={student.id}>
+                        {student.isCommonStudent ? (
+                          <>
                             <SubjectCell
                               examtype={examType}
                               isediting={
@@ -963,43 +932,72 @@ const RevisionExamsPage = () => {
                                 ]
                               }
                             >
-                              {renderSubjectMarks(examItem, student, "physics")}
+                              {renderSubjectMarks(
+                                examItem,
+                                student,
+                                "physics"
+                              )}
                             </SubjectCell>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </ExamRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={
-                      3 +
-                      revisionStudents.reduce(
-                        (total, student) =>
-                          total + (student.isCommonStudent ? 2 : 1),
-                        0
-                      )
-                    }
-                    sx={{ py: 4, textAlign: "center" }}
+                            <SubjectCell
+                              examtype={examType}
+                              isediting={
+                                editingExam[
+                                  `${examItem.id}_${student.id}_chemistry`
+                                ]
+                              }
+                            >
+                              {renderSubjectMarks(
+                                examItem,
+                                student,
+                                "chemistry"
+                              )}
+                            </SubjectCell>
+                          </>
+                        ) : (
+                          <SubjectCell
+                            examtype={examType}
+                            isediting={
+                              editingExam[
+                                `${examItem.id}_${student.id}_physics`
+                              ]
+                            }
+                          >
+                            {renderSubjectMarks(examItem, student, "physics")}
+                          </SubjectCell>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </ExamRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={
+                    3 +
+                    revisionStudents.reduce(
+                      (total, student) =>
+                        total + (student.isCommonStudent ? 2 : 1),
+                      0
+                    )
+                  }
+                  sx={{ py: 4, textAlign: "center" }}
+                >
+                  <Typography
+                    variant="body1"
+                    sx={{ color: "#64748b", fontSize: "0.9rem" }}
                   >
-                    <Typography
-                      variant="body1"
-                      sx={{ color: "#64748b", fontSize: "0.9rem" }} // Slightly reduced
-                    >
-                      No {title.toLowerCase()} found
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
-    );
-  };
-
+                    No {title.toLowerCase()} found
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+};
   return (
     <Fade in timeout={800}>
       <StyledPaper sx={{ p: 3 }}>

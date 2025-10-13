@@ -338,8 +338,8 @@ const RevisionClassesPage = () => {
         const nameOrder = {
           gagan: 1,
           amal: 2,
-          sriya: 4,
-          ananya: 3,
+          sriya: 3,
+          ananya: 4,
           nithya: 5,
           navya: 6,
         };

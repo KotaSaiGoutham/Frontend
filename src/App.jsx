@@ -4,11 +4,27 @@ import {
   Routes,
   Route,
   Navigate,
-  useLocation, // <-- Import useLocation
+  useLocation,
 } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux"; // <-- Import useDispatch and useSelector
+import { useDispatch, useSelector } from "react-redux";
 
-// Import your authentication actions
+import ReactGA from "react-ga4";
+
+const GA4_MEASUREMENT_ID = "G-X618BEJF5H"; 
+
+const GATracker = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    ReactGA.send({
+      hitType: "pageview",
+      page: location.pathname + location.search,
+      title: location.pathname,
+    });
+  }, [location]);
+
+  return null; 
+};
 import { logoutUser } from "./redux/actions";
 // Import your components
 import Navbar from "./pages/Navbar";
@@ -17,7 +33,7 @@ import About from "./pages/About";
 import Teachers from "./pages/Teachers";
 import Contact from "./pages/Contact";
 import BookDemo from "./pages/BookDemo";
-import Careers from "./pages/Carrers"; // Ensure this matches your filename and export
+import Careers from "./pages/Carrers";
 import Blog from "./pages/Blog";
 import PageSummarizer from "./pages/Pagesummarizer";
 import PhysicsPage from "./pages/Physics";
@@ -49,7 +65,7 @@ import ExpenditureDashboard from "./components/ExpenditureDashboard";
 import { SnackbarProvider } from "./components/customcomponents/SnackbarContext";
 import Reports from "./components/Reports";
 import StudentExam from "./components/StudentExam";
-import Analytics from "./components/Analytics";
+import AnalyticsComp from "./components/Analytics"; // Renamed to avoid confusion with GA
 import AddStudentExamPage from "./components/AddStudentExamPage";
 import WeekSyllabusPage from "./components/WeekSyallabus";
 import RevisionProgramme from "./components/utils/revisionProgramme";
@@ -57,23 +73,32 @@ import RevisionProgramDetails from "./components/utils/RevisionProgramDetails";
 import RevisionStudentsPage from "./components/revisionStudents/RevisionStudentsPage";
 import RevisionRegistratedStudents from "./components/revisionStudents/RevisionRegistratedStudents";
 const PrivateRoute = ({ children }) => {
-  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get from Redux
-  const token = localStorage.getItem("token"); // Also check localStorage for robustness on initial load
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const token = localStorage.getItem("token");
   return isAuthenticated || token ? children : <Navigate to="/login" />;
 };
 
-// Define an array of base protected paths
-// For dynamic routes like "/student/:id", we'll check if the path starts with "/student/
 function App() {
-  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get auth status from Redux
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+
+  // Initialize GA4 only once when the App component mounts
+  useEffect(() => {
+    // Only initialize if the ID is present
+    if (GA4_MEASUREMENT_ID && GA4_MEASUREMENT_ID !== "YOUR_MEASUREMENT_ID_HERE") {
+      ReactGA.initialize(GA4_MEASUREMENT_ID);
+    }
+  }, []); // Empty dependency array ensures it runs once
 
   return (
     <SnackbarProvider>
       <ThemeProvider theme={theme}>
         <Router>
-          <ScrollToTop /> {/* Handles scrolling on route change */}
+          {/* PLACE THE GA TRACKER HERE, INSIDE ROUTER, BEFORE SCROLLTOTOP, 
+              to capture all route changes in the application. */}
+          <GATracker />
+          <ScrollToTop />
           <div>
-            <Navbar /> {/* Your global Navbar */}
+            <Navbar />
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
@@ -112,24 +137,22 @@ function App() {
                 <Route path="/demo-classes" element={<DemoClassesPage />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/student-exams" element={<StudentExam />} />
-                <Route path="/analytics" element={<Analytics />} />
+                {/* NOTE: Renamed your component to AnalyticsComp to prevent naming conflict with GA */}
+                <Route path="/analytics" element={<AnalyticsComp />} /> 
                 <Route path="/week-syllabus" element={<WeekSyllabusPage />} />
                 <Route
                   path="/add-student-exam"
                   element={<AddStudentExamPage />}
                 />
-                <Route path="/add-demo-class" element={<AddDemoClassPage />} />{" "}
-                {/* NEW ROUTE */}
+                <Route path="/add-demo-class" element={<AddDemoClassPage />} />
                 <Route
                   path="/add-expenditure"
                   element={<AddExpenditure />}
-                />{" "}
-                {/* NEW ROUTE */}
+                />
                 <Route
                   path="/expenditure"
                   element={<ExpenditureDashboard />}
-                />{" "}
-                {/* NEW ROUTE */}
+                />
                 <Route path="/student/:id" element={<StudentPortfolio />} />
                 <Route path="/timetable" element={<TimetablePage />} />
                 <Route path="/employees" element={<Employees />} />
@@ -146,14 +169,13 @@ function App() {
                 />
               </Route>
 
-              {/* Fallback Route: Redirects unhandled paths based on authentication status */}
-              {/* This should be the last route in your Routes list */}
+              {/* Fallback Route */}
               <Route
-                path="*" // Matches any path not matched by previous routes
+                path="*"
                 element={
                   <Navigate
-                    to={isAuthenticated ? "/dashboard" : "/login"} // Redirect to dashboard if logged in, else to login
-                    replace // Replaces the current entry in the history stack
+                    to={isAuthenticated ? "/dashboard" : "/login"}
+                    replace
                   />
                 }
               />

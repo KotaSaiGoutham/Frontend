@@ -1228,7 +1228,7 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
                           ).toLocaleString()}
                         </TableCell>
                       )}
-                      {columnVisibility.classesCompleted && (
+                      {(columnVisibility.classesCompleted && !student.isRevisionProgramJEEMains2026Student) ? (
                         <TableCell
                           align="center"
                           sx={{ fontSize: "0.9rem", whiteSpace: "nowrap" }}
@@ -1324,6 +1324,17 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
                             )}
                           </Box>
                         </TableCell>
+                      ):(
+          <TableCell
+    align="center"
+    sx={{ 
+      fontSize: "0.9rem", 
+      whiteSpace: "nowrap",
+      fontWeight: "medium"
+    }}
+  >
+    {student.revisionClassesCompleted}
+  </TableCell>
                       )}
                                            {" "}
                       {columnVisibility.startDate && (
@@ -1413,7 +1424,7 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
                                   "&:hover": { boxShadow: 1 },
                                 }}
                               />
-                              {student["Payment Status"] === "Unpaid" &&
+                              {(student["Payment Status"] === "Unpaid" && !student.isRevisionProgramJEEMains2026Student) &&
                                 (student.classesCompleted || 0) >= 12 && (
                                   <Typography
                                     variant="caption"
