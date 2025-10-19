@@ -24,21 +24,21 @@ import {
   Drawer,
   Divider,
   FormControlLabel,
-  Checkbox
+  Checkbox,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
-import { 
-  FaGraduationCap, 
-  FaPlus, 
-  FaEdit, 
-  FaCheck, 
+import {
+  FaGraduationCap,
+  FaPlus,
+  FaEdit,
+  FaCheck,
   FaFilter,
   FaSearch,
   FaColumns,
   FaUserCircle,
   FaIdCard,
-  FaUsers
+  FaUsers,
 } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -106,7 +106,10 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
   // Toggle drawer
   const toggleDrawer = (open) => (event) => {
-    if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
+    if (
+      event.type === "keydown" &&
+      (event.key === "Tab" || event.key === "Shift")
+    ) {
       return;
     }
     setIsDrawerOpen(open);
@@ -141,9 +144,9 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
   // Handle column visibility toggle
   const handleColumnToggle = (columnKey) => (event) => {
-    setColumnVisibility(prev => ({
+    setColumnVisibility((prev) => ({
       ...prev,
-      [columnKey]: event.target.checked
+      [columnKey]: event.target.checked,
     }));
   };
 
@@ -166,7 +169,7 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const examTypeOptions = [
     { value: "", label: "All Types" },
     { value: "E-EA", label: "Exam by EA" },
-    { value: "CA", label: "Exam by Collge" },
+    { value: "CA", label: "Exam by Collage" },
   ];
 
   const handleStartEdit = (examId, field) => {
@@ -238,31 +241,43 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     let filteredExams = [...studentExams];
 
     // Revision program date range: 6th October 2025 to 21st January 2026
-    const revisionProgramStartDate = new Date('2025-10-06T00:00:00.000Z');
-    const revisionProgramEndDate = new Date('2026-01-21T23:59:59.999Z');
+    const revisionProgramStartDate = new Date("2025-10-06T00:00:00.000Z");
+    const revisionProgramEndDate = new Date("2026-01-21T23:59:59.999Z");
 
     // Filter by revision program students if the flag is true
-    if (isRevisionProgramJEEMains2026Student && students && students.length > 0) {
+    if (
+      isRevisionProgramJEEMains2026Student &&
+      students &&
+      students.length > 0
+    ) {
       const revisionStudentIds = new Set(
         students
-          .filter(student => student.isRevisionProgramJEEMains2026Student === true)
-          .map(student => student.id)
+          .filter(
+            (student) => student.isRevisionProgramJEEMains2026Student === true
+          )
+          .map((student) => student.id)
       );
 
-      filteredExams = filteredExams.filter(exam => {
-        const isRevisionStudent = exam.studentId && revisionStudentIds.has(exam.studentId) || 
-          (exam.studentName && students && students.find(
-            student => 
-              student.Name === exam.studentName && 
-              student.isRevisionProgramJEEMains2026Student === true
-          ));
+      filteredExams = filteredExams.filter((exam) => {
+        const isRevisionStudent =
+          (exam.studentId && revisionStudentIds.has(exam.studentId)) ||
+          (exam.studentName &&
+            students &&
+            students.find(
+              (student) =>
+                student.Name === exam.studentName &&
+                student.isRevisionProgramJEEMains2026Student === true
+            ));
 
         if (!isRevisionStudent) {
           return false;
         }
 
         const examDate = new Date(exam.examDate);
-        return examDate >= revisionProgramStartDate && examDate <= revisionProgramEndDate;
+        return (
+          examDate >= revisionProgramStartDate &&
+          examDate <= revisionProgramEndDate
+        );
       });
     }
 
@@ -277,7 +292,7 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
       const matchesStatus =
         filters.status === "" ||
         exam.status?.toLowerCase() === filters.status.toLowerCase();
-      
+
       const examType = exam.examType || "E-EA";
       const matchesExamType =
         filters.examType === "" ||
@@ -300,13 +315,13 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
           b.createdAt._seconds * 1000 + b.createdAt._nanoseconds / 1000000
         );
         const createdDateComparison = createdDateB - createdDateA;
-        
+
         if (createdDateComparison === 0) {
           const nameA = a.studentName.toLowerCase();
           const nameB = b.studentName.toLowerCase();
           return nameA.localeCompare(nameB);
         }
-        
+
         return createdDateComparison;
       }
 
@@ -317,11 +332,15 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const dialogData = selectedExam
     ? {
         "Student Name": selectedExam.studentName,
-        "Exam Date": new Date(selectedExam.examDate).toLocaleDateString("en-GB"),
+        "Exam Date": new Date(selectedExam.examDate).toLocaleDateString(
+          "en-GB"
+        ),
         Stream: selectedExam.stream,
       }
     : null;
-
+  const handleExamTypeChange = (e) => {
+    setFilters((prev) => ({ ...prev, examType: e.target.value }));
+  };
   return (
     <Box
       sx={{
@@ -371,41 +390,78 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                 </Typography>
               </Box>
             </Box>
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <MuiButton
-                variant="outlined"
-                startIcon={<FaFilter />}
-                onClick={toggleDrawer(true)}
-                sx={{
-                  borderRadius: "8px",
-                  px: 3,
-                  py: 1.2,
-                  minWidth: "120px",
-                  color: "#1976d2",
-                  borderColor: "#1976d2",
-                  "&:hover": {
-                    borderColor: "#1565c0",
-                    bgcolor: "rgba(25, 118, 210, 0.04)",
-                  },
-                }}
-              >
-                Options & Filters
-              </MuiButton>
-              <MuiButton
-                variant="contained"
-                startIcon={<FaPlus />}
-                onClick={() => navigate("/add-student-exam")}
-                sx={{
-                  bgcolor: "#1976d2",
-                  "&:hover": { bgcolor: "#1565c0" },
-                  borderRadius: "8px",
-                  px: 3,
-                  py: 1.2,
-                  minWidth: "180px",
-                }}
-              >
-                Add Exam Record
-              </MuiButton>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Exam Type Filter - Better aligned */}
+              <FormControl size="small" sx={{ width: 200, mb: 0 }}>
+                <InputLabel sx={{ fontSize: "0.9rem" }}>Exam Type</InputLabel>
+                <Select
+                  value={filters.examType}
+                  label="Exam Type"
+                  onChange={handleExamTypeChange}
+                  sx={{
+                    height: "40px",
+                    borderRadius: "8px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#1976d2",
+                    },
+                    "& .MuiSelect-select": {
+                      paddingTop: "8px",
+                      paddingBottom: "8px",
+                    },
+                  }}
+                >
+                  {examTypeOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                <MuiButton
+                  variant="outlined"
+                  startIcon={<FaFilter />}
+                  onClick={toggleDrawer(true)}
+                  sx={{
+                    height: "40px",
+                    borderRadius: "8px",
+                    px: 2,
+                    minWidth: "auto",
+                    color: "#1976d2",
+                    borderColor: "#1976d2",
+                    "&:hover": {
+                      borderColor: "#1565c0",
+                      bgcolor: "rgba(25, 118, 210, 0.04)",
+                    },
+                  }}
+                >
+                  Options & Filters
+                </MuiButton>
+                <MuiButton
+                  variant="contained"
+                  startIcon={<FaPlus />}
+                  onClick={() => navigate("/add-student-exam")}
+                  sx={{
+                    height: "40px",
+                    bgcolor: "#1976d2",
+                    "&:hover": { bgcolor: "#1565c0" },
+                    borderRadius: "8px",
+                    px: 2,
+                    minWidth: "auto",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Add Exam
+                </MuiButton>
+              </Box>
             </Box>
           </Paper>
         </Slide>
@@ -510,14 +566,6 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
             onChange={handleFilterChange}
             options={statusOptions}
             icon={FaIdCard}
-          />
-          <MuiSelect
-            label="Exam Type"
-            name="examType"
-            value={tempFilters.examType}
-            onChange={handleFilterChange}
-            options={examTypeOptions}
-            icon={FaUsers}
           />
         </Box>
 
@@ -663,10 +711,10 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                       (s) => s.id === exam.studentId
                     );
                     const examType = exam.examType || "E-EA";
-                    
+
                     // Skip rendering if column is hidden
                     if (!columnVisibility.sNo) return null;
-                    
+
                     return (
                       <TableRow
                         key={exam.id}
@@ -698,12 +746,14 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                             <Tooltip
                               title={`Click to view details for ${exam.studentName}`}
                             >
-                              <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center', 
-                                gap: 1.5
-                              }}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: 1.5,
+                                }}
+                              >
                                 <Link
                                   to={`/student/${exam.studentId}`}
                                   state={{ studentData: studentData }}
@@ -711,79 +761,86 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                                     fontWeight: 500,
                                     color: "#34495e",
                                     textDecoration: "none",
-                                    transition: "color 0.2s ease, text-decoration 0.2s ease",
+                                    transition:
+                                      "color 0.2s ease, text-decoration 0.2s ease",
                                   }}
                                   onMouseEnter={(e) => {
                                     e.currentTarget.style.color = "#2980b9";
-                                    e.currentTarget.style.textDecoration = "underline";
+                                    e.currentTarget.style.textDecoration =
+                                      "underline";
                                   }}
                                   onMouseLeave={(e) => {
                                     e.currentTarget.style.color = "#34495e";
-                                    e.currentTarget.style.textDecoration = "none";
+                                    e.currentTarget.style.textDecoration =
+                                      "none";
                                   }}
                                 >
                                   {exam.studentName}
                                 </Link>
                                 {exam.testType && exam.testType.length > 0 && (
-                                  <Box sx={{ 
-                                    display: 'flex', 
-                                    gap: 0.5,
-                                    alignItems: 'center'
-                                  }}>
-                                    {exam.testType.includes('weekendTest') && (
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      gap: 0.5,
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    {exam.testType.includes("weekendTest") && (
                                       <Chip
                                         label="WT"
                                         size="small"
                                         variant="outlined"
                                         sx={{
-                                          height: '20px',
-                                          fontSize: '0.65rem',
-                                          fontWeight: '700',
-                                          color: '#1976d2',
-                                          borderColor: '#1976d2',
-                                          backgroundColor: '#e3f2fd',
-                                          '& .MuiChip-label': {
+                                          height: "20px",
+                                          fontSize: "0.65rem",
+                                          fontWeight: "700",
+                                          color: "#1976d2",
+                                          borderColor: "#1976d2",
+                                          backgroundColor: "#e3f2fd",
+                                          "& .MuiChip-label": {
                                             px: 0.5,
-                                            py: 0.25
-                                          }
+                                            py: 0.25,
+                                          },
                                         }}
                                       />
                                     )}
-                                    {exam.testType.includes('cumulativeTest') && (
+                                    {exam.testType.includes(
+                                      "cumulativeTest"
+                                    ) && (
                                       <Chip
                                         label="CT"
                                         size="small"
                                         variant="outlined"
                                         sx={{
-                                          height: '20px',
-                                          fontSize: '0.65rem',
-                                          fontWeight: '700',
-                                          color: '#7b1fa2',
-                                          borderColor: '#7b1fa2',
-                                          backgroundColor: '#f3e5f5',
-                                          '& .MuiChip-label': {
+                                          height: "20px",
+                                          fontSize: "0.65rem",
+                                          fontWeight: "700",
+                                          color: "#7b1fa2",
+                                          borderColor: "#7b1fa2",
+                                          backgroundColor: "#f3e5f5",
+                                          "& .MuiChip-label": {
                                             px: 0.5,
-                                            py: 0.25
-                                          }
+                                            py: 0.25,
+                                          },
                                         }}
                                       />
                                     )}
-                                    {exam.testType.includes('grandTest') && (
+                                    {exam.testType.includes("grandTest") && (
                                       <Chip
                                         label="GT"
                                         size="small"
                                         variant="outlined"
                                         sx={{
-                                          height: '20px',
-                                          fontSize: '0.65rem',
-                                          fontWeight: '700',
-                                          color: '#2e7d32',
-                                          borderColor: '#2e7d32',
-                                          backgroundColor: '#e8f5e8',
-                                          '& .MuiChip-label': {
+                                          height: "20px",
+                                          fontSize: "0.65rem",
+                                          fontWeight: "700",
+                                          color: "#2e7d32",
+                                          borderColor: "#2e7d32",
+                                          backgroundColor: "#e8f5e8",
+                                          "& .MuiChip-label": {
                                             px: 0.5,
-                                            py: 0.25
-                                          }
+                                            py: 0.25,
+                                          },
                                         }}
                                       />
                                     )}
@@ -800,7 +857,9 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                             align="center"
                             sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
                           >
-                            {new Date(exam.examDate).toLocaleDateString("en-GB")}
+                            {new Date(exam.examDate).toLocaleDateString(
+                              "en-GB"
+                            )}
                           </TableCell>
                         )}
 
@@ -828,28 +887,31 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
                         {/* Exam Type */}
                         {columnVisibility.examType && (
-                          <TableCell align="center" sx={{ fontSize: "0.85rem", padding: "10px 8px" }}>
+                          <TableCell
+                            align="center"
+                            sx={{ fontSize: "0.85rem", padding: "10px 8px" }}
+                          >
                             {examType === "CA" ? (
-                              <Chip 
-                                label="CA" 
-                                size="small" 
-                                sx={{ 
-                                  backgroundColor: '#d32f2f', 
-                                  color: 'white',
-                                  fontSize: '0.7rem',
-                                  fontWeight: 'bold'
-                                }} 
+                              <Chip
+                                label="CA"
+                                size="small"
+                                sx={{
+                                  backgroundColor: "#d32f2f",
+                                  color: "white",
+                                  fontSize: "0.7rem",
+                                  fontWeight: "bold",
+                                }}
                               />
                             ) : (
-                              <Chip 
-                                label="E-EA" 
-                                size="small" 
-                                sx={{ 
-                                  backgroundColor: '#1976d2', 
-                                  color: 'white',
-                                  fontSize: '0.7rem',
-                                  fontWeight: 'bold'
-                                }} 
+                              <Chip
+                                label="E-EA"
+                                size="small"
+                                sx={{
+                                  backgroundColor: "#1976d2",
+                                  color: "white",
+                                  fontSize: "0.7rem",
+                                  fontWeight: "bold",
+                                }}
                               />
                             )}
                           </TableCell>
