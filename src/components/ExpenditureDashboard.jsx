@@ -52,6 +52,7 @@ import MetricCard from "./customcomponents/MetricCard";
 import TableHeadCell from "./customcomponents/TableHeadCell";
 import { DeleteConfirmationDialog } from "./customcomponents/Dialogs";
 import { Link, useNavigate } from "react-router-dom";
+import { useSnackbar } from "./customcomponents/SnackbarContext";
 
 const ExpenditureDashboard = () => {
   const navigate = useNavigate();
@@ -68,35 +69,57 @@ const ExpenditureDashboard = () => {
     message: "",
     severity: "success",
   });
+  const { showSnackbar } = useSnackbar();
+ const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const confirmDelete = () => {
-    if (selectedExpenditure) {
-      dispatch(deleteExpenditure(selectedExpenditure.id));
-      setSnackbar({
-        open: true,
-        message: `Deleted: ${selectedExpenditure.purpose} (₹${selectedExpenditure.amount})`,
-        severity: "success",
-      });
-    }
-    setDeleteDialogOpen(false);
-    setSelectedExpenditure(null);
-  };
   const { user } = useSelector((state) => state.auth);
   const { students } = useSelector((state) => state.students);
 
   const {
     expenditures,
+    manualexpenditures,
     payments,
     loading,
     error,
     totalStudentPayments,
     totalExpenditure,
   } = useSelector((state) => state.expenditures);
-  const filteredExpenditures = expenditures.filter(
-    (row) => row.createdBy === user.subject
-  );
+
+  // Combine and filter both expenditures and manualexpenditures
+  const combinedExpenditures = useMemo(() => {
+    const allExpenditures = [];
+    
+    // Add regular expenditures with type identifier
+    if (expenditures && expenditures.length > 0) {
+      allExpenditures.push(...expenditures.map(exp => ({
+        ...exp,
+        type: 'expenditure',
+        createdBy: exp.createdBy || user.subject
+      })));
+    }
+    
+    // Add manual expenditures with type identifier
+    if (manualexpenditures && manualexpenditures.length > 0) {
+      allExpenditures.push(...manualexpenditures.map(exp => ({
+        ...exp,
+        type: 'manualexpenditure',
+        createdBy: exp.createdBy || user.subject
+      })));
+    }
+    
+    return allExpenditures;
+  }, [expenditures, manualexpenditures, user.subject]);
+
+  // Filter expenditures by current user
+  const filteredExpenditures = useMemo(() => {
+    return combinedExpenditures.filter(
+      (row) => row.createdBy === user.subject
+    );
+  }, [combinedExpenditures, user.subject]);
+
   const { chartData } = useMemo(() => {
-    if (!filteredExpenditures) return { chartData: [] };
+    if (!filteredExpenditures || filteredExpenditures.length === 0) return { chartData: [] };
+    
     const groupedData = filteredExpenditures.reduce((acc, item) => {
       const purpose = item.purpose || "Uncategorized";
       if (!acc[purpose]) {
@@ -142,7 +165,7 @@ const ExpenditureDashboard = () => {
   };
 
   const getPdfTableHeaders = () => {
-    return ["S. No", "Purpose", "Work / Details", "Date", "Amount"];
+    return ["S. No", "Purpose", "Work / Details", "Date", "Amount", "Type"];
   };
 
   const getPdfTableRows = () => {
@@ -153,6 +176,7 @@ const ExpenditureDashboard = () => {
       row.work,
       new Date(row.date).toLocaleDateString("en-GB"),
       row.amount.toLocaleString("en-IN"),
+      row.type === 'manualexpenditure' ? 'Manual Expense' : 'Regular Expense'
     ]);
   };
 
@@ -163,13 +187,30 @@ const ExpenditureDashboard = () => {
     return `${user.name}_Expenditure_${monthName}_${selectedDate.year}.pdf`;
   };
 
-  const handleEdit = (expenditureToEdit) => {
-    navigate("/add-expenditure", { state: { expenditureToEdit } });
-  };
-
   const handleDelete = (expenditure) => {
+    // Check if it's a salary record (non-editable)
+    if (expenditure.isSalary || expenditure.source === 'employeesalarydetails') {
+      showSnackbar("Salary payments cannot be deleted. They are automatically generated.", "warning");
+      return;
+    }
+    
     setSelectedExpenditure(expenditure);
     setDeleteDialogOpen(true);
+  };
+
+  const handleEdit = (expenditureToEdit) => {
+    // Check if it's a salary record (non-editable)
+    if (expenditureToEdit.isSalary || expenditureToEdit.source === 'employeesalarydetails') {
+      showSnackbar("Salary payments cannot be edited. They are automatically generated from employee payments.", "warning");
+      return;
+    }
+    
+    // Navigate to appropriate edit page based on type
+    const editRoute = expenditureToEdit.type === 'manualexpenditure' 
+      ? "/add-manual-expenditure" 
+      : "/add-expenditure";
+    
+    navigate(editRoute, { state: { expenditureToEdit } });
   };
 
   const handleMonthChange = (e) => {
@@ -191,6 +232,7 @@ const ExpenditureDashboard = () => {
         .map((p) => p.studentId)
     );
   }, [payments, students, selectedDate.month, selectedDate.year]);
+
   const paidStudentSum = useMemo(() => {
     const activePaidStudents = students
       .filter((student) => student.isActive === true)
@@ -224,10 +266,12 @@ const ExpenditureDashboard = () => {
     selectedDate.month,
     selectedDate.year,
   ]);
+
   const totalFilteredExpenditure = filteredExpenditures.reduce(
     (sum, row) => sum + (row.amount || 0),
     0
   );
+
   const now = new Date();
   const isCurrentMonthYear =
     selectedDate.month === now.getMonth() + 1 &&
@@ -258,22 +302,46 @@ const ExpenditureDashboard = () => {
       : netProfit > 0
       ? 100
       : null;
-  useEffect(() => {
-    dispatch(
-      fetchExpenditures(
-        selectedDate.year,
-        selectedDate.month,
-        isCurrentMonthYear ? "month" : null
-      )
-    );
-  }, [dispatch, selectedDate.year, selectedDate.month, isCurrentMonthYear]);
+
+
+const confirmDelete = async () => {
+  if (selectedExpenditure) {
+    dispatch(deleteExpenditure(selectedExpenditure.id, selectedExpenditure.type));
+    setSnackbar({
+      open: true,
+      message: `Deleted: ${selectedExpenditure.purpose} (₹${selectedExpenditure.amount})`,
+      severity: "success",
+    });
+    
+    // Trigger refresh after a short delay
+    setTimeout(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 500);
+  }
+  setDeleteDialogOpen(false);
+  setSelectedExpenditure(null);
+};
+
+// Add refreshTrigger to useEffect dependencies
+useEffect(() => {
+  dispatch(
+    fetchExpenditures(
+      selectedDate.year,
+      selectedDate.month,
+      isCurrentMonthYear ? "month" : null
+    )
+  );
+}, [dispatch, selectedDate.year, selectedDate.month, isCurrentMonthYear, refreshTrigger]);
+
   const dialogData = selectedExpenditure
     ? {
         Date: new Date(selectedExpenditure.date).toLocaleDateString("en-GB"),
         Purpose: selectedExpenditure.purpose,
         Amount: `₹${selectedExpenditure.amount.toLocaleString("en-IN")}`,
+        Type: selectedExpenditure.type === 'manualexpenditure' ? 'Manual Expense' : 'Regular Expense'
       }
     : null;
+
   const pendingStudentSum = useMemo(() => {
     const monthString = `${selectedDate.year}-${String(
       selectedDate.month
@@ -301,6 +369,7 @@ const ExpenditureDashboard = () => {
       0
     );
   }, [payments, students, user, selectedDate.month, selectedDate.year]);
+
   const getPreviousMonthData = useCallback(
     (type) => {
       const prevDate = new Date(selectedDate.year, selectedDate.month - 2, 1);
@@ -317,7 +386,7 @@ const ExpenditureDashboard = () => {
         });
         return prevPayments.reduce((sum, p) => sum + p.amount, 0);
       } else if (type === "expenditure") {
-        const prevExpenditures = expenditures.filter((exp) => {
+        const prevExpenditures = combinedExpenditures.filter((exp) => {
           const expDate = new Date(exp.date);
           return (
             expDate.getMonth() + 1 === prevMonth &&
@@ -328,8 +397,9 @@ const ExpenditureDashboard = () => {
       }
       return 0;
     },
-    [selectedDate, payments, expenditures]
+    [selectedDate, payments, combinedExpenditures]
   );
+
   const filteredStudents = useMemo(() => {
     const monthString = `${selectedDate.year}-${String(
       selectedDate.month
@@ -372,7 +442,9 @@ const ExpenditureDashboard = () => {
         return 0;
       });
   }, [students, paidStudentIds, payments, selectedDate, user]);
+
   const showSubjectColumn = user?.AllowAll;
+
   return (
     <Box
       sx={{
@@ -541,7 +613,7 @@ const ExpenditureDashboard = () => {
                         ? "linear-gradient(135deg, #e0f7fa, #b2ebf2)"
                         : "linear-gradient(135deg, #ffebee, #ffcdd2)"
                     }
-                    textColor={netProfit >= 0 ? "success.dark" : "error.dark"}
+                    textColor={netProfit >= 0 ? "green" : "red"}
                     icon={<FaRupeeSign />}
                   />
                 </Grid>
@@ -831,18 +903,25 @@ const ExpenditureDashboard = () => {
                   {filteredExpenditures.length > 0 ? (
                     filteredExpenditures.map((row, index) => (
                       <TableRow
-                        key={row.id}
-                        sx={{ "&:hover": { backgroundColor: "action.hover" } }}
+                        key={`${row.type}-${row.id}`}
+                        sx={{ 
+                          "&:hover": { backgroundColor: "action.hover" },
+                          backgroundColor: "inherit"
+                        }}
                       >
                         <TableCell align="center">{index + 1}</TableCell>
                         <TableCell align="center">
                           {new Date(row.date).toLocaleDateString("en-GB")}
+                          {row.isSalary}
                         </TableCell>
-                        <TableCell align="center">{row.purpose}</TableCell>
+                        <TableCell align="center">
+                          {row.purpose}
+                        </TableCell>
                         <TableCell align="center">{row.work}</TableCell>
                         <TableCell align="center">
                           {row.amount.toLocaleString("en-IN")}
                         </TableCell>
+                  
                         <TableCell align="center" sx={{ py: 1.5 }}>
                           <Box
                             sx={{
@@ -851,17 +930,23 @@ const ExpenditureDashboard = () => {
                               gap: 0.5,
                             }}
                           >
-                            <ActionButtons
-                              onEdit={() => handleEdit(row)}
-                              onDelete={() => handleDelete(row)}
-                            />
+                            {row.isSalary ? (
+                              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                Salary non editable
+                              </Typography>
+                            ) : (
+                              <ActionButtons
+                                onEdit={() => handleEdit(row)}
+                                onDelete={() => handleDelete(row)}
+                              />
+                            )}
                           </Box>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} align="center">
+                      <TableCell colSpan={7} align="center">
                         No expenditures found for this month.
                       </TableCell>
                     </TableRow>
@@ -905,6 +990,7 @@ const ExpenditureDashboard = () => {
         onConfirm={confirmDelete}
         title="Confirm Delete"
         message="Are you sure you want to delete this expenditure?"
+        data={dialogData}
       />
       <Snackbar
         open={snackbar.open}

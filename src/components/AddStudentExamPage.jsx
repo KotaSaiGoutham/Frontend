@@ -13,8 +13,9 @@ import {
 } from "./customcomponents/MuiCustomFormFields";
 import {
   Box,
-  FormControlLabel, // <-- Import this
-  Checkbox, // <-- Import this
+  FormControlLabel,
+  Checkbox,
+  Chip 
 } from "@mui/material";
 import {
   FaUser,
@@ -25,6 +26,7 @@ import {
   FaCalendarAlt,
   FaLightbulb,
   FaCheckSquare,
+  FaUniversity,
 } from "react-icons/fa";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -58,7 +60,8 @@ const StudentExamFormPage = () => {
     examDate: format(new Date(), "yyyy-MM-dd"),
     status: "Pending",
     topic: [],
-    testType: [], // New field for test types
+    testType: [], // For revision program students
+    examType: "E-EA", // New field: E-EA (Exam by EA) or CA (College Exam)
   });
 
   // Check if selected student is a revision program student
@@ -87,6 +90,12 @@ const StudentExamFormPage = () => {
         }
       });
 
+      // Determine exam type for existing records
+      let examType = "E-EA"; // Default for existing records
+      if (examToEdit.examType) {
+        examType = examToEdit.examType;
+      }
+
       setFormData({
         studentId: examToEdit.studentId,
         studentName: examToEdit.studentName,
@@ -102,7 +111,8 @@ const StudentExamFormPage = () => {
         topic: Array.isArray(examToEdit.topic)
           ? examToEdit.topic
           : [examToEdit.topic],
-        testType: examToEdit.testType || [], // Initialize testType from existing data
+        testType: examToEdit.testType || [],
+        examType: examType, // Set exam type
       });
     } else {
       setFormData({
@@ -120,7 +130,8 @@ const StudentExamFormPage = () => {
         examDate: format(new Date(), "yyyy-MM-dd"),
         status: "Pending",
         topic: [],
-        testType: [], // Initialize as empty array
+        testType: [],
+        examType: "E-EA", // Default to E-EA for new exams
       });
     }
   }, [examToEdit, user]);
@@ -173,7 +184,12 @@ const StudentExamFormPage = () => {
     setFormData((prev) => ({ ...prev, [updatedName]: updatedValue }));
   };
 
-  // Handle test type checkbox changes
+  // Handle exam type change
+  const handleExamTypeChange = (e) => {
+    setFormData((prev) => ({ ...prev, examType: e.target.value }));
+  };
+
+  // Handle test type checkbox changes (for revision program students)
   const handleTestTypeChange = (testType) => {
     setFormData((prev) => {
       const currentTestTypes = prev.testType || [];
@@ -239,8 +255,9 @@ const StudentExamFormPage = () => {
         : user.isChemistry
         ? "Chemistry"
         : "Any",
-      testType: formData.testType, // Add test type to backend data
-      isRevisionProgramJEEMains2026Student: isRevisionStudent, // Add revision program flag
+      testType: formData.testType,
+      examType: formData.examType, // Add exam type to backend data
+      isRevisionProgramJEEMains2026Student: isRevisionStudent,
     };
 
     if (MARK_SCHEMES[formData.stream]) {
@@ -337,7 +354,123 @@ const StudentExamFormPage = () => {
                 ? `Edit Exam for ${formData.studentName}`
                 : "Add Student Exam"}
             </h3>
+ <div
+              style={{
+                marginTop: 20,
+                background: "#f0f8ff",
+                padding: "15px",
+                borderRadius: "8px",
+                borderLeft: "4px solid #1976d2",
+                marginBottom:20,
+                paddingBottom:10
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "1.1rem",
+                  fontWeight: "600",
+                  color: "#292551",
+                  marginBottom: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <FaUniversity style={{ marginRight: 8 }} />
+                Exam Type
+              </div>
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.examType === "E-EA"}
+                      onChange={() => handleExamTypeChange({ target: { value: "E-EA" } })}
+                      name="examType"
+                      value="E-EA"
+                      sx={{
+                        p: 0.5,
+                        color: "#1976d2",
+                        "&.Mui-checked": {
+                          color: "#1976d2",
+                        },
+                      }}
+                    />
+                  }
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <span>Exam by EA</span>
+                      {/* <Chip 
+                        label="E-EA" 
+                        size="small" 
+                        sx={{ 
+                          backgroundColor: '#1976d2', 
+                          color: 'white',
+                          fontSize: '0.7rem',
+                          height: '20px'
+                        }} 
+                      /> */}
+                    </Box>
+                  }
+                  sx={{
+                    m: 0,
+                    "& .MuiFormControlLabel-label": {
+                      fontSize: "0.85rem",
+                      color: "#4a4a4a",
+                      fontWeight: "500",
+                    },
+                    border: formData.examType === "E-EA" ? "2px solid #1976d2" : "1px solid #e0e0e0",
+                    borderRadius: "4px",
+                    backgroundColor: formData.examType === "E-EA" ? "#e3f2fd" : "white",
+                    p: 0.5,
+                    minWidth: "160px",
+                    "&:hover": {
+                      borderColor: "#1976d2",
+                      backgroundColor: "#f5f9ff",
+                    },
+                  }}
+                />
 
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.examType === "CA"}
+                      onChange={() => handleExamTypeChange({ target: { value: "CA" } })}
+                      name="examType"
+                      value="CA"
+                      sx={{
+                        p: 0.5,
+                        color: "#d32f2f",
+                        "&.Mui-checked": {
+                          color: "#d32f2f",
+                        },
+                      }}
+                    />
+                  }
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <span>College Exam</span>
+                      
+                    </Box>
+                  }
+                  sx={{
+                    m: 0,
+                    "& .MuiFormControlLabel-label": {
+                      fontSize: "0.85rem",
+                      color: "#4a4a4a",
+                      fontWeight: "500",
+                    },
+                    border: formData.examType === "CA" ? "2px solid #d32f2f" : "1px solid #e0e0e0",
+                    borderRadius: "4px",
+                    backgroundColor: formData.examType === "CA" ? "#ffebee" : "white",
+                    p: 0.5,
+                    minWidth: "160px",
+                    "&:hover": {
+                      borderColor: "#d32f2f",
+                      backgroundColor: "#fff5f5",
+                    },
+                  }}
+                />
+              </Box>
+            </div>
             {/* Student & Stream */}
             <div className="ats-form-grid">
               <MuiSelect
@@ -361,7 +494,9 @@ const StudentExamFormPage = () => {
               />
             </div>
 
-            {/* Test Type Checkboxes - Only for Revision Program Students */}
+            {/* Exam Type Selection */}
+           
+
             {/* Test Type Checkboxes - Only for Revision Program Students */}
             {isRevisionStudent && (
               <div

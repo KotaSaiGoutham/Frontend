@@ -229,6 +229,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
   const combinedAndFilteredTimetables = useMemo(() => {
     // Combine manual and auto-generated timetables
+    console.log("manualTimetables", manualTimetables);
     let combinedTimetables = [...manualTimetables, ...autoTimetables];
 
     // --- Deduplication Logic ---
@@ -265,7 +266,11 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     }
 
     // --- REVISED: Filter by Revision Program Students ---
-    if (isRevisionProgramJEEMains2026Student && students && students.length > 0) {
+    if (
+      isRevisionProgramJEEMains2026Student &&
+      students &&
+      students.length > 0
+    ) {
       // Create a Set of revision program student IDs for faster lookup
       const revisionStudentIds = new Set(
         students
@@ -370,7 +375,6 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
           item.Time?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
     const studentSubjectDataMap = new Map();
     if (students && students.length > 0) {
       students.forEach((student) => {
@@ -414,13 +418,15 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
       return {
         ...item,
-        monthlyFeePerClass:isRevisionStudent?"1000": monthlyFeePerClass,
+        monthlyFeePerClass: isRevisionStudent ? "1000" : monthlyFeePerClass,
         studentId: studentId,
         isRevisionStudent: isRevisionStudent,
       };
     });
 
+    // FIXED SORTING LOGIC - Use the existing getDateFromTimetableItem function
     currentTimetables.sort((a, b) => {
+      // First, sort by date
       const dateA = getDateFromTimetableItem(a);
       const dateB = getDateFromTimetableItem(b);
 
@@ -428,9 +434,38 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
         return dateA.getTime() - dateB.getTime();
       }
 
-      const timeA = parse(a.Time?.split(" to ")[0], "hh:mm a", new Date());
-      const timeB = parse(b.Time?.split(" to ")[0], "hh:mm a", new Date());
-      return timeA.getTime() - timeB.getTime();
+      // Then sort by time - use the actual time values from the Time field
+      const getTimeValue = (item) => {
+        if (!item.Time) return 0;
+
+        try {
+          const [startTimeStr] = item.Time.split(" to ");
+          if (!startTimeStr) return 0;
+
+          // Create a base date and parse the time onto it
+          const baseDate = new Date(2020, 0, 1); // Use any fixed date
+          const timeDate = parse(startTimeStr.trim(), "hh:mm a", baseDate);
+
+          if (isValid(timeDate)) {
+            return timeDate.getTime();
+          }
+
+          // Try 24-hour format as fallback
+          const time24Date = parse(startTimeStr.trim(), "HH:mm", baseDate);
+          if (isValid(time24Date)) {
+            return time24Date.getTime();
+          }
+        } catch (error) {
+          console.warn("Invalid Time format for sorting:", item.Time, error);
+        }
+
+        return 0;
+      };
+
+      const timeA = getTimeValue(a);
+      const timeB = getTimeValue(b);
+
+      return timeA - timeB;
     });
 
     return currentTimetables;
@@ -509,7 +544,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     },
     [dispatch, combinedAndFilteredTimetables]
   );
-
+  console.log("filterDate", filterDate);
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
@@ -519,6 +554,11 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
         setSnackbarMessage("Auto-generated timetable deleted successfully!");
       } else {
         await dispatch(deleteTimetable(timetableToDelete.id)); // Use existing action
+        await dispatch(
+          fetchUpcomingClasses({
+            date: filterDate.toLocaleDateString("en-GB"),
+          })
+        );
         setSnackbarSeverity("success");
         setSnackbarMessage("Manual timetable deleted successfully!");
       }
@@ -734,8 +774,14 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
     if (generated.length > 0) {
       try {
+        // Use the same backend format for both calls
         const dateStrForBackend = format(selectedDate, "yyyy-MM-dd");
         await dispatch(saveOrFetchAutoTimetables(dateStrForBackend, generated));
+
+        // Convert backend format to en-GB format for fetchUpcomingClasses
+        const [year, month, day] = dateStrForBackend.split("-");
+        const formattedDate = `${day}/${month}/${year}`;
+        await dispatch(fetchUpcomingClasses({ date: formattedDate }));
       } catch (err) {
         console.error("Error saving auto timetables:", err);
       }
@@ -1104,14 +1150,15 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                           }}
                         >
                           {item.Student}
-                          {(item.isRevisionStudent && !isRevisionProgramJEEMains2026Student) &&  (
-                            <Chip
-                              size="small"
-                              label="Revision"
-                              color="warning"
-                              sx={{ marginLeft: 1, height: "20px" }}
-                            />
-                          )}
+                          {item.isRevisionStudent &&
+                            !isRevisionProgramJEEMains2026Student && (
+                              <Chip
+                                size="small"
+                                label="Revision"
+                                color="warning"
+                                sx={{ marginLeft: 1, height: "20px" }}
+                              />
+                            )}
                         </TableCell>
                         <TableCell align="center">
                           <Box

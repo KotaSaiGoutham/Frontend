@@ -37,6 +37,7 @@ import {
   Payment,
   School,
   CalendarMonth,
+  Grade,
   Class,
   CurrencyRupee,
   HowToReg 
@@ -107,11 +108,11 @@ const NavButton = styled(MuiButton)(({ theme, isActive }) => ({
 }));
 
 const navItems = [
-  { id: "students", label: "Students", icon: <School /> },
-  { id: "timetables", label: "Timetables", icon: <CalendarMonth /> },
-  { id: "classes", label: "Classes", icon: <Class /> },
-  { id: "marks", label: "Marks", icon: <Class /> },
-  { id: "fee_details", label: "Fee Details", icon: <CurrencyRupee /> },
+{ id: "students", label: "Students", icon: <School /> },
+{ id: "timetables", label: "Timetables", icon: <CalendarMonth /> },
+{ id: "classes", label: "Classes", icon: <Class /> },
+{ id: "marks", label: "Marks", icon: <Grade /> }, // Best option
+{ id: "fee_details", label: "Fee Details", icon: <CurrencyRupee /> },
   // { id: "registered_students", label: "Registered Students", icon: <HowToReg  /> },
 
 ];

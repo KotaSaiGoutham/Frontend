@@ -443,17 +443,12 @@ const AddTimetablePage = () => {
   const validateForm = () => {
     const { date, facultyId, fromTime, toTime, subject, topic, student } =
       formData;
+      console.log(",formData",formData)
 
     if (
       !date ||
-      !facultyId ||
-      facultyId === "" ||
-      !subject ||
-      subject === "" ||
       !topic ||
-      topic === "" ||
-      !student ||
-      student === ""
+      !student 
     ) {
       setFormError("All fields are required.");
       return false;

@@ -342,6 +342,9 @@ export const clearAuthError = () => ({
 export const resetLoadingState = () => ({
   type: RESET_LOADING_STATE,
 });
+export const resetEmployeeLoadingState = () => ({
+  type: 'RESET_EMPlOYEE_LOADING_STATE',
+});
 export const loginUser = ({ username, password }) =>
   apiRequest({
     url: "/api/auth/login",
@@ -675,10 +678,11 @@ export const addWeeklyMarks = (studentId, newMark) =>
     authRequired: true,
   });
 
-// --- 7. Employee Action Creator (Updated - no mock fallback) ---
+// In your redux/actions.js
+
 export const fetchEmployees = () =>
   apiRequest({
-    url: "/api/data/empolyees",
+    url: "/api/data/employees", // Make sure this is correct
     method: "GET",
     onStart: FETCH_EMPLOYEES_REQUEST,
     onSuccess: (data, dispatch) => {
@@ -689,43 +693,86 @@ export const fetchEmployees = () =>
     },
     onFailure: (error, dispatch) => {
       console.error("Error fetching employees from API:", error);
-      const errorMessage =
-        error.error || error.message || "Failed to fetch employees";
-      if (error.status === 401 || error.status === 403) {
+      
+      // Extract error message properly
+      let errorMessage = "Failed to fetch employees";
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object') {
+        errorMessage = JSON.stringify(error);
+      }
+      
+      if (error?.status === 401 || error?.status === 403) {
         dispatch(setAuthError("Session expired please login again"));
       }
       dispatch({
         type: FETCH_EMPLOYEES_FAILURE,
-        payload: { error: errorMessage },
+        payload: { error: errorMessage }, // Ensure this is a string
       });
     },
     authRequired: true,
   });
 
-// --- NEW: Add Employee Action Creator ---
+export const updateEmployeeData = (employeeId, updatedData) =>
+  apiRequest({
+    url: `/api/data/employees/${employeeId}`,
+    method: "PATCH",
+    data: updatedData,
+    onStart: UPDATE_EMPLOYEE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_EMPLOYEE_SUCCESS,
+        payload: data,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error(`Error updating employee ${employeeId}:`, error);
+      
+      // Extract error message properly
+      let errorMessage = "Failed to update employee";
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object') {
+        errorMessage = JSON.stringify(error);
+      }
+      
+      dispatch({
+        type: UPDATE_EMPLOYEE_FAILURE,
+        payload: {
+          employeeId,
+          error: errorMessage, // Ensure this is a string
+        },
+      });
+    },
+  });
+
 export const addEmployee = (employeeData) =>
   apiRequest({
     url: "/api/data/addEmployee",
     method: "POST",
-    data: employeeData, // The employee data to send in the request body
+    data: employeeData,
     onStart: ADD_EMPLOYEE_REQUEST,
     onSuccess: (data, dispatch) => {
       dispatch({
         type: ADD_EMPLOYEE_SUCCESS,
         payload: data,
       });
-      // Optionally, refetch the entire employee list to update UI
       dispatch(fetchEmployees());
     },
     onFailure: (error, dispatch) => {
       console.error("Error adding employee:", error);
-      const errorMessage =
-        error.error || error.message || "Failed to add employee";
+      const errorMessage = error.error || error.message || "Failed to add employee";
       if (error.status === 401 || error.status === 403) {
         dispatch(
-          setAuthError(
-            "Authentication failed or session expired. Please log in again."
-          )
+          setAuthError("Authentication failed or session expired. Please log in again.")
         );
       }
       dispatch({
@@ -839,9 +886,7 @@ export const deleteTimetable = (timetableId) =>
         payload: timetableId, // Send the ID of the deleted item for potential UI updates
       });
       // Re-fetch to update the list immediately after successful deletion
-      dispatch(
-        fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
-      );
+   
     },
     onFailure: (error, dispatch) => {
       console.error("Error deleting timetable entry:", error);
@@ -1418,6 +1463,8 @@ export const addStudentExam = (examData) =>
               maths: examData.maths || 0,
               total: examData.total || 0,
               subject: examData.Subject,
+                            stream: examData.stream,
+
             }
           }
         });
@@ -1596,32 +1643,7 @@ export const updateWeeklySyllabus = (studentId, updatedLessons) =>
     },
   });
 
-export const updateEmployeeData = (employeeId, updatedData) =>
-  apiRequest({
-    url: `/api/data/employees/${employeeId}`, // The backend endpoint
-    method: "PATCH", // Use PATCH for partial updates
-    data: updatedData, // Send only the updated fields (e.g., { salary: 5000 } or { paid: true })
-    onStart: UPDATE_EMPLOYEE_REQUEST, // ✅ make it same style as demo
 
-    onSuccess: (data, dispatch) => {
-      // Assuming your backend returns the updated employee object directly
-      dispatch({
-        type: UPDATE_EMPLOYEE_SUCCESS,
-        payload: data, // The backend response should be the updated object
-      });
-    },
-
-    onFailure: (error, dispatch) => {
-      console.error(`Error updating employee ${employeeId}:`, error);
-      dispatch({
-        type: UPDATE_EMPLOYEE_FAILURE,
-        payload: {
-          employeeId, // Pass the ID to the reducer to handle the error state for this employee
-          error: error?.error || error?.message || "Failed to update employee",
-        },
-      });
-    },
-  });
 export const fetchStudentExamsByStudent = (studentId) =>
   apiRequest({
     url: `/api/data/getstudentexamsbyid?studentId=${studentId}`,

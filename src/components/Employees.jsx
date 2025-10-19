@@ -35,6 +35,7 @@ import {
   IconButton,
   TextField,
   TableSortLabel, // This is already imported, good.
+  Tooltip,
 } from "@mui/material";
 
 import {
@@ -54,7 +55,8 @@ const Employees = () => {
   const employees = useSelector((state) => state.employees.employees);
   const employeesLoading = useSelector((state) => state.employees.loading);
   const employeesError = useSelector((state) => state.employees.error);
-  const [editingRow, setEditingRow] = useState(null);
+  const [editingRow, setEditingRow] = useState(null);
+  const [newSalary, setNewSalary] = useState(""); // Add this line
 
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [filters, setFilters] = useState({
@@ -63,7 +65,10 @@ const Employees = () => {
     paymentStatus: "",
   });
   // ✅ Change initial sort key to 'name' to have it sorted by default if desired
-  const [sortConfig, setSortConfig] = useState({ key: "name", direction: "asc" });
+  const [sortConfig, setSortConfig] = useState({
+    key: "name",
+    direction: "asc",
+  });
 
   const uniqueRoles = React.useMemo(() => {
     return [...new Set(employees.map((emp) => emp.role))].sort();
@@ -73,65 +78,58 @@ const Employees = () => {
     dispatch(fetchEmployees());
   }, [dispatch, navigate]);
 
- useEffect(() => {
-    let tempEmployees = [...employees];
+  useEffect(() => {
+    let tempEmployees = [...employees];
 
-    if (filters.name) {
-      tempEmployees = tempEmployees.filter((employee) =>
-        employee.name.toLowerCase().includes(filters.name.toLowerCase())
-      );
-    }
-    if (filters.role) {
-      tempEmployees = tempEmployees.filter(
-        (employee) => employee.role === filters.role
-      );
-    }
-    if (filters.paymentStatus) {
-      const isPaid = filters.paymentStatus === "paid";
-      tempEmployees = tempEmployees.filter(
-        (employee) => employee.paid === isPaid
-      );
-    }
+    if (filters.name) {
+      tempEmployees = tempEmployees.filter((employee) =>
+        employee.name.toLowerCase().includes(filters.name.toLowerCase())
+      );
+    }
+    if (filters.role) {
+      tempEmployees = tempEmployees.filter(
+        (employee) => employee.role === filters.role
+      );
+    }
+    if (filters.paymentStatus) {
+      const isPaid = filters.paymentStatus === "paid";
+      tempEmployees = tempEmployees.filter(
+        (employee) => employee.paid === isPaid
+      );
+    } // Custom sort logic: Sort by 'paid' status first (paid employees on top), // then by 'lastPaid' date for paid employees, and finally by other columns.
 
-    // Custom sort logic: Sort by 'paid' status first (paid employees on top),
-    // then by 'lastPaid' date for paid employees, and finally by other columns.
-    if (sortConfig.key) {
-      tempEmployees.sort((a, b) => {
-        // First, sort by paid status to keep paid employees on top
-        if (a.paid !== b.paid) {
-          return a.paid ? -1 : 1; // -1 for a, a.paid = true, a comes before b
-        }
+    if (sortConfig.key) {
+      tempEmployees.sort((a, b) => {
+        // First, sort by paid status to keep paid employees on top
+        if (a.paid !== b.paid) {
+          return a.paid ? -1 : 1; // -1 for a, a.paid = true, a comes before b
+        } // If both are paid or both are unpaid, apply the user's sort
 
-        // If both are paid or both are unpaid, apply the user's sort
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key]; // Handle string sorting (e.g., name)
 
-        // Handle string sorting (e.g., name)
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          const comparison = aValue.localeCompare(bValue);
-          return sortConfig.direction === "asc" ? comparison : -comparison;
-        }
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          const comparison = aValue.localeCompare(bValue);
+          return sortConfig.direction === "asc" ? comparison : -comparison;
+        } // Handle number sorting (e.g., salary) and date sorting (lastPaid) // For 'lastPaid', we want to sort in descending order by default for the latest date.
 
-        // Handle number sorting (e.g., salary) and date sorting (lastPaid)
-        // For 'lastPaid', we want to sort in descending order by default for the latest date.
-        if (sortConfig.key === 'lastPaid') {
-          const dateA = aValue ? parseISO(aValue).getTime() : 0;
-          const dateB = bValue ? parseISO(bValue).getTime() : 0;
-          return sortConfig.direction === "asc" ? dateA - dateB : dateB - dateA;
-        }
+        if (sortConfig.key === "lastPaid") {
+          const dateA = aValue ? parseISO(aValue).getTime() : 0;
+          const dateB = bValue ? parseISO(bValue).getTime() : 0;
+          return sortConfig.direction === "asc" ? dateA - dateB : dateB - dateA;
+        } // Fallback for other numerical values like salary
 
-        // Fallback for other numerical values like salary
-        if (aValue < bValue) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    setFilteredEmployees(tempEmployees);
-  }, [filters, employees, sortConfig]);
+        if (aValue < bValue) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    setFilteredEmployees(tempEmployees);
+  }, [filters, employees, sortConfig]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -154,25 +152,61 @@ const Employees = () => {
     setSortConfig({ key, direction });
   };
 
-  // --- Handlers for new functionality ---
-  const handleEditClick = (employee) => {
-    setEditingRow(employee.id);
-    setNewSalary(employee.salary);
-  };
-
   const handleSaveClick = async (employeeId) => {
+    if (!newSalary || isNaN(newSalary)) {
+      alert("Please enter a valid salary");
+      return;
+    }
     await dispatch(
       updateEmployeeData(employeeId, { salary: Number(newSalary) })
     );
     setEditingRow(null);
+    setNewSalary(""); // Reset the salary state
   };
 
-  const handlePaidToggle = (employee) => {
+  // Add this helper function
+  const isEmployeePaidThisMonth = (employee) => {
+    return employee.paid === true;
+  };
+
+  // Update the handlePaidToggle function
+  const handlePaidToggle = async (employee) => {
+    // If already paid, don't allow toggling back to unpaid
+    if (employee.paid) {
+      alert(
+        "Employee already paid for this month. Payment status will reset automatically on 1st of next month."
+      );
+      return;
+    }
+
     const newPaidStatus = !employee.paid;
-    const updatedData = {
-      paid: newPaidStatus,
-    };
-    dispatch(updateEmployeeData(employee.id, updatedData));
+
+    try {
+      await dispatch(updateEmployeeData(employee.id, { paid: newPaidStatus }));
+
+      if (newPaidStatus) {
+        alert(`Payment marked as paid for ${employee.name}`);
+      }
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      alert(error.message || "Failed to update payment status");
+    }
+  };
+
+  // Update the salary editing logic to check payment status
+  const handleEditClick = (employee) => {
+    // Allow salary editing even if paid, but show warning
+    if (employee.paid && isEmployeePaidThisMonth(employee)) {
+      if (
+        !window.confirm(
+          "This employee has already been paid for this month. Changing salary will not affect this month's payment. Continue?"
+        )
+      ) {
+        return;
+      }
+    }
+    setEditingRow(employee.id);
+    setNewSalary(employee.salary.toString());
   };
 
   // --- Conditional Rendering for Loading and Error States ---
@@ -198,8 +232,23 @@ const Employees = () => {
     );
   }
 
+  // In your Employees.js component, replace the error section with:
+
   if (employeesError) {
-    const displayError = employeesError;
+    // Safely extract error message
+    let displayError = "An error occurred while fetching employees";
+
+    if (typeof employeesError === "string") {
+      displayError = employeesError;
+    } else if (employeesError?.error) {
+      displayError = employeesError.error;
+    } else if (employeesError?.message) {
+      displayError = employeesError.message;
+    } else if (typeof employeesError === "object") {
+      // If it's an object, stringify it for display
+      displayError = JSON.stringify(employeesError);
+    }
+
     return (
       <Box
         sx={{
@@ -241,7 +290,6 @@ const Employees = () => {
       </Box>
     );
   }
-
   return (
     <Box
       sx={{
@@ -378,11 +426,15 @@ const Employees = () => {
                       textAlign: "center",
                     }}
                     // ✅ Add the sort direction and onClick handler here
-                    sortDirection={sortConfig.key === "name" ? sortConfig.direction : false}
+                    sortDirection={
+                      sortConfig.key === "name" ? sortConfig.direction : false
+                    }
                   >
                     <TableSortLabel
                       active={sortConfig.key === "name"}
-                      direction={sortConfig.key === "name" ? sortConfig.direction : "asc"}
+                      direction={
+                        sortConfig.key === "name" ? sortConfig.direction : "asc"
+                      }
                       onClick={() => handleSort("name")}
                       sx={{
                         "& .MuiTableSortLabel-icon": {
@@ -397,7 +449,8 @@ const Employees = () => {
                           justifyContent: "center",
                         }}
                       >
-                        <FaUserTie style={{ marginRight: "8px" }} /> Employee Name
+                        <FaUserTie style={{ marginRight: "8px" }} /> Employee
+                        Name
                       </Box>
                     </TableSortLabel>
                   </TableCell>
@@ -511,7 +564,8 @@ const Employees = () => {
                       backgroundColor: index % 2 === 0 ? "#FFFFFF" : "#f7f8fc",
                       "&:hover": { backgroundColor: "#e3f2fd !important" },
                       "& > td": {
-                        borderBottom: "1px solid rgba(0, 0, 0, 0.05) !important",
+                        borderBottom:
+                          "1px solid rgba(0, 0, 0, 0.05) !important",
                       },
                     }}
                   >
@@ -581,39 +635,59 @@ const Employees = () => {
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
                       <Typography variant="body2">
-                        {employee.lastPaid && typeof employee.lastPaid === "string"
+                        {employee.lastPaid &&
+                        typeof employee.lastPaid === "string"
                           ? format(parseISO(employee.lastPaid), "MMM dd, yyyy")
                           : "N/A"}
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
-                      <Box
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          px: 1.5,
-                          py: 0.5,
-                          borderRadius: "16px",
-                          fontWeight: "bold",
-                          fontSize: "0.85rem",
-                          cursor: "pointer",
-                          backgroundColor: employee.paid ? "#e8f5e9" : "#ffebee",
-                          color: employee.paid ? "#2e7d32" : "#d32f2f",
-                          "&:hover": {
-                            opacity: 0.8,
-                          },
-                        }}
-                        onClick={() => handlePaidToggle(employee)}
+                      <Tooltip
+                        title={
+                          employee.paid
+                            ? "Already paid for this month. Will reset to unpaid on 1st of next month."
+                            : "Click to mark as paid for current month"
+                        }
+                        placement="bottom"
+                        arrow
                       >
-                        {employee.paid ? <FaCheckCircle /> : <FaTimesCircle />}
-                        <Typography
-                          variant="body2"
-                          component="span"
-                          sx={{ ml: 1, fontWeight: "bold" }}
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: "16px",
+                            fontWeight: "bold",
+                            fontSize: "0.85rem",
+                            cursor: employee.paid ? "not-allowed" : "pointer",
+                            backgroundColor: employee.paid
+                              ? "#e8f5e9"
+                              : "#ffebee",
+                            color: employee.paid ? "#2e7d32" : "#d32f2f",
+                            opacity: employee.paid ? 0.6 : 1,
+                            "&:hover": {
+                              opacity: employee.paid ? 0.6 : 0.8,
+                            },
+                          }}
+                          onClick={() =>
+                            !employee.paid && handlePaidToggle(employee)
+                          }
                         >
-                          {employee.paid ? "Paid" : "Unpaid"}
-                        </Typography>
-                      </Box>
+                          {employee.paid ? (
+                            <FaCheckCircle />
+                          ) : (
+                            <FaTimesCircle />
+                          )}
+                          <Typography
+                            variant="body2"
+                            component="span"
+                            sx={{ ml: 1, fontWeight: "bold" }}
+                          >
+                            {employee.paid ? "Paid" : "Unpaid"}
+                          </Typography>
+                        </Box>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -6,7 +6,7 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // This defaults to localStorage for web
 import rootReducer from './rootReducer';
 import apiMiddleware from './middleware/apiMiddleware'; // Your custom API middleware
-import { resetLoadingState } from './actions';
+import { resetLoadingState,resetEmployeeLoadingState } from './actions';
 // 1. Configuration for redux-persist
 const persistConfig = {
   key: 'root', // The key for the localStorage entry (e.g., 'root' or 'myAppName')
@@ -29,4 +29,5 @@ export const store = createStore(
 export const persistor = persistStore(store, null, () => {
   // This callback is executed after the store has been rehydrated
   store.dispatch(resetLoadingState());
+  store.dispatch(resetEmployeeLoadingState())
 });
