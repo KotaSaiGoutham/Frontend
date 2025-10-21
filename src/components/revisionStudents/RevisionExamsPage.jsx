@@ -440,7 +440,7 @@ const RevisionExamsPage = () => {
 
     return averages;
   }, [examData, exams, revisionStudents]);
-// Calculate expected marks for finals (240 target) - FIXED FOR JEE
+// Calculate expected marks for finals (200 target) - FIXED FOR JEE
 const calculateExpectedMarks = useMemo(() => {
   const expected = {};
   
@@ -458,9 +458,9 @@ const calculateExpectedMarks = useMemo(() => {
 
     if (currentAvg.count > 0) {
       if (student.isCommonStudent) {
-        // For common students: Physics (120) + Chemistry (120) = Total 240
-        const predictedPhysics = Math.round((currentAvg.physics / 100) * 120);
-        const predictedChemistry = Math.round((currentAvg.chemistry / 100) * 120);
+        // For common students: Physics (100) + Chemistry (100) = Total 200
+        const predictedPhysics = Math.round((currentAvg.physics / 100) * 100);
+        const predictedChemistry = Math.round((currentAvg.chemistry / 100) * 100);
         const predictedTotal = predictedPhysics + predictedChemistry;
 
         expected[student.id] = {
@@ -469,12 +469,12 @@ const calculateExpectedMarks = useMemo(() => {
           predictedChemistry,
           currentAverage: currentAvg.total,
           currentPercentage: Math.round((currentAvg.total / 200) * 100),
-          improvementNeeded: 240 - predictedTotal,
-          progressPercentage: Math.round((predictedTotal / 240) * 100),
+          improvementNeeded: 200 - predictedTotal,
+          progressPercentage: Math.round((predictedTotal / 200) * 100),
         };
       } else {
-        // For single subject students: Total 120 only
-        const predictedTotal = Math.round((currentAvg.physics / 100) * 120);
+        // For single subject students: Total 100 only
+        const predictedTotal = Math.round((currentAvg.physics / 100) * 100);
         
         expected[student.id] = {
           predictedTotal,
@@ -482,8 +482,8 @@ const calculateExpectedMarks = useMemo(() => {
           predictedChemistry: 0,
           currentAverage: currentAvg.physics,
           currentPercentage: Math.round(currentAvg.physics),
-          improvementNeeded: 120 - predictedTotal,
-          progressPercentage: Math.round((predictedTotal / 120) * 100),
+          improvementNeeded: 100 - predictedTotal,
+          progressPercentage: Math.round((predictedTotal / 100) * 100),
         };
       }
     } else {
@@ -494,7 +494,7 @@ const calculateExpectedMarks = useMemo(() => {
         predictedChemistry: 0,
         currentAverage: 0,
         currentPercentage: 0,
-        improvementNeeded: student.isCommonStudent ? 240 : 120,
+        improvementNeeded: student.isCommonStudent ? 200 : 100,
         progressPercentage: 0,
       };
     }
@@ -858,7 +858,7 @@ const renderPredictionsRow = () => {
       <TableCell colSpan={3} sx={{ textAlign: 'left', fontWeight: 700, padding: '16px 8px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <EmojiEvents sx={{ fontSize: 20, color: '#f59e0b' }} />
-          Final JEE Predictions (Target: {revisionStudents.some(s => !s.isCommonStudent) ? '120 (Single) / 240 (Common)' : '240'})
+          Final JEE Predictions (Target: {revisionStudents.some(s => !s.isCommonStudent) ? '100 (Single) / 200 (Common)' : '200'})
           <Typography variant="caption" sx={{ color: '#64748b', ml: 1 }}>
             Based on current performance
           </Typography>
@@ -871,14 +871,14 @@ const renderPredictionsRow = () => {
             <TableCell sx={{ textAlign: 'center', padding: '16px 8px', fontWeight: 600 }}>
               <Box>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: '#dc2626' }}>
-                  {prediction?.predictedPhysics || 0}/120
+                  {prediction?.predictedPhysics || 0}/100
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#64748b' }}>
-                  {Math.round((prediction?.predictedPhysics / 120) * 100)}%
+                  {Math.round((prediction?.predictedPhysics / 100) * 100)}%
                 </Typography>
                 <LinearProgress 
                   variant="determinate" 
-                  value={prediction ? Math.min(100, (prediction.predictedPhysics / 120) * 100) : 0}
+                  value={prediction ? Math.min(100, (prediction.predictedPhysics / 100) * 100) : 0}
                   sx={{ 
                     height: 6, 
                     borderRadius: 3, 
@@ -895,14 +895,14 @@ const renderPredictionsRow = () => {
             <TableCell sx={{ textAlign: 'center', padding: '16px 8px', fontWeight: 600 }}>
               <Box>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: '#dc2626' }}>
-                  {prediction?.predictedChemistry || 0}/120
+                  {prediction?.predictedChemistry || 0}/100
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#64748b' }}>
-                  {Math.round((prediction?.predictedChemistry / 120) * 100)}%
+                  {Math.round((prediction?.predictedChemistry / 100) * 100)}%
                 </Typography>
                 <LinearProgress 
                   variant="determinate" 
-                  value={prediction ? Math.min(100, (prediction.predictedChemistry / 120) * 100) : 0}
+                  value={prediction ? Math.min(100, (prediction.predictedChemistry / 100) * 100) : 0}
                   sx={{ 
                     height: 6, 
                     borderRadius: 3, 
@@ -921,7 +921,7 @@ const renderPredictionsRow = () => {
           <TableCell key={student.id} sx={{ textAlign: 'center', padding: '16px 8px', fontWeight: 600 }}>
             <Box>
               <Typography variant="body2" sx={{ fontWeight: 700, color: '#dc2626' }}>
-                {prediction?.predictedTotal || 0}/120
+                {prediction?.predictedTotal || 0}/100
               </Typography>
               <Typography variant="caption" sx={{ color: '#64748b' }}>
                 {prediction?.currentPercentage || 0}% current
@@ -941,7 +941,7 @@ const renderPredictionsRow = () => {
                 }} 
               />
               <Typography variant="caption" sx={{ color: '#64748b', mt: 0.5, display: 'block' }}>
-                Need: +{prediction?.improvementNeeded || 120}
+                Need: +{prediction?.improvementNeeded || 100}
               </Typography>
             </Box>
           </TableCell>

@@ -1,4 +1,3 @@
-// PaymentHistoryTable.jsx  (drop this in src/components or similar)
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import dayjs from "dayjs";
@@ -14,31 +13,54 @@ import {
 } from "@mui/material";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
-
-const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
-  /* Build rows + running total in one go */
+const PaymentHistoryTable = ({ payments = [] }) => {
+  /* Build rows + calculate total paid from actual 'amount' */
   const { rows, totalPaid } = useMemo(() => {
     let total = 0;
 
     const rows = payments
       .map((p) => {
-        const paid = p.status ? p.status === "Paid" : p.Paid === 1;
-        const jsDate = (p.date || p.rawDate);
+        // --- FIX 1: Use 'paidOn' as the date field ---
+        const jsDate = p.paidOn; 
         if (!jsDate) return null; // skip malformed
 
-        if (paid) total += monthlyFee;
+        // All records you provided have an 'amount', so we treat them as Paid for this table.
+        // If you need a proper status, your API should return a 'status' or 'isPaid' flag.
+        // Based on your data structure, we assume a record existing here means a payment was made.
+        const paid = p.amount > 0;
+        
+        // --- FIX 2: Calculate total Paid from actual 'amount' field ---
+        const amount = p.amount || 0;
+        if (paid) total += amount;
 
         return {
-          id: p.id || `${jsDate.getTime()}_${paid}`,
+          id: p.id,
+          // Format the 'paidOn' date
           date: dayjs(jsDate).format("DD MMM YYYY"),
+          // Include the actual month for clarity (optional, but helpful)
+          month: p.month,
           paid,
+          amount: amount,
         };
       })
-      .filter(Boolean)
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
+      .filter(Boolean);
+      
+    // NOTE: We don't re-sort here. The component now assumes the 'payments' array
+    // is already sorted by the API in DESCENDING order (newest first).
+    // If you need to re-sort to oldest-first, change the sort logic to:
+    // .sort((a, b) => new Date(a.date) - new Date(b.date)); 
+    // but DESCENDING is usually better for history.
 
     return { rows, totalPaid: total };
-  }, [payments, monthlyFee]);
+  }, [payments]);
+
+  // Use a number formatter for better currency display
+  const currencyFormatter = new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
 
   if (!rows.length) {
     return (
@@ -74,36 +96,17 @@ const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
               backgroundColor: "#f5faff",
             }}
           >
-            <TableCell
-              sx={{
-                fontWeight: "bold",
-                color: "#1a237e",
-                fontSize: "1.05rem",
-                padding: "12px 8px",
-              }}
-            >
-              Date
+            <TableCell sx={{ fontWeight: "bold", color: "#1a237e", fontSize: "1.05rem", padding: "12px 8px" }}>
+              Month
             </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: "bold",
-                color: "#1a237e",
-                fontSize: "1.05rem",
-                padding: "12px 8px",
-              }}
-            >
+            <TableCell sx={{ fontWeight: "bold", color: "#1a237e", fontSize: "1.05rem", padding: "12px 8px" }}>
+              Date Paid
+            </TableCell>
+            <TableCell sx={{ fontWeight: "bold", color: "#1a237e", fontSize: "1.05rem", padding: "12px 8px" }}>
               Status
             </TableCell>
-            <TableCell
-              align="right"
-              sx={{
-                fontWeight: "bold",
-                color: "#1a237e",
-                fontSize: "1.05rem",
-                padding: "12px 8px",
-              }}
-            >
-              Amount&nbsp;(₹)
+            <TableCell align="right" sx={{ fontWeight: "bold", color: "#1a237e", fontSize: "1.05rem", padding: "12px 8px" }}>
+              Amount
             </TableCell>
           </TableRow>
         </TableHead>
@@ -119,6 +122,11 @@ const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
                 "&:hover": { backgroundColor: "#e1f5fe" },
               }}
             >
+              {/* Added Month Column */}
+              <TableCell sx={{ fontSize: "0.95rem", fontWeight: 500 }}>
+                {dayjs(r.month, 'YYYY-MM').format('MMM YYYY')}
+              </TableCell>
+
               <TableCell sx={{ fontSize: "0.95rem" }}>{r.date}</TableCell>
 
               <TableCell
@@ -130,19 +138,15 @@ const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
                   gap: 1,
                 }}
               >
-                {r.paid ? (
-                  <FaCheckCircle style={{ fontSize: 16 }} />
-                ) : (
-                  <FaTimesCircle style={{ fontSize: 16 }} />
-                )}
-                {r.paid ? "Paid" : "Unpaid"}
+                <FaCheckCircle style={{ fontSize: 16, color: '#4CAF50' }} />
+                Paid
               </TableCell>
 
               <TableCell
                 align="right"
-                sx={{ fontSize: "0.95rem", fontWeight: r.paid ? 500 : 400 }}
+                sx={{ fontSize: "0.95rem", fontWeight: 500 }}
               >
-                {r.paid ? monthlyFee.toLocaleString() : "—"}
+                {currencyFormatter.format(r.amount)}
               </TableCell>
             </TableRow>
           ))}
@@ -150,7 +154,7 @@ const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
           {/* ───────── total row ───────── */}
           <TableRow>
             <TableCell
-              colSpan={2}
+              colSpan={3} // Span is now 3 because we added a 'Month' column
               sx={{
                 fontWeight: "bold",
                 backgroundColor: "#e3f2fd",
@@ -165,9 +169,10 @@ const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
                 fontWeight: "bold",
                 backgroundColor: "#e3f2fd",
                 color: "#1a237e",
+                fontSize: "1.05rem"
               }}
             >
-              {totalPaid.toLocaleString()}
+              {currencyFormatter.format(totalPaid)}
             </TableCell>
           </TableRow>
         </TableBody>
@@ -177,8 +182,14 @@ const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
 };
 
 PaymentHistoryTable.propTypes = {
-  payments: PropTypes.arrayOf(PropTypes.object).isRequired,
-  monthlyFee: PropTypes.number.isRequired,
+  payments: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      amount: PropTypes.number.isRequired,
+      paidOn: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+      month: PropTypes.string,
+      // Add other relevant prop types if necessary
+  })).isRequired,
+  // Removed monthlyFee prop as it's not used to calculate total or amount
 };
 
 export default PaymentHistoryTable;

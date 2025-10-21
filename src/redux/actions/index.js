@@ -938,17 +938,15 @@ export const formatPaymentHistory = (payments = []) =>
  */
 export const fetchPaymentHistory = (studentId) =>
   apiRequest({
-    url: `/api/data/students/${studentId}/payments?order=asc`,
+    url: `/api/data/students/${studentId}/payments`,
     method: "GET",
 
-    // ----- lifecycle handlers ---------------------------------------------
     onStart: FETCH_PAYMENTS_REQUEST,
 
     onSuccess: (data, dispatch) => {
-      const formatted = formatPaymentHistory(data?.payments || []);
       dispatch({
         type: FETCH_PAYMENTS_SUCCESS,
-        payload: formatted,
+        payload: data?.payments,
       });
     },
 
@@ -1413,9 +1411,9 @@ export const updateExpenditure = (expenditureId, expenditureData) =>
       throw new Error(error.message || "Failed to update expenditure");
     },
   });
-export const fetchStudentExams = () =>
+export const fetchStudentExams = (examType = "") =>
   apiRequest({
-    url: "/api/data/studentexams",
+url: `/api/data/studentexams${examType ? `?examType=${examType}` : ""}`,
     method: "GET",
     onStart: FETCH_STUDENT_EXAMS_REQUEST,
     onSuccess: (data, dispatch) => {

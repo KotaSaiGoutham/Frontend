@@ -78,7 +78,7 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     studentName: "",
     stream: "",
     status: "",
-    examType: "",
+    examType: "E-EA",
   });
 
   // Temporary filters for drawer
@@ -86,7 +86,7 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     studentName: "",
     stream: "",
     status: "",
-    examType: "",
+    examType: "E-EA",
   });
 
   // Column visibility state
@@ -167,9 +167,8 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   ];
 
   const examTypeOptions = [
-    { value: "", label: "All Types" },
     { value: "E-EA", label: "Exam by EA" },
-    { value: "CA", label: "Exam by Collage" },
+    { value: "CA", label: "Exam by College" },
   ];
 
   const handleStartEdit = (examId, field) => {
@@ -195,7 +194,7 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     const updatedExam = { ...examToUpdate, [field]: Number(newValue) };
     dispatch(updateStudentExam(updatedExam));
     setEditingCell(null);
-    dispatch(fetchStudentExams());
+    dispatch(fetchStudentExams(filters.examType));
   };
 
   const handleEdit = (exam) => {
@@ -210,7 +209,7 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const handleConfirmDelete = () => {
     if (selectedExam) {
       dispatch(deleteStudentExam(selectedExam.id));
-      dispatch(fetchStudentExams());
+      dispatch(fetchStudentExams(filters.examType));
     }
     setIsDeleteDialogOpen(false);
     setSelectedExam(null);
@@ -228,12 +227,12 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     if (examToUpdate) {
       const updatedExam = { ...examToUpdate, status: newStatus };
       dispatch(updateStudentExam(updatedExam));
-      dispatch(fetchStudentExams());
+      dispatch(fetchStudentExams(filters.examType));
     }
   };
 
   useEffect(() => {
-    dispatch(fetchStudentExams());
+    dispatch(fetchStudentExams(filters.examType));
   }, [dispatch]);
 
   // Filter exams based on revision program flag and date range
@@ -338,7 +337,8 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
         Stream: selectedExam.stream,
       }
     : null;
-  const handleExamTypeChange = (e) => {
+  const handleExamTypeChange =  (e) => {
+     dispatch(fetchStudentExams(e.target.value));
     setFilters((prev) => ({ ...prev, examType: e.target.value }));
   };
   return (

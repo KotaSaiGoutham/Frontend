@@ -34,7 +34,7 @@ import {
   Alert,
   IconButton,
   TextField,
-  TableSortLabel, // This is already imported, good.
+  TableSortLabel, 
   Tooltip,
 } from "@mui/material";
 
@@ -56,7 +56,7 @@ const Employees = () => {
   const employeesLoading = useSelector((state) => state.employees.loading);
   const employeesError = useSelector((state) => state.employees.error);
   const [editingRow, setEditingRow] = useState(null);
-  const [newSalary, setNewSalary] = useState(""); // Add this line
+  const [newSalary, setNewSalary] = useState(""); 
 
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [filters, setFilters] = useState({
@@ -64,7 +64,7 @@ const Employees = () => {
     role: "",
     paymentStatus: "",
   });
-  // ✅ Change initial sort key to 'name' to have it sorted by default if desired
+  
   const [sortConfig, setSortConfig] = useState({
     key: "name",
     direction: "asc",
@@ -73,6 +73,20 @@ const Employees = () => {
   const uniqueRoles = React.useMemo(() => {
     return [...new Set(employees.map((emp) => emp.role))].sort();
   }, [employees]);
+  
+  // 💡 NEW MEMO: Calculate Total Payroll
+  const totalPayroll = React.useMemo(() => {
+    return filteredEmployees.reduce((sum, employee) => sum + (employee.salary || 0), 0);
+  }, [filteredEmployees]);
+  
+  // 💡 NEW FORMATTER: Consistent Indian Rupee formatting
+  const currencyFormatter = new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+
 
   useEffect(() => {
     dispatch(fetchEmployees());
@@ -96,29 +110,32 @@ const Employees = () => {
       tempEmployees = tempEmployees.filter(
         (employee) => employee.paid === isPaid
       );
-    } // Custom sort logic: Sort by 'paid' status first (paid employees on top), // then by 'lastPaid' date for paid employees, and finally by other columns.
+    } 
 
     if (sortConfig.key) {
       tempEmployees.sort((a, b) => {
         // First, sort by paid status to keep paid employees on top
         if (a.paid !== b.paid) {
-          return a.paid ? -1 : 1; // -1 for a, a.paid = true, a comes before b
-        } // If both are paid or both are unpaid, apply the user's sort
+          return a.paid ? -1 : 1; 
+        } 
 
         const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key]; // Handle string sorting (e.g., name)
+        const bValue = b[sortConfig.key]; 
 
+        // Handle string sorting (e.g., name)
         if (typeof aValue === "string" && typeof bValue === "string") {
           const comparison = aValue.localeCompare(bValue);
           return sortConfig.direction === "asc" ? comparison : -comparison;
-        } // Handle number sorting (e.g., salary) and date sorting (lastPaid) // For 'lastPaid', we want to sort in descending order by default for the latest date.
+        } 
 
+        // Handle number sorting (e.g., salary) and date sorting (lastPaid) 
         if (sortConfig.key === "lastPaid") {
           const dateA = aValue ? parseISO(aValue).getTime() : 0;
           const dateB = bValue ? parseISO(bValue).getTime() : 0;
           return sortConfig.direction === "asc" ? dateA - dateB : dateB - dateA;
-        } // Fallback for other numerical values like salary
+        } 
 
+        // Fallback for other numerical values like salary
         if (aValue < bValue) {
           return sortConfig.direction === "asc" ? -1 : 1;
         }
@@ -145,7 +162,7 @@ const Employees = () => {
 
   const handleSort = (key) => {
     let direction = "asc";
-    // ✅ This logic is perfect and works for any sortable column
+    
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
     }
@@ -161,15 +178,13 @@ const Employees = () => {
       updateEmployeeData(employeeId, { salary: Number(newSalary) })
     );
     setEditingRow(null);
-    setNewSalary(""); // Reset the salary state
+    setNewSalary(""); 
   };
 
-  // Add this helper function
   const isEmployeePaidThisMonth = (employee) => {
     return employee.paid === true;
   };
 
-  // Update the handlePaidToggle function
   const handlePaidToggle = async (employee) => {
     // If already paid, don't allow toggling back to unpaid
     if (employee.paid) {
@@ -193,7 +208,6 @@ const Employees = () => {
     }
   };
 
-  // Update the salary editing logic to check payment status
   const handleEditClick = (employee) => {
     // Allow salary editing even if paid, but show warning
     if (employee.paid && isEmployeePaidThisMonth(employee)) {
@@ -231,8 +245,6 @@ const Employees = () => {
       </Box>
     );
   }
-
-  // In your Employees.js component, replace the error section with:
 
   if (employeesError) {
     // Safely extract error message
@@ -425,7 +437,6 @@ const Employees = () => {
                       p: "18px 12px",
                       textAlign: "center",
                     }}
-                    // ✅ Add the sort direction and onClick handler here
                     sortDirection={
                       sortConfig.key === "name" ? sortConfig.direction : false
                     }
@@ -460,6 +471,10 @@ const Employees = () => {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        color: "#333",
+                        fontWeight: "bold",
+                        fontSize: "1.05rem",
+                        p: "18px 12px",
                       }}
                     >
                       <FaPhone style={{ marginRight: "8px" }} /> Mobile Number
@@ -471,6 +486,10 @@ const Employees = () => {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        color: "#333",
+                        fontWeight: "bold",
+                        fontSize: "1.05rem",
+                        p: "18px 12px",
                       }}
                     >
                       <FaBuilding style={{ marginRight: "8px" }} /> Role
@@ -620,7 +639,7 @@ const Employees = () => {
                         ) : (
                           <>
                             <Typography variant="body2">
-                              ₹{employee.salary.toLocaleString()}
+                              {currencyFormatter.format(employee.salary)}
                             </Typography>
                             <IconButton
                               size="small"
@@ -691,6 +710,33 @@ const Employees = () => {
                     </TableCell>
                   </TableRow>
                 ))}
+                
+                {/* 🌟 NEW ROW: Total Payroll Sum 🌟 */}
+                <TableRow sx={{ backgroundColor: '#e3f2fd', '&:last-child td': { borderBottom: 0 } }}>
+                    {/* The column span is 4 (Sl No, Name, Mobile, Role) */}
+                    <TableCell colSpan={4} sx={{ 
+                        fontWeight: 'bold', 
+                        fontSize: '1.1rem', 
+                        color: '#1a237e',
+                        textAlign: 'right', // Align the "Total Payroll" label to the right
+                        p: '16px 12px'
+                    }}>
+                        Total Monthly Payment
+                    </TableCell>
+                    <TableCell sx={{ 
+                        fontWeight: 'bold', 
+                        fontSize: '1.1rem', 
+                        color: '#1a237e', 
+                        textAlign: 'center',
+                        p: '16px 12px'
+                    }}>
+                        {currencyFormatter.format(totalPayroll)}
+                    </TableCell>
+                    {/* These cells are empty to complete the row columns (Last Paid Date, Payment Status) */}
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                </TableRow>
+                {/* 🌟 END NEW ROW 🌟 */}
               </TableBody>
             </Table>
           </TableContainer>

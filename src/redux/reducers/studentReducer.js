@@ -234,23 +234,23 @@ const studentReducer = (state = initialState, action) => {
         ),
       };
     }
- case FETCH_PAYMENTS_REQUEST:
-      return {
-        ...state,
-                payments: action.payload,  // already formatted by the action creator
-      };
+//  case FETCH_PAYMENTS_REQUEST:
+//       return {
+//         ...state,
+//                 payments: action.payload,  // already formatted by the action creator
+//       };
 
-    case FETCH_PAYMENTS_SUCCESS:
-      return {
-        ...state,
-        payments: action.payload,  // already formatted by the action creator
-      };
+    // case FETCH_PAYMENTS_SUCCESS:
+    //   return {
+    //     ...state,
+    //     payments: action.payload,  // already formatted by the action creator
+    //   };
 
-    case FETCH_PAYMENTS_FAILURE:
-      return {
-        ...state,
-        payments: [],              // clear data so UI shows “no history”
-      };
+    // case FETCH_PAYMENTS_FAILURE:
+    //   return {
+    //     ...state,
+    //     payments: [],              // clear data so UI shows “no history”
+    //   };
        case FETCH_DEMO_CLASSES_REQUEST:
     case ADD_DEMO_CLASS_REQUEST: // Assuming you want loading state for adding too
       return {
