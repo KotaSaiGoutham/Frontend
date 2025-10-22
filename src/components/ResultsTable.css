@@ -1,0 +1,353 @@
+.results-table-container {
+  background: var(--card-background);
+  border-radius: 1rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Statistics Section */
+.results-statistics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--card-hover);
+  border-bottom: 1px solid var(--card-border);
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--background);
+  border-radius: 0.75rem;
+  border: 1px solid var(--card-border);
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+}
+
+.stat-icon.total-exams { background: var(--primary); }
+.stat-icon.average-score { background: var(--success); }
+.stat-icon.high-score { background: var(--warning); }
+.stat-icon.low-score { background: var(--error); }
+
+.stat-info h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.stat-info p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Table Styles */
+.results-table-wrapper {
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-background);
+}
+
+.results-table th {
+  background: var(--card-hover);
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--card-border);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.results-table th:hover {
+  background: var(--primary-light);
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.results-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--card-border);
+  vertical-align: middle;
+}
+
+.exam-row {
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.exam-row:hover {
+  background: var(--primary-light);
+}
+
+/* Exam Name Column */
+.exam-name strong {
+  display: block;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.exam-subject {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  background: var(--card-hover);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+}
+
+/* Marks Display */
+.marks-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.obtained-marks {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.total-marks {
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+
+/* Percentage Display */
+.percentage-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.percentage-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 50px;
+}
+
+.percentage-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--card-border);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 80px;
+}
+
+.percentage-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Grade Badge */
+.grade-badge {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 1rem;
+  color: white;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-align: center;
+  min-width: 40px;
+}
+
+/* Trend Indicator */
+.trend-indicator {
+  padding: 0.375rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.trend-indicator.improving {
+  background: var(--success-light);
+  color: #065f46;
+}
+
+.trend-indicator.declining {
+  background: var(--error-light);
+  color: #7f1d1d;
+}
+
+.trend-indicator.neutral {
+  background: var(--warning-light);
+  color: #92400e;
+}
+
+/* Performance Summary */
+.performance-summary {
+  padding: 1.5rem;
+  background: var(--card-hover);
+  border-top: 1px solid var(--card-border);
+}
+
+.performance-summary h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--background);
+  border-radius: 0.5rem;
+  border: 1px solid var(--card-border);
+}
+
+.summary-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.summary-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.summary-value.trend-up {
+  color: var(--success);
+}
+
+.summary-value.trend-down {
+  color: var(--error);
+}
+
+.summary-value.trend-neutral {
+  color: var(--warning);
+}
+
+/* Loading and Empty States */
+.results-loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-light);
+}
+
+.results-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--card-border);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+.results-empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-light);
+}
+
+.results-empty .empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+  color: var(--warning);
+}
+
+.results-empty h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .results-statistics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .stat-card {
+    padding: 0.75rem;
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .stat-info h3 {
+    font-size: 1.25rem;
+  }
+  
+  .results-table th,
+  .results-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .percentage-display {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .percentage-bar {
+    min-width: 60px;
+  }
+  
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .results-statistics {
+    grid-template-columns: 1fr;
+  }
+  
+  .table-header span {
+    display: none;
+  }
+  
+  .exam-subject {
+    display: none;
+  }
+}
+
+/* Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

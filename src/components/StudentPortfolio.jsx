@@ -48,17 +48,27 @@ import {
   FaIdCard,
   FaSchool,
   FaUserGraduate,
+  FaFilePowerpoint,
   FaStar,
   FaRocket,
   FaArrowUp,
   FaAward,
   FaCrown,
   FaMedal,
-  FaFileAlt
+  FaFileAlt,
+  FaFilePdf,
+  FaCalendarWeek,
+  FaClipboardCheck,
+  FaRegCalendar,
+  FaTasks,
+  FaFileUpload,
+  FaTable,
+  FaChartArea
 } from "react-icons/fa";
 import { MuiButton } from "./customcomponents/MuiCustomFormFields";
 import WeeklyMarksTrendGraph from "./WeeklyMarksBarChart";
 import PaymentHistoryTable from "./PaymentHistoryTable";
+import ResultsTable from "./ResultsTable";
 
 const StudentPortfolio = () => {
   const { id: studentId } = useParams();
@@ -78,7 +88,6 @@ const StudentPortfolio = () => {
   const [loading, setLoading] = useState(!location.state?.studentData);
 
   const payments = useSelector((state) => state.payments.data);
-  console.log("payments",payments)
 
   // Format phone number
   const formatPhone = (num) => {
@@ -196,53 +205,6 @@ const StudentPortfolio = () => {
     }
   }, [studentData?.id, studentId, dispatch]);
 
-  // // Simulate loading
-  // useEffect(() => {
-  //   if (!studentData) {
-  //     const timer = setTimeout(() => {
-  //       setLoading(false);
-  //       setStudentData({
-  //         Name: "John Doe",
-  //         isActive: true,
-  //         Gender: "Male",
-  //         Subject: "Mathematics, Physics",
-  //         Year: "2024",
-  //         Stream: "Science",
-  //         "Group ": "A",
-  //         College: "City College",
-  //         Source: "Referral",
-  //         "Monthly Fee": "5000",
-  //         "Payment Status": "Paid",
-  //         paidDate: { seconds: 1701388800 },
-  //         nextDueDate: { seconds: 1704067200 },
-  //         classesCompleted: 24,
-  //         nextClass: new Date(),
-  //         classDateandTime: ["Mon, Wed, Fri - 4:00 PM", "Tue, Thu - 3:00 PM"],
-  //         ContactNumber: "9876543210",
-  //         FatherContactNumber: "9876543211",
-  //         MotherContactNumber: "9876543212",
-  //         admissionDate: { seconds: 1696118400 },
-  //         performance: "excellent",
-  //         attendance: "95%"
-  //       });
-  //     }, 2000);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [studentData]);
-
-  // Get performance badge
-  const getPerformanceBadge = () => {
-    if (studentData.performance === "excellent") {
-      return { icon: FaCrown, label: "Top Performer", color: "gold" };
-    } else if (studentData.performance === "good") {
-      return { icon: FaMedal, label: "Excellent", color: "silver" };
-    } else {
-      return { icon: FaStar, label: "Good", color: "bronze" };
-    }
-  };
-
-  const performanceBadge = getPerformanceBadge();
-
   if (loading) {
     return (
       <div className="portfolio-loading premium">
@@ -291,13 +253,6 @@ const StudentPortfolio = () => {
             <div className="floating-shape shape-3"></div>
             <div className="floating-shape shape-4"></div>
           </div>
-          {/* <div className="header-sparkles">
-            <div className="sparkle"></div>
-            <div className="sparkle"></div>
-            <div className="sparkle"></div>
-            <div className="sparkle"></div>
-            <div className="sparkle"></div>
-          </div> */}
         </div>
 
         <div className="header-content">
@@ -306,14 +261,7 @@ const StudentPortfolio = () => {
               <div className="avatar-glow"></div>
               <div className="profile-avatar premium">
                 <FaUserGraduate />
-                {/* <div className="avatar-pulse"></div> */}
               </div>
-              {/* <div className={`status-indicator premium ${studentData.isActive ? 'active' : 'inactive'}`}>
-          {studentData.isActive ? <FaCheckCircle /> : <FaExclamationCircle />}
-        </div>
-        <div className="achievement-badge">
-          <FaStar />
-        </div> */}
             </div>
 
             <div className="profile-info premium">
@@ -372,11 +320,17 @@ const StudentPortfolio = () => {
       <nav className="portfolio-tabs premium light-theme">
         <div className="tabs-container">
           {[
-            { id: "overview", label: "Overview", icon: FaUserCircle },
-            { id: "academics", label: "Academics", icon: FaBook },
-            { id: "performance", label: "Performance", icon: FaChartBar },
-            { id: "payments", label: "Payments", icon: FaDollarSign },
-{ id: "materials", label: "Materials", icon: FaFileAlt }
+       { id: "overview", label: "Overview", icon: FaUserCircle },
+  { id: "profile", label: "Profile", icon: FaIdCard },
+  { id: "weekend", label: "Weekend Syllabus", icon: FaCalendarAlt },
+  { id: "upload", label: "Upload Files", icon: FaFileUpload },
+  { id: "ppts", label: "PPT's and Materials", icon: FaFilePowerpoint },
+  { id: "worksheets", label: "Worksheets", icon: FaTasks },
+  { id: "papers", label: "Question Papers", icon: FaFileAlt },
+  { id: "results", label: "Results", icon: FaClipboardCheck },
+  { id: "classes", label: "Classes Info", icon: FaChalkboardTeacher },
+  { id: "payments", label: "Fees Payment", icon: FaDollarSign },
+  { id: "others", label: "Others", icon: FaInfoCircle }
           ].map((tab, index) => (
             <button
               key={tab.id}
@@ -401,7 +355,6 @@ const StudentPortfolio = () => {
         {/* Overview Tab */}
         {activeTab === "overview" && (
           <div className="tab-content premium">
-            {/* Stats Grid */}
             <div className="stats-grid premium">
               <StatCard
                 icon={FaBookOpen}
@@ -430,7 +383,6 @@ const StudentPortfolio = () => {
             </div>
 
             <div className="content-grid premium">
-              {/* Left Column */}
               <div className="content-column">
                 <DetailCard
                   title="Academic Information"
@@ -520,7 +472,6 @@ const StudentPortfolio = () => {
                 </DetailCard>
               </div>
 
-              {/* Right Column */}
               <div className="content-column">
                 <DetailCard
                   title="Payment Status"
@@ -528,15 +479,6 @@ const StudentPortfolio = () => {
                   delay={300}
                 >
                   <div className="payment-status premium">
-                    {/* <div className="payment-visual">
-                      <div className="payment-circle">
-                        <div className="payment-progress"></div>
-                        <div className="payment-amount">
-                          <span>₹{(+studentData["Monthly Fee"] || 0).toLocaleString()}</span>
-                          <small>per month</small>
-                        </div>
-                      </div>
-                    </div> */}
                     <div className="payment-details premium">
                       <div className="payment-item premium">
                         <span>Status</span>
@@ -570,42 +512,360 @@ const StudentPortfolio = () => {
           </div>
         )}
 
-        {/* Performance Tab */}
-        {activeTab === "performance" && (
+        {/* Profile Tab */}
+        {activeTab === "profile" && (
           <div className="tab-content premium">
-            <div className="performance-header premium">
-              <h2>Academic Performance</h2>
-              <p>Track progress and weekly marks</p>
+            <div className="content-grid premium">
+              <div className="content-column">
+                <DetailCard title="Personal Information" icon={FaUserCircle} delay={200}>
+                  <div className="info-grid premium">
+                    <DetailItem
+                      icon={FaUserCircle}
+                      label="Full Name"
+                      value={studentData.Name || "N/A"}
+                      delay={100}
+                    />
+                    <DetailItem
+                      icon={FaTransgender}
+                      label="Gender"
+                      value={studentData.Gender || "N/A"}
+                      delay={150}
+                    />
+                    <DetailItem
+                      icon={FaCalendarDay}
+                      label="Admission Date"
+                      value={formatFirebaseDate(studentData.admissionDate)}
+                      delay={200}
+                    />
+                    <DetailItem
+                      icon={FaPhone}
+                      label="Contact Number"
+                      value={formatPhone(studentData.ContactNumber)}
+                      delay={250}
+                    />
+                  </div>
+                </DetailCard>
+              </div>
+              <div className="content-column">
+                <DetailCard title="Academic Profile" icon={FaGraduationCap} delay={400}>
+                  <div className="info-grid premium">
+                    <DetailItem
+                      icon={FaUniversity}
+                      label="College"
+                      value={studentData.College || "N/A"}
+                      delay={100}
+                    />
+                    <DetailItem
+                      icon={FaBook}
+                      label="Stream"
+                      value={studentData.Stream || "N/A"}
+                      delay={150}
+                    />
+                    <DetailItem
+                      icon={FaUsers}
+                      label="Group"
+                      value={studentData["Group "] || "N/A"}
+                      delay={200}
+                    />
+                    <DetailItem
+                      icon={FaCalendarCheck}
+                      label="Academic Year"
+                      value={studentData.Year || "N/A"}
+                      delay={250}
+                    />
+                  </div>
+                </DetailCard>
+              </div>
             </div>
+          </div>
+        )}
 
-            <div className="chart-container premium">
-              {studentExamsLoading ? (
-                <div className="loading-state premium">
-                  <div className="loading-spinner"></div>
-                  <span>Loading performance data...</span>
-                </div>
-              ) : studentExams?.length > 0 ? (
-                <WeeklyMarksTrendGraph
-                  weeklyMarksData={studentExams}
-                  programType={studentData.Stream}
-                  studentData={studentData}
-                />
-              ) : (
-                <div className="empty-state premium">
-                  <FaChartLine />
-                  <h3>No Performance Data</h3>
-                  <p>Add weekly marks to see performance trends</p>
-                  <MuiButton
-                    variant="contained"
-                    startIcon={<FaPlus />}
-                    onClick={() => setShowAddMarksModal(true)}
-                    className="premium"
-                  >
-                    Add First Marks
-                  </MuiButton>
-                </div>
-              )}
+        {/* Weekend Syllabus Tab */}
+        {activeTab === "weekend" && (
+          <div className="tab-content premium">
+            <div className="section-header premium">
+              <h2>Weekend Syllabus</h2>
+              <p>Weekly study plan and curriculum schedule</p>
             </div>
+            <div className="weekend-syllabus-container">
+              <DetailCard title="Current Week Syllabus" icon={FaCalendarWeek} delay={200}>
+                <div className="syllabus-content">
+                  <div className="syllabus-week">
+                    <h4>Week 15 (Dec 9-15, 2024)</h4>
+                    <div className="syllabus-grid">
+                      <div className="syllabus-day">
+                        <h5>Saturday</h5>
+                        <ul>
+                          <li>Mathematics: Calculus - Integration Techniques</li>
+                          <li>Physics: Electromagnetism - Faraday's Law</li>
+                          <li>Practice Problems: Set 15A</li>
+                        </ul>
+                      </div>
+                      <div className="syllabus-day">
+                        <h5>Sunday</h5>
+                        <ul>
+                          <li>Chemistry: Organic Chemistry - Reaction Mechanisms</li>
+                          <li>Mathematics: Differential Equations</li>
+                          <li>Revision: Week 14 Topics</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </DetailCard>
+              
+              <DetailCard title="Upcoming Topics" icon={FaBook} delay={400}>
+                <div className="upcoming-topics">
+                  <div className="topic-item">
+                    <span className="topic-week">Week 16</span>
+                    <span className="topic-desc">Advanced Physics Concepts</span>
+                  </div>
+                  <div className="topic-item">
+                    <span className="topic-week">Week 17</span>
+                    <span className="topic-desc">Chemistry Revision</span>
+                  </div>
+                  <div className="topic-item">
+                    <span className="topic-week">Week 18</span>
+                    <span className="topic-desc">Mock Test Preparation</span>
+                  </div>
+                </div>
+              </DetailCard>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Files Tab */}
+        {activeTab === "upload" && (
+          <div className="tab-content premium">
+            <div className="section-header premium">
+              <h2>Upload Files</h2>
+              <p>Manage and upload study materials, PPTs, and worksheets</p>
+            </div>
+            
+            <div className="upload-files-container">
+              <DetailCard title="Upload New File" icon={FaFileUpload} delay={200}>
+                <div className="upload-section">
+                  <div className="upload-zone">
+                    <FaFileUpload className="upload-icon" />
+                    <p>Drag and drop files here or click to browse</p>
+                    <MuiButton variant="contained" className="premium">
+                      Browse Files
+                    </MuiButton>
+                  </div>
+                  <div className="file-types">
+                    <h4>Supported File Types:</h4>
+                    <div className="file-type-tags">
+                      <span className="file-tag">PDF</span>
+                      <span className="file-tag">PPT</span>
+                      <span className="file-tag">DOC</span>
+                      <span className="file-tag">XLS</span>
+                      <span className="file-tag">ZIP</span>
+                    </div>
+                  </div>
+                </div>
+              </DetailCard>
+
+              <DetailCard title="Recent Uploads" icon={FaFileAlt} delay={400}>
+                <div className="recent-uploads">
+                  <div className="upload-item">
+                    <FaFilePdf className="file-icon pdf" />
+                    <div className="file-info">
+                      <strong>Calculus_Notes_Week15.pdf</strong>
+                      <span>Uploaded 2 days ago</span>
+                    </div>
+                    <div className="file-actions">
+                      <MuiButton variant="outlined" size="small">
+                        Download
+                      </MuiButton>
+                    </div>
+                  </div>
+                  <div className="upload-item">
+                    <FaFileAlt className="file-icon ppt" />
+                    <div className="file-info">
+                      <strong>Electromagnetism_PPT.pptx</strong>
+                      <span>Uploaded 1 week ago</span>
+                    </div>
+                    <div className="file-actions">
+                      <MuiButton variant="outlined" size="small">
+                        Download
+                      </MuiButton>
+                    </div>
+                  </div>
+                </div>
+              </DetailCard>
+            </div>
+          </div>
+        )}
+
+        {/* Worksheets Tab */}
+        {activeTab === "worksheets" && (
+          <div className="tab-content premium">
+            <div className="section-header premium">
+              <h2>Worksheets</h2>
+              <p>Practice worksheets and assignments</p>
+            </div>
+            
+            <div className="worksheets-container">
+              <DetailCard title="Available Worksheets" icon={FaTasks} delay={200}>
+                <div className="worksheets-list">
+                  <div className="worksheet-item">
+                    <FaFilePdf className="worksheet-icon" />
+                    <div className="worksheet-info">
+                      <h4>Mathematics Worksheet - Week 15</h4>
+                      <p>Integration techniques and applications</p>
+                      <span className="worksheet-meta">Due: Dec 16, 2024</span>
+                    </div>
+                    <div className="worksheet-actions">
+                      <MuiButton variant="contained" size="small">
+                        Download
+                      </MuiButton>
+                      <MuiButton variant="outlined" size="small">
+                        Submit
+                      </MuiButton>
+                    </div>
+                  </div>
+                  
+                  <div className="worksheet-item">
+                    <FaFilePdf className="worksheet-icon" />
+                    <div className="worksheet-info">
+                      <h4>Physics Assignment - Electromagnetism</h4>
+                      <p>Faraday's law and electromagnetic induction</p>
+                      <span className="worksheet-meta">Due: Dec 18, 2024</span>
+                    </div>
+                    <div className="worksheet-actions">
+                      <MuiButton variant="contained" size="small">
+                        Download
+                      </MuiButton>
+                      <MuiButton variant="outlined" size="small">
+                        Submit
+                      </MuiButton>
+                    </div>
+                  </div>
+                </div>
+              </DetailCard>
+            </div>
+          </div>
+        )}
+
+        {/* Results Tab */}
+        {activeTab === "results" && (
+          <div className="tab-content premium">
+            <div className="section-header premium">
+              <h2>Results & Performance</h2>
+              <p>Exam results and performance analysis</p>
+            </div>
+            
+            <div className="results-container">
+              <DetailCard title="Marks Overview" icon={FaTable} delay={200}>
+                <ResultsTable studentExams={studentExams} />
+              </DetailCard>
+              
+              <DetailCard title="Performance Trends" icon={FaChartArea} delay={400}>
+                <div className="chart-container premium">
+                  {studentExamsLoading ? (
+                    <div className="loading-state premium">
+                      <div className="loading-spinner"></div>
+                      <span>Loading performance data...</span>
+                    </div>
+                  ) : studentExams?.length > 0 ? (
+                    <WeeklyMarksTrendGraph
+                      weeklyMarksData={studentExams}
+                      programType={studentData.Stream}
+                      studentData={studentData}
+                    />
+                  ) : (
+                    <div className="empty-state premium">
+                      <FaChartLine />
+                      <h3>No Performance Data</h3>
+                      <p>Add weekly marks to see performance trends</p>
+                      <MuiButton
+                        variant="contained"
+                        startIcon={<FaPlus />}
+                        onClick={() => setShowAddMarksModal(true)}
+                        className="premium"
+                      >
+                        Add First Marks
+                      </MuiButton>
+                    </div>
+                  )}
+                </div>
+              </DetailCard>
+            </div>
+          </div>
+        )}
+
+        {/* Question Papers Tab */}
+        {activeTab === "papers" && (
+          <div className="tab-content premium">
+            <div className="section-header premium">
+              <h2>Question Papers</h2>
+              <p>Previous year question papers and practice tests</p>
+            </div>
+            <div className="empty-state premium">
+              <FaFileAlt />
+              <h3>Question Papers</h3>
+              <p>Access to previous year question papers and practice tests</p>
+              <MuiButton variant="contained" className="premium">
+                Browse Question Papers
+              </MuiButton>
+            </div>
+          </div>
+        )}
+
+        {/* Exam Dates Tab */}
+        {activeTab === "exams" && (
+          <div className="tab-content premium">
+            <div className="section-header premium">
+              <h2>Exam Dates</h2>
+              <p>Upcoming examination schedule</p>
+            </div>
+            <div className="empty-state premium">
+              <FaRegCalendar />
+              <h3>Exam Schedule</h3>
+              <p>Upcoming exam dates and schedule will be displayed here</p>
+              <MuiButton variant="contained" className="premium">
+                View Exam Calendar
+              </MuiButton>
+            </div>
+          </div>
+        )}
+
+        {/* Classes Info Tab */}
+        {activeTab === "classes" && (
+          <div className="tab-content premium">
+            <div className="section-header premium">
+              <h2>Classes Information</h2>
+              <p>Class schedule and timetable</p>
+            </div>
+            <DetailCard title="Class Schedule" icon={FaChalkboardTeacher} delay={200}>
+              <div className="info-grid premium">
+                {studentData.classDateandTime && studentData.classDateandTime.map((schedule, index) => (
+                  <DetailItem
+                    key={index}
+                    icon={FaClock}
+                    label={`Session ${index + 1}`}
+                    value={schedule}
+                    delay={100 * (index + 1)}
+                  />
+                ))}
+              </div>
+            </DetailCard>
+            <DetailCard title="Class Statistics" icon={FaBookOpen} delay={400}>
+              <div className="info-grid premium">
+                <DetailItem
+                  icon={FaCheckCircle}
+                  label="Classes Completed"
+                  value={studentData.classesCompleted || "0"}
+                  delay={100}
+                />
+                <DetailItem
+                  icon={FaChartLine}
+                  label="Attendance Rate"
+                  value={studentData.attendance || "N/A"}
+                  delay={200}
+                />
+              </div>
+            </DetailCard>
           </div>
         )}
 
@@ -623,17 +883,44 @@ const StudentPortfolio = () => {
           </div>
         )}
 
-        {/* Schedule Tab */}
-        {activeTab === "materials" && (
+        {/* Others Tab */}
+        {activeTab === "others" && (
           <div className="tab-content premium">
-            {studentData && studentId && studentData.admissionDate && (
-              <LectureMaterialsTable
-                studentId={studentId}
-                studentName={studentData.Name}
-                studentClassSchedule={studentData.classDateandTime}
-                admissionDate={studentData.admissionDate}
-              />
-            )}
+            <div className="content-grid premium">
+              <div className="content-column">
+                <DetailCard title="Additional Resources" icon={FaInfoCircle} delay={200}>
+                  <div className="info-grid premium">
+                    <DetailItem
+                      icon={FaSearchDollar}
+                      label="Source"
+                      value={studentData.Source || "N/A"}
+                      delay={100}
+                    />
+                    <DetailItem
+                      icon={FaMoneyBillWave}
+                      label="Fee Structure"
+                      value={`₹${(+studentData["Monthly Fee"] || 0).toLocaleString()}/month`}
+                      delay={150}
+                    />
+                  </div>
+                </DetailCard>
+              </div>
+              <div className="content-column">
+                <DetailCard title="Quick Actions" icon={FaRocket} delay={400}>
+                  <div className="action-buttons premium">
+                    <MuiButton variant="contained" className="premium action-btn">
+                      <FaEdit /> Edit Profile
+                    </MuiButton>
+                    <MuiButton variant="outlined" className="premium action-btn">
+                      <FaFileAlt /> Generate Report
+                    </MuiButton>
+                    <MuiButton variant="outlined" className="premium action-btn">
+                      <FaHistory /> View Activity Log
+                    </MuiButton>
+                  </div>
+                </DetailCard>
+              </div>
+            </div>
           </div>
         )}
       </main>
