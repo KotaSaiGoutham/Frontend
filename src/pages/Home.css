@@ -88,9 +88,9 @@ a[aria-label="Enroll Now"] {
 .book-btn {
   display: inline-block;
   background-color: #facc15; /* Yellow CTA */
-  color: #1e1e1e;
+  color: #1e1e1e !important;
   padding: 12px 24px;
-  font-weight: 600;
+  font-weight: bold;
   font-size: 16px;
   border-radius: 8px;
   text-decoration: none;

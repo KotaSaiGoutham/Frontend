@@ -3,6 +3,8 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../redux/actions";
 import "./Navbar.css";
+import { FaDownload } from 'react-icons/fa';
+
 
 const PROTECTED_BASE_PATHS = [
   "/dashboard",
@@ -117,7 +119,7 @@ const Navbar = () => {
           >
             Careers
           </NavLink>
-          <NavLink
+  <NavLink
             to="/contact"
             onClick={handleLinkClick}
             activeClassName="active-link"
@@ -125,15 +127,30 @@ const Navbar = () => {
             Contact Us
           </NavLink>
 
+<NavLink
+  to="#"
+  onClick={(e) => {
+    e.preventDefault();
+    handleLinkClick();
+    window.open('/ElectronAcademy_Brochure.pdf', '_blank');
+  }}
+  activeClassName="active-link"
+  className="program-highlight-link-desktop"
+>
+  <FaDownload style={{ marginRight: '8px' }} />
+  Download Brochure
+</NavLink>
+        
+
           {/* The program link is now correctly placed here on the desktop layout */}
-          <NavLink
+{/*           <NavLink
             to="/revision-program/details"
             onClick={handleLinkClick}
             activeClassName="active-link"
             className="program-highlight-link-desktop"
           >
             JEE Mains (Session 1) 90 Days Program
-          </NavLink>
+          </NavLink> */}
           
           {/* Conditional rendering for auth buttons based on isAuthenticated state */}
           {isAuthenticated ? (
@@ -154,6 +171,14 @@ const Navbar = () => {
           ) : (
             // If not authenticated, show Login and Book Demo
             <div className="auth-buttons">
+       <NavLink
+                to="/book-demo"
+                className="book-btn"
+                onClick={handleLinkClick}
+                activeClassName="active-btn"
+              >
+                Book Demo
+              </NavLink>
               <NavLink
                 to="/login"
                 className="auth-btn auth-secondary-btn"
@@ -162,14 +187,7 @@ const Navbar = () => {
               >
                 Login
               </NavLink>
-              <NavLink
-                to="/book-demo"
-                className="book-btn demo-btn"
-                onClick={handleLinkClick}
-                activeClassName="active-btn"
-              >
-                Book Demo
-              </NavLink>
+         
             </div>
           )}
         </nav>
@@ -178,13 +196,20 @@ const Navbar = () => {
       {/* This container will only be visible on mobile screens */}
       <div className="program-highlight-container-mobile">
         <NavLink
-          to="/revision-program/details"
-          onClick={handleLinkClick}
+      to="#"
+  onClick={(e) => {
+    e.preventDefault();
+    handleLinkClick();
+    window.open('/ElectronAcademy_Brochure.pdf', '_blank');
+  }}
           activeClassName="active-link"
           className="program-highlight-link"
         >
-          JEE Mains (Session 1) 90 Days Program
+    <FaDownload style={{ marginRight: '8px' }} />
+
+  Download Brochure
         </NavLink>
+
       </div>
     </div>
   );
