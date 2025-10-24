@@ -266,7 +266,7 @@ const Home = () => {
           <SubjectCard
             title="Physics"
             description="Unravel the laws that govern the universe"
-            imageSrc="https://www.svgrepo.com/show/3679/physics.svg"
+            imageSrc="physics_latest.png"
             altText="Physics Icon"
             redirectPath="/subjects/physics"
             delayClass="delay-1"
