@@ -180,7 +180,13 @@ import {
   FETCH_REVISION_CLASSES_FAILURE,
   UPDATE_REVISION_FEE_FAILURE,
   UPDATE_REVISION_FEE_SUCCESS,
-  UPDATE_REVISION_FEE_REQUEST
+  UPDATE_REVISION_FEE_REQUEST,
+  FETCH_CLASS_SCHEDULE_REQUEST,
+  FETCH_CLASS_SCHEDULE_SUCCESS,
+  FETCH_CLASS_SCHEDULE_FAILURE,
+  UPDATE_CLASS_SCHEDULE_REQUEST,
+  UPDATE_CLASS_SCHEDULE_SUCCESS,
+  UPDATE_CLASS_SCHEDULE_FAILURE,
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -483,6 +489,59 @@ export const fetchStudents = () =>
       dispatch({
         type: FETCH_STUDENTS_FAILURE,
         payload: { error: errorMessage },
+      });
+    },
+    authRequired: true,
+  });
+  export const fetchClassSchedule = () =>
+  apiRequest({
+    url: "/api/data/students-class-details", // New optimized endpoint
+    method: "GET",
+    onStart: FETCH_CLASS_SCHEDULE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      const scheduleData = data || [];
+      dispatch({
+        type: FETCH_CLASS_SCHEDULE_SUCCESS,
+        payload: scheduleData,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching class schedule from API:", error);
+      const errorMessage = error.error || error.message || "Failed to fetch class schedule";
+      
+      if (error.status === 401 || error.status === 403) {
+        dispatch(setAuthError("Session expired please login again"));
+      }
+      
+      dispatch({
+        type: FETCH_CLASS_SCHEDULE_FAILURE,
+        payload: errorMessage, // Store as string directly
+      });
+    },
+    authRequired: true,
+  });
+  export const updateClassSchedule = (studentId, updateData) =>
+  apiRequest({
+    url: `/api/data/students/${studentId}/schedule`,
+    method: "PUT",
+    data: updateData,
+    onStart: UPDATE_CLASS_SCHEDULE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_CLASS_SCHEDULE_SUCCESS,
+        payload: {
+          studentId,
+          updatedSchedules: data.classDateandTime
+        }
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error updating class schedule:", error);
+      const errorMessage = error.error || error.message || "Failed to update schedule";
+      
+      dispatch({
+        type: UPDATE_CLASS_SCHEDULE_FAILURE,
+        payload: errorMessage,
       });
     },
     authRequired: true,

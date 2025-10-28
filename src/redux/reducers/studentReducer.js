@@ -29,6 +29,12 @@ import {
   ADD_DEMO_CLASS_REQUEST,
   ADD_DEMO_CLASS_SUCCESS,
   ADD_DEMO_CLASS_FAILURE,
+    FETCH_CLASS_SCHEDULE_REQUEST,
+  FETCH_CLASS_SCHEDULE_SUCCESS,
+  FETCH_CLASS_SCHEDULE_FAILURE,
+  UPDATE_CLASS_SCHEDULE_REQUEST,
+  UPDATE_CLASS_SCHEDULE_SUCCESS,
+  UPDATE_CLASS_SCHEDULE_FAILURE,
 } from "../types";
 
 const initialState = {
@@ -59,11 +65,81 @@ const initialState = {
    demoClasses: [], // Array to hold the fetched demo class objects
   loading: false,  // Boolean to indicate if data is being fetched
   error: null,     // Null or a string to hold any error messages
+    classSchedule: {
+    data: [], // Optimized schedule data
+    loading: false,
+    error: null, // Now stores string directly
+    updating: false,
+    updateError: null
+  },
 };
 
 const studentReducer = (state = initialState, action) => {
   switch (action.type) {
     // --- Cases for fetching ALL students ---
+     case FETCH_CLASS_SCHEDULE_REQUEST:
+      return {
+        ...state,
+        classSchedule: {
+          ...state.classSchedule,
+          loading: true,
+          error: null,
+        }
+      };
+    case FETCH_CLASS_SCHEDULE_SUCCESS:
+      return {
+        ...state,
+        classSchedule: {
+          ...state.classSchedule,
+          loading: false,
+          data: action.payload,
+          error: null,
+        }
+      };
+    case FETCH_CLASS_SCHEDULE_FAILURE:
+      return {
+        ...state,
+        classSchedule: {
+          ...state.classSchedule,
+          loading: false,
+          data: [],
+          error: action.payload, // This is now a string
+        }
+      };
+      case UPDATE_CLASS_SCHEDULE_REQUEST:
+      return {
+        ...state,
+        classSchedule: {
+          ...state.classSchedule,
+          updating: true,
+          updateError: null,
+        }
+      };
+    case UPDATE_CLASS_SCHEDULE_SUCCESS:
+      return {
+        ...state,
+        classSchedule: {
+          ...state.classSchedule,
+          updating: false,
+          updateError: null,
+          // Optionally update the local data if needed
+          data: state.classSchedule.data.map(student => 
+            student.id === action.payload.studentId 
+              ? { ...student, classDateandTime: action.payload.updatedSchedules }
+              : student
+          )
+        }
+      };
+    case UPDATE_CLASS_SCHEDULE_FAILURE:
+      return {
+        ...state,
+        classSchedule: {
+          ...state.classSchedule,
+          updating: false,
+          updateError: action.payload,
+        }
+      };
+
     case FETCH_STUDENTS_REQUEST:
       return {
         ...state,

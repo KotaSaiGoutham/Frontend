@@ -10,6 +10,7 @@ const PROTECTED_BASE_PATHS = [
   "/dashboard",
   "/students",
   "/student/",
+"/week-timetable",
   "/timetable",
   "/employees",
   "/add-student",

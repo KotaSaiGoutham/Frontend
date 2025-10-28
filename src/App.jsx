@@ -72,6 +72,7 @@ import RevisionProgramme from "./components/utils/revisionProgramme";
 import RevisionProgramDetails from "./components/utils/RevisionProgramDetails";
 import RevisionStudentsPage from "./components/revisionStudents/RevisionStudentsPage";
 import RevisionRegistratedStudents from "./components/revisionStudents/RevisionRegistratedStudents";
+import TimeTableManager from "./pages/TimeTableManager";
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const token = localStorage.getItem("token");
@@ -154,7 +155,7 @@ function App() {
                   element={<ExpenditureDashboard />}
                 />
                 <Route path="/student/:id" element={<StudentPortfolio />} />
-                <Route path="/timetable" element={<TimetablePage />} />
+                <Route path="/timetable" element={<TimeTableManager />} />
                 <Route path="/employees" element={<Employees />} />
                 <Route path="/add-student" element={<AddStudent />} />
                 <Route path="/add-employee" element={<AddEmployeePage />} />
