@@ -5,12 +5,15 @@ import {
   FaSortDown, 
   FaChartLine, 
   FaAward,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaFlask,
+  FaCalculator,
+  FaAtom
 } from "react-icons/fa";
 import "./ResultsTable.css";
 
 const ResultsTable = ({ studentExams = [], loading = false }) => {
-  const [sortField, setSortField] = React.useState("date");
+  const [sortField, setSortField] = React.useState("examDate");
   const [sortDirection, setSortDirection] = React.useState("desc");
 
   if (loading) {
@@ -21,6 +24,7 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
       </div>
     );
   }
+
   const getGrade = (percentage) => {
     if (percentage >= 90) return { grade: "A+", color: "#10b981" };
     if (percentage >= 80) return { grade: "A", color: "#34d399" };
@@ -29,6 +33,15 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
     if (percentage >= 50) return { grade: "C", color: "#f59e0b" };
     if (percentage >= 40) return { grade: "D", color: "#f97316" };
     return { grade: "F", color: "#ef4444" };
+  };
+
+  const getSubjectIcon = (subject) => {
+    switch (subject?.toLowerCase()) {
+      case 'physics': return <FaAtom />;
+      case 'chemistry': return <FaFlask />;
+      case 'maths': return <FaCalculator />;
+      default: return <FaChartLine />;
+    }
   };
 
   if (!studentExams || studentExams.length === 0) {
@@ -41,19 +54,51 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
     );
   }
 
-  // Process and sort exam data
+  // Process exam data to match your actual structure
   const processedExams = studentExams.map(exam => {
-    const totalMarks = exam.totalMarks || 100; // Default to 100 if not provided
-    const obtainedMarks = exam.marks || 0;
-    const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
-    
+    // Calculate percentage based on available subject scores
+    let percentage = 0;
+    let totalScore = 0;
+    let maxPossible = 0;
+
+    if (exam.total !== undefined) {
+      // For exams with total score (like weekend exams)
+      totalScore = exam.total;
+      maxPossible = 300; // Assuming 100 per subject for 3 subjects
+      percentage = (totalScore / maxPossible) * 100;
+    } else if (exam.physics !== undefined) {
+      // For subject-specific exams
+      totalScore = exam.physics;
+      maxPossible = exam.maxPhysics || 100;
+      percentage = (totalScore / maxPossible) * 100;
+    }
+
+    // Determine the main subject for display
+    const mainSubject = exam.Subject || 
+                       (exam.physics !== undefined ? 'Physics' : 
+                       (exam.chemistry !== undefined ? 'Chemistry' : 
+                       (exam.maths !== undefined ? 'Mathematics' : 'General')));
+
+    // Get topic information
+    const topic = Array.isArray(exam.topic) ? exam.topic[0] : exam.topic;
+    const examName = Array.isArray(exam.examName) ? exam.examName[0] : exam.examName;
+
     return {
       ...exam,
-      obtainedMarks,
-      totalMarks,
+      id: exam.id,
+      examName: examName || topic || "Weekly Test",
+      subject: mainSubject,
+      topic: topic,
+      obtainedMarks: totalScore,
+      totalMarks: maxPossible,
       percentage: Math.round(percentage * 100) / 100,
       grade: getGrade(percentage),
-      date: exam.examDate || exam.date || new Date().toISOString()
+      date: exam.examDate,
+      physics: exam.physics,
+      chemistry: exam.chemistry,
+      maths: exam.maths,
+      total: exam.total,
+      testType: exam.testType?.[0] || 'weekly'
     };
   });
 
@@ -62,7 +107,7 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
     let aValue = a[sortField];
     let bValue = b[sortField];
 
-    if (sortField === "date") {
+    if (sortField === "date" || sortField === "examDate") {
       aValue = new Date(aValue);
       bValue = new Date(bValue);
     }
@@ -74,11 +119,32 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
     }
   });
 
-  // Calculate statistics
+  // Calculate statistics based on processed data
   const totalExams = sortedExams.length;
-  const averagePercentage = sortedExams.reduce((sum, exam) => sum + exam.percentage, 0) / totalExams;
-  const highestScore = Math.max(...sortedExams.map(exam => exam.percentage));
-  const lowestScore = Math.min(...sortedExams.map(exam => exam.percentage));
+  const averagePercentage = sortedExams.length > 0 
+    ? sortedExams.reduce((sum, exam) => sum + exam.percentage, 0) / totalExams 
+    : 0;
+  
+  const highestScore = sortedExams.length > 0 
+    ? Math.max(...sortedExams.map(exam => exam.percentage)) 
+    : 0;
+  
+  const lowestScore = sortedExams.length > 0 
+    ? Math.min(...sortedExams.map(exam => exam.percentage)) 
+    : 0;
+
+  // Calculate subject averages
+  const physicsExams = sortedExams.filter(exam => exam.physics !== undefined);
+  const chemistryExams = sortedExams.filter(exam => exam.chemistry !== undefined);
+  const mathsExams = sortedExams.filter(exam => exam.maths !== undefined);
+
+  const physicsAverage = physicsExams.length > 0 
+    ? physicsExams.reduce((sum, exam) => sum + exam.physics, 0) / physicsExams.length 
+    : 0;
+
+  const chemistryAverage = chemistryExams.length > 0 
+    ? chemistryExams.reduce((sum, exam) => sum + exam.chemistry, 0) / chemistryExams.length 
+    : 0;
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -94,10 +160,26 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
     return sortDirection === "asc" ? <FaSortUp /> : <FaSortDown />;
   };
 
-
   const getPerformanceTrend = (current, previous) => {
     if (!previous) return "neutral";
     return current > previous ? "improving" : current < previous ? "declining" : "neutral";
+  };
+
+  const renderSubjectScores = (exam) => {
+    const scores = [];
+    if (exam.physics !== undefined) {
+      scores.push(`P: ${exam.physics}/${exam.maxPhysics || 100}`);
+    }
+    if (exam.chemistry !== undefined) {
+      scores.push(`C: ${exam.chemistry}`);
+    }
+    if (exam.maths !== undefined && exam.maths > 0) {
+      scores.push(`M: ${exam.maths}`);
+    }
+    if (exam.total !== undefined) {
+      scores.push(`Total: ${exam.total}`);
+    }
+    return scores.join(' | ');
   };
 
   return (
@@ -145,6 +227,27 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
         </div>
       </div>
 
+      {/* Subject-wise Averages */}
+      {(physicsAverage > 0 || chemistryAverage > 0) && (
+        <div className="subject-averages">
+          <h4>Subject-wise Averages</h4>
+          <div className="subject-stats">
+            {physicsAverage > 0 && (
+              <div className="subject-stat">
+                <FaAtom className="physics-icon" />
+                <span>Physics: {physicsAverage.toFixed(1)}%</span>
+              </div>
+            )}
+            {chemistryAverage > 0 && (
+              <div className="subject-stat">
+                <FaFlask className="chemistry-icon" />
+                <span>Chemistry: {chemistryAverage.toFixed(1)}%</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Results Table */}
       <div className="results-table-wrapper">
         <table className="results-table">
@@ -152,20 +255,20 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
             <tr>
               <th onClick={() => handleSort("examName")}>
                 <div className="table-header">
-                  Exam Name
+                  Exam & Topic
                   {getSortIcon("examName")}
                 </div>
               </th>
-              <th onClick={() => handleSort("date")}>
+              <th onClick={() => handleSort("examDate")}>
                 <div className="table-header">
                   Date
-                  {getSortIcon("date")}
+                  {getSortIcon("examDate")}
                 </div>
               </th>
-              <th onClick={() => handleSort("obtainedMarks")}>
+              <th onClick={() => handleSort("percentage")}>
                 <div className="table-header">
-                  Marks
-                  {getSortIcon("obtainedMarks")}
+                  Scores
+                  {getSortIcon("percentage")}
                 </div>
               </th>
               <th onClick={() => handleSort("percentage")}>
@@ -175,7 +278,7 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
                 </div>
               </th>
               <th>Grade</th>
-              <th>Performance</th>
+              <th>Trend</th>
             </tr>
           </thead>
           <tbody>
@@ -186,8 +289,14 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
               return (
                 <tr key={exam.id || index} className="exam-row">
                   <td className="exam-name">
-                    <strong>{exam.examName || "Weekly Test"}</strong>
-                    {exam.subject && <span className="exam-subject">{exam.subject}</span>}
+                    <div className="exam-title">
+                      {getSubjectIcon(exam.subject)}
+                      <strong>{exam.examName}</strong>
+                    </div>
+                    {exam.topic && exam.topic !== exam.examName && (
+                      <div className="exam-topic">{exam.topic}</div>
+                    )}
+                    <div className="exam-type">{exam.testType}</div>
                   </td>
                   
                   <td className="exam-date">
@@ -198,10 +307,9 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
                     })}
                   </td>
                   
-                  <td className="exam-marks">
-                    <div className="marks-display">
-                      <span className="obtained-marks">{exam.obtainedMarks}</span>
-                      <span className="total-marks">/{exam.totalMarks}</span>
+                  <td className="exam-scores">
+                    <div className="scores-display">
+                      {renderSubjectScores(exam)}
                     </div>
                   </td>
                   
@@ -212,7 +320,7 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
                         <div 
                           className="percentage-fill"
                           style={{ 
-                            width: `${exam.percentage}%`,
+                            width: `${Math.min(exam.percentage, 100)}%`,
                             backgroundColor: exam.grade.color
                           }}
                         ></div>
@@ -231,9 +339,9 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
                   
                   <td className="exam-trend">
                     <div className={`trend-indicator ${trend}`}>
-                      {trend === "improving" && "↗ Improving"}
-                      {trend === "declining" && "↘ Declining"}
-                      {trend === "neutral" && "→ Stable"}
+                      {trend === "improving" && "↗"}
+                      {trend === "declining" && "↘"}
+                      {trend === "neutral" && "→"}
                     </div>
                   </td>
                 </tr>
@@ -245,35 +353,35 @@ const ResultsTable = ({ studentExams = [], loading = false }) => {
 
       {/* Overall Performance Summary */}
       <div className="performance-summary">
-        <h4>Overall Performance Summary</h4>
+        <h4>Performance Analysis</h4>
         <div className="summary-grid">
           <div className="summary-item">
-            <span className="summary-label">Average Performance:</span>
+            <span className="summary-label">Overall Average:</span>
             <span className="summary-value">{averagePercentage.toFixed(1)}%</span>
           </div>
           <div className="summary-item">
-            <span className="summary-label">Grade Average:</span>
-            <span className="summary-value">
+            <span className="summary-label">Overall Grade:</span>
+            <span 
+              className="summary-value grade"
+              style={{ color: getGrade(averagePercentage).color }}
+            >
               {getGrade(averagePercentage).grade}
             </span>
           </div>
           <div className="summary-item">
-            <span className="summary-label">Exams Taken:</span>
+            <span className="summary-label">Exams Count:</span>
             <span className="summary-value">{totalExams}</span>
           </div>
           <div className="summary-item">
-            <span className="summary-label">Performance Trend:</span>
+            <span className="summary-label">Performance Level:</span>
             <span className={`summary-value ${
-              sortedExams.length > 1 ? 
-                sortedExams[sortedExams.length - 1].percentage > averagePercentage ? 
-                  "trend-up" : "trend-down" 
-                : "trend-neutral"
+              averagePercentage >= 70 ? "level-excellent" :
+              averagePercentage >= 60 ? "level-good" :
+              averagePercentage >= 50 ? "level-average" : "level-poor"
             }`}>
-              {sortedExams.length > 1 ? 
-                sortedExams[sortedExams.length - 1].percentage > averagePercentage ? 
-                  "Improving" : "Needs Improvement" 
-                : "Baseline Established"
-              }
+              {averagePercentage >= 70 ? "Excellent" :
+               averagePercentage >= 60 ? "Good" :
+               averagePercentage >= 50 ? "Average" : "Needs Improvement"}
             </span>
           </div>
         </div>

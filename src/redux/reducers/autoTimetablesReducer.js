@@ -48,15 +48,15 @@ const autoTimetablesReducer = (state = initialAutoTimetablesState, action) => {
         error: null,
       };
 case UPDATE_AUTOTIMETABLE_SUCCESS:
-  // action.payload will be the entire updated timetable entry object
   const updatedAutoTimetables = state.timetables.map((timetable) =>
-    // Find the timetable with the matching ID
-    timetable.id === action.payload.id ? action.payload : timetable
+    timetable.id === action.payload.id 
+      ? { ...action.payload } // ✅ Use spread to create new object
+      : timetable
   );
   return {
     ...state,
     loading: false,
-    timetables: updatedAutoTimetables,
+    timetables: updatedAutoTimetables, // ✅ New array reference
     error: null,
   };
     case UPDATE_AUTO_TIMETABLE_TOPIC_SUCCESS:

@@ -83,6 +83,7 @@ const StudentPortfolio = () => {
   const [studentData, setStudentData] = useState(
     location.state?.studentData || null
   );
+  console.log("studentExams",studentExams)
   const [showAddMarksModal, setShowAddMarksModal] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(!location.state?.studentData);
@@ -240,6 +241,104 @@ const StudentPortfolio = () => {
       </div>
     );
   }
+// Helper functions for weekend syllabus
+const renderCurrentWeekSyllabus = () => {
+  if (!studentData.weekSyllabus || studentData.weekSyllabus.length === 0) {
+    return (
+      <div className="syllabus-week">
+        <h4>No syllabus data available</h4>
+        <div className="syllabus-grid">
+          <div className="syllabus-day">
+            <h5>Saturday</h5>
+            <ul>
+              <li>No topics scheduled</li>
+            </ul>
+          </div>
+          <div className="syllabus-day">
+            <h5>Sunday</h5>
+            <ul>
+              <li>No topics scheduled</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Get the latest syllabus entry
+  const latestSyllabus = [...studentData.weekSyllabus]
+    .sort((a, b) => {
+      const dateA = a.date?._seconds || 0;
+      const dateB = b.date?._seconds || 0;
+      return dateB - dateA;
+    })[0];
+
+  // Get previous syllabus entries (excluding the latest)
+  const previousSyllabus = [...studentData.weekSyllabus]
+    .sort((a, b) => {
+      const dateA = a.date?._seconds || 0;
+      const dateB = b.date?._seconds || 0;
+      return dateB - dateA;
+    })
+    .slice(1);
+
+  const formatDate = (timestamp) => {
+    if (!timestamp || !timestamp._seconds) return 'Date not available';
+    const date = new Date(timestamp._seconds * 1000);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getWeekNumber = (timestamp) => {
+    if (!timestamp || !timestamp._seconds) return 'Current Week';
+    const date = new Date(timestamp._seconds * 1000);
+    const startDate = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
+    return Math.ceil(days / 7);
+  };
+
+  return (
+    <>
+      <div className="syllabus-week">
+        <h4>Week {getWeekNumber(latestSyllabus.date)} ({formatDate(latestSyllabus.date)})</h4>
+        <div className="syllabus-grid">
+          <div className="syllabus-day">
+            <h5>Saturday</h5>
+            <ul>
+              <li key={latestSyllabus.id}>
+                <strong>{studentData.Subject || 'Subject'}:</strong> {latestSyllabus.topic}
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Previous Week Syllabus */}
+      {previousSyllabus.length > 0 && (
+        <div className="previous-syllabus">
+          <h4>Previous Week</h4>
+          <div className="syllabus-grid">
+            <div className="syllabus-day">
+              <h5>Saturday</h5>
+              <ul>
+                {previousSyllabus.slice(0, 2).map((syllabus, index) => (
+                  <li key={`prev-${syllabus.id}-${index}`}>
+                    <strong>{studentData.Subject}:</strong> {syllabus.topic}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
   return (
     <div className="student-portfolio premium light-theme">
@@ -449,7 +548,7 @@ const StudentPortfolio = () => {
                       <div className="contact-info">
                         <strong>Father</strong>
                         <span>
-                          {formatPhone(studentData.FatherContactNumber)}
+                          {formatPhone(studentData.father_contact)}
                         </span>
                       </div>
                     </div>
@@ -464,7 +563,7 @@ const StudentPortfolio = () => {
                       <div className="contact-info">
                         <strong>Mother</strong>
                         <span>
-                          {formatPhone(studentData.MotherContactNumber)}
+                          {formatPhone(studentData.mother_contact)}
                         </span>
                       </div>
                     </div>
@@ -581,58 +680,18 @@ const StudentPortfolio = () => {
         )}
 
         {/* Weekend Syllabus Tab */}
-        {activeTab === "weekend" && (
-          <div className="tab-content premium">
-            <div className="section-header premium">
-              <h2>Weekend Syllabus</h2>
-              <p>Weekly study plan and curriculum schedule</p>
-            </div>
-            <div className="weekend-syllabus-container">
-              <DetailCard title="Current Week Syllabus" icon={FaCalendarWeek} delay={200}>
-                <div className="syllabus-content">
-                  <div className="syllabus-week">
-                    <h4>Week 15 (Dec 9-15, 2024)</h4>
-                    <div className="syllabus-grid">
-                      <div className="syllabus-day">
-                        <h5>Saturday</h5>
-                        <ul>
-                          <li>Mathematics: Calculus - Integration Techniques</li>
-                          <li>Physics: Electromagnetism - Faraday's Law</li>
-                          <li>Practice Problems: Set 15A</li>
-                        </ul>
-                      </div>
-                      <div className="syllabus-day">
-                        <h5>Sunday</h5>
-                        <ul>
-                          <li>Chemistry: Organic Chemistry - Reaction Mechanisms</li>
-                          <li>Mathematics: Differential Equations</li>
-                          <li>Revision: Week 14 Topics</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </DetailCard>
-              
-              <DetailCard title="Upcoming Topics" icon={FaBook} delay={400}>
-                <div className="upcoming-topics">
-                  <div className="topic-item">
-                    <span className="topic-week">Week 16</span>
-                    <span className="topic-desc">Advanced Physics Concepts</span>
-                  </div>
-                  <div className="topic-item">
-                    <span className="topic-week">Week 17</span>
-                    <span className="topic-desc">Chemistry Revision</span>
-                  </div>
-                  <div className="topic-item">
-                    <span className="topic-week">Week 18</span>
-                    <span className="topic-desc">Mock Test Preparation</span>
-                  </div>
-                </div>
-              </DetailCard>
-            </div>
-          </div>
-        )}
+    {activeTab === "weekend" && (
+  <div className="tab-content premium">
+    <div className="weekend-syllabus-container">
+      <DetailCard title="Current Week Syllabus" icon={FaCalendarWeek} delay={200}>
+        <div className="syllabus-content">
+          {renderCurrentWeekSyllabus()}
+        </div>
+      </DetailCard>
+
+    </div>
+  </div>
+)}
 
         {/* Upload Files Tab */}
         {activeTab === "upload" && (
@@ -750,11 +809,6 @@ const StudentPortfolio = () => {
         {/* Results Tab */}
         {activeTab === "results" && (
           <div className="tab-content premium">
-            <div className="section-header premium">
-              <h2>Results & Performance</h2>
-              <p>Exam results and performance analysis</p>
-            </div>
-            
             <div className="results-container">
               <DetailCard title="Marks Overview" icon={FaTable} delay={200}>
                 <ResultsTable studentExams={studentExams} />
@@ -833,10 +887,6 @@ const StudentPortfolio = () => {
         {/* Classes Info Tab */}
         {activeTab === "classes" && (
           <div className="tab-content premium">
-            <div className="section-header premium">
-              <h2>Classes Information</h2>
-              <p>Class schedule and timetable</p>
-            </div>
             <DetailCard title="Class Schedule" icon={FaChalkboardTeacher} delay={200}>
               <div className="info-grid premium">
                 {studentData.classDateandTime && studentData.classDateandTime.map((schedule, index) => (
@@ -855,7 +905,7 @@ const StudentPortfolio = () => {
                 <DetailItem
                   icon={FaCheckCircle}
                   label="Classes Completed"
-                  value={studentData.classesCompleted || "0"}
+                  value={studentData.isRevisionProgramJEEMains2026Student ? studentData.revisionClassesCompleted : studentData.classesCompleted}
                   delay={100}
                 />
                 <DetailItem
@@ -902,21 +952,6 @@ const StudentPortfolio = () => {
                       value={`₹${(+studentData["Monthly Fee"] || 0).toLocaleString()}/month`}
                       delay={150}
                     />
-                  </div>
-                </DetailCard>
-              </div>
-              <div className="content-column">
-                <DetailCard title="Quick Actions" icon={FaRocket} delay={400}>
-                  <div className="action-buttons premium">
-                    <MuiButton variant="contained" className="premium action-btn">
-                      <FaEdit /> Edit Profile
-                    </MuiButton>
-                    <MuiButton variant="outlined" className="premium action-btn">
-                      <FaFileAlt /> Generate Report
-                    </MuiButton>
-                    <MuiButton variant="outlined" className="premium action-btn">
-                      <FaHistory /> View Activity Log
-                    </MuiButton>
                   </div>
                 </DetailCard>
               </div>

@@ -45,11 +45,13 @@ import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
 import GridViewIcon from "@mui/icons-material/GridView";
 import ListIcon from "@mui/icons-material/List";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 // Enhanced Color definitions
 const colors = {
-  regular: "#77dd77", // Light Green for regular students
-  revision: "#ff726f", // Light Red for revision students
+  regular: "#C2F0C2", // Light Green for regular students
+  revision: "green", // Light Red for revision students
   headerBackground: "#2c3e50", // Dark blue-gray header
   border: "#bdc3c7", // Border color
   text: "#2c3e50", // Dark text
@@ -58,13 +60,12 @@ const colors = {
   background: "#ecf0f1", // Light background
   cardBackground: "#ffffff",
   hover: "#f8f9fa",
+  swapButton: "#9b59b6", // Purple for swap feature
 };
 
 // Enhanced Styles
 const containerStyle = {
-
   padding: "10px",
-
 };
 
 const mainContainerStyle = {
@@ -132,7 +133,7 @@ const baseCellStyle = {
   padding: "16px 12px",
   textAlign: "center",
   color: colors.text,
-  fontWeight: "500",
+  fontWeight: "700",
   transition: "all 0.2s ease-in-out",
 };
 
@@ -196,35 +197,6 @@ const editModalContentStyle = {
   animation: "modalAppear 0.3s ease-out forwards",
 };
 
-// Stats card styles
-const statCardStyle = {
-  background: `linear-gradient(135deg, ${colors.cardBackground} 0%, #f8f9fa 100%)`,
-  borderRadius: "16px",
-  padding: "20px",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-  border: `1px solid ${colors.border}`,
-  transition: "all 0.3s ease",
-  height: "100%",
-  "&:hover": {
-    transform: "translateY(-4px)",
-    boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
-  },
-};
-
-// List view card styles
-const listCardStyle = {
-  background: colors.cardBackground,
-  borderRadius: "12px",
-  padding: "16px",
-  marginBottom: "12px",
-  border: `1px solid ${colors.border}`,
-  transition: "all 0.2s ease-in-out",
-  "&:hover": {
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-    transform: "translateY(-2px)",
-  },
-};
-
 const ClassSchedule = () => {
   const dispatch = useDispatch();
   // Add safe access with default values
@@ -250,6 +222,12 @@ const ClassSchedule = () => {
   const [selectedDay, setSelectedDay] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
+  
+  // New states for student swap feature
+  const [swapMode, setSwapMode] = useState(false);
+  const [selectedStudentForSwap, setSelectedStudentForSwap] = useState(null);
+  const [targetStudentForSwap, setTargetStudentForSwap] = useState("");
+  const [swapHistory, setSwapHistory] = useState([]);
 
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -387,6 +365,84 @@ const ClassSchedule = () => {
     }
   };
 
+  // NEW FUNCTION: Handle student schedule swap
+  const handleStudentSwap = async () => {
+    if (!selectedStudentForSwap || !targetStudentForSwap) {
+      alert("Please select both source and target students");
+      return;
+    }
+
+    if (selectedStudentForSwap === targetStudentForSwap) {
+      alert("Cannot swap schedule with the same student");
+      return;
+    }
+
+    try {
+      // Get current schedules for both students
+      const sourceStudent = safeClassSchedule.data.find(
+        (s) => s.id === selectedStudentForSwap
+      );
+      const targetStudent = safeClassSchedule.data.find(
+        (s) => s.id === targetStudentForSwap
+      );
+
+      if (!sourceStudent || !targetStudent) {
+        alert("Students not found");
+        return;
+      }
+
+      // Swap the classDateandTime arrays
+      const sourceSchedule = sourceStudent.classDateandTime || [];
+      const targetSchedule = targetStudent.classDateandTime || [];
+
+      // Update both students
+      await Promise.all([
+        dispatch(
+          updateClassSchedule(selectedStudentForSwap, {
+            classDateandTime: targetSchedule,
+          })
+        ),
+        dispatch(
+          updateClassSchedule(targetStudentForSwap, {
+            classDateandTime: sourceSchedule,
+          })
+        ),
+      ]);
+
+      // Add to swap history
+      const newSwapRecord = {
+        id: Date.now(),
+        sourceStudent: sourceStudent.Name || sourceStudent.name,
+        targetStudent: targetStudent.Name || targetStudent.name,
+        timestamp: new Date().toLocaleString(),
+        sourceStudentId: selectedStudentForSwap,
+        targetStudentId: targetStudentForSwap,
+      };
+
+      setSwapHistory((prev) => [newSwapRecord, ...prev.slice(0, 9)]); // Keep last 10 records
+
+      // Reset swap state
+      setSelectedStudentForSwap(null);
+      setTargetStudentForSwap("");
+      setSwapMode(false);
+
+      alert("Student schedules swapped successfully!");
+    } catch (error) {
+      console.error("Error swapping schedules:", error);
+      alert("Failed to swap schedules");
+    }
+  };
+
+  // NEW FUNCTION: Handle student selection for swap
+  const handleStudentSelectForSwap = (studentId) => {
+    if (!swapMode) {
+      setSwapMode(true);
+      setSelectedStudentForSwap(studentId);
+    } else {
+      setTargetStudentForSwap(studentId);
+    }
+  };
+
   const handleCancel = () => {
     setEditingCell(null);
     setTempValue("");
@@ -469,7 +525,38 @@ const ClassSchedule = () => {
     );
   };
 
-  // Render Grid View (Table)
+  // NEW COMPONENT: Student Dropdown for Swap
+  const StudentSwapDropdown = ({ studentId, studentName }) => {
+    const otherStudents = scheduleData.filter(
+      (student) => student.id !== studentId
+    );
+
+    return (
+      <Select
+        value={targetStudentForSwap}
+        onChange={(e) => setTargetStudentForSwap(e.target.value)}
+        size="small"
+        sx={{
+          minWidth: 200,
+          borderRadius: 2,
+          backgroundColor: "white",
+          "& .MuiSelect-select": { py: 0.5 },
+        }}
+        displayEmpty
+      >
+        <MenuItem value="">
+          <em>Select student to swap with...</em>
+        </MenuItem>
+        {otherStudents.map((student) => (
+          <MenuItem key={student.id} value={student.id}>
+            {student.name} ({student.studentType})
+          </MenuItem>
+        ))}
+      </Select>
+    );
+  };
+
+  // Render Grid View (Table) - Updated with swap feature
   const renderGridView = () => (
     <TableContainer component={Paper} style={tableContainerStyle}>
       <Table stickyHeader sx={{ minWidth: 800 }}>
@@ -483,6 +570,12 @@ const ClassSchedule = () => {
             </TableCell>
             <TableCell style={nameHeaderCellStyle} sx={{ minWidth: "180px" }}>
               Student Name
+            </TableCell>
+            <TableCell
+              style={headerCellStyle}
+              sx={{ width: "150px", textAlign: "center" }}
+            >
+              Actions
             </TableCell>
             {days.map((day) => (
               <TableCell key={day} style={headerCellStyle}>
@@ -505,8 +598,21 @@ const ClassSchedule = () => {
               },
             };
 
+            const isSelectedForSwap = selectedStudentForSwap === student.id;
+            const highlightStyle = isSelectedForSwap
+              ? {
+                  boxShadow: "0 0 0 3px #9b59b6",
+                  backgroundColor: isRevision
+                    ? "rgba(255, 114, 111, 0.7)"
+                    : "rgba(119, 221, 119, 0.7)",
+                }
+              : {};
+
             return (
-              <TableRow key={student.id} sx={rowStyle}>
+              <TableRow
+                key={student.id}
+                sx={{ ...rowStyle, ...highlightStyle }}
+              >
                 <TableCell style={nameCellStyle}>
                   <Chip
                     label={index + 1}
@@ -521,23 +627,71 @@ const ClassSchedule = () => {
                 </TableCell>
                 <TableCell style={nameCellStyle}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Typography variant="body1" fontWeight="600">
+                    <Typography variant="body1" fontWeight="800">
                       {student.name}
                     </Typography>
-                    <Chip
-                      label={student.studentType}
-                      size="small"
-                      sx={{
-                        bgcolor:
-                          student.studentType === "revision"
-                            ? "#d32f2f"
-                            : "#388e3c",
-                        color: "white",
-                        fontSize: "0.7rem",
-                        height: "20px",
-                      }}
-                    />
                   </Box>
+                </TableCell>
+
+                {/* NEW: Actions Cell with Swap Button */}
+                <TableCell style={baseCellStyle}>
+                  <Tooltip
+                    title={
+                      swapMode
+                        ? isSelectedForSwap
+                          ? "Select target student from dropdown"
+                          : "Click to select as target for swap"
+                        : "Swap schedule with another student"
+                    }
+                  >
+                    <Button
+                      variant={isSelectedForSwap ? "contained" : "outlined"}
+                      color="secondary"
+                      size="small"
+                      startIcon={<SwapHorizIcon />}
+                      onClick={() => handleStudentSelectForSwap(student.id)}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        backgroundColor: isSelectedForSwap
+                          ? colors.swapButton
+                          : "transparent",
+                        "&:hover": {
+                          backgroundColor: isSelectedForSwap
+                            ? "#8e44ad"
+                            : "rgba(155, 89, 182, 0.1)",
+                        },
+                      }}
+                    >
+                      {swapMode
+                        ? isSelectedForSwap
+                          ? "Selected"
+                          : "Select"
+                        : "Swap"}
+                    </Button>
+                  </Tooltip>
+
+                  {/* Show dropdown when this student is selected for swap */}
+                  {isSelectedForSwap && (
+                    <Box sx={{ mt: 1 }}>
+                      <StudentSwapDropdown
+                        studentId={student.id}
+                        studentName={student.name}
+                      />
+                      {targetStudentForSwap && (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          size="small"
+                          onClick={handleStudentSwap}
+                          sx={{ mt: 1, width: "100%" }}
+                        >
+                          Confirm Swap
+                        </Button>
+                      )}
+                    </Box>
+                  )}
                 </TableCell>
 
                 {days.map((day) => {
@@ -583,115 +737,6 @@ const ClassSchedule = () => {
         </Box>
       )}
     </TableContainer>
-  );
-
-  // Render List View (Cards)
-  const renderListView = () => (
-    <Box style={tableContainerStyle} sx={{ p: 3 }}>
-      {sortedData.map((student, index) => {
-        const isRevision = student.studentType === "revision";
-        const cardStyle = {
-          ...listCardStyle,
-          backgroundColor: isRevision ? colors.revision : colors.regular,
-        };
-
-        return (
-          <Card key={student.id} sx={cardStyle}>
-            <CardContent>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  mb: 2,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Chip
-                    label={index + 1}
-                    size="small"
-                    sx={{
-                      bgcolor: "white",
-                      color: colors.text,
-                      fontWeight: 700,
-                    }}
-                  />
-                  <Typography variant="h6" fontWeight="600">
-                    {student.name}
-                  </Typography>
-                  <Chip
-                    label={student.studentType}
-                    size="small"
-                    sx={{
-                      bgcolor:
-                        student.studentType === "revision"
-                          ? "#d32f2f"
-                          : "#388e3c",
-                      color: "white",
-                      fontSize: "0.7rem",
-                    }}
-                  />
-                </Box>
-              </Box>
-
-              <Grid container spacing={2}>
-                {days.map((day) => {
-                  const dayKey = day.toLowerCase();
-                  const cellValue = student[dayKey];
-
-                  return (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={day}>
-                      <Box
-                        sx={{
-                          p: 2,
-                          borderRadius: 2,
-                          backgroundColor: "rgba(255,255,255,0.7)",
-                          cursor: isEditMode ? "pointer" : "default",
-                          transition: "all 0.2s ease",
-                          "&:hover": isEditMode
-                            ? {
-                                backgroundColor: "rgba(255,255,255,0.9)",
-                                transform: "scale(1.02)",
-                              }
-                            : {},
-                        }}
-                        onClick={() =>
-                          handleEditClick(student.id, dayKey, cellValue)
-                        }
-                      >
-                        <Typography
-                          variant="subtitle2"
-                          fontWeight="600"
-                          color="text.secondary"
-                          gutterBottom
-                        >
-                          {day}
-                        </Typography>
-                        {renderTimeSlots(cellValue)}
-                      </Box>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-            </CardContent>
-          </Card>
-        );
-      })}
-
-      {sortedData.length === 0 && (
-        <Box sx={{ textAlign: "center", padding: "60px 20px" }}>
-          <Box sx={{ fontSize: "64px", mb: 2, opacity: 0.3 }}>📚</Box>
-          <Typography variant="h5" color="text.primary" gutterBottom>
-            No students found
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {searchTerm || selectedDay !== "all"
-              ? "Try adjusting your search criteria or filters"
-              : "No schedule data available for display"}
-          </Typography>
-        </Box>
-      )}
-    </Box>
   );
 
   // Update loading state to use safeClassSchedule.loading
@@ -760,7 +805,7 @@ const ClassSchedule = () => {
             justifyContent="space-between"
           >
             {/* Left side - Search */}
-            <Grid item xs={12} md={8}>
+            <Grid item xs={12} md={6}>
               <TextField
                 style={{ width: 350 }}
                 placeholder="Search students by name..."
@@ -784,7 +829,7 @@ const ClassSchedule = () => {
             </Grid>
 
             {/* Right side - Controls */}
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={6}>
               <Box
                 sx={{
                   display: "flex",
@@ -823,6 +868,30 @@ const ClassSchedule = () => {
                   {viewMode === "grid" ? "List View" : "Grid View"}
                 </Button>
 
+                {/* Swap Mode Toggle */}
+                <Button
+                  variant={swapMode ? "contained" : "outlined"}
+                  color="secondary"
+                  startIcon={<SwapHorizIcon />}
+                  onClick={() => {
+                    setSwapMode(!swapMode);
+                    setSelectedStudentForSwap(null);
+                    setTargetStudentForSwap("");
+                  }}
+                  size="medium"
+                  sx={{
+                    borderRadius: 3,
+                    px: 3,
+                    fontWeight: 600,
+                    backgroundColor: swapMode ? colors.swapButton : "transparent",
+                    "&:hover": {
+                      backgroundColor: swapMode ? "#8e44ad" : "rgba(155, 89, 182, 0.1)",
+                    },
+                  }}
+                >
+                  {swapMode ? "Cancel Swap" : "Swap Schedules"}
+                </Button>
+
                 {/* Edit Mode Toggle */}
                 <Button
                   variant={isEditMode ? "contained" : "outlined"}
@@ -843,8 +912,26 @@ const ClassSchedule = () => {
           </Grid>
         </Box>
 
+        {/* Swap Mode Banner */}
+        {swapMode && (
+          <Alert
+            severity="info"
+            sx={{
+              mb: 3,
+              borderRadius: 3,
+              "& .MuiAlert-message": {
+                fontSize: "15px",
+                fontWeight: 500,
+              },
+            }}
+            icon={<SwapHorizIcon />}
+          >
+            <strong>Swap Mode Active</strong> - Click on a student's "Swap" button to select them, then choose another student from the dropdown to swap their complete schedules.
+          </Alert>
+        )}
+
         {/* Edit Mode Banner - Show update status */}
-        {isEditMode && (
+        {isEditMode && !swapMode && (
           <Alert
             severity="warning"
             sx={{
@@ -897,6 +984,42 @@ const ClassSchedule = () => {
 
         {/* Render appropriate view */}
         {viewMode === "grid" ? renderGridView() : renderListView()}
+
+        {/* Swap History Section */}
+        {swapHistory.length > 0 && (
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h6" gutterBottom fontWeight="600">
+              Recent Schedule Swaps
+            </Typography>
+            <Box style={tableContainerStyle} sx={{ p: 3 }}>
+              {swapHistory.map((swap) => (
+                <Card key={swap.id} sx={{ mb: 2, p: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <SwapHorizIcon color="secondary" />
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography variant="body1" fontWeight="600">
+                        {swap.sourceStudent} ↔ {swap.targetStudent}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {swap.timestamp}
+                      </Typography>
+                    </Box>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setSelectedStudentForSwap(swap.sourceStudentId);
+                        setTargetStudentForSwap(swap.targetStudentId);
+                        setSwapMode(true);
+                      }}
+                    >
+                      Redo Swap
+                    </Button>
+                  </Box>
+                </Card>
+              ))}
+            </Box>
+          </Box>
+        )}
       </Box>
 
       {/* Edit Modal - Use safe access */}

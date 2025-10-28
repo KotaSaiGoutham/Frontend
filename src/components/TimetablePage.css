@@ -6,7 +6,6 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif; /* Standard MUI font */
-  background-color: #f7f8fc; /* Consistent light background for the entire page */
   -webkit-font-smoothing: antialiased; /* Improves font rendering on macOS/iOS */
   -moz-osx-font-smoothing: grayscale; /* Improves font rendering on macOS/iOS */
   overflow-x: hidden; /* Prevent horizontal scroll due to animations */
