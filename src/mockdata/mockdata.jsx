@@ -493,3 +493,19 @@ export  const getTimetablePdfTitle = () => {
     }
     return "General Timetable Report";
   };
+
+  // Add this near the top of your component, after the studentConfig
+export const absentReasons = [
+  "Student absent",
+  "Tutor absent", 
+  "Internet issue",
+  "Zoom issue",
+  "Student health issue",
+  "Student on vacation",
+  "Power outage",
+  "Technical issues",
+  "Family emergency",
+  "School conflict",
+  "Transportation issues",
+  "Other personal reasons"
+];

@@ -1489,8 +1489,6 @@ url: `/api/data/studentexams${examType ? `?examType=${examType}` : ""}`,
     },
   });
 
-// redux/actions - Fixed addStudentExam and updateStudentExam
-
 export const addStudentExam = (examData) =>
   apiRequest({
     url: "/api/data/addStudentExam",
@@ -1505,29 +1503,39 @@ export const addStudentExam = (examData) =>
         payload: data.exam 
       });
       
-      // CRITICAL: Also update the revision classes state
+      // CRITICAL: Update the revision classes state for both present and absent
       if (examData.classId && data.exam) {
         dispatch({
           type: "ADD_REVISION_CLASS_EXAM_SUCCESS",
           payload: {
             classId: examData.classId,
-            examData: {
+            examData: examData.status === "Absent" ? {
               studentId: examData.studentId,
               studentName: examData.studentName,
-              examRecordId: data.exam.id, // Use the returned ID
+              examRecordId: data.exam.id,
+              status: "Absent",
+              absentReason: examData.absentReason,
+              isAbsent: true,
+              physics: 0,
+              chemistry: 0,
+              maths: 0,
+              total: 0
+            } : {
+              studentId: examData.studentId,
+              studentName: examData.studentName,
+              examRecordId: data.exam.id,
               physics: examData.physics || 0,
               chemistry: examData.chemistry || 0,
               maths: examData.maths || 0,
               total: examData.total || 0,
               subject: examData.Subject,
-                            stream: examData.stream,
-
+              stream: examData.stream,
+              status: "Present"
             }
           }
         });
       }
       
-      // Return the entire response so component can access it
       return data;
     },
     onFailure: (error, dispatch) => {
@@ -1539,6 +1547,7 @@ export const addStudentExam = (examData) =>
     },
   });
 
+// Update updateStudentExam action
 export const updateStudentExam = (examData) =>
   apiRequest({
     url: `/api/data/studentexams/${examData.id}`,
@@ -1553,25 +1562,34 @@ export const updateStudentExam = (examData) =>
         payload: data 
       });
       
-      // CRITICAL: Also update the revision classes state
+      // Update revision classes state
       if (examData.classId) {
         dispatch({
           type: "UPDATE_REVISION_CLASS_EXAM_SUCCESS",
           payload: {
             classId: examData.classId,
             studentId: examData.studentId,
-            examData: {
+            examData: examData.status === "Absent" ? {
+              status: "Absent",
+              absentReason: examData.absentReason,
+              isAbsent: true,
+              physics: 0,
+              chemistry: 0,
+              maths: 0,
+              total: 0
+            } : {
               physics: examData.physics,
               chemistry: examData.chemistry,
               maths: examData.maths,
               total: examData.total,
               subject: examData.Subject,
+              status: "Present",
+              isAbsent: false
             }
           }
         });
       }
       
-      // Return the response
       return data;
     },
     onFailure: (error, dispatch) => {

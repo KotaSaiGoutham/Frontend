@@ -59,7 +59,7 @@ const revisionExamsReducer = (state = initialState, action) => {
       };
 
     // Handle adding exam data to revision class
-    case "ADD_REVISION_CLASS_EXAM_SUCCESS": {
+ case "ADD_REVISION_CLASS_EXAM_SUCCESS": {
       const { classId, examData } = action.payload;
       return {
         ...state,
@@ -72,18 +72,16 @@ const revisionExamsReducer = (state = initialState, action) => {
             
             let updatedExamData;
             if (studentIndex >= 0) {
-              // Update existing entry
               updatedExamData = [...existingExamData];
               updatedExamData[studentIndex] = { 
                 ...updatedExamData[studentIndex], 
                 ...examData,
-                id: examData.examRecordId || updatedExamData[studentIndex].id // Preserve ID
+                id: examData.examRecordId || updatedExamData[studentIndex].id
               };
             } else {
-              // Add new entry
               updatedExamData = [...existingExamData, {
                 ...examData,
-                id: examData.examRecordId // Set ID for new entry
+                id: examData.examRecordId
               }];
             }
             
@@ -96,6 +94,7 @@ const revisionExamsReducer = (state = initialState, action) => {
         })
       };
     }
+
 
     // Handle updating exam data in revision class
     case "UPDATE_REVISION_CLASS_EXAM_SUCCESS": {

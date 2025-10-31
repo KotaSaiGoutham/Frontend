@@ -118,7 +118,7 @@ const navItems = [
 ];
 
 const RevisionStudentsPage = () => {
-  const [activeTab, setActiveTab] = useState("students");
+  const [activeTab, setActiveTab] = useState("marks");
   const dispatch = useDispatch();
   const { students, loading, error } = useSelector(
     (state) => state.studentprogram

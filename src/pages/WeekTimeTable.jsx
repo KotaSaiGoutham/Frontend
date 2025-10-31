@@ -555,7 +555,156 @@ const ClassSchedule = () => {
       </Select>
     );
   };
+// Add this function to your component, right after the renderGridView function
+const renderListView = () => (
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    {sortedData.map((student, index) => {
+      const isRevision = student.studentType === "revision";
+      const isSelectedForSwap = selectedStudentForSwap === student.id;
+      
+      return (
+        <Card 
+          key={student.id} 
+          sx={{ 
+            borderRadius: 3,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+            border: isSelectedForSwap ? "2px solid #9b59b6" : "1px solid #bdc3c7",
+            backgroundColor: isRevision 
+              ? "rgba(255, 114, 111, 0.1)" 
+              : "rgba(119, 221, 119, 0.1)",
+            transition: "all 0.2s ease-in-out",
+            "&:hover": {
+              transform: "translateY(-2px)",
+              boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
+            }
+          }}
+        >
+          <CardContent sx={{ p: 3 }}>
+            {/* Header with student info and actions */}
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+              <Box>
+                <Typography variant="h6" fontWeight="700" gutterBottom>
+                  {student.name}
+                </Typography>
+              </Box>
+              
+              {/* Actions */}
+              <Box sx={{ display: "flex", gap: 1, flexDirection: "column", alignItems: "flex-end" }}>
+                <Tooltip title={swapMode ? "Select for schedule swap" : "Swap schedule with another student"}>
+                  <Button
+                    variant={isSelectedForSwap ? "contained" : "outlined"}
+                    color="secondary"
+                    size="small"
+                    startIcon={<SwapHorizIcon />}
+                    onClick={() => handleStudentSelectForSwap(student.id)}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {swapMode ? (isSelectedForSwap ? "Selected" : "Select") : "Swap"}
+                  </Button>
+                </Tooltip>
 
+                {/* Swap dropdown when selected */}
+                {isSelectedForSwap && (
+                  <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 1, minWidth: 200 }}>
+                    <StudentSwapDropdown
+                      studentId={student.id}
+                      studentName={student.name}
+                    />
+                    {targetStudentForSwap && (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        onClick={handleStudentSwap}
+                        sx={{ mt: 1 }}
+                      >
+                        Confirm Swap
+                      </Button>
+                    )}
+                  </Box>
+                )}
+              </Box>
+            </Box>
+
+            {/* Schedule days */}
+            <Grid container spacing={2}>
+              {days.map((day) => {
+                const dayKey = day.toLowerCase();
+                const cellValue = student[dayKey];
+                const isEditing = editingCell?.studentId === student.id && editingCell?.day === dayKey;
+
+                return (
+                  <Grid item xs={12} sm={6} md={4} lg={3} key={day}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        backgroundColor: "white",
+                        border: "1px solid #e0e0e0",
+                        cursor: isEditMode ? "pointer" : "default",
+                        transition: "all 0.2s ease-in-out",
+                        "&:hover": isEditMode ? {
+                          backgroundColor: "#f5f5f5",
+                          transform: "scale(1.02)",
+                        } : {},
+                      }}
+                      onClick={() => handleEditClick(student.id, dayKey, cellValue)}
+                    >
+                      <Typography variant="subtitle2" fontWeight="700" color="text.primary" gutterBottom>
+                        {day}
+                      </Typography>
+                      <Box sx={{ minHeight: 24 }}>
+                        {cellValue ? (
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                            {cellValue.split(",").map((time, idx) => (
+                              <Chip
+                                key={idx}
+                                label={time.trim()}
+                                size="small"
+                                sx={{
+                                  backgroundColor: isRevision ? "#ff6f61" : "#77dd77",
+                                  color: "white",
+                                  fontWeight: 600,
+                                  fontSize: "0.75rem",
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                            No class
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </CardContent>
+        </Card>
+      );
+    })}
+
+    {sortedData.length === 0 && (
+      <Box sx={{ textAlign: "center", padding: "60px 20px" }}>
+        <Box sx={{ fontSize: "64px", mb: 2, opacity: 0.3 }}>📚</Box>
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          No students found
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          {searchTerm || selectedDay !== "all"
+            ? "Try adjusting your search criteria or filters"
+            : "No schedule data available for display"}
+        </Typography>
+      </Box>
+    )}
+  </Box>
+);
   // Render Grid View (Table) - Updated with swap feature
   const renderGridView = () => (
     <TableContainer component={Paper} style={tableContainerStyle}>

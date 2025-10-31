@@ -320,85 +320,69 @@ const HistoricalTables = ({ students }) => {
         </div>
       </div>
 
-      {/* Second Row: Fee payment per month */}
-      <div className="table-section">
-        <div className="row-container">
-          <div className="table-container">
-            <div className="table-card secondary-card fixed-table-card">
-              <h3 className="table-heading">
-                <span className="heading-icon">
-                  <FaRupeeSign />
-                </span>
-                Fee payment per month
-              </h3>
-              {/* Scroll Wrapper */}
-              <div className="table-scroll-wrapper">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      {Object.keys(monthlyFeeData).map((month) => (
-                        <th
-                          key={month}
-                          className={
-                            month === currentMonth ? "highlight-cell pulse" : ""
-                          }
-                        >
-                          <span className="th-content">{month}</span>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      {Object.keys(monthlyFeeData).map((monthKey, index) => {
-                        const amount = monthlyFeeData[monthKey];
-                        return (
-                          <td
-                            key={index}
-                            className={
-                              monthKey === currentMonth ? "highlight-cell" : ""
-                            }
-                          >
-                            <span className="data-value">
-                              {amount.toLocaleString()}
-                            </span>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <div className="chart-container-history">
-            {/* Bar Chart for Fee payment per month */}
-            <Box className="chart-card">
-              <BarChart
-                xAxis={[{ scaleType: "band", data: allMonths }]}
-                yAxis={[
-                  {
-                    min: 0,
-                    max: q3Fee + q3Fee * 0.1,
-                    tickNumber: 3,
-                    tickValues: [0, medianFee, q3Fee],
-                  },
-                ]}
-                series={[
-                  {
-                    data: Object.values(monthlyFeeData).map((val) =>
-                      val === "-" ? 0 : val
-                    ),
-                    color: "#B21F62",
-                  },
-                ]}
-                height={180}
-                margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
-              />
-            </Box>
+  <div className="table-section">
+  <div className="row-container">
+    <div className="table-container">
+      <div className="table-card secondary-card fixed-table-card">
+        <h3 className="table-heading">
+          <span className="heading-icon">
+            <FaRupeeSign />
+          </span>
+          Fee payment per month
+        </h3>
+        <div className="grid-table-wrapper">
+          <div className="month-grid">
+            {Object.keys(monthlyFeeData).map((monthKey, index) => {
+              const amount = monthlyFeeData[monthKey];
+              const isCurrentMonth = monthKey === currentMonth;
+              const isFuture = amount === "-";
+              
+              return (
+                <div
+                  key={monthKey}
+                  className={`month-grid-item ${isCurrentMonth ? 'highlight-cell' : ''}`}
+                >
+                  <div className="month-header">{monthKey}</div>
+                  <div 
+                    className="month-value"
+                    data-future={isFuture}
+                  >
+                    {isFuture ? "-" : `₹${amount.toLocaleString()}`}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
+    </div>
+    <div className="chart-container-history">
+      <Box className="chart-card">
+        <BarChart
+          xAxis={[{ scaleType: "band", data: allMonths }]}
+          yAxis={[
+            {
+              min: 0,
+              max: q3Fee + q3Fee * 0.1,
+              tickNumber: 3,
+              tickValues: [0, medianFee, q3Fee],
+            },
+          ]}
+          series={[
+            {
+              data: Object.values(monthlyFeeData).map((val) =>
+                val === "-" ? 0 : val
+              ),
+              color: "#B21F62",
+            },
+          ]}
+          height={180}
+          margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
+        />
+      </Box>
+    </div>
+  </div>
+</div>
 
       {/* Third Row: Students per month */}
       <div className="table-section">

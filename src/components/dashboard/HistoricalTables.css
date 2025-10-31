@@ -49,7 +49,7 @@
   height: 200px;
   display: flex;
   flex-direction: column;
-  min-height: 200px;
+  min-height: 210px;
 }
 
 .table-card:hover {
@@ -370,4 +370,104 @@
 .MuiCharts-surface {
   width: 100% !important;
   height: 100% !important;
+}
+
+/* COMPACT GRID LAYOUT STYLES - For fee payment */
+.grid-table-wrapper {
+  padding: 4px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  width: 100%;
+}
+
+.month-grid-item {
+  padding: 6px 3px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 35px;
+}
+
+.month-grid-item:nth-child(6n) {
+  border-right: none;
+}
+
+.month-grid-item.highlight-cell {
+  background: rgba(255, 255, 255, 0.2);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.month-grid-item:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.02);
+}
+
+.month-grid-item.highlight-cell {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.month-header {
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.month-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+}
+
+/* For future months (with "-" value) */
+.month-grid-item .month-value[data-future="true"] {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Responsive grid */
+@media (max-width: 1200px) {
+  .month-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .month-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+  }
+  
+  .month-grid-item {
+    padding: 4px 1px;
+    min-height: 40px;
+  }
+  
+  .month-header {
+    font-size: 0.65rem;
+  }
+  
+  .month-value {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .month-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

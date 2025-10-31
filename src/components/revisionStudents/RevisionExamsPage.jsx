@@ -26,7 +26,17 @@ import {
   CardContent,
   Grid,
   LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Button as MuiButton,
 } from "@mui/material";
+import { absentReasons } from "../../mockdata/mockdata";
 import { styled } from "@mui/material/styles";
 import {
   Refresh,
@@ -248,7 +258,13 @@ const RevisionExamsPage = () => {
   const { exams, loading, error } = useSelector((state) => state.revisionExams);
   const { students: allStudents } = useSelector((state) => state.students);
   const { user } = useSelector((state) => state.auth);
-
+  const [markAbsentDialog, setMarkAbsentDialog] = useState({
+    open: false,
+    examItem: null,
+    student: null,
+    subject: null,
+  });
+  const [absentReason, setAbsentReason] = useState("");
   const getTodayDate = useCallback(() => {
     const today = new Date();
     const day = String(today.getDate()).padStart(2, "0");
@@ -258,6 +274,131 @@ const RevisionExamsPage = () => {
   }, []);
 
   const todayDate = getTodayDate();
+  const handleMarkAbsentClick = (examItem, student, subject) => {
+    setMarkAbsentDialog({
+      open: true,
+      examItem,
+      student,
+      subject,
+    });
+    setAbsentReason("");
+  };
+  const handleMarkAbsent = async () => {
+    const { examItem, student, subject } = markAbsentDialog;
+
+    if (!absentReason) {
+      setSaveMessage({
+        text: "Please select an absent reason",
+        severity: "error",
+      });
+      return;
+    }
+
+    const examDataToSave = {
+      classId: examItem.id,
+      studentId: student.id,
+      studentName: student.studentName,
+      originalStudentName: student.originalName,
+      examDate: new Date(
+        examItem.date.split(".").reverse().join("-")
+      ).toISOString(),
+      examName: examItem.exam || "Revision Exam",
+      status: "Absent",
+      absentReason: `${subject.toUpperCase()}: ${absentReason}`, // Include subject in reason
+      topic: [examItem.exam || "General"],
+      testType: getTestTypeFromExam(examItem.exam),
+      isRevisionProgramJEEMains2026Student: true,
+      Subject:
+        subject === "physics"
+          ? "Physics"
+          : subject === "chemistry"
+          ? "Chemistry"
+          : subject === "maths"
+          ? "Maths"
+          : "General",
+      isCommonStudent: student.isCommonStudent,
+      stream: student.Stream,
+    };
+
+    try {
+      setSavingState((prev) => ({
+        ...prev,
+        [`${examItem.id}_${student.id}_absent`]: true,
+      }));
+
+      const result = await dispatch(addStudentExam(examDataToSave));
+
+      if (result) {
+        // Update the local examData state with absent information
+        const examKey = `${examItem.id}_${student.id}`;
+        const existingExam = examData[examKey] || {};
+
+        setExamData((prev) => ({
+          ...prev,
+          [examKey]: {
+            ...existingExam, // Keep existing data
+            examRecordId:
+              result.exam?.id ||
+              result.exam?.examRecordId ||
+              existingExam.examRecordId,
+            status: "Absent",
+            absentReason: `${subject.toUpperCase()}: ${absentReason}`,
+            isAbsent: true,
+            studentName: student.studentName,
+            studentId: student.id,
+            // Only clear the specific subject that was marked absent
+            [subject]: 0,
+            // Update total by subtracting the specific subject's marks
+            total: (existingExam.total || 0) - (existingExam[subject] || 0),
+          },
+        }));
+
+        setSaveMessage({
+          text: `Student marked absent for ${subject} successfully!`,
+          severity: "success",
+        });
+      }
+
+      // Close dialog and reset state - MOVED OUTSIDE THE if(result) BLOCK
+      setMarkAbsentDialog({
+        open: false,
+        examItem: null,
+        student: null,
+        subject: null,
+      });
+      setAbsentReason("");
+
+      // Then refresh the data to ensure consistency
+      setTimeout(() => {
+        handleRefresh();
+      }, 500);
+
+      setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 2000);
+    } catch (error) {
+      console.error("Error marking student absent:", error);
+      setSaveMessage({
+        text: "Failed to mark student absent",
+        severity: "error",
+      });
+
+      // Close dialog even on error
+      setMarkAbsentDialog({
+        open: false,
+        examItem: null,
+        student: null,
+        subject: null,
+      });
+      setAbsentReason("");
+
+      setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 4000);
+    } finally {
+      setSavingState((prev) => {
+        const newState = { ...prev };
+        delete newState[`${examItem.id}_${student.id}_absent`];
+        return newState;
+      });
+    }
+  };
 
   // Student configuration
   const studentConfig = useMemo(
@@ -323,7 +464,7 @@ const RevisionExamsPage = () => {
         isCommonStudent: config.isCommon,
         originalName:
           matchedStudent?.Name || matchedStudent?.studentName || config.name,
-        Stream:matchedStudent?.Stream
+        Stream: matchedStudent?.Stream,
       };
     });
   }, [allStudents, studentConfig]);
@@ -440,68 +581,74 @@ const RevisionExamsPage = () => {
 
     return averages;
   }, [examData, exams, revisionStudents]);
-// Calculate expected marks for finals (200 target) - FIXED FOR JEE
-const calculateExpectedMarks = useMemo(() => {
-  const expected = {};
-  
-  revisionStudents.forEach((student) => {
-    const weekendAvg = calculateAverages.weekend[student.id];
-    const cumulativeAvg = calculateAverages.cumulative[student.id];
-    const grandAvg = calculateAverages.grand[student.id];
-    const overallAvg = calculateAverages.overall[student.id];
+  // Calculate expected marks for finals (200 target) - FIXED FOR JEE
+  const calculateExpectedMarks = useMemo(() => {
+    const expected = {};
 
-    // Get the most relevant average
-    const currentAvg = grandAvg.count > 0 ? grandAvg : 
-                      cumulativeAvg.count > 0 ? cumulativeAvg : 
-                      weekendAvg.count > 0 ? weekendAvg : 
-                      overallAvg;
+    revisionStudents.forEach((student) => {
+      const weekendAvg = calculateAverages.weekend[student.id];
+      const cumulativeAvg = calculateAverages.cumulative[student.id];
+      const grandAvg = calculateAverages.grand[student.id];
+      const overallAvg = calculateAverages.overall[student.id];
 
-    if (currentAvg.count > 0) {
-      if (student.isCommonStudent) {
-        // For common students: Physics (100) + Chemistry (100) = Total 200
-        const predictedPhysics = Math.round((currentAvg.physics / 100) * 100);
-        const predictedChemistry = Math.round((currentAvg.chemistry / 100) * 100);
-        const predictedTotal = predictedPhysics + predictedChemistry;
+      // Get the most relevant average
+      const currentAvg =
+        grandAvg.count > 0
+          ? grandAvg
+          : cumulativeAvg.count > 0
+          ? cumulativeAvg
+          : weekendAvg.count > 0
+          ? weekendAvg
+          : overallAvg;
 
-        expected[student.id] = {
-          predictedTotal,
-          predictedPhysics,
-          predictedChemistry,
-          currentAverage: currentAvg.total,
-          currentPercentage: Math.round((currentAvg.total / 200) * 100),
-          improvementNeeded: 200 - predictedTotal,
-          progressPercentage: Math.round((predictedTotal / 200) * 100),
-        };
+      if (currentAvg.count > 0) {
+        if (student.isCommonStudent) {
+          // For common students: Physics (100) + Chemistry (100) = Total 200
+          const predictedPhysics = Math.round((currentAvg.physics / 100) * 100);
+          const predictedChemistry = Math.round(
+            (currentAvg.chemistry / 100) * 100
+          );
+          const predictedTotal = predictedPhysics + predictedChemistry;
+
+          expected[student.id] = {
+            predictedTotal,
+            predictedPhysics,
+            predictedChemistry,
+            currentAverage: currentAvg.total,
+            currentPercentage: Math.round((currentAvg.total / 200) * 100),
+            improvementNeeded: 200 - predictedTotal,
+            progressPercentage: Math.round((predictedTotal / 200) * 100),
+          };
+        } else {
+          // For single subject students: Total 100 only
+          const predictedTotal = Math.round((currentAvg.physics / 100) * 100);
+
+          expected[student.id] = {
+            predictedTotal,
+            predictedPhysics: predictedTotal,
+            predictedChemistry: 0,
+            currentAverage: currentAvg.physics,
+            currentPercentage: Math.round(currentAvg.physics),
+            improvementNeeded: 100 - predictedTotal,
+            progressPercentage: Math.round((predictedTotal / 100) * 100),
+          };
+        }
       } else {
-        // For single subject students: Total 100 only
-        const predictedTotal = Math.round((currentAvg.physics / 100) * 100);
-        
+        // No data available
         expected[student.id] = {
-          predictedTotal,
-          predictedPhysics: predictedTotal,
+          predictedTotal: 0,
+          predictedPhysics: 0,
           predictedChemistry: 0,
-          currentAverage: currentAvg.physics,
-          currentPercentage: Math.round(currentAvg.physics),
-          improvementNeeded: 100 - predictedTotal,
-          progressPercentage: Math.round((predictedTotal / 100) * 100),
+          currentAverage: 0,
+          currentPercentage: 0,
+          improvementNeeded: student.isCommonStudent ? 200 : 100,
+          progressPercentage: 0,
         };
       }
-    } else {
-      // No data available
-      expected[student.id] = {
-        predictedTotal: 0,
-        predictedPhysics: 0,
-        predictedChemistry: 0,
-        currentAverage: 0,
-        currentPercentage: 0,
-        improvementNeeded: student.isCommonStudent ? 200 : 100,
-        progressPercentage: 0,
-      };
-    }
-  });
+    });
 
-  return expected;
-}, [calculateAverages, revisionStudents]);
+    return expected;
+  }, [calculateAverages, revisionStudents]);
 
   const handleEditExam = (examId, studentId, subject, existingData = null) => {
     if (!globalEditMode) return;
@@ -510,6 +657,7 @@ const calculateExpectedMarks = useMemo(() => {
     setEditingExam((prev) => ({ ...prev, [examKey]: true }));
 
     if (existingData) {
+      // Only set the mark for the specific subject being edited
       setExamMarks((prev) => ({
         ...prev,
         [examKey]: {
@@ -538,7 +686,7 @@ const calculateExpectedMarks = useMemo(() => {
   };
 
   const handleSaveExam = async (examItem, student, subject) => {
-    console.log("student",student)
+    console.log("student", student);
     const examKey = `${examItem.id}_${student.id}`;
     const subjectKey = `${examItem.id}_${student.id}_${subject}`;
     const marks = examMarks[subjectKey] || {};
@@ -547,17 +695,25 @@ const calculateExpectedMarks = useMemo(() => {
     const subjectMark = Number(marks[subject]) || 0;
 
     const existingExam = examData[examKey];
+
+    // Get current marks for ALL subjects from the existing exam data
     const currentPhysics = existingExam?.physics || 0;
     const currentChemistry = existingExam?.chemistry || 0;
     const currentMaths = existingExam?.maths || 0;
 
+    // Only update the subject that's being edited, keep others as they are
     let physicsMarks = currentPhysics;
     let chemistryMarks = currentChemistry;
     let mathsMarks = currentMaths;
 
-    if (subject === "physics") physicsMarks = subjectMark;
-    if (subject === "chemistry") chemistryMarks = subjectMark;
-    if (subject === "maths") mathsMarks = subjectMark;
+    // Update only the specific subject that's being edited
+    if (subject === "physics") {
+      physicsMarks = subjectMark;
+    } else if (subject === "chemistry") {
+      chemistryMarks = subjectMark;
+    } else if (subject === "maths") {
+      mathsMarks = subjectMark;
+    }
 
     const total = physicsMarks + chemistryMarks + mathsMarks;
 
@@ -586,9 +742,9 @@ const calculateExpectedMarks = useMemo(() => {
       chemistry: chemistryMarks,
       maths: mathsMarks,
       isCommonStudent: student.isCommonStudent,
-      stream:student.Stream
+      stream: student.Stream,
     };
-    console.log("examDataToSave",examDataToSave)
+    console.log("examDataToSave", examDataToSave);
 
     try {
       setSavingState((prev) => ({ ...prev, [cellKey]: true }));
@@ -617,6 +773,8 @@ const calculateExpectedMarks = useMemo(() => {
           subject: examDataToSave.Subject,
           studentName: student.studentName,
           studentId: student.id,
+          status: "Present", // Ensure status is updated
+          isAbsent: false, // Ensure absent flag is updated
         };
 
         setExamData((prev) => ({
@@ -701,120 +859,274 @@ const calculateExpectedMarks = useMemo(() => {
     }
   };
 
-  const renderSubjectMarks = (examItem, student, subject) => {
-    const examKey = `${examItem.id}_${student.id}`;
-    const subjectKey = `${examItem.id}_${student.id}_${subject}`;
-    const isEditing = editingExam[subjectKey];
-    const marks = examMarks[subjectKey] || {};
-    const savedExam = examData[examKey];
-    const cellKey = `${examItem.id}_${student.id}_${subject}`;
-    const isSaving = savingState[cellKey];
-    const examType = getExamType(examItem.exam);
+const renderSubjectMarks = (examItem, student, subject) => {
+  const examKey = `${examItem.id}_${student.id}`;
+  const subjectKey = `${examItem.id}_${student.id}_${subject}`;
+  const isEditing = editingExam[subjectKey];
+  const marks = examMarks[subjectKey] || {};
+  const savedExam = examData[examKey];
+  const cellKey = `${examItem.id}_${student.id}_${subject}`;
+  const isSaving = savingState[cellKey];
+  const examType = getExamType(examItem.exam);
 
-    const subjectMark = savedExam ? savedExam[subject] || 0 : 0;
+  // Check if student is absent for this specific subject
+  const isAbsent =
+    savedExam?.status === "Absent" &&
+    savedExam?.absentReason?.includes(subject.toUpperCase());
+  const absentReasonText = savedExam?.absentReason;
 
-    if (isEditing) {
-      return (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1 }}>
-          <TextField
-            size="small"
-            type="number"
-            value={marks[subject] || ""}
-            onChange={(e) =>
-              handleExamMarkChange(
-                examItem.id,
-                student.id,
-                subject,
-                e.target.value
-              )
-            }
-            inputProps={{
-              min: 0,
-              max: 100,
-              style: {
-                fontSize: "0.9rem",
-                padding: "6px",
-                width: "50px",
-                textAlign: "center",
-              },
-            }}
-            sx={{
-              width: "70px",
-              "& .MuiInputBase-root": { height: "36px" },
-            }}
-            autoFocus
-          />
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-            <Tooltip title="Save">
-              <IconButton
-                size="small"
-                onClick={() => handleSaveExam(examItem, student, subject)}
-                disabled={isSaving}
-                sx={{ color: "#10b981", padding: "3px" }}
-              >
-                {isSaving ? (
-                  <CircularProgress size={18} />
-                ) : (
-                  <Check fontSize="small" />
-                )}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Cancel">
-              <IconButton
-                size="small"
-                onClick={() =>
-                  handleCancelExam(examItem.id, student.id, subject)
-                }
-                disabled={isSaving}
-                sx={{ color: "#ef4444", padding: "3px" }}
-              >
-                <Close fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-      );
-    }
+  // Check if marks are already entered for this subject
+  const hasMarksEntered = (savedExam?.[subject] || 0) > 0;
+  
+  // Check if it's a future exam (date is after today)
+  const isFutureExam = () => {
+    const examDate = examItem.date.split('.').reverse().join('-');
+    const today = new Date();
+    const exam = new Date(examDate);
+    return exam > today;
+  };
 
+  console.log(`Rendering ${subject} for ${student.studentName}:`, {
+    isAbsent,
+    absentReasonText,
+    savedExam,
+    hasMarksEntered,
+    isFuture: isFutureExam()
+  });
+
+  if (isEditing) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 0.5,
-          p: 0.5,
-          minHeight: "45px",
-        }}
-      >
-        <Typography
-          variant="body1"
-          sx={{
-            fontWeight: 600,
-            fontSize: "1rem",
-            minWidth: "25px",
-            textAlign: "center",
-            color: subjectMark > 0 ? "#1e293b" : "#64748b",
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1 }}>
+        <TextField
+          size="small"
+          type="number"
+          value={marks[subject] || ""}
+          onChange={(e) =>
+            handleExamMarkChange(
+              examItem.id,
+              student.id,
+              subject,
+              e.target.value
+            )
+          }
+          inputProps={{
+            min: 0,
+            max: 100,
+            style: {
+              fontSize: "0.9rem",
+              padding: "6px",
+              width: "50px",
+              textAlign: "center",
+            },
           }}
-        >
-          {subjectMark > 0 ? subjectMark : "-"}
-        </Typography>
-        {globalEditMode && (
-          <Tooltip title={`Edit ${subject} marks`}>
+          sx={{ width: "70px", "& .MuiInputBase-root": { height: "36px" } }}
+          autoFocus
+        />
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          <Tooltip title="Save">
+            <IconButton
+              size="small"
+              onClick={() => handleSaveExam(examItem, student, subject)}
+              disabled={isSaving}
+              sx={{ color: "#10b981", padding: "3px" }}
+            >
+              {isSaving ? (
+                <CircularProgress size={18} />
+              ) : (
+                <Check fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Cancel">
             <IconButton
               size="small"
               onClick={() =>
-                handleEditExam(examItem.id, student.id, subject, savedExam)
+                handleCancelExam(examItem.id, student.id, subject)
               }
-              sx={{ color: "#3b82f6", padding: "3px" }}
+              disabled={isSaving}
+              sx={{ color: "#ef4444", padding: "3px" }}
             >
-              <Edit fontSize="small" />
+              <Close fontSize="small" />
             </IconButton>
           </Tooltip>
-        )}
+        </Box>
       </Box>
     );
-  };
+  }
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 0.5,
+        p: 0.5,
+        minHeight: "45px",
+        flexDirection: "column",
+      }}
+    >
+      {isAbsent ? (
+        <Tooltip
+          title={`Absent for ${subject}: ${
+            absentReasonText?.replace(`${subject.toUpperCase()}: `, "") ||
+            "No reason provided"
+          }`}
+          arrow
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 0.5,
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                color: "#dc2626",
+                fontSize: "0.8rem",
+                textAlign: "center",
+              }}
+            >
+              ABSENT
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                color: "#64748b",
+                fontSize: "0.7rem",
+                textAlign: "center",
+                maxWidth: "80px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {absentReasonText?.replace(`${subject.toUpperCase()}: `, "") ||
+                "Absent"}
+            </Typography>
+          </Box>
+        </Tooltip>
+      ) : (
+        <>
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: 600,
+              fontSize: "1rem",
+              minWidth: "25px",
+              textAlign: "center",
+              color: (savedExam?.[subject] || 0) > 0 ? "#1e293b" : "#64748b",
+            }}
+          >
+            {(savedExam?.[subject] || 0) > 0 ? savedExam[subject] : "-"}
+          </Typography>
+          {globalEditMode && (
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <Tooltip title={`Edit ${subject} marks`}>
+                <IconButton
+                  size="small"
+                  onClick={() =>
+                    handleEditExam(
+                      examItem.id,
+                      student.id,
+                      subject,
+                      savedExam
+                    )
+                  }
+                  sx={{ color: "#3b82f6", padding: "2px" }}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {/* Show cross mark only if marks are NOT entered and it's NOT a future exam */}
+              {!hasMarksEntered && !isFutureExam() && (
+                <Tooltip title={`Mark ${subject} absent`}>
+                  <IconButton
+                    size="small"
+                    onClick={() =>
+                      handleMarkAbsentClick(examItem, student, subject)
+                    }
+                    sx={{ color: "#dc2626", padding: "2px" }}
+                  >
+                    <Close fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
+          )}
+        </>
+      )}
+    </Box>
+  );
+};
+  const renderMarkAbsentDialog = () => (
+    <Dialog
+      open={markAbsentDialog.open}
+      onClose={() =>
+        setMarkAbsentDialog({
+          open: false,
+          examItem: null,
+          student: null,
+          subject: null,
+        })
+      }
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>Mark Student Absent</DialogTitle>
+      <DialogContent>
+        <Box sx={{ mt: 2 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Absent Reason</InputLabel>
+            <Select
+              value={absentReason}
+              label="Absent Reason"
+              onChange={(e) => setAbsentReason(e.target.value)}
+            >
+              {absentReasons.map((reason) => (
+                <MenuItem key={reason} value={reason}>
+                  {reason}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {markAbsentDialog.student && (
+            <Typography variant="body2" sx={{ mt: 2, color: "#64748b" }}>
+              Marking <strong>{markAbsentDialog.student.studentName}</strong> as
+              absent for <strong>{markAbsentDialog.examItem?.exam}</strong> on{" "}
+              <strong>{markAbsentDialog.examItem?.date}</strong>
+            </Typography>
+          )}
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <MuiButton
+          onClick={() =>
+            setMarkAbsentDialog({
+              open: false,
+              examItem: null,
+              student: null,
+              subject: null,
+            })
+          }
+        >
+          Cancel
+        </MuiButton>
+        <MuiButton
+          onClick={handleMarkAbsent}
+          variant="contained"
+          color="error"
+          disabled={!absentReason}
+        >
+          Mark Absent
+        </MuiButton>
+      </DialogActions>
+    </Dialog>
+  );
 
   // Render table footer with averages
   const renderTableFooter = (examsList, examType) => {
@@ -852,104 +1164,164 @@ const calculateExpectedMarks = useMemo(() => {
     );
   };
 
-const renderPredictionsRow = () => {
-  return (
-    <PredictionRow>
-      <TableCell colSpan={3} sx={{ textAlign: 'left', fontWeight: 700, padding: '16px 8px' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <EmojiEvents sx={{ fontSize: 20, color: '#f59e0b' }} />
-          Final JEE Predictions (Target: {revisionStudents.some(s => !s.isCommonStudent) ? '100 (Single) / 200 (Common)' : '200'})
-          <Typography variant="caption" sx={{ color: '#64748b', ml: 1 }}>
-            Based on current performance
-          </Typography>
-        </Box>
-      </TableCell>
-      {revisionStudents.map((student) => {
-        const prediction = calculateExpectedMarks[student.id];
-        return student.isCommonStudent ? (
-          <React.Fragment key={student.id}>
-            <TableCell sx={{ textAlign: 'center', padding: '16px 8px', fontWeight: 600 }}>
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: '#dc2626' }}>
-                  {prediction?.predictedPhysics || 0}/100
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#64748b' }}>
-                  {Math.round((prediction?.predictedPhysics / 100) * 100)}%
-                </Typography>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={prediction ? Math.min(100, (prediction.predictedPhysics / 100) * 100) : 0}
-                  sx={{ 
-                    height: 6, 
-                    borderRadius: 3, 
-                    mt: 0.5,
-                    backgroundColor: '#fecaca',
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: prediction?.predictedPhysics >= 90 ? '#10b981' : 
-                                      prediction?.predictedPhysics >= 70 ? '#3b82f6' : '#dc2626'
+  const renderPredictionsRow = () => {
+    return (
+      <PredictionRow>
+        <TableCell
+          colSpan={3}
+          sx={{ textAlign: "left", fontWeight: 700, padding: "16px 8px" }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <EmojiEvents sx={{ fontSize: 20, color: "#f59e0b" }} />
+            Final JEE Predictions (Target:{" "}
+            {revisionStudents.some((s) => !s.isCommonStudent)
+              ? "100 (Single) / 200 (Common)"
+              : "200"}
+            )
+            <Typography variant="caption" sx={{ color: "#64748b", ml: 1 }}>
+              Based on current performance
+            </Typography>
+          </Box>
+        </TableCell>
+        {revisionStudents.map((student) => {
+          const prediction = calculateExpectedMarks[student.id];
+          return student.isCommonStudent ? (
+            <React.Fragment key={student.id}>
+              <TableCell
+                sx={{
+                  textAlign: "center",
+                  padding: "16px 8px",
+                  fontWeight: 600,
+                }}
+              >
+                <Box>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 700, color: "#dc2626" }}
+                  >
+                    {prediction?.predictedPhysics || 0}/100
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#64748b" }}>
+                    {Math.round((prediction?.predictedPhysics / 100) * 100)}%
+                  </Typography>
+                  <LinearProgress
+                    variant="determinate"
+                    value={
+                      prediction
+                        ? Math.min(
+                            100,
+                            (prediction.predictedPhysics / 100) * 100
+                          )
+                        : 0
                     }
-                  }} 
+                    sx={{
+                      height: 6,
+                      borderRadius: 3,
+                      mt: 0.5,
+                      backgroundColor: "#fecaca",
+                      "& .MuiLinearProgress-bar": {
+                        backgroundColor:
+                          prediction?.predictedPhysics >= 90
+                            ? "#10b981"
+                            : prediction?.predictedPhysics >= 70
+                            ? "#3b82f6"
+                            : "#dc2626",
+                      },
+                    }}
+                  />
+                </Box>
+              </TableCell>
+              <TableCell
+                sx={{
+                  textAlign: "center",
+                  padding: "16px 8px",
+                  fontWeight: 600,
+                }}
+              >
+                <Box>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 700, color: "#dc2626" }}
+                  >
+                    {prediction?.predictedChemistry || 0}/100
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#64748b" }}>
+                    {Math.round((prediction?.predictedChemistry / 100) * 100)}%
+                  </Typography>
+                  <LinearProgress
+                    variant="determinate"
+                    value={
+                      prediction
+                        ? Math.min(
+                            100,
+                            (prediction.predictedChemistry / 100) * 100
+                          )
+                        : 0
+                    }
+                    sx={{
+                      height: 6,
+                      borderRadius: 3,
+                      mt: 0.5,
+                      backgroundColor: "#fecaca",
+                      "& .MuiLinearProgress-bar": {
+                        backgroundColor:
+                          prediction?.predictedChemistry >= 90
+                            ? "#10b981"
+                            : prediction?.predictedChemistry >= 70
+                            ? "#3b82f6"
+                            : "#dc2626",
+                      },
+                    }}
+                  />
+                </Box>
+              </TableCell>
+            </React.Fragment>
+          ) : (
+            <TableCell
+              key={student.id}
+              sx={{ textAlign: "center", padding: "16px 8px", fontWeight: 600 }}
+            >
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 700, color: "#dc2626" }}
+                >
+                  {prediction?.predictedTotal || 0}/100
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#64748b" }}>
+                  {prediction?.currentPercentage || 0}% current
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={prediction?.progressPercentage || 0}
+                  sx={{
+                    height: 6,
+                    borderRadius: 3,
+                    mt: 0.5,
+                    backgroundColor: "#fecaca",
+                    "& .MuiLinearProgress-bar": {
+                      backgroundColor:
+                        prediction?.progressPercentage >= 85
+                          ? "#10b981"
+                          : prediction?.progressPercentage >= 70
+                          ? "#3b82f6"
+                          : "#dc2626",
+                    },
+                  }}
                 />
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#64748b", mt: 0.5, display: "block" }}
+                >
+                  Need: +{prediction?.improvementNeeded || 100}
+                </Typography>
               </Box>
             </TableCell>
-            <TableCell sx={{ textAlign: 'center', padding: '16px 8px', fontWeight: 600 }}>
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: '#dc2626' }}>
-                  {prediction?.predictedChemistry || 0}/100
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#64748b' }}>
-                  {Math.round((prediction?.predictedChemistry / 100) * 100)}%
-                </Typography>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={prediction ? Math.min(100, (prediction.predictedChemistry / 100) * 100) : 0}
-                  sx={{ 
-                    height: 6, 
-                    borderRadius: 3, 
-                    mt: 0.5,
-                    backgroundColor: '#fecaca',
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: prediction?.predictedChemistry >= 90 ? '#10b981' : 
-                                      prediction?.predictedChemistry >= 70 ? '#3b82f6' : '#dc2626'
-                    }
-                  }} 
-                />
-              </Box>
-            </TableCell>
-          </React.Fragment>
-        ) : (
-          <TableCell key={student.id} sx={{ textAlign: 'center', padding: '16px 8px', fontWeight: 600 }}>
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 700, color: '#dc2626' }}>
-                {prediction?.predictedTotal || 0}/100
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#64748b' }}>
-                {prediction?.currentPercentage || 0}% current
-              </Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={prediction?.progressPercentage || 0}
-                sx={{ 
-                  height: 6, 
-                  borderRadius: 3, 
-                  mt: 0.5,
-                  backgroundColor: '#fecaca',
-                  '& .MuiLinearProgress-bar': {
-                    backgroundColor: prediction?.progressPercentage >= 85 ? '#10b981' : 
-                                    prediction?.progressPercentage >= 70 ? '#3b82f6' : '#dc2626'
-                  }
-                }} 
-              />
-              <Typography variant="caption" sx={{ color: '#64748b', mt: 0.5, display: 'block' }}>
-                Need: +{prediction?.improvementNeeded || 100}
-              </Typography>
-            </Box>
-          </TableCell>
-        );
-      })}
-    </PredictionRow>
-  );
-};
+          );
+        })}
+      </PredictionRow>
+    );
+  };
   const renderExamTable = (examsList, title, examType = "overall") => {
     return (
       <Box sx={{ mb: 4 }}>
@@ -1217,7 +1589,6 @@ const renderPredictionsRow = () => {
       </Box>
     );
   };
-
   useEffect(() => {
     const loadExamData = () => {
       if (!exams || exams.length === 0) return;
@@ -1230,6 +1601,10 @@ const renderPredictionsRow = () => {
           examItem.examData.forEach((examRecord) => {
             const examKey = `${examItem.id}_${examRecord.studentId}`;
 
+            // Check if student is absent
+            const isAbsent =
+              examRecord.status === "Absent" || examRecord.isAbsent;
+
             examDataMap[examKey] = {
               examRecordId: examRecord.id,
               physics: examRecord.physics || 0,
@@ -1239,6 +1614,9 @@ const renderPredictionsRow = () => {
               subject: examRecord.subject,
               studentName: examRecord.studentName,
               studentId: examRecord.studentId,
+              status: examRecord.status || "Present",
+              absentReason: examRecord.absentReason || "",
+              isAbsent: isAbsent,
             };
           });
         }
@@ -1260,6 +1638,7 @@ const renderPredictionsRow = () => {
   return (
     <Fade in timeout={800}>
       <StyledPaper sx={{ p: 3 }}>
+        {renderMarkAbsentDialog()}
         <Box
           sx={{
             display: "flex",

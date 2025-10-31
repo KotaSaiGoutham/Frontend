@@ -806,47 +806,58 @@ const renderCurrentWeekSyllabus = () => {
           </div>
         )}
 
-        {/* Results Tab */}
-        {activeTab === "results" && (
-          <div className="tab-content premium">
-            <div className="results-container">
-              <DetailCard title="Marks Overview" icon={FaTable} delay={200}>
-                <ResultsTable studentExams={studentExams} />
-              </DetailCard>
-              
-              <DetailCard title="Performance Trends" icon={FaChartArea} delay={400}>
-                <div className="chart-container premium">
-                  {studentExamsLoading ? (
-                    <div className="loading-state premium">
-                      <div className="loading-spinner"></div>
-                      <span>Loading performance data...</span>
-                    </div>
-                  ) : studentExams?.length > 0 ? (
-                    <WeeklyMarksTrendGraph
-                      weeklyMarksData={studentExams}
-                      programType={studentData.Stream}
-                      studentData={studentData}
-                    />
-                  ) : (
-                    <div className="empty-state premium">
-                      <FaChartLine />
-                      <h3>No Performance Data</h3>
-                      <p>Add weekly marks to see performance trends</p>
-                      <MuiButton
-                        variant="contained"
-                        startIcon={<FaPlus />}
-                        onClick={() => setShowAddMarksModal(true)}
-                        className="premium"
-                      >
-                        Add First Marks
-                      </MuiButton>
-                    </div>
-                  )}
-                </div>
-              </DetailCard>
+     {activeTab === "results" && (
+  <div className="tab-content premium">
+    <div className="results-container">
+      <DetailCard title="Marks Overview" icon={FaTable} delay={200}>
+        <ResultsTable 
+          studentExams={studentExams}    
+          studentData={studentData}
+        />
+      </DetailCard>
+      
+      <DetailCard title="Performance Trends" icon={FaChartArea} delay={400}>
+        <div className="chart-container premium">
+          {studentExamsLoading ? (
+            <div className="loading-state premium">
+              <div className="loading-spinner"></div>
+              <span>Loading performance data...</span>
             </div>
-          </div>
-        )}
+          ) : studentExams?.length > 0 ? (
+            <WeeklyMarksTrendGraph
+              weeklyMarksData={studentExams}
+              programType={studentData.Stream}
+              studentData={studentData}
+            />
+          ) : (
+            <div className="empty-state premium">
+              <FaChartLine />
+              <h3>No Performance Data</h3>
+              <p>Add weekly marks to see performance trends</p>
+              <MuiButton
+                variant="contained"
+                startIcon={<FaPlus />}
+                onClick={() => setShowAddMarksModal(true)}
+                className="premium"
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  fontWeight: '600',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+                }}
+              >
+                Add First Marks
+              </MuiButton>
+            </div>
+          )}
+        </div>
+      </DetailCard>
+    </div>
+  </div>
+)}
 
         {/* Question Papers Tab */}
         {activeTab === "papers" && (
