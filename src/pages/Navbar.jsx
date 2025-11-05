@@ -25,7 +25,8 @@ const PROTECTED_BASE_PATHS = [
   "/add-student-exam",
   "/week-syllabus",
   "/analytics",
-  '/revision-students'
+  '/revision-students',
+  "/demo-bookings",
 ];
 
 const Navbar = () => {
@@ -133,7 +134,7 @@ const Navbar = () => {
   onClick={(e) => {
     e.preventDefault();
     handleLinkClick();
-    window.open('/ElectronAcademy_Brochure_compressed.pdf', '_blank');
+    window.open('/ElectronAcademy_Brochure.pdf', '_blank');
   }}
   activeClassName="active-link"
   className="program-highlight-link-desktop"
@@ -201,7 +202,7 @@ const Navbar = () => {
   onClick={(e) => {
     e.preventDefault();
     handleLinkClick();
-    window.open('/ElectronAcademy_Brochure_compressed.pdf', '_blank');
+    window.open('/ElectronAcademy_Brochure.pdf', '_blank');
   }}
           activeClassName="active-link"
           className="program-highlight-link"

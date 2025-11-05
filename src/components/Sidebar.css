@@ -3,7 +3,7 @@
 /* Define CSS Variables for consistent theming (ensure these are also in your global CSS) */
 :root {
     --navbar-height: 80px; /* IMPORTANT: This MUST accurately match your Navbar's height from global CSS */
-    --sidebar-width: 220px;
+    --sidebar-width: 240px;
 
     /* Your Provided Color Palette */
     --dark-indigo: #292551;
@@ -30,7 +30,6 @@
     width: var(--sidebar-width);
     background-color: var(--sidebar-bg);
     color: var(--sidebar-text);
-    padding: 1.5rem 0;
     position: fixed; /* Ensures it stays in place when scrolling */
     top: var(--navbar-height); /* Positions sidebar right below the Navbar */
     left: 0;
@@ -63,8 +62,58 @@
     /* No margin-right, as there's no text beside it now */
 }
 
+/* Navigation Container */
+.sidebar-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent main container from scrolling */
+}
+
+/* Scroll Container for Navigation Items */
+.sidebar-nav-scroll-container {
+    flex: 1;
+    overflow: hidden; /* Hide scrollbar by default */
+    position: relative;
+}
+
+/* Show scrollbar only when hovering or scrolling */
+.sidebar-nav-scroll-container:hover {
+    overflow-y: auto;
+}
+
+/* Custom scrollbar styling - hidden by default, visible on hover/scroll */
+.sidebar-nav-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-nav-scroll-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.sidebar-nav-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.3s ease;
+}
+
+/* Show scrollbar thumb on hover, focus, or when scrolling */
+.sidebar-nav-scroll-container:hover::-webkit-scrollbar-thumb,
+.sidebar-nav-scroll-container:focus::-webkit-scrollbar-thumb,
+.sidebar-nav-scroll-container:active::-webkit-scrollbar-thumb {
+    opacity: 1;
+}
+
+/* Firefox scrollbar styling */
+.sidebar-nav-scroll-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+}
+
 /* Navigation List */
-.sidebar-nav ul {
+.sidebar-nav-scroll-container ul {
     list-style: none; /* Remove bullet points */
     padding: 0;
     margin: 0;
@@ -112,6 +161,40 @@
     font-weight: 600; /* Bolder text for active */
 }
 
+/* Expand icon for dropdown */
+.expand-icon {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+    padding: 8px 0 8px 10px;
+    margin-right: -10px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.expand-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Sub-menu styles */
+.sidebar-sub-menu {
+    background: rgba(0, 0, 0, 0.1);
+    border-left: 3px solid var(--bright-yellow);
+    margin-left: 1.5rem;
+}
+
+.sidebar-sub-item {
+    padding-left: 45px !important;
+    font-size: 0.9em !important;
+    border-left: none !important;
+}
+
+.sidebar-sub-item.active-sub {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: var(--bright-yellow) !important;
+}
+
 /* Mobile Menu Toggle Button */
 .mobile-menu-toggle {
     display: none; /* Hidden by default on desktop */
@@ -133,6 +216,92 @@
     background-color: var(--deep-magenta); /* Darker shade of Hot Pink/Deep Magenta on hover */
 }
 
+/* Navigation Toggle Styles */
+.navigation-toggle-container {
+    padding: 15px 20px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navigation-toggle {
+    display: flex;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 4px;
+    gap: 2px;
+}
+
+.toggle-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.toggle-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-icon {
+    font-size: 0.9rem;
+}
+
+.toggle-text {
+    white-space: nowrap;
+}
+
+/* Light theme support */
+.sidebar.light-theme .navigation-toggle-container {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.light-theme .navigation-toggle {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.sidebar.light-theme .toggle-btn {
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.sidebar.light-theme .toggle-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.8);
+}
+
+.sidebar.light-theme .toggle-btn.active {
+    background: rgba(0, 0, 0, 0.12);
+    color: #000;
+}
+
+/* Light theme scrollbar */
+.sidebar.light-theme .sidebar-nav-scroll-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.sidebar.light-theme .sidebar-nav-scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.sidebar.light-theme .sidebar-nav-scroll-container {
+    scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     .sidebar {
@@ -144,4 +313,23 @@
     .mobile-menu-toggle {
         display: block; /* Show toggle button on mobile */
     }
+    
+    /* Adjust scrollbar for mobile */
+    .sidebar-nav-scroll-container {
+        overflow-y: auto; /* Always show scroll on mobile for better UX */
+    }
+    
+    .sidebar-nav-scroll-container::-webkit-scrollbar-thumb {
+        opacity: 1; /* Always visible on mobile */
+    }
+}
+
+/* Ensure smooth scrolling behavior */
+.sidebar-nav-scroll-container {
+    scroll-behavior: smooth;
+}
+
+/* Prevent horizontal scrolling */
+.sidebar-nav-scroll-container {
+    overflow-x: hidden;
 }

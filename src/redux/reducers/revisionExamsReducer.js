@@ -6,9 +6,13 @@ import {
   FETCH_REVISION_EXAMS_FAILURE,
   ADD_REVISION_EXAM_SUCCESS,
   UPDATE_REVISION_EXAM_SUCCESS,
+  FETCH_ATTENDANCE_SUMMARY_REQUEST,
+  FETCH_ATTENDANCE_SUMMARY_SUCCESS,
+  FETCH_ATTENDANCE_SUMMARY_FAILURE
 } from "../types";
 
 const initialState = {
+  // Revision exams state
   exams: [],
   loading: false,
   error: null,
@@ -16,6 +20,13 @@ const initialState = {
   nextCursor: null,
   prevCursor: null,
   hasPrevious: false,
+  
+  // Attendance state
+  attendance: {
+    attendanceSummary: null,
+    loading: false,
+    error: null
+  }
 };
 
 // Helper function to parse dates (DD.MM.YYYY)
@@ -27,6 +38,7 @@ const parseDate = (dateStr) => {
 
 const revisionExamsReducer = (state = initialState, action) => {
   switch (action.type) {
+    // Revision Exams Cases
     case FETCH_REVISION_EXAMS_REQUEST:
       return {
         ...state,
@@ -59,7 +71,7 @@ const revisionExamsReducer = (state = initialState, action) => {
       };
 
     // Handle adding exam data to revision class
- case "ADD_REVISION_CLASS_EXAM_SUCCESS": {
+    case "ADD_REVISION_CLASS_EXAM_SUCCESS": {
       const { classId, examData } = action.payload;
       return {
         ...state,
@@ -95,7 +107,6 @@ const revisionExamsReducer = (state = initialState, action) => {
       };
     }
 
-
     // Handle updating exam data in revision class
     case "UPDATE_REVISION_CLASS_EXAM_SUCCESS": {
       const { classId, studentId, examData } = action.payload;
@@ -124,6 +135,38 @@ const revisionExamsReducer = (state = initialState, action) => {
         })
       };
     }
+
+    // Attendance Cases
+    case FETCH_ATTENDANCE_SUMMARY_REQUEST:
+      return {
+        ...state,
+        attendance: {
+          ...state.attendance,
+          loading: true,
+          error: null
+        }
+      };
+    
+    case FETCH_ATTENDANCE_SUMMARY_SUCCESS:
+      return {
+        ...state,
+        attendance: {
+          ...state.attendance,
+          loading: false,
+          attendanceSummary: action.payload,
+          error: null
+        }
+      };
+    
+    case FETCH_ATTENDANCE_SUMMARY_FAILURE:
+      return {
+        ...state,
+        attendance: {
+          ...state.attendance,
+          loading: false,
+          error: action.payload.error
+        }
+      };
 
     default:
       return state;

@@ -1,4 +1,10 @@
 import {
+  FETCH_YEAR_STATISTICS_REQUEST,
+  FETCH_YEAR_STATISTICS_SUCCESS,
+  FETCH_YEAR_STATISTICS_FAILURE,
+  CLEAR_SEARCH_RESULTS,
+  SET_CURRENT_STUDENT,
+  CLEAR_CURRENT_STUDENT,
   API_REQUEST,
   DELETE_LECTURE_MATERIAL_SUCCESS,
   DELETE_LECTURE_MATERIAL_FAILURE,
@@ -171,6 +177,9 @@ import {
   UPLOAD_LECTURE_MATERIAL_SUCCESS,
   UPLOAD_LECTURE_MATERIAL_FAILURE,
   FETCH_REVISION_CLASSES_REQUEST,
+  FETCH_STUDENT_CLASSES_SUCCESS,
+  FETCH_STUDENT_CLASSES_FAILURE,
+  FETCH_STUDENT_CLASSES_REQUEST,
   FETCH_REVISION_CLASSES_SUCCESS,
   UPDATE_CLASS_ATTENDANCE_REQUEST,
   UPDATE_CLASS_ATTENDANCE_SUCCESS,
@@ -187,6 +196,27 @@ import {
   UPDATE_CLASS_SCHEDULE_REQUEST,
   UPDATE_CLASS_SCHEDULE_SUCCESS,
   UPDATE_CLASS_SCHEDULE_FAILURE,
+   SEARCH_STUDENT_CLASSES_SUCCESS,
+  SEARCH_STUDENT_CLASSES_FAILURE,
+  SEARCH_STUDENT_CLASSES_REQUEST,
+  FETCH_ATTENDANCE_SUMMARY_SUCCESS,
+  FETCH_ATTENDANCE_SUMMARY_REQUEST,
+  FETCH_ATTENDANCE_SUMMARY_FAILURE,
+   UPDATE_DEMO_STATUS_SUCCESS,
+    FETCH_DEMO_BOOKINGS_FAILURE,
+    UPDATE_DEMO_STATUS_FAILURE,
+    BOOK_DEMO_REQUEST,
+    FETCH_DEMO_BOOKINGS_REQUEST,
+    FETCH_DEMO_BOOKINGS_SUCCESS,
+    UPDATE_DEMO_STATUS_REQUEST,
+    BOOK_DEMO_SUCCESS,
+    BOOK_DEMO_FAILURE,
+     FETCH_STUDENT_PPTS_REQUEST,
+  FETCH_STUDENT_PPTS_SUCCESS,
+  FETCH_STUDENT_PPTS_FAILURE,
+  FETCH_STUDENT_WORKSHEETS_REQUEST,
+  FETCH_STUDENT_WORKSHEETS_SUCCESS,
+  FETCH_STUDENT_WORKSHEETS_FAILURE,
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -1945,6 +1975,73 @@ export const fetchRevisionClasses = (requestParams = {}) => { // Rename to avoid
     authRequired: true,
   });
 };
+// export const fetchStudentClasses = () => {
+  
+//   return apiRequest({
+//     url: `/api/data/studentRevisionClassesbyId`,
+//     method: "GET",
+//     onStart: FETCH_STUDENT_CLASSES_REQUEST,
+//     onSuccess: (data, dispatch) => {
+//       console.log("✅ Student Classes API Response:", data);
+//       dispatch({
+//         type: FETCH_STUDENT_CLASSES_SUCCESS,
+//         payload: {
+//           pastClasses: data.pastClasses || [],
+//           futureClasses: data.futureClasses || [],
+//           studentId: data.studentId || null,
+//         },
+//       });
+//     },
+//     onFailure: (error, dispatch) => {
+//       console.error("❌ Error fetching student classes:", error);
+//       dispatch({
+//         type: FETCH_STUDENT_CLASSES_FAILURE,
+//         payload: { error: error.message || "Failed to fetch student classes" },
+//       });
+//     },
+//     authRequired: true,
+//   });
+// };
+
+// Search classes by topic/lesson
+export const searchStudentClasses = (requestParams = {}) => {
+  console.log("🔍 searchStudentClasses called with:", requestParams);
+  
+  return apiRequest({
+    url: `/api/data/studentClassesSearch`,
+    method: "GET",
+    params: {
+      studentId: requestParams.studentId,
+      searchQuery: requestParams.searchQuery,
+    },
+    onStart: SEARCH_STUDENT_CLASSES_REQUEST,
+    onSuccess: (data, dispatch) => {
+      console.log("✅ Search Results:", data);
+      dispatch({
+        type: SEARCH_STUDENT_CLASSES_SUCCESS,
+        payload: {
+          searchResults: data.classes || [],
+          searchQuery: data.searchQuery || '',
+          totalResults: data.totalResults || 0,
+          studentId: data.studentId || null,
+        },
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("❌ Error searching student classes:", error);
+      dispatch({
+        type: SEARCH_STUDENT_CLASSES_FAILURE,
+        payload: { error: error.message || "Failed to search student classes" },
+      });
+    },
+    authRequired: true,
+  });
+};
+
+// Clear search results
+export const clearSearchResults = () => ({
+  type: CLEAR_SEARCH_RESULTS
+});
 export const updateStudentAttendance = (classId, studentId, status) =>
   apiRequest({
     url: `/api/data/revisionClasses/${classId}/attendance/${studentId}`,
@@ -2024,3 +2121,226 @@ export const updateRevisionFee = (studentId, installmentData) =>
     authRequired: true,
   });
 
+
+  export const setCurrentStudent = (studentData) => ({
+  type: SET_CURRENT_STUDENT,
+  payload: studentData
+});
+
+export const clearCurrentStudent = () => ({
+  type: CLEAR_CURRENT_STUDENT
+});
+export const fetchStudentClasses = () => async (dispatch) => {
+  dispatch({ type: FETCH_STUDENT_CLASSES_REQUEST });
+  
+  try {
+    let data;
+    
+    if (USE_FIXTURES) {
+      console.log("📚 Using fixture data for student classes");
+      data = studentsSyllabusFixture;
+    } else {
+      // Use original API call
+      const response = await apiRequest({
+        url: `/api/data/studentRevisionClassesbyId`,
+        method: "GET",
+        authRequired: true,
+      });
+      data = response.payload || {};
+    }
+    
+    console.log("✅ Student Classes Response:", data);
+    dispatch({
+      type: FETCH_STUDENT_CLASSES_SUCCESS,
+      payload: {
+        pastClasses: data.pastClasses || [],
+        futureClasses: data.futureClasses || [],
+        studentId: data.studentId || null,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error fetching student classes:", error);
+    dispatch({
+      type: FETCH_STUDENT_CLASSES_FAILURE,
+      payload: { error: error.message || "Failed to fetch student classes" },
+    });
+  }
+};
+
+export const fetchYearStatistics = (requestParams = {}) => async (dispatch) => {
+  dispatch({ type: FETCH_YEAR_STATISTICS_REQUEST });
+  
+  try {
+    let data;
+    
+    if (USE_FIXTURES) {
+      console.log("📊 Using fixture data for year statistics");
+      data = studentsYearStatsFixture;
+    } else {
+      // Use original API call
+      const response = await apiRequest({
+        url: `/api/data/studentYearStats`,
+        method: "GET",
+        params: {
+          studentId: requestParams.studentId,
+        },
+        authRequired: true,
+      });
+      data = response.payload || {};
+    }
+    
+    console.log("✅ Year Statistics Response:", data);
+    dispatch({
+      type: FETCH_YEAR_STATISTICS_SUCCESS,
+      payload: {
+        firstYear: {
+          total: data.firstYear?.total || 0,
+          completed: data.firstYear?.completed || 0,
+          pending: data.firstYear?.pending || 0,
+          completedLessons: data.firstYear?.completedLessons || [],
+          pendingLessons: data.firstYear?.pendingLessons || []
+        },
+        secondYear: {
+          total: data.secondYear?.total || 0,
+          completed: data.secondYear?.completed || 0,
+          pending: data.secondYear?.pending || 0,
+          completedLessons: data.secondYear?.completedLessons || [],
+          pendingLessons: data.secondYear?.pendingLessons || []
+        },
+        dateRange: data.dateRange || {},
+        studentId: data.studentId || null,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error fetching year statistics:", error);
+    dispatch({
+      type: FETCH_YEAR_STATISTICS_FAILURE,
+      payload: { error: error.message || "Failed to fetch year statistics" },
+    });
+  }
+};
+export const fetchAttendanceSummary = (studentId, sessions = "all") => {
+  return apiRequest({
+    url: `/api/data/attendance-summary`,
+    method: "GET",
+    params: {
+      studentId,
+      sessions
+    },
+    onStart: FETCH_ATTENDANCE_SUMMARY_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_ATTENDANCE_SUMMARY_SUCCESS,
+        payload: data
+      });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_ATTENDANCE_SUMMARY_FAILURE,
+        payload: { error: error.message || "Failed to fetch attendance summary" }
+      });
+    },
+    authRequired: true,
+  });
+};
+// actions/demoActions.js
+export const bookDemo = (demoData) =>
+  apiRequest({
+    url: "/api/data/book-demo",
+    method: "POST",
+    data: demoData,
+    onStart: BOOK_DEMO_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: BOOK_DEMO_SUCCESS,
+        payload: data,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: BOOK_DEMO_FAILURE,
+        payload: { error: error.message || "Failed to book demo" },
+      });
+    },
+    authRequired: false,
+  });
+
+export const fetchDemoBookings = (status = "all") => 
+  apiRequest({
+    url: `/api/data/demo-bookings?status=${status}`,
+    method: "GET",
+    onStart: FETCH_DEMO_BOOKINGS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_DEMO_BOOKINGS_SUCCESS,
+        payload: data
+      });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_DEMO_BOOKINGS_FAILURE,
+        payload: { error: error.message || "Failed to fetch demo bookings" }
+      });
+    },
+    authRequired: true,
+  });
+
+export const updateDemoStatus = (demoId, status, contactReason = "") => 
+  apiRequest({
+    url: `/api/data/demo-bookings/${demoId}`,
+    method: "PUT",
+    data: { status, contactReason },
+    onStart: UPDATE_DEMO_STATUS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_DEMO_STATUS_SUCCESS,
+        payload: { demoId, status, contactReason }
+      });
+      // Refresh the list
+      dispatch(fetchDemoBookings());
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPDATE_DEMO_STATUS_FAILURE,
+        payload: { error: error.message || "Failed to update demo status" }
+      });
+    },
+    authRequired: true,
+  });
+  // Add these to your existing actions file
+
+// Fetch Student PPTs
+export const fetchStudentPPTs = (studentId) =>
+  apiRequest({
+    url: `/api/materials/student-ppts/${studentId}`,
+    method: "GET",
+    onStart: FETCH_STUDENT_PPTS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: FETCH_STUDENT_PPTS_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_STUDENT_PPTS_FAILURE,
+        payload: { error: error.message || "Failed to fetch PPTs" },
+      });
+    },
+    authRequired: true,
+  });
+
+// Fetch Student Worksheets
+export const fetchStudentWorksheets = (studentId) =>
+  apiRequest({
+    url: `/api/materials/student-worksheets/${studentId}`,
+    method: "GET",
+    onStart: FETCH_STUDENT_WORKSHEETS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: FETCH_STUDENT_WORKSHEETS_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_STUDENT_WORKSHEETS_FAILURE,
+        payload: { error: error.message || "Failed to fetch worksheets" },
+      });
+    },
+    authRequired: true,
+  });

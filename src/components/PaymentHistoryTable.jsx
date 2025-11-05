@@ -10,186 +10,344 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Chip,
+  Typography,
+  Avatar,
+  LinearProgress,
 } from "@mui/material";
-import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import {
+  CheckCircle,
+  Cancel,
+  Payment,
+  AccountBalanceWallet,
+  CalendarToday,
+  TrendingUp,
+} from "@mui/icons-material";
 
 const PaymentHistoryTable = ({ payments = [] }) => {
-  /* Build rows + calculate total paid from actual 'amount' */
-  const { rows, totalPaid } = useMemo(() => {
+  const { rows, totalPaid, paidCount, totalAmount } = useMemo(() => {
     let total = 0;
+    let paid = 0;
+    let totalPossible = 0;
 
     const rows = payments
       .map((p) => {
-        // --- FIX 1: Use 'paidOn' as the date field ---
-        const jsDate = p.paidOn; 
-        if (!jsDate) return null; // skip malformed
+        let jsDate = null;
 
-        // All records you provided have an 'amount', so we treat them as Paid for this table.
-        // If you need a proper status, your API should return a 'status' or 'isPaid' flag.
-        // Based on your data structure, we assume a record existing here means a payment was made.
-        const paid = p.amount > 0;
-        
-        // --- FIX 2: Calculate total Paid from actual 'amount' field ---
+        if (p.paidOn) {
+          if (p.paidOn._seconds) {
+            jsDate = new Date(p.paidOn._seconds * 1000);
+          } else if (p.paidOn instanceof Date) {
+            jsDate = p.paidOn;
+          } else if (typeof p.paidOn === "string") {
+            jsDate = new Date(p.paidOn);
+          }
+        }
+
+        if (!jsDate || isNaN(jsDate.getTime())) {
+          console.warn("Invalid date for payment:", p.id, p.paidOn);
+          return null;
+        }
+
+        const isPaid = p.amount > 0;
         const amount = p.amount || 0;
-        if (paid) total += amount;
+        if (isPaid) {
+          total += amount;
+          paid++;
+        }
+        totalPossible += amount || 0;
 
         return {
           id: p.id,
-          // Format the 'paidOn' date
           date: dayjs(jsDate).format("DD MMM YYYY"),
-          // Include the actual month for clarity (optional, but helpful)
           month: p.month,
-          paid,
+          paid: isPaid,
           amount: amount,
+          rawDate: jsDate,
         };
       })
       .filter(Boolean);
-      
-    // NOTE: We don't re-sort here. The component now assumes the 'payments' array
-    // is already sorted by the API in DESCENDING order (newest first).
-    // If you need to re-sort to oldest-first, change the sort logic to:
-    // .sort((a, b) => new Date(a.date) - new Date(b.date)); 
-    // but DESCENDING is usually better for history.
 
-    return { rows, totalPaid: total };
+    rows.sort((a, b) => b.rawDate - a.rawDate);
+    return {
+      rows,
+      totalPaid: total,
+      paidCount: paid,
+      totalAmount: totalPossible,
+    };
   }, [payments]);
+  console.log("rows",rows)
 
-  // Use a number formatter for better currency display
-  const currencyFormatter = new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  const currencyFormatter = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   });
 
+  const paymentRate =
+    payments.length > 0 ? (paidCount / payments.length) * 100 : 0;
+
   if (!rows.length) {
     return (
-      <Box sx={{ p: 2, textAlign: "center", color: "#757575" }}>
-        No payment history available.
+      <Box
+        sx={{
+          p: 6,
+          textAlign: "center",
+          background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+          borderRadius: 3,
+          border: "1px solid #e2e8f0",
+        }}
+      >
+        <AccountBalanceWallet
+          sx={{
+            fontSize: 64,
+            color: "text.secondary",
+            mb: 2,
+            opacity: 0.5,
+          }}
+        />
+        <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+          No payment history available
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Payment records will appear here once transactions are processed
+        </Typography>
       </Box>
     );
   }
 
   return (
-    <TableContainer
-      component={Paper}
-      elevation={3}
-      sx={{
-        borderRadius: 2,
-        boxShadow: "0px 4px 12px rgba(0,0,0,0.08)",
-        mt: 2,
-      }}
-    >
-      <Table aria-label="payment history table">
-        {/* ───────── header ───────── */}
-        <TableHead
-          sx={{
-            position: "sticky",
-            top: 0,
-            zIndex: 2,
-            backgroundColor: "#e3f2fd",
-          }}
-        >
-          <TableRow
-            sx={{
-              borderBottom: "2px solid #1976d2",
-              backgroundColor: "#f5faff",
-            }}
-          >
-            <TableCell sx={{ fontWeight: "bold", color: "#1a237e", fontSize: "1.05rem", padding: "12px 8px" }}>
-              Month
-            </TableCell>
-            <TableCell sx={{ fontWeight: "bold", color: "#1a237e", fontSize: "1.05rem", padding: "12px 8px" }}>
-              Date Paid
-            </TableCell>
-            <TableCell sx={{ fontWeight: "bold", color: "#1a237e", fontSize: "1.05rem", padding: "12px 8px" }}>
-              Status
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold", color: "#1a237e", fontSize: "1.05rem", padding: "12px 8px" }}>
-              Amount
-            </TableCell>
-          </TableRow>
-        </TableHead>
-
-        {/* ───────── body ───────── */}
-        <TableBody>
-          {rows.map((r, idx) => (
+    <Box sx={{ width: "100%" }}>
+      {/* Enhanced Table */}
+      <TableContainer
+        component={Paper}
+        elevation={4}
+        sx={{
+          borderRadius: 3,
+          overflow: "hidden",
+          background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+          border: "1px solid #e2e8f0",
+        }}
+      >
+        <Table>
+          <TableHead>
             <TableRow
-              key={r.id}
               sx={{
-                backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#fbfbfb",
-                transition: "background-color 0.2s ease-in-out",
-                "&:hover": { backgroundColor: "#e1f5fe" },
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               }}
             >
-              {/* Added Month Column */}
-              <TableCell sx={{ fontSize: "0.95rem", fontWeight: 500 }}>
-                {dayjs(r.month, 'YYYY-MM').format('MMM YYYY')}
-              </TableCell>
-
-              <TableCell sx={{ fontSize: "0.95rem" }}>{r.date}</TableCell>
-
               <TableCell
                 sx={{
-                  fontSize: "0.95rem",
-                  color: r.paid ? "success.main" : "error.main",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
+                  fontWeight: 700,
+                  color: "white",
+                  fontSize: "16px",
+                  textAlign: "center",
+                  py: 3,
                 }}
               >
-                <FaCheckCircle style={{ fontSize: 16, color: '#4CAF50' }} />
-                Paid
+                Month
               </TableCell>
-
               <TableCell
-                align="right"
-                sx={{ fontSize: "0.95rem", fontWeight: 500 }}
+                sx={{
+                  fontWeight: 700,
+                  color: "white",
+                  fontSize: "16px",
+                  textAlign: "center",
+                  py: 3,
+                }}
               >
-                {currencyFormatter.format(r.amount)}
+                Date Paid
+              </TableCell>
+              <TableCell
+                sx={{
+                  fontWeight: 700,
+                  color: "white",
+                  fontSize: "16px",
+                  textAlign: "center",
+                  py: 3,
+                }}
+              >
+                Status
+              </TableCell>
+              <TableCell
+                sx={{
+                  fontWeight: 700,
+                  color: "white",
+                  fontSize: "16px",
+                  textAlign: "center",
+                  py: 3,
+                }}
+              >
+                Amount
               </TableCell>
             </TableRow>
-          ))}
+          </TableHead>
 
-          {/* ───────── total row ───────── */}
-          <TableRow>
-            <TableCell
-              colSpan={3} // Span is now 3 because we added a 'Month' column
+          <TableBody>
+            {rows.map((row, index) => (
+              <TableRow
+                key={row.id}
+                sx={{
+                  "&:last-child td, &:last-child th": { border: 0 },
+                  "&:hover": {
+                    background:
+                      "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
+                    transform: "translateY(-1px)",
+                    transition: "all 0.2s ease",
+                  },
+                  background: index % 2 === 0 ? "#ffffff" : "#f8fafc",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <TableCell
+                  sx={{
+                    textAlign: "center",
+                    py: 2.5,
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    sx={{ fontSize: "15px" }}
+                  >
+                    {row.month
+                      ? dayjs(row.month, "YYYY-MM").format("MMM YYYY")
+                      : "N/A"}
+                  </Typography>
+                </TableCell>
+
+                <TableCell
+                  sx={{
+                    textAlign: "center",
+                    py: 2.5,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <CalendarToday
+                      sx={{ fontSize: 18, color: "text.secondary" }}
+                    />
+                    <Typography
+                      variant="body1"
+                      color="text.secondary"
+                      sx={{ fontSize: "15px" }}
+                    >
+                      {row.date}
+                    </Typography>
+                  </Box>
+                </TableCell>
+
+                <TableCell
+                  sx={{
+                    textAlign: "center",
+                    py: 2.5,
+                  }}
+                >
+                  <Chip
+                    icon={row.paid ? <CheckCircle /> : <Cancel />}
+                    label={row.paid ? "Paid" : "Unpaid"}
+                    color={row.paid ? "success" : "error"}
+                    size="medium"
+                    variant="filled"
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: "14px",
+                      px: 1,
+                      minWidth: 100,
+                    }}
+                  />
+                </TableCell>
+
+                <TableCell
+                  sx={{
+                    textAlign: "center",
+                    py: 2.5,
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    sx={{
+                      fontSize: "15px",
+                      color: row.paid ? "success.main" : "text.secondary",
+                    }}
+                  >
+                    {currencyFormatter.format(row.amount)}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))}
+            <TableRow
               sx={{
-                fontWeight: "bold",
-                backgroundColor: "#e3f2fd",
-                color: "#1a237e",
+                background: "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)",
+                borderTop: "2px solid #cbd5e1",
               }}
             >
-              Total Paid
-            </TableCell>
-            <TableCell
-              align="right"
-              sx={{
-                fontWeight: "bold",
-                backgroundColor: "#e3f2fd",
-                color: "#1a237e",
-                fontSize: "1.05rem"
-              }}
-            >
-              {currencyFormatter.format(totalPaid)}
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </TableContainer>
+              <TableCell sx={{ py: 2.5, textAlign: "center" }}>
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  sx={{ color: "text.secondary" }}
+                ></Typography>
+              </TableCell>
+              <TableCell sx={{ py: 2.5, textAlign: "center" }}>
+                {/* Empty - matches Date column */}
+              </TableCell>
+              <TableCell sx={{ py: 2.5, textAlign: "center" }}>
+                <Typography
+                  variant="body1"
+                  fontWeight={700}
+                  sx={{
+                    fontSize: "16px",
+                    color: "text.primary",
+                  }}
+                >
+                  Total Paid:
+                </Typography>
+              </TableCell>
+              <TableCell sx={{ py: 2.5, textAlign: "center" }}>
+                <Typography
+                  variant="body1"
+                  fontWeight={700}
+                  sx={{
+                    fontSize: "16px",
+                    color: "success.main",
+                  }}
+                >
+                  {currencyFormatter.format(totalPaid)}
+                </Typography>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 };
 
 PaymentHistoryTable.propTypes = {
-  payments: PropTypes.arrayOf(PropTypes.shape({
+  payments: PropTypes.arrayOf(
+    PropTypes.shape({
       id: PropTypes.string.isRequired,
       amount: PropTypes.number.isRequired,
-      paidOn: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+      paidOn: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.instanceOf(Date),
+        PropTypes.shape({
+          _seconds: PropTypes.number,
+          _nanoseconds: PropTypes.number,
+        }),
+      ]),
       month: PropTypes.string,
-      // Add other relevant prop types if necessary
-  })).isRequired,
-  // Removed monthlyFee prop as it's not used to calculate total or amount
+    })
+  ).isRequired,
 };
 
 export default PaymentHistoryTable;

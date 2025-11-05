@@ -69,7 +69,7 @@ import { MuiButton } from "./customcomponents/MuiCustomFormFields";
 import WeeklyMarksTrendGraph from "./WeeklyMarksBarChart";
 import PaymentHistoryTable from "./PaymentHistoryTable";
 import ResultsTable from "./ResultsTable";
-
+import { formatPhone } from "../mockdata/function";
 const StudentPortfolio = () => {
   const { id: studentId } = useParams();
   const navigate = useNavigate();
@@ -91,14 +91,7 @@ const StudentPortfolio = () => {
   const payments = useSelector((state) => state.payments.data);
 
   // Format phone number
-  const formatPhone = (num) => {
-    if (!num) return "N/A";
-    return (
-      <a href={`tel:${num}`} className="phone-link">
-        {num.replace(/(\d{5})(\d{5})/, "$1 $2")}
-      </a>
-    );
-  };
+
 
   // Premium Stat Card Component
   const StatCard = ({

@@ -12,6 +12,8 @@ import {
   SIGNUP_FAILURE, // <-- NEW
 CLEAR_AUTH_ERROR,
 RESET_LOADING_STATE,
+SET_CURRENT_STUDENT,
+CLEAR_CURRENT_STUDENT
 } from '../types';
 
 // Helper function to determine the user's subject
@@ -48,6 +50,7 @@ const initialState = {
   loading: false,
   error: null,
   needsLoginRedirect: false,
+currentStudent:null
 };
 
 const authReducer = (state = initialState, action) => {
@@ -156,6 +159,16 @@ const authReducer = (state = initialState, action) => {
         },
         isAuthenticated: !!action.payload && !!state.token,
       };
+    case SET_CURRENT_STUDENT:
+      return {
+        ...state,
+        currentStudent: action.payload
+      };
+    case CLEAR_CURRENT_STUDENT:
+      return {
+        ...state,
+        currentStudent: null
+      };
     default:
       return state;
   }

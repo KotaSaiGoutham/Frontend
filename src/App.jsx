@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import ReactGA from "react-ga4";
 
-const GA4_MEASUREMENT_ID = "G-X618BEJF5H"; 
+const GA4_MEASUREMENT_ID = "G-X618BEJF5H";
 
 const GATracker = () => {
   const location = useLocation();
@@ -23,9 +23,9 @@ const GATracker = () => {
     });
   }, [location]);
 
-  return null; 
+  return null;
 };
-import { logoutUser } from "./redux/actions";
+
 // Import your components
 import Navbar from "./pages/Navbar";
 import Home from "./pages/Home";
@@ -65,7 +65,7 @@ import ExpenditureDashboard from "./components/ExpenditureDashboard";
 import { SnackbarProvider } from "./components/customcomponents/SnackbarContext";
 import Reports from "./components/Reports";
 import StudentExam from "./components/StudentExam";
-import AnalyticsComp from "./components/Analytics"; // Renamed to avoid confusion with GA
+import AnalyticsComp from "./components/Analytics";
 import AddStudentExamPage from "./components/AddStudentExamPage";
 import WeekSyllabusPage from "./components/WeekSyallabus";
 import RevisionProgramme from "./components/utils/revisionProgramme";
@@ -73,6 +73,21 @@ import RevisionProgramDetails from "./components/utils/RevisionProgramDetails";
 import RevisionStudentsPage from "./components/revisionStudents/RevisionStudentsPage";
 import RevisionRegistratedStudents from "./components/revisionStudents/RevisionRegistratedStudents";
 import TimeTableManager from "./pages/TimeTableManager";
+import {
+  StudentProfile,
+  StudentWeekend,
+  StudentUpload,
+  StudentPPTs,
+  StudentWorksheets,
+  StudentPapers,
+  StudentResults,
+  StudentClasses,
+  StudentPayments,
+  StudentOthers,
+} from "./components/student-portfolio";
+import DemoBookingsPage from "./components/DemoBookings";
+import StudentStudyMaterials from "./components/student-portfolio/StudentStudyMaterials";
+
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const token = localStorage.getItem("token");
@@ -84,18 +99,18 @@ function App() {
 
   // Initialize GA4 only once when the App component mounts
   useEffect(() => {
-    // Only initialize if the ID is present
-    if (GA4_MEASUREMENT_ID && GA4_MEASUREMENT_ID !== "YOUR_MEASUREMENT_ID_HERE") {
+    if (
+      GA4_MEASUREMENT_ID &&
+      GA4_MEASUREMENT_ID !== "YOUR_MEASUREMENT_ID_HERE"
+    ) {
       ReactGA.initialize(GA4_MEASUREMENT_ID);
     }
-  }, []); // Empty dependency array ensures it runs once
+  }, []);
 
   return (
     <SnackbarProvider>
       <ThemeProvider theme={theme}>
         <Router>
-          {/* PLACE THE GA TRACKER HERE, INSIDE ROUTER, BEFORE SCROLLTOTOP, 
-              to capture all route changes in the application. */}
           <GATracker />
           <ScrollToTop />
           <div>
@@ -126,6 +141,7 @@ function App() {
                 element={<RevisionProgramDetails />}
               />
 
+              {/* Protected Routes - All routes inside AuthLayout are protected by PrivateRoute */}
               <Route
                 element={
                   <PrivateRoute>
@@ -138,23 +154,19 @@ function App() {
                 <Route path="/demo-classes" element={<DemoClassesPage />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/student-exams" element={<StudentExam />} />
-                {/* NOTE: Renamed your component to AnalyticsComp to prevent naming conflict with GA */}
-                <Route path="/analytics" element={<AnalyticsComp />} /> 
+                <Route path="/analytics" element={<AnalyticsComp />} />
                 <Route path="/week-syllabus" element={<WeekSyllabusPage />} />
                 <Route
                   path="/add-student-exam"
                   element={<AddStudentExamPage />}
                 />
                 <Route path="/add-demo-class" element={<AddDemoClassPage />} />
-                <Route
-                  path="/add-expenditure"
-                  element={<AddExpenditure />}
-                />
-                <Route
-                  path="/expenditure"
-                  element={<ExpenditureDashboard />}
-                />
+                <Route path="/add-expenditure" element={<AddExpenditure />} />
+                <Route path="/expenditure" element={<ExpenditureDashboard />} />
+                
+                {/* Old Student Portfolio Route (you can remove this if migrating completely) */}
                 <Route path="/student/:id" element={<StudentPortfolio />} />
+                
                 <Route path="/timetable" element={<TimeTableManager />} />
                 <Route path="/employees" element={<Employees />} />
                 <Route path="/add-student" element={<AddStudent />} />
@@ -167,6 +179,27 @@ function App() {
                 <Route
                   path="/revision-registrated-students"
                   element={<RevisionRegistratedStudents />}
+                />
+                      <Route
+                  path="/demo-bookings"
+                  element={<DemoBookingsPage />}
+                />
+                
+                {/* New Student Portfolio Routes */}
+                <Route path="/student/:studentId/profile" element={<StudentProfile />} />
+                <Route path="/student/:studentId/weekend" element={<StudentWeekend />} />
+                <Route path="/student/:studentId/results" element={<StudentResults />} />
+                <Route path="/student/:studentId/classes" element={<StudentClasses />} />
+                <Route path="/student/:studentId/payments" element={<StudentPayments />} />
+                <Route path="/student/:studentId/ppts" element={<StudentPPTs />} />
+                <Route path="/student/:studentId/worksheets" element={<StudentWorksheets />} />
+                <Route path="/student/:studentId/papers" element={<StudentPapers />} />
+                <Route path="/student/:studentId/upload" element={<StudentUpload />} />
+                <Route path="/student/:studentId/study-materials" element={<StudentStudyMaterials />} />
+
+                <Route
+                  path="/student/:studentId"
+                  element={<Navigate to="/student/:studentId/profile" replace />}
                 />
               </Route>
 

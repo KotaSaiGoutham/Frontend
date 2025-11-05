@@ -471,8 +471,8 @@ const RevisionExamsPage = () => {
 
   const { weekendExams, cumulativeExams, grandTestExams, allExams } =
     useMemo(() => {
-      const weekend = exams.filter((exam) => exam.exam?.includes("Weekend"));
-      const cumulative = exams.filter((exam) =>
+      const weekend = exams?.filter((exam) => exam.exam?.includes("Weekend"));
+      const cumulative = exams?.filter((exam) =>
         exam.exam?.includes("Cumulative")
       );
       const grand = exams.filter((exam) => exam.exam?.includes("Grand"));

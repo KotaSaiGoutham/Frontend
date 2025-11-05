@@ -13,7 +13,7 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser,clearAuthError } from "../redux/actions";
+import { loginUser,clearAuthError,clearCurrentStudent,setCurrentStudent } from "../redux/actions";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
@@ -30,48 +30,44 @@ const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
+  
+  const [activeTab, setActiveTab] = useState("student"); 
+  
+  const [isFading, setIsFading] = useState(false);
 
   const modalStatus = isAuthenticated ? "success" : "error";
   const modalMessage = isAuthenticated
     ? "Login successful! Redirecting..."
     : error?.message || error || "An unknown error occurred. Please try again.";
-useEffect(() => {
+    
+  useEffect(() => {
     dispatch(clearAuthError());
   }, [dispatch]);
-  // This is the useEffect that was commented out.
-  useEffect(() => {
-    // This part is for debugging and can be kept or removed
-    console.log(
-      "LoginPage - isAuthenticated:",
-      isAuthenticated,
-      "error:",
-      error,
-      "loading:",
-      loading,
-      "user:",
-      user
-    );
 
-    // This checks for an error and opens the modal
+  useEffect(() => {
     if (error) {
       setModalOpen(true);
     } else if (isAuthenticated && !loading) {
-      // This part handles a successful login
       setModalOpen(true);
       const timer = setTimeout(() => {
         setModalOpen(false);
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [error, isAuthenticated, loading, user]); // Added 'user' to the dependency array
+  }, [error, isAuthenticated, loading, user]);
 
   useEffect(() => {
     if (user) {
       if (user.role === "student") {
-        navigate(`/student/${user.id}`, {
+        console.log("user",user)
+              dispatch(setCurrentStudent(user));
+
+        navigate(`/student/${user?.id}/profile`, {
           state: { studentData: user },
         });
       } else if (user.role === "admin" || user.role === "faculty") {
+                dispatch(clearCurrentStudent());
+
         navigate("/dashboard");
       }
     }
@@ -141,68 +137,158 @@ useEffect(() => {
 
     dispatch(loginUser(loginPayload));
   };
+  
+  // --- NEW: Function to handle tab change with animation ---
+  const handleTabChange = (newTab) => {
+    if (newTab === activeTab) return; // Do nothing if clicking the same tab
+
+    setIsFading(true); // Start fade-out
+    
+    // Wait for fade-out to complete (200ms) before changing content
+    setTimeout(() => {
+      setActiveTab(newTab); // Change content
+      setIsFading(false); // Start fade-in
+    }, 200); // This duration must match the CSS transition duration
+  };
+
+  // --- Dynamic content based on tab ---
+  const title = activeTab === "student" ? "Student Login" : "Faculty Login";
+  const subtitle =
+    activeTab === "student"
+      ? "Log in to continue your learning journey."
+      : "Log in to manage your courses and students.";
+
+  // --- Inline styles for tabs and animation ---
+  const tabContainerStyle = {
+    display: "flex",
+    width: "100%",
+    borderBottom: "1px solid #e0e0e0",
+    position: "relative",
+    marginBottom: "24px",
+  };
+
+  const tabStyle = {
+    flex: 1,
+    padding: "12px 0",
+    textAlign: "center",
+    cursor: "pointer",
+    border: "none",
+    backgroundColor: "transparent",
+    fontSize: "16px",
+    fontWeight: "600",
+    color: "#888", // Inactive color
+    transition: "color 0.3s ease",
+  };
+
+  const activeTabStyle = {
+    ...tabStyle,
+    color: "#333", // Active color
+  };
+
+  const sliderStyle = {
+    position: "absolute",
+    bottom: "-1px", 
+    height: "3px",
+    backgroundColor: "#007bff", 
+    width: "50%",
+    left: activeTab === "student" ? "0%" : "50%",
+    transition: "left 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0)", 
+  };
+  
+  // --- NEW: Inline style for the fading content wrapper ---
+  const contentFadeStyle = {
+    opacity: isFading ? 0 : 1,
+    transition: "opacity 0.2s ease-in-out", // This duration must match the setTimeout
+  };
+
 
   return (
     <div className="signup-page-container">
       <div className="signup-card">
-        <h2 className="signup-title">Welcome Back!</h2>
-        <p className="signup-subtitle">
-          Log in to continue your learning journey and manage your account.
-        </p>
-        <form onSubmit={handleSubmit} className="signup-form">
-          <div className="form-group-signup">
-            <label htmlFor="username">Email address or Mobile number</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              placeholder="Enter your email or mobile number"
-              value={formData.username}
-              onChange={handleChange}
-              className={errors.username ? "input-error" : ""}
-            />
-            {errors.username && (
-              <span className="error-message-signup">{errors.username}</span>
-            )}
-          </div>
 
-          <div className="form-group-signup password-group">
-            <label htmlFor="password">Password</label>
-            <div className="input-icon-wrapper">
-              <button
-                type="button"
-                onClick={togglePasswordVisibility}
-                className="password-toggle-button left"
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`input-with-icon ${
-                  errors.password ? "input-error" : ""
-                }`}
-              />
-            </div>
-            {errors.password && (
-              <span className="error-message-signup">{errors.password}</span>
-            )}
-          </div>
-          <button type="submit" className="signup-button" disabled={loading}>
-            {loading ? (
-              <>
-                <FaSpinner className="spinner-icon" />
-                <span style={{ marginLeft: "8px" }}>Logging In...</span>
-              </>
-            ) : (
-              "Log In"
-            )}
+        {/* --- Tabbed Interface --- */}
+        <div style={tabContainerStyle}>
+          <button
+            type="button"
+            style={activeTab === "student" ? activeTabStyle : tabStyle}
+            // --- MODIFIED: Use new handler ---
+            onClick={() => handleTabChange("student")}
+          >
+            Student Login
           </button>
-        </form>
+          <button
+            type="button"
+            style={activeTab === "faculty" ? activeTabStyle : tabStyle}
+            // --- MODIFIED: Use new handler ---
+            onClick={() => handleTabChange("faculty")}
+          >
+            Faculty Login
+          </button>
+          <div style={sliderStyle}></div> {/* Animated slider */}
+        </div>
+
+        {/* --- NEW: Fading content wrapper --- */}
+        <div style={contentFadeStyle}>
+                  <p className="signup-subtitle">{subtitle}</p>
+          
+          {/* --- The Form Itself --- */}
+          <form onSubmit={handleSubmit} className="signup-form">
+            <div className="form-group-signup">
+              <label htmlFor="username">Email address or Mobile number</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter your email or mobile number"
+                value={formData.username}
+                onChange={handleChange}
+                className={errors.username ? "input-error" : ""}
+              />
+              {errors.username && (
+                <span className="error-message-signup">{errors.username}</span>
+              )}
+            </div>
+
+            <div className="form-group-signup password-group">
+              <label htmlFor="password">Password</label>
+              <div className="input-icon-wrapper">
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="password-toggle-button left"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`input-with-icon ${
+                    errors.password ? "input-error" : ""
+                  }`}
+                />
+              </div>
+              {errors.password && (
+                <span className="error-message-signup">{errors.password}</span>
+              )}
+            </div>
+            <button type="submit" className="signup-button" disabled={loading}>
+              {loading ? (
+                <>
+                  <FaSpinner className="spinner-icon" />
+                  <span style={{ marginLeft: "8px" }}>Logging In...</span>
+                </>
+              ) : (
+                "Log In"
+              )}
+            </button>
+          </form>
+        </div> {/* --- End of Fading Wrapper --- */}
+
+
         <p className="login-link">
           Don't have an account? <Link to="/signup">Sign Up</Link>
         </p>

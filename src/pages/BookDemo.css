@@ -63,7 +63,7 @@
 .book-demo-card {
   max-width: 600px;
   width: 100%;
-  padding: 20px 40px;
+  padding: 40px;
   background: var(--card-bg);
   border-radius: 20px;
   box-shadow: 0 20px 60px var(--shadow-light);

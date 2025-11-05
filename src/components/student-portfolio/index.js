@@ -1,0 +1,10 @@
+export { default as StudentProfile } from './StudentProfile';
+export { default as StudentWeekend } from './StudentWeekend';
+export { default as StudentUpload } from './StudentUpload';
+export { default as StudentPPTs } from './StudentPPTs';
+export { default as StudentWorksheets } from './StudentWorksheets';
+export { default as StudentPapers } from './StudentPapers';
+export { default as StudentResults } from './StudentResults';
+export { default as StudentClasses } from './StudentClasses';
+export { default as StudentPayments } from './StudentPayments';
+export { default as StudentOthers } from './StudentStudyMaterials';

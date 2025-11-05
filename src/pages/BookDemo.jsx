@@ -3,8 +3,10 @@ import "./BookDemo.css"; // Ensure this CSS file is linked
 import emailjs from "@emailjs/browser";
 import Modal from "./Modal"; // adjust path if needed
 import Loader from "./Loader"; // adjust path if needed
-
+import { bookDemo } from "../redux/actions";
+import { useDispatch } from "react-redux";
 const BookDemo = () => {
+  const dispatch = useDispatch()
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -56,44 +58,64 @@ const BookDemo = () => {
     if (!validate()) return;
 
     setIsLoading(true);
-
-    emailjs
-      .send(
-        "service_96hpvsw",
-        "template_fj32b8k",
-        {
-          name: formData.name,
-          email: formData.email,
-          mobile: formData.mobile,
-          subject: formData.subject,
-          stream: formData.stream,
-          message: formData.message,
-        },
-        "CodaKdlgBTQoYetms"
-      )
-      .then(() => {
-        setIsLoading(false);
-        setModalOpen(true);
-        setSubmitted(true);
-        setFormData({
-          name: "",
-          email: "",
-          mobile: "",
-          subject: "",
-          stream: "",
-          message: "",
-        }); // Clear form
-      })
-      .catch((error) => {
-        setIsLoading(false);
-        console.error("EmailJS error:", error); // Log the actual error
-        setModalOpen(true);
-        setSubmitted(false);
+  dispatch(bookDemo(formData))
+    .then(() => {
+      setIsLoading(false);
+      setModalOpen(true);
+      setSubmitted(true);
+      setFormData({
+        name: "",
+        email: "",
+        mobile: "",
+        subject: "",
+        stream: "",
+        message: "",
       });
+    })
+    .catch((error) => {
+      setIsLoading(false);
+      console.error("Booking error:", error);
+      setModalOpen(true);
+      setSubmitted(false);
+    });
+    // emailjs
+    //   .send(
+    //     "service_96hpvsw",
+    //     "template_fj32b8k",
+    //     {
+    //       name: formData.name,
+    //       email: formData.email,
+    //       mobile: formData.mobile,
+    //       subject: formData.subject,
+    //       stream: formData.stream,
+    //       message: formData.message,
+    //     },
+    //     "CodaKdlgBTQoYetms"
+    //   )
+    //   .then(() => {
+    //     setIsLoading(false);
+    //     setModalOpen(true);
+    //     setSubmitted(true);
+    //     setFormData({
+    //       name: "",
+    //       email: "",
+    //       mobile: "",
+    //       subject: "",
+    //       stream: "",
+    //       message: "",
+    //     }); // Clear form
+    //   })
+    //   .catch((error) => {
+    //     setIsLoading(false);
+    //     console.error("EmailJS error:", error); // Log the actual error
+    //     setModalOpen(true);
+    //     setSubmitted(false);
+    //   });
   };
 
   return (
-    <div className="book-demo-page">
+      <div className="signup-page-container">
+      {/* <div className="signup-card"> */}
       {isLoading && <Loader />} {/* Loader overlay */}
       <div className="book-demo-card">
         <h2 className="card-title">Book a Free Demo Class</h2>
@@ -205,7 +227,9 @@ const BookDemo = () => {
         }
         status={submitted ? "success" : "error"}
       />
-    </div>
+          </div>
+
+    // </div>
   );
 };
 

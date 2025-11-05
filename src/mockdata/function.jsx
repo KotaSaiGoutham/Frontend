@@ -56,6 +56,33 @@ export const formatFirebaseDate = (timestampObject) => {
     return "Invalid Date";
   }
 };
+export const formatClassInfo = (classId) => {
+  if (!classId) return '';
+  
+  const parts = classId.split('-');
+  if (parts.length < 5) return classId;
+  
+  const [, year, month, day, dayTime] = parts;
+  
+  // Format: "Monday, Nov 04 - 10:00 AM"
+  const date = new Date(`${year}-${month}-${day}`);
+  const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+  const formattedDate = date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric' 
+  });
+  
+  // Extract and format time (e.g., "1000am" -> "10:00 AM")
+  const timeMatch = dayTime.match(/([0-9]{1,2})([0-9]{2})([ap]m)/i);
+  if (timeMatch) {
+    const [, hour, minute, period] = timeMatch;
+    const formattedTime = `${hour}:${minute} ${period.toUpperCase()}`;
+    return `${dayName}, ${formattedDate} - ${formattedTime}`;
+  }
+  
+  return `${dayName}, ${formattedDate}`;
+};
+
 export const calculateQuartiles = (data) => {
   // Filter out any non-numeric or future values (like '-')
   const numericData = data.filter(val => typeof val === 'number');
@@ -733,3 +760,12 @@ export const calculateExpectedEndDate = (startDate, classDays, totalClasses) => 
   const year = currentDate.getFullYear();
   return `${day}/${month}/${year}`;
 };
+
+ export const formatPhone = (num) => {
+    if (!num) return "N/A";
+    return (
+      <a href={`tel:${num}`} className="phone-link">
+        {num.replace(/(\d{5})(\d{5})/, "$1 $2")}
+      </a>
+    );
+  };

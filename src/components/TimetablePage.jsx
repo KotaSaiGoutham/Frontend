@@ -228,22 +228,14 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   }, []);
 
   const combinedAndFilteredTimetables = useMemo(() => {
-    // Combine manual and auto-generated timetables
-    console.log("manualTimetables", manualTimetables);
     let combinedTimetables = [...manualTimetables, ...autoTimetables];
 
-    // --- Deduplication Logic ---
     const uniqueTimetables = new Map();
     combinedTimetables.forEach((item) => {
-      // Create a unique key based on Student name and Time
       const key = `${item.Student}-${item.Time}`;
-      // Add the item to the Map. If a key already exists, this will overwrite it,
-      // effectively keeping only the last occurrence.
       uniqueTimetables.set(key, item);
     });
-    // Convert the Map values back to an array
     let permissionFilteredTimetables = Array.from(uniqueTimetables.values());
-    // --- End of Deduplication Logic ---
 
     if (
       user &&
@@ -251,9 +243,6 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
       permissionFilteredTimetables.length > 0
     ) {
       if (canAccessAll) {
-        // The uniqueTimetables array is already filtered by this logic,
-        // but keeping the variable name for clarity.
-        // We can directly use it.
       } else if (currentUserSubject) {
         permissionFilteredTimetables = permissionFilteredTimetables.filter(
           (schedule) => schedule.Subject?.trim() === currentUserSubject
@@ -492,7 +481,6 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     calculateDuration,
     isRevisionProgramJEEMains2026Student, // Add this to dependencies
   ]);
-  console.log("combinedAndFilteredTimetables", combinedAndFilteredTimetables);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -766,12 +754,9 @@ const handleTopicChange = useCallback(
     year: now.getFullYear(), // e.g., 2025
   };
   const Exceltitle = `Electron Academy ${subject} class details ${current?.month} ${current?.year}`;
-  // ✅ Define a function for date change
-  // TimetablePage.jsx
-  console.log("combinedAndFilteredTimetables", combinedAndFilteredTimetables);
+
   const handleDateChange = async (dateString) => {
     if (!dateString) {
-      // Handle case where date is cleared
       setFilterDate(null);
       setGeneratedTimetables([]);
       return;

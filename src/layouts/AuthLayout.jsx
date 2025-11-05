@@ -14,7 +14,7 @@ const AuthLayout = () => {
     // Initialize sidebar open based on screen width
     // Sidebar is never open for students in this layout
     const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-        return !isStudent && window.innerWidth > 768;
+        return window.innerWidth > 768;
     });
 
     // Function to toggle sidebar (primarily used by mobile button)
@@ -65,16 +65,15 @@ const AuthLayout = () => {
     const showSidebar = !isStudent; // Sidebar is shown only if NOT a student
 
     // Determine the content class based on sidebar visibility and student role
-    const contentClass = isStudent
-        ? 'centered-content' // For students, always center content
-        : (showSidebar ? (isSidebarOpen ? 'sidebar-open' : 'sidebar-closed') : 'full-width'); // For others, use existing logic
+    const contentClass = // For students, always center content
+        ('sidebar-open') 
 
     return (
         <div className="auth-layout-container">
             {/* Conditionally render Sidebar */}
-            {showSidebar && (
-                <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-            )}
+            {/* {showSidebar && ( */}
+                <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} userRole={user.role}/>
+            {/* )} */}
 
             {/* Main content area */}
             <div className={`auth-layout-content ${contentClass}`}>
