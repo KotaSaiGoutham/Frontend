@@ -26,19 +26,19 @@ import Benefits from "./BenefitsSection";
 import StatsSection from "./StatsSection";
 import BannerPopup from "../components/customcomponents/BannerPopup";
 const faculties = [
-  // {
-  //   id: 1,
-  //   name: "Vamshi Krishna Dulam",
-  //   subject: "Physics",
-  //   experience: 16,
-  //   videoUrl:
-  //     "https://www.youtube.com/embed/i_OE2PcGzBE?controls=1&modestbranding=1&rel=0",
-  //   description:
-  //     "Expert in Physics with 16 years of NEET,JEE and BITSAT teaching experience. Known for simplifying complex topics and boosting student confidence.",
-  //   syllabus: "Covers Mechanics, Thermodynamics, Optics, Modern Physics.",
-  //   teachingStyle:
-  //     "Interactive sessions with concept clarity, problem-solving, and regular doubt clearing.",
-  // },
+  {
+    id: 1,
+    name: "Vamshi Krishna Dulam",
+    subject: "Physics",
+    experience: 16,
+    videoUrl:
+      "https://www.youtube.com/embed/i_OE2PcGzBE?controls=1&modestbranding=1&rel=0",
+    description:
+      "Expert in Physics with 16 years of NEET,JEE and BITSAT teaching experience. Known for simplifying complex topics and boosting student confidence.",
+    syllabus: "Covers Mechanics, Thermodynamics, Optics, Modern Physics.",
+    teachingStyle:
+      "Interactive sessions with concept clarity, problem-solving, and regular doubt clearing.",
+  },
   {
     id: 2,
     name: "Karunakar Reddy Bollam",

@@ -32,22 +32,29 @@ const glow = keyframes`
 `;
 
 
-const TableStatusSelect = ({ value, onChange,options }) => {
+const TableStatusSelect = ({ value, onChange, options, compact = false }) => {
   const statusOptions = Object.keys(options);
-  const [selected, setSelected] = useState(value || '');
+  const [selected, setSelected] = useState(value || "");
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
     setSelected(value);
     if (value) {
       setAnimate(true);
-      const timer = setTimeout(() => setAnimate(false), 600); // reset animation
+      const timer = setTimeout(() => setAnimate(false), 600);
       return () => clearTimeout(timer);
     }
   }, [value]);
 
   return (
-    <FormControl size="small" sx={{ minWidth: 150 }}>
+    <FormControl
+      size="small"
+      sx={{
+        minWidth: compact ? "auto" : 150,
+        m: 0,
+        p: 0,
+      }}
+    >
       <Select
         value={selected}
         onChange={onChange}
@@ -66,12 +73,12 @@ const TableStatusSelect = ({ value, onChange,options }) => {
                   gap: 1,
                   backgroundColor: config.backgroundColor,
                   color: config.color,
-                  px: 1.5,
-                  py: 0.6,
+                  px: compact ? 1 : 1.5,
+                  py: compact ? 0.4 : 0.6,
                   borderRadius: 1.5,
                   fontWeight: 600,
                   justifyContent: "center",
-                  minWidth: "110px",
+                  minWidth: compact ? "100px" : "110px",
                   textAlign: "center",
                   transition: "all 0.4s ease",
                   animation: animate ? `${glow} 0.6s ease` : "none",
@@ -93,11 +100,14 @@ const TableStatusSelect = ({ value, onChange,options }) => {
           );
         }}
         sx={{
-          '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-          '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
-          '& .MuiSelect-icon': {
-            color: '#1976d2',
+          "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+          "&:hover .MuiOutlinedInput-notchedOutline": { border: "none" },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { border: "none" },
+          "& .MuiSelect-select": {
+            p: compact ? "0px 3px" : "6px 10px", // compact padding control
+          },
+          "& .MuiSelect-icon": {
+            color: "#1976d2",
             right: 8,
           },
         }}
@@ -115,7 +125,7 @@ const TableStatusSelect = ({ value, onChange,options }) => {
                 backgroundColor: config.backgroundColor,
                 color: config.color,
                 fontWeight: 500,
-                '&:hover': {
+                "&:hover": {
                   backgroundColor: config.backgroundColor,
                   opacity: 0.9,
                 },
@@ -134,17 +144,18 @@ const TableStatusSelect = ({ value, onChange,options }) => {
 export default TableStatusSelect;
 
 
+
 export const EditButton = ({ onClick, size = 'medium' }) => (
   <Tooltip title="Edit" arrow placement="top" TransitionComponent={Fade} TransitionProps={{ timeout: 300 }}>
     <IconButton
       size={size}
       sx={{
-        p: 1.25,
+        p: size === 'small' ? 0.75 : 1.25,
         color: "primary.main",
         position: "relative",
         overflow: "hidden",
         transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        borderRadius: "10px",
+        borderRadius: "8px",
         "&::before": {
           content: '""',
           position: "absolute",
@@ -162,6 +173,7 @@ export const EditButton = ({ onClick, size = 'medium' }) => (
         },
         "& svg": {
           transition: "all 0.3s ease",
+          fontSize: size === 'small' ? '0.875rem' : '1rem',
         },
         "&:hover svg": {
           transform: "scale(1.15)",
@@ -169,7 +181,7 @@ export const EditButton = ({ onClick, size = 'medium' }) => (
       }}
       onClick={onClick}
     >
-      <FaEdit style={{ fontSize: '1rem' }} />
+      <FaEdit />
     </IconButton>
   </Tooltip>
 );
@@ -179,12 +191,12 @@ export const DeleteButton = ({ onClick, size = 'medium' }) => (
     <IconButton
       size={size}
       sx={{
-        p: 1.25,
+        p: size === 'small' ? 0.75 : 1.25,
         color: "error.main",
         position: "relative",
         overflow: "hidden",
         transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        borderRadius: "10px",
+        borderRadius: "8px",
         "&::before": {
           content: '""',
           position: "absolute",
@@ -202,6 +214,7 @@ export const DeleteButton = ({ onClick, size = 'medium' }) => (
         },
         "& svg": {
           transition: "all 0.3s ease",
+          fontSize: size === 'small' ? '0.875rem' : '1rem',
         },
         "&:hover svg": {
           transform: "scale(1.15)",
@@ -209,25 +222,30 @@ export const DeleteButton = ({ onClick, size = 'medium' }) => (
       }}
       onClick={onClick}
     >
-      <FaTrashAlt style={{ fontSize: '1rem' }} />
+      <FaTrashAlt />
     </IconButton>
   </Tooltip>
 );
 
-export const ActionButtons = ({ onEdit, onDelete, size = 'medium' }) => (
-  <>
-  
+export const ActionButtons = ({ onEdit, onDelete, size = 'medium', gap = 0.25 }) => (
+  <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center',
+    gap: gap,
+    padding: 0.25,
+    borderRadius: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+  }}>
     <EditButton onClick={onEdit} size={size} />
     <Divider 
       orientation="vertical" 
       flexItem 
       sx={{ 
-        my: 0.5, 
-        height: 24,
+        height: size === 'small' ? 20 : 24,
         borderColor: 'rgba(0, 0, 0, 0.08)',
         alignSelf: 'center'
       }} 
     />
     <DeleteButton onClick={onDelete} size={size} />
-  </>
+  </Box>
 );

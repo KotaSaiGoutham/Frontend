@@ -6,6 +6,7 @@ import {
   fetchMonthlyPayments,
   fetchAutoTimetablesForToday,
   fetchUpcomingClasses,
+  fetchMonthlyPaymentDetails
 } from "../../redux/actions";
 import { Box, Tooltip } from "@mui/material";
 import { BarChart } from "@mui/x-charts";
@@ -20,6 +21,7 @@ import {
 } from "date-fns";
 import "./HistoricalTables.css";
 import { calculateQuartiles } from "../../mockdata/function";
+import MonthlyPaymentDetailsDialog from "../customcomponents/MonthlyPaymentDetailsDialog"
 
 const HistoricalTables = ({ students }) => {
   const dispatch = useDispatch();
@@ -42,11 +44,10 @@ const HistoricalTables = ({ students }) => {
     error: autoTimetablesError,
     hasSavedToday: autoTimetablesHasSavedToday,
   } = useSelector((state) => state.autoTimetables);
+  
   useEffect(() => {
     dispatch(fetchAutoTimetablesForToday(user?.id));
-
     dispatch(fetchUpcomingClasses());
-
     dispatch(fetchMonthlyPayments());
   }, [dispatch]);
 
@@ -202,28 +203,55 @@ const HistoricalTables = ({ students }) => {
     const dateFormatted = format(date, "dd/MM/yyyy");
     navigate("/timetable", { state: { date: dateFormatted } });
   };
+  
   const handleNavigateToToday = () => {
     const todayDateFormatted = format(today, "dd/MM/yyyy");
     navigate("/timetable", { state: { date: todayDateFormatted } });
   };
+  
   const { median: medianClasses, q3: q3Classes } = useMemo(() => {
     const counts = sevenDayClassesData.map((item) => item.count);
     return calculateQuartiles(counts);
   }, [sevenDayClassesData]);
+  
   const { median: medianFee, q3: q3Fee } = useMemo(() => {
     const fees = Object.values(monthlyFeeData).filter(
       (val) => typeof val === "number"
     );
     return calculateQuartiles(fees);
   }, [monthlyFeeData]);
+  
   const { median: medianStudents, q3: q3Students } = useMemo(() => {
     const studentsCount = Object.values(monthlyStudentData).filter(
       (val) => typeof val === "number"
     );
     return calculateQuartiles(studentsCount);
   }, [monthlyStudentData]);
+  
+  const handleMonthClick = async (monthKey) => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const monthMap = {
+        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+        'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+        'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+      };
+      
+      const monthNumber = monthMap[monthKey];
+      const yearMonth = `${currentYear}-${monthNumber}`;
+      
+      // Fetch payment details for selected month
+      dispatch(fetchMonthlyPaymentDetails(yearMonth));
+    } catch (error) {
+      console.error('Error fetching payment details:', error);
+    }
+  };
+
   return (
     <div className="historical-tables-container">
+      {/* Render the dialog component */}
+      <MonthlyPaymentDetailsDialog />
+      
       {/* First Row: Classes per day */}
       <div className="table-section">
         <div className="row-container">
@@ -320,69 +348,72 @@ const HistoricalTables = ({ students }) => {
         </div>
       </div>
 
-  <div className="table-section">
-  <div className="row-container">
-    <div className="table-container">
-      <div className="table-card secondary-card fixed-table-card">
-        <h3 className="table-heading">
-          <span className="heading-icon">
-            <FaRupeeSign />
-          </span>
-          Fee payment per month
-        </h3>
-        <div className="grid-table-wrapper">
-          <div className="month-grid">
-            {Object.keys(monthlyFeeData).map((monthKey, index) => {
-              const amount = monthlyFeeData[monthKey];
-              const isCurrentMonth = monthKey === currentMonth;
-              const isFuture = amount === "-";
-              
-              return (
-                <div
-                  key={monthKey}
-                  className={`month-grid-item ${isCurrentMonth ? 'highlight-cell' : ''}`}
-                >
-                  <div className="month-header">{monthKey}</div>
-                  <div 
-                    className="month-value"
-                    data-future={isFuture}
-                  >
-                    {isFuture ? "-" : `₹${amount.toLocaleString()}`}
-                  </div>
+      {/* Second Row: Fee payment per month */}
+      <div className="table-section">
+        <div className="row-container">
+          <div className="table-container">
+            <div className="table-card secondary-card fixed-table-card">
+              <h3 className="table-heading">
+                <span className="heading-icon">
+                  <FaRupeeSign />
+                </span>
+                Fee payment per month
+              </h3>
+              <div className="grid-table-wrapper">
+                <div className="month-grid">
+                  {Object.keys(monthlyFeeData).map((monthKey, index) => {
+                    const amount = monthlyFeeData[monthKey];
+                    const isCurrentMonth = monthKey === currentMonth;
+                    const isFuture = amount === "-";
+                    
+                    return (
+                      <div
+                        key={monthKey}
+                        className={`month-grid-item ${isCurrentMonth ? 'highlight-cell' : ''}`}
+                        onClick={() => !isFuture && handleMonthClick(monthKey)}
+                        style={{ cursor: isFuture ? 'default' : 'pointer' }}
+                      >
+                        <div className="month-header">{monthKey}</div>
+                        <div 
+                          className="month-value"
+                          data-future={isFuture}
+                        >
+                          {isFuture ? "-" : `₹${amount.toLocaleString()}`}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            </div>
+          </div>
+          <div className="chart-container-history">
+            <Box className="chart-card">
+              <BarChart
+                xAxis={[{ scaleType: "band", data: allMonths }]}
+                yAxis={[
+                  {
+                    min: 0,
+                    max: q3Fee + q3Fee * 0.1,
+                    tickNumber: 3,
+                    tickValues: [0, medianFee, q3Fee],
+                  },
+                ]}
+                series={[
+                  {
+                    data: Object.values(monthlyFeeData).map((val) =>
+                      val === "-" ? 0 : val
+                    ),
+                    color: "#B21F62",
+                  },
+                ]}
+                height={180}
+                margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
+              />
+            </Box>
           </div>
         </div>
       </div>
-    </div>
-    <div className="chart-container-history">
-      <Box className="chart-card">
-        <BarChart
-          xAxis={[{ scaleType: "band", data: allMonths }]}
-          yAxis={[
-            {
-              min: 0,
-              max: q3Fee + q3Fee * 0.1,
-              tickNumber: 3,
-              tickValues: [0, medianFee, q3Fee],
-            },
-          ]}
-          series={[
-            {
-              data: Object.values(monthlyFeeData).map((val) =>
-                val === "-" ? 0 : val
-              ),
-              color: "#B21F62",
-            },
-          ]}
-          height={180}
-          margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
-        />
-      </Box>
-    </div>
-  </div>
-</div>
 
       {/* Third Row: Students per month */}
       <div className="table-section">

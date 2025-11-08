@@ -14,15 +14,34 @@ import {
   FETCH_STUDENT_WORKSHEETS_REQUEST,
   FETCH_STUDENT_WORKSHEETS_SUCCESS,
   FETCH_STUDENT_WORKSHEETS_FAILURE,
+  // Study Materials and Question Papers Actions
+  UPLOAD_STUDY_MATERIAL_REQUEST,
+  UPLOAD_STUDY_MATERIAL_SUCCESS,
+  UPLOAD_STUDY_MATERIAL_FAILURE,
+  UPLOAD_QUESTION_PAPER_REQUEST,
+  UPLOAD_QUESTION_PAPER_SUCCESS,
+  UPLOAD_QUESTION_PAPER_FAILURE,
+  FETCH_STUDY_MATERIALS_REQUEST,
+  FETCH_STUDY_MATERIALS_SUCCESS,
+  FETCH_STUDY_MATERIALS_FAILURE,
+  FETCH_QUESTION_PAPERS_REQUEST,
+  FETCH_QUESTION_PAPERS_SUCCESS,
+  FETCH_QUESTION_PAPERS_FAILURE,
 } from "../types";
 
 const initialLectureMaterialsState = {
   materials: [],
   ppts: [], // Student-specific PPTs
   worksheets: [], // Student-specific worksheets
+  studyMaterials: [], // Study materials for students
+  questionPapers: [], // Question papers for students
   loading: false,
   uploading: false,
   deleting: false,
+  uploadingStudyMaterial: false,
+  uploadingQuestionPaper: false,
+  fetchingStudyMaterials: false,
+  fetchingQuestionPapers: false,
   error: null,
 };
 
@@ -104,6 +123,97 @@ export const lectureMaterialsReducer = (
       return { 
         ...state, 
         loading: false, 
+        error: action.payload.error 
+      };
+
+    // Study Materials Cases
+    case UPLOAD_STUDY_MATERIAL_REQUEST:
+      return { 
+        ...state, 
+        uploadingStudyMaterial: true, 
+        error: null 
+      };
+
+    case UPLOAD_STUDY_MATERIAL_SUCCESS:
+      return {
+        ...state,
+        uploadingStudyMaterial: false,
+        error: null,
+        // Note: We don't add to studyMaterials array here because we'll refetch
+        // This prevents duplicate data if the upload succeeds but fetch fails
+      };
+
+    case UPLOAD_STUDY_MATERIAL_FAILURE:
+      return { 
+        ...state, 
+        uploadingStudyMaterial: false, 
+        error: action.payload.error 
+      };
+
+    case FETCH_STUDY_MATERIALS_REQUEST:
+      return { 
+        ...state, 
+        fetchingStudyMaterials: true, 
+        error: null 
+      };
+
+    case FETCH_STUDY_MATERIALS_SUCCESS:
+      return { 
+        ...state, 
+        fetchingStudyMaterials: false, 
+        studyMaterials: action.payload, 
+        error: null 
+      };
+
+    case FETCH_STUDY_MATERIALS_FAILURE:
+      return { 
+        ...state, 
+        fetchingStudyMaterials: false, 
+        error: action.payload.error 
+      };
+
+    // Question Papers Cases
+    case UPLOAD_QUESTION_PAPER_REQUEST:
+      return { 
+        ...state, 
+        uploadingQuestionPaper: true, 
+        error: null 
+      };
+
+    case UPLOAD_QUESTION_PAPER_SUCCESS:
+      return {
+        ...state,
+        uploadingQuestionPaper: false,
+        error: null,
+        // Note: We don't add to questionPapers array here because we'll refetch
+      };
+
+    case UPLOAD_QUESTION_PAPER_FAILURE:
+      return { 
+        ...state, 
+        uploadingQuestionPaper: false, 
+        error: action.payload.error 
+      };
+
+    case FETCH_QUESTION_PAPERS_REQUEST:
+      return { 
+        ...state, 
+        fetchingQuestionPapers: true, 
+        error: null 
+      };
+
+    case FETCH_QUESTION_PAPERS_SUCCESS:
+      return { 
+        ...state, 
+        fetchingQuestionPapers: false, 
+        questionPapers: action.payload, 
+        error: null 
+      };
+
+    case FETCH_QUESTION_PAPERS_FAILURE:
+      return { 
+        ...state, 
+        fetchingQuestionPapers: false, 
         error: action.payload.error 
       };
 

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import DemoProgressTracker from "./customcomponents/DemoProgressTracker";
 import {
   Box,
   Paper,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
+  Grid,
+  Card,
+  CardContent,
   CircularProgress,
   Alert,
   Slide,
@@ -21,17 +20,27 @@ import {
   IconButton,
   TextField,
   Tooltip,
+  Chip,
+  Avatar,
+  Badge,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import {
   FaChalkboardTeacher,
   FaPlus,
   FaArrowRight,
   FaEdit,
+  FaCalendarAlt,
+  FaClock,
+  FaUserGraduate,
+  FaUniversity,
+  FaPhone,
+  FaMapMarkerAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { demoStatusConfig } from "../mockdata/Options";
 
-import TableStatusSelect from "./customcomponents/TableStatusSelect";
 import {
   fetchDemoClasses,
   updateDemoClassStatus,
@@ -39,84 +48,40 @@ import {
   updateDemoClass,
 } from "../redux/actions";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
-import TableHeaders from "./students/TableHeaders";
-import { demoTableColumns } from "../mockdata/Options";
+import TableStatusSelect from "./customcomponents/TableStatusSelect";
+import { formatFirebaseDate } from "../mockdata/function";
 
-const DemoClassesPage = () => { 
+const DemoClassesPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const { demoClasses, loading, error } = useSelector(
     (state) => state.demoClasses
   );
-  const { user, loading: userLoading } = useSelector((state) => state.auth);
 
   // State for filters
   const [filters, setFilters] = useState({
     studentName: "",
     course: "",
     status: "",
-    year: "",
-    collegeName: "",
-  });
-
-  // State for column visibility
-  const [columnVisibility, setColumnVisibility] = useState({
-    sNo: true,
-    studentName: true,
-    contactNo: false,
-    source: false,
-    year: true,
-    course: true,
-    collegeName: false,
-    demoDate: true,
-    demoTime: true,
-    status: true,
-    moveToStudents: true,
-    actions: true,
-    remarks: true,
   });
 
   // State for remarks dialog
   const [isRemarksDialogOpen, setIsRemarksDialogOpen] = useState(false);
   const [currentRemarks, setCurrentRemarks] = useState("");
-
-  // State for the actions menu
-  const [anchorEl, setAnchorEl] = useState(null);
   const [selectedDemo, setSelectedDemo] = useState(null);
-  const open = Boolean(anchorEl);
-
-  // State for the delete confirmation dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     dispatch(fetchDemoClasses());
   }, [dispatch]);
-
-  // Handler for opening the actions menu
-  const handleClick = (event, demo) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedDemo(demo);
-  };
-
-  // Handler for closing the actions menu
-  const handleClose = () => {
-    setAnchorEl(null);
-    setSelectedDemo(null);
-  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prevFilters) => ({
       ...prevFilters,
       [name]: value,
-    }));
-  };
-
-  const handleColumnToggle = (column) => (event) => {
-    setColumnVisibility((prevVisibility) => ({
-      ...prevVisibility,
-      [column]: event.target.checked,
     }));
   };
 
@@ -130,13 +95,11 @@ const DemoClassesPage = () => {
     });
   };
 
-  // Handler to open the delete confirmation dialog
   const handleDeleteClick = (demo) => {
     setSelectedDemo(demo);
     setIsDeleteDialogOpen(true);
   };
 
-  // Handler to confirm deletion
   const handleConfirmDelete = () => {
     if (selectedDemo) {
       dispatch(deleteDemoClass(selectedDemo.id))
@@ -148,16 +111,8 @@ const DemoClassesPage = () => {
         });
     }
     setIsDeleteDialogOpen(false);
-    handleClose();
   };
 
-  // Handler to cancel deletion
-  const handleCancelDelete = () => {
-    setIsDeleteDialogOpen(false);
-    handleClose();
-  };
-
-  // Handler to save remarks
   const handleSaveRemarks = async () => {
     if (selectedDemo) {
       const updatedDemo = {
@@ -175,23 +130,35 @@ const DemoClassesPage = () => {
     }
   };
 
+  // Filter demo classes based on filters and tab selection
   const filteredDemoClasses = demoClasses.filter((demo) => {
+    const matchesSearch = demo.studentName
+      .toLowerCase()
+      .includes(filters.studentName.toLowerCase());
+
+    const matchesCourse =
+      filters.course === "" || demo.course === filters.course;
+    const matchesStatus =
+      filters.status === "" || demo.status === filters.status;
+
+    // Tab filtering
+    let matchesTab = true;
+    if (activeTab === 1) matchesTab = demo.status === "Contacted";
+    if (activeTab === 2) matchesTab = demo.status === "Demo scheduled";
+    if (activeTab === 3) matchesTab = demo.status === "Demo completed";
+    if (activeTab === 4) matchesTab = demo.status === "Success";
+
     return (
-      demo.studentName
-        .toLowerCase()
-        .includes(filters.studentName.toLowerCase()) &&
-      (filters.course === "" || demo.course === filters.course) &&
-      (filters.status === "" || demo.status === filters.status) &&
-      (filters.year === "" || demo.year === filters.year) &&
-      (filters.collegeName === "" ||
-        demo.collegeName
-          .toLowerCase()
-          .includes(filters.collegeName.toLowerCase())) &&
+      matchesSearch &&
+      matchesCourse &&
+      matchesStatus &&
+      matchesTab &&
       !demo.addstudenttostudenttable
     );
   });
 
-  const sortedFilteredDemoClasses = filteredDemoClasses.sort((a, b) => {
+  // Sort by date (newest first)
+  const sortedDemoClasses = [...filteredDemoClasses].sort((a, b) => {
     const dateA = a.demoDate
       ? new Date(a.demoDate.split(".").reverse().join("-"))
       : new Date(0);
@@ -200,6 +167,19 @@ const DemoClassesPage = () => {
       : new Date(0);
     return dateB - dateA;
   });
+
+  // Status color mapping
+  const getStatusColor = (status) => {
+    const colors = {
+      Contacted: "#9c27b0",
+      "Demo scheduled": "#1976d2",
+      "Demo completed": "#ed6c02",
+      Success: "#2e7d32",
+      Pending: "#757575",
+      Cancelled: "#d32f2f",
+    };
+    return colors[status] || "#757575";
+  };
 
   return (
     <Box
@@ -212,6 +192,7 @@ const DemoClassesPage = () => {
         gap: 3,
       }}
     >
+      {/* Header */}
       <Slide
         direction="down"
         in={true}
@@ -229,6 +210,8 @@ const DemoClassesPage = () => {
             flexWrap: "wrap",
             gap: 2,
             borderRadius: "12px",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white",
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -236,19 +219,19 @@ const DemoClassesPage = () => {
               style={{
                 marginRight: "15px",
                 fontSize: "2.5rem",
-                color: "#1976d2",
+                color: "white",
               }}
             />
             <Box>
               <Typography
                 variant="h4"
                 component="h1"
-                sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
+                sx={{ fontWeight: 700, mb: 0.5 }}
               >
                 Demo Classes Overview
               </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Manage and filter your demo class records.
+              <Typography sx={{ opacity: 0.9 }}>
+                Manage and track your demo class conversions
               </Typography>
             </Box>
           </Box>
@@ -257,243 +240,326 @@ const DemoClassesPage = () => {
             startIcon={<FaPlus />}
             onClick={() => navigate("/add-demo-class")}
             sx={{
-              bgcolor: "#1976d2",
-              "&:hover": { bgcolor: "#1565c0" },
+              bgcolor: "white",
+              color: "#667eea",
+              "&:hover": { bgcolor: "#f5f5f5" },
               borderRadius: "8px",
               px: 3,
               py: 1.2,
               minWidth: "180px",
-              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+              fontWeight: 600,
             }}
           >
-            Add New Demo Class
+            Add New Demo
           </MuiButton>
         </Paper>
       </Slide>
-      <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
-        <Paper
-          elevation={6}
-          sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
-        >
+
+      {/* Demo Classes Cards */}
+      <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={1100}>
+        <Paper elevation={3} sx={{ p: 2, borderRadius: "12px" }}>
           {loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
               <CircularProgress />
             </Box>
           ) : error ? (
-  <Alert severity="error">{error.error || "An unexpected error occurred."}</Alert>
-          ) : sortedFilteredDemoClasses.length > 0 ? (
-            <TableContainer
-              component={Paper}
-              elevation={3}
-              sx={{
-                borderRadius: 3,
-                overflowX: "auto", // Apply horizontal scroll here
-                overflowY: "hidden", // Prevent vertical scroll unless needed
-                transition:
-                  "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
-                "&:hover": {
-                  transform: "translateY(-4px)",
-                  boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.15)",
-                },
-              }}
-            >
-              <Table sx={{ minWidth: 1200 }} aria-label="demo classes table">
-                <TableHeaders
-                  columns={demoTableColumns}
-                  columnVisibility={columnVisibility}
-                />
-                <TableBody>
-                  {sortedFilteredDemoClasses.map((demo, index) => (
-                    <TableRow
-                      key={demo.id}
-                      sx={{
-                        transition:
-                          "background-color 0.3s ease, transform 0.2s ease",
-                        "&:nth-of-type(odd)": { backgroundColor: "#f9fafb" },
-                        "&:hover": {
-                          backgroundColor: "#e3f2fd",
-                          transform: "scale(1.005)",
-                          boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)",
-                        },
-                      }}
-                    >
-                      {columnVisibility.sNo && (
-                        <TableCell
-                          align="center"
-                          sx={{ fontSize: "0.9rem", p: 1.5 }}
-                        >
-                          {index + 1}
-                        </TableCell>
-                      )}
-                      {columnVisibility.studentName && (
-                        <TableCell
-                          align="center"
-                          sx={{ fontSize: "0.9rem", p: 1.5 }}
-                        >
-                          {demo.studentName}
-                        </TableCell>
-                      )}
-                      {columnVisibility.demoDate && (
-                        <TableCell
-                          align="center"
-                          sx={{ fontSize: "0.9rem", p: 1.5 }}
-                        >
-                          {new Date(demo.demoDate).toLocaleDateString("en-GB")}{" "}
-                        </TableCell>
-                      )}
-                      {/* New TableCell for demoTime */}
-                      {columnVisibility.demoTime && (
-                        <TableCell
-                          align="center"
-                          sx={{ fontSize: "0.9rem", p: 1.5 }}
-                        >
-                          {/* Convert 24-hour time to 12-hour format with AM/PM */}
-                          {new Date(
-                            `1970-01-01T${demo.demoTime}:00`
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          })}
-                        </TableCell>
-                      )}
-                      {columnVisibility.status && (
-                        <TableCell
-                          align="center"
+            <Alert severity="error">
+              {error.error || "An unexpected error occurred."}
+            </Alert>
+          ) : sortedDemoClasses.length > 0 ? (
+            <Grid container spacing={5} >
+              {sortedDemoClasses.map((demo) => (
+                <Grid item xs={12} md={6} lg={4} key={demo.id} style={{width:470}}>
+                  <Card
+                    elevation={2}
+                    sx={{
+                      height: "100%",
+                      transition: "all 0.3s ease",
+                      borderLeft: `4px solid ${getStatusColor(demo.status)}`,
+                      "&:hover": {
+                        elevation: 4,
+                        transform: "translateY(-4px)",
+                        boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ p: 3 }}>
+                      {/* Header with Student Info and Actions */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          mb: 2,
+                        }}
+                      >
+                       <Box
+  sx={{
+    display: "flex",
+    alignItems: "flex-start", // align from top
+    gap: 2,
+  }}
+>
+  <Avatar
+    sx={{
+      width: 56,
+      height: 56,
+      bgcolor: getStatusColor(demo.status),
+      fontSize: "1.2rem",
+      fontWeight: "bold",
+      flexShrink: 0, // prevents squishing
+      mt: 0.5, // subtle vertical alignment tweak
+    }}
+  >
+    {demo.studentName.charAt(0).toUpperCase()}
+  </Avatar>
+
+  <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+    <Typography
+      variant="h6"
+      component="h3"
+      fontWeight="600"
+      sx={{ lineHeight: 1.2, mb: 0.8 }}
+    >
+      {demo.studentName}
+    </Typography>
+    <TableStatusSelect
+      value={demo.status || ""}
+      onChange={(e) => handleStatusChange(demo.id, e.target.value)}
+      options={demoStatusConfig}
+      fullWidth
+      size="small"
+      sx={{
+        mt: 0,
+        width: 180, // keeps dropdown narrower for better look
+      }}
+      compact
+    />
+  </Box>
+</Box>
+
+                        <ActionButtons
+                          onEdit={() => {
+                            navigate("/add-demo-class", {
+                              state: { demoToEdit: demo },
+                            });
+                          }}
+                          onDelete={() => handleDeleteClick(demo)}
+                          size="small"
+                        />
+                      </Box>
+
+                      {/* Progress Tracker */}
+                      <Box sx={{ mb: 3 }}>
+                        <DemoProgressTracker currentStatus={demo.status} />
+                      </Box>
+
+                      {/* Course and Details */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1.5,
+                          mb: 3,
+                        }}
+                      >
+                        <Box
                           sx={{
-                            fontSize: "0.85rem",
-                            p: 1.5,
-                            minWidth: 150,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
                           }}
                         >
-                          <TableStatusSelect
-                            value={demo.status || ""}
-                            onChange={(e) =>
-                              handleStatusChange(demo.id, e.target.value)
-                            }
-                            options={demoStatusConfig}
-                          />
-                        </TableCell>
-                      )}
-                      {columnVisibility.remarks && (
-                        <TableCell
-                          align="left"
-                          sx={{
-                            fontSize: "0.9rem",
-                            p: 1,
-                            border: "1px solid #e0e0e0", // Adds a subtle border around the entire cell
-                          }}
-                        >
+                          <FaUserGraduate size={16} color="#666" />
+                          <Typography variant="body1" fontWeight="500">
+                            {demo.course}
+                          </Typography>
+                        </Box>
+
+                        {demo.collegeName && (
                           <Box
                             sx={{
                               display: "flex",
                               alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: 1, // Space between text and icon
-                              p: 1, // Inner padding for the hover effect
-                              borderRadius: 1, // Slight rounding for a softer look
-                              transition: "box-shadow 0.3s ease-in-out", // Smooth transition for the hover effect
-                              "&:hover": {
-                                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)", // Creates a subtle shadow on hover
-                              },
+                              gap: 1.5,
                             }}
                           >
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                maxWidth: 200,
-                                whiteSpace: "pre-wrap",
-                                textAlign: "left",
-                                wordBreak: "break-word",
-                                flexGrow: 1,
-                              }}
-                            >
-                              {demo.remarks || "No remarks"}
+                            <FaUniversity size={16} color="#666" />
+                            <Typography variant="body2" color="text.secondary">
+                              {demo.collegeName}
                             </Typography>
-                            <Tooltip title="Edit Remarks">
-                              <IconButton
-                                size="small"
-                                onClick={() => {
-                                  setSelectedDemo(demo);
-                                  setCurrentRemarks(demo.remarks || "");
-                                  setIsRemarksDialogOpen(true);
-                                }}
-                              >
-                                <FaEdit color="#34495e" size={14} />
-                              </IconButton>
-                            </Tooltip>
                           </Box>
-                        </TableCell>
-                      )}
-                      {columnVisibility.moveToStudents && (
-                        <TableCell
-                          align="center"
-                          sx={{
-                            fontSize: "0.85rem",
-                            p: 1.5,
-                            minWidth: 180,
-                          }}
+                        )}
+
+                        {demo.contactNo && (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                            }}
+                          >
+                            <FaPhone size={14} color="#666" />
+                            <Typography variant="body2" color="text.secondary">
+                              {demo.contactNo}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+
+                      {/* Date and Time */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 1,
+                          mb: 3,
+                          p: 2,
+                          backgroundColor: "#f8f9fa",
+                          borderRadius: 2,
+                          border: "1px solid #e0e0e0",
+                        }}
+                      >
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         >
-                          {demo.status === "Success" ? (
-                            <MuiButton
-                              variant="contained"
-                              size="small"
-                              startIcon={<FaArrowRight />}
-                              onClick={() => handleMoveToStudents(demo)}
-                              sx={{
-                                bgcolor: "#4caf50",
-                                "&:hover": {
-                                  bgcolor: "#388e3c",
-                                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
-                                },
-                                borderRadius: "6px",
-                                textTransform: "none",
-                                fontSize: "0.85rem",
-                                px: 1.5,
-                                py: 0.8,
-                                transition:
-                                  "background-color 0.3s ease, box-shadow 0.3s ease",
-                              }}
-                            >
-                              Move
-                            </MuiButton>
-                          ) : (
+                          <FaCalendarAlt size={16} color="#1976d2" />
+                          <Box>
                             <Typography
                               variant="caption"
                               color="text.secondary"
+                              display="block"
                             >
-                              (Not Success)
+                              Date
                             </Typography>
-                          )}
-                        </TableCell>
-                      )}
+                            <Typography variant="body2" fontWeight="500">
+                              {new Date(demo.demoDate).toLocaleDateString(
+                                "en-GB"
+                              )}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <FaClock size={16} color="#1976d2" />
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              display="block"
+                            >
+                              Time
+                            </Typography>
+                            <Typography variant="body2" fontWeight="500">
+                              {new Date(
+                                `1970-01-01T${demo.demoTime}:00`
+                              ).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                              })}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
 
-                      {columnVisibility.actions && (
-                        <TableCell align="center" sx={{ py: 1.5, p: 1.5 }}>
-                          <Box
+                      {/* Remarks Section */}
+                      <Box sx={{ mb: 3 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            mb: 1,
+                          }}
+                        >
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                            fontWeight="600"
+                          >
+                            Remarks
+                          </Typography>
+                          <Tooltip title="Edit Remarks">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                setSelectedDemo(demo);
+                                setCurrentRemarks(demo.remarks || "");
+                                setIsRemarksDialogOpen(true);
+                              }}
+                            >
+                              <FaEdit size={14} color="#666" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            p: 1.5,
+                            backgroundColor: "#f8f9fa",
+                            borderRadius: 1,
+                            border: "1px solid #e0e0e0",
+                            minHeight: "60px",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          {demo.remarks || "No remarks added"}
+                        </Typography>
+                      </Box>
+
+                      {/* Actions Footer */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          pt: 2,
+                          borderTop: "1px solid #e0e0e0",
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          Added:{" "}
+                           { formatFirebaseDate(demo.createdAt)}
+                        </Typography>
+
+                        {demo.status === "Success" ? (
+                          <MuiButton
+                            variant="contained"
+                            size="small"
+                            startIcon={<FaArrowRight />}
+                            onClick={() => handleMoveToStudents(demo)}
                             sx={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 0.5,
+                              bgcolor: "#4caf50",
+                              "&:hover": { bgcolor: "#388e3c" },
+                              borderRadius: "6px",
+                              textTransform: "none",
+                              fontSize: "0.8rem",
+                              px: 2,
+                              py: 0.8,
+                              fontWeight: "600",
                             }}
                           >
-                            <ActionButtons
-                              onEdit={() => {
-                                navigate("/add-demo-class", {
-                                  state: { demoToEdit: demo },
-                                });
-                              }}
-                              onDelete={() => handleDeleteClick(demo)}
-                              size="small"
-                            />
-                          </Box>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                            Move to Students
+                          </MuiButton>
+                        ) : (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            fontStyle="italic"
+                          >
+                            Complete demo to move
+                          </Typography>
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
           ) : (
             <Alert severity="info" sx={{ mt: 2 }}>
               No demo classes found matching your criteria.
@@ -548,7 +614,7 @@ const DemoClassesPage = () => {
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={isDeleteDialogOpen}
-        onClose={handleCancelDelete}
+        onClose={() => setIsDeleteDialogOpen(false)}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
@@ -563,7 +629,10 @@ const DemoClassesPage = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <MuiButton onClick={handleCancelDelete} color="primary">
+          <MuiButton
+            onClick={() => setIsDeleteDialogOpen(false)}
+            color="primary"
+          >
             Cancel
           </MuiButton>
           <MuiButton onClick={handleConfirmDelete} color="error" autoFocus>

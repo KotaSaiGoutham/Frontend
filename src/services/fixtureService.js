@@ -3,6 +3,7 @@ import { allFixture} from "../fixtures/all";
 import { studentsExamFixture } from "../fixtures/studentexams";
 import { employeeFixture} from "../fixtures/employees"
 import { studentpaymentbyid } from "../fixtures/studentpaymentbyid";
+import { expenditureFixture } from "../fixtures/expenditures";
 
 // Simulate API delay
 const withDelay = (data, delay = 500) => 
@@ -26,6 +27,7 @@ export const fixtureService = {
   
 
     getstudentidbyPayments: () => withDelay(studentpaymentbyid),
+    getExpenditures: () => withDelay(expenditureFixture),
 
   // Add other methods as needed...
 };

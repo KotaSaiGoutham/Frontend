@@ -1074,14 +1074,7 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
       )}
 
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
-        <Paper
-          elevation={6}
-          sx={{
-            p: !isRevisionProgramJEEMains2026Student ? 2 : 0.5,
-            overflowX: "auto",
-            borderRadius: "12px",
-          }}
-        >
+  
           {sortedFilteredStudents.length > 0 ? (
             <TableContainer
               component={Paper}
@@ -1544,7 +1537,7 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
               No students match your criteria.
             </Typography>
           )}
-        </Paper>
+        {/* </Paper> */}
       </Slide>
 
       {/* Snackbar for Notifications */}

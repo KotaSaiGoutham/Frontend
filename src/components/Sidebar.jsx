@@ -28,12 +28,12 @@ import {
   FaUserGraduate,
   FaRupeeSign,
   FaCalendarCheck,
-  FaBook 
+  FaBook,
 } from "react-icons/fa";
 import "./Sidebar.css";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
-  console.log("userRole",userRole)
+  console.log("userRole", userRole);
   const location = useLocation();
   const { studentId } = useParams();
 
@@ -85,11 +85,26 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: "/revision-students",
       icon: <FaGraduationCap />,
     },
-      {
-    name: "Demo Booked",
-    path: "/demo-bookings",
-    icon: <FaCalendarCheck />,
-  },
+    {
+      name: "Demo Booked",
+      path: "/demo-bookings",
+      icon: <FaCalendarCheck />,
+    },
+    {
+      name: "Academy Finance",
+      path: "/academy-finance-dashboard",
+      icon: <FaMoneyBillAlt  />,
+    },
+     {
+      name: "Upload Study Materials",
+      path: "/upload-study-materials",
+      icon: <FaFileUpload  />,
+    },
+    {
+      name: "Upload Question Papers",
+      path: "/upload-question-papers",
+      icon: <FaFileAlt  />,
+    },
   ];
 
   // ORIGINAL Student management sub-items
@@ -99,7 +114,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
   ];
 
   // Student portfolio sub-items - for faculty when viewing student portfolio
-const studentPortfolioSubItems = [
+  const studentPortfolioSubItems = [
     {
       name: "Profile",
       path: `/student/${extractedStudentId}/profile`,
@@ -133,7 +148,7 @@ const studentPortfolioSubItems = [
     {
       name: "Class PPT's",
       path: `/student/${extractedStudentId}/ppts`,
-      icon: <FaFilePowerpoint />, 
+      icon: <FaFilePowerpoint />,
     },
     {
       name: "Worksheets",
@@ -150,7 +165,7 @@ const studentPortfolioSubItems = [
       path: `/student/${extractedStudentId}/papers`,
       icon: <FaFileAlt />,
     },
-];
+  ];
 
   // Student role navigation - limited access to their own portfolio
   const studentRoleNavItems = [
@@ -160,24 +175,39 @@ const studentPortfolioSubItems = [
       icon: <FaUserCircle />,
     },
     {
-      name: "My Syllabus",
+      name: "Syllabus",
       path: `/student/${extractedStudentId}/weekend`,
       icon: <FaCalendarAlt />,
     },
     {
-      name: "My Results",
+      name: "Results & Marks",
       path: `/student/${extractedStudentId}/results`,
       icon: <FaClipboardCheck />,
     },
     {
-      name: "Study Materials",
-      path: `/student/${extractedStudentId}/materials`,
-      icon: <FaBook  />,
+      name: "Classes Info",
+      path: `/student/${extractedStudentId}/classes`,
+      icon: <FaChalkboardTeacher />,
+    },
+    {
+      name: "Class PPT's",
+      path: `/student/${extractedStudentId}/ppts`,
+      icon: <FaFilePowerpoint />,
     },
     {
       name: "Worksheets",
       path: `/student/${extractedStudentId}/worksheets`,
       icon: <FaTasks />,
+    },
+    {
+      name: "Study Materials",
+      path: `/student/${extractedStudentId}/study-materials`,
+      icon: <FaBook />, // Changed to be more generic for study materials
+    },
+    {
+      name: "Question Papers",
+      path: `/student/${extractedStudentId}/papers`,
+      icon: <FaFileAlt />,
     },
   ];
 
@@ -260,30 +290,30 @@ const studentPortfolioSubItems = [
         }`}
       >
         {/* NEW: Navigation Toggle for Faculty on Student Portfolio Pages */}
-       {isFaculty && isStudentPortfolioPage && (
-  <div className="navigation-toggle-container">
-    <div className="navigation-toggle">
-      <button
-        className={`toggle-btn ${
-          navigationMode === "faculty" ? "active" : ""
-        }`}
-        onClick={() => setNavigationMode("faculty")}
-      >
-        <FaUserTie className="toggle-icon" />
-        <span className="toggle-text">Faculty</span>
-      </button>
-      <button
-        className={`toggle-btn ${
-          navigationMode === "student" ? "active" : ""
-        }`}
-        onClick={() => setNavigationMode("student")}
-      >
-        <FaUserGraduate className="toggle-icon" />
-        <span className="toggle-text">Student</span>
-      </button>
-    </div>
-  </div>
-)}
+        {isFaculty && isStudentPortfolioPage && (
+          <div className="navigation-toggle-container">
+            <div className="navigation-toggle">
+              <button
+                className={`toggle-btn ${
+                  navigationMode === "faculty" ? "active" : ""
+                }`}
+                onClick={() => setNavigationMode("faculty")}
+              >
+                <FaUserTie className="toggle-icon" />
+                <span className="toggle-text">Faculty</span>
+              </button>
+              <button
+                className={`toggle-btn ${
+                  navigationMode === "student" ? "active" : ""
+                }`}
+                onClick={() => setNavigationMode("student")}
+              >
+                <FaUserGraduate className="toggle-icon" />
+                <span className="toggle-text">Student</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         <nav className="sidebar-nav">
           <div className="sidebar-nav-scroll-container">

@@ -27,6 +27,10 @@ const PROTECTED_BASE_PATHS = [
   "/analytics",
   '/revision-students',
   "/demo-bookings",
+  "/academy-finance-dashboard",
+  "/add-academy-earnings",
+  "/upload-study-materials",
+  "/upload-question-papers"
 ];
 
 const Navbar = () => {

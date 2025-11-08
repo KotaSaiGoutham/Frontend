@@ -173,7 +173,7 @@ const StudentClasses = () => {
     </Zoom>
   );
 
-  const SessionSummary = ({ summary, sessionNumber }) => {
+const SessionSummary = ({ summary, sessionNumber }) => {
     if (!summary) return null;
 
     const pieChartData = [
@@ -216,38 +216,38 @@ const StudentClasses = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                       <FaCalendarAlt />
                       S.No
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                       <FaClock />
                       Days
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                       <FaBookOpen />
                       Total Classes
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                       <FaCheckCircle />
                       Completed
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                       <FaChartLine />
                       Total Hours
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                       <FaUsers />
                       Completed Hours
                     </Box>
@@ -264,41 +264,43 @@ const StudentClasses = () => {
                     } 
                   }}
                 >
-                  <TableCell>
-                    <Chip 
-                      label={sessionNumber} 
-                      color="primary" 
-                      variant="filled"
-                      sx={{ fontWeight: 700 }}
-                    />
+                  <TableCell sx={{ textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                      <Chip 
+                        label={sessionNumber} 
+                        color="primary" 
+                        variant="filled"
+                        sx={{ fontWeight: 700 }}
+                      />
+                    </Box>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ textAlign: 'center' }}>
                     <Box>
-                      <Typography variant="h6" fontWeight={700}>
+                      <Typography variant="h6" fontWeight={700} sx={{ textAlign: 'center' }}>
                         {summary.totalDays} Days
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
                         {summary.period}
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="h6" fontWeight={700} color="primary">
+                  <TableCell sx={{ textAlign: 'center' }}>
+                    <Typography variant="h6" fontWeight={700} color="primary" sx={{ textAlign: 'center' }}>
                       {summary.totalClasses}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="h6" fontWeight={700} color="success.main">
+                  <TableCell sx={{ textAlign: 'center' }}>
+                    <Typography variant="h6" fontWeight={700} color="success.main" sx={{ textAlign: 'center' }}>
                       {summary.presentCount}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="h6" fontWeight={700} color="info.main">
+                  <TableCell sx={{ textAlign: 'center' }}>
+                    <Typography variant="h6" fontWeight={700} color="info.main" sx={{ textAlign: 'center' }}>
                       {summary.totalHours}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="h6" fontWeight={700} color="success.main">
+                  <TableCell sx={{ textAlign: 'center' }}>
+                    <Typography variant="h6" fontWeight={700} color="success.main" sx={{ textAlign: 'center' }}>
                       {summary.completedHours}
                     </Typography>
                   </TableCell>

@@ -87,6 +87,10 @@ import {
 } from "./components/student-portfolio";
 import DemoBookingsPage from "./components/DemoBookings";
 import StudentStudyMaterials from "./components/student-portfolio/StudentStudyMaterials";
+import AcademyFinanceDashboard from "./components/AcademyFinanceDashboard";
+import AddAcademyEarning from "./components/AddAcademyEarning";
+import StudyMaterialUpload from "./components/StudyMaterialUpload";
+import QuestionPaperUpload from "./components/QuestionPaperUpload";
 
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -162,12 +166,27 @@ function App() {
                 />
                 <Route path="/add-demo-class" element={<AddDemoClassPage />} />
                 <Route path="/add-expenditure" element={<AddExpenditure />} />
+                <Route
+                  path="/add-academy-earnings"
+                  element={<AddAcademyEarning />}
+                />
+
                 <Route path="/expenditure" element={<ExpenditureDashboard />} />
-                
+
                 {/* Old Student Portfolio Route (you can remove this if migrating completely) */}
                 <Route path="/student/:id" element={<StudentPortfolio />} />
-                
+
                 <Route path="/timetable" element={<TimeTableManager />} />
+                <Route path="/employees" element={<Employees />} />
+                <Route
+                  path="/upload-study-materials"
+                  element={<StudyMaterialUpload />}
+                />
+                <Route
+                  path="/upload-question-papers"
+                  element={<QuestionPaperUpload />}
+                />
+
                 <Route path="/employees" element={<Employees />} />
                 <Route path="/add-student" element={<AddStudent />} />
                 <Route path="/add-employee" element={<AddEmployeePage />} />
@@ -180,26 +199,59 @@ function App() {
                   path="/revision-registrated-students"
                   element={<RevisionRegistratedStudents />}
                 />
-                      <Route
-                  path="/demo-bookings"
-                  element={<DemoBookingsPage />}
+                <Route path="/demo-bookings" element={<DemoBookingsPage />} />
+                <Route
+                  path="/academy-finance-dashboard"
+                  element={<AcademyFinanceDashboard />}
                 />
-                
+
                 {/* New Student Portfolio Routes */}
-                <Route path="/student/:studentId/profile" element={<StudentProfile />} />
-                <Route path="/student/:studentId/weekend" element={<StudentWeekend />} />
-                <Route path="/student/:studentId/results" element={<StudentResults />} />
-                <Route path="/student/:studentId/classes" element={<StudentClasses />} />
-                <Route path="/student/:studentId/payments" element={<StudentPayments />} />
-                <Route path="/student/:studentId/ppts" element={<StudentPPTs />} />
-                <Route path="/student/:studentId/worksheets" element={<StudentWorksheets />} />
-                <Route path="/student/:studentId/papers" element={<StudentPapers />} />
-                <Route path="/student/:studentId/upload" element={<StudentUpload />} />
-                <Route path="/student/:studentId/study-materials" element={<StudentStudyMaterials />} />
+                <Route
+                  path="/student/:studentId/profile"
+                  element={<StudentProfile />}
+                />
+                <Route
+                  path="/student/:studentId/weekend"
+                  element={<StudentWeekend />}
+                />
+                <Route
+                  path="/student/:studentId/results"
+                  element={<StudentResults />}
+                />
+                <Route
+                  path="/student/:studentId/classes"
+                  element={<StudentClasses />}
+                />
+                <Route
+                  path="/student/:studentId/payments"
+                  element={<StudentPayments />}
+                />
+                <Route
+                  path="/student/:studentId/ppts"
+                  element={<StudentPPTs />}
+                />
+                <Route
+                  path="/student/:studentId/worksheets"
+                  element={<StudentWorksheets />}
+                />
+                <Route
+                  path="/student/:studentId/papers"
+                  element={<StudentPapers />}
+                />
+                <Route
+                  path="/student/:studentId/upload"
+                  element={<StudentUpload />}
+                />
+                <Route
+                  path="/student/:studentId/study-materials"
+                  element={<StudentStudyMaterials />}
+                />
 
                 <Route
                   path="/student/:studentId"
-                  element={<Navigate to="/student/:studentId/profile" replace />}
+                  element={
+                    <Navigate to="/student/:studentId/profile" replace />
+                  }
                 />
               </Route>
 

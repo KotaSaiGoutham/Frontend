@@ -7,38 +7,36 @@ import {
   Snackbar,
   Alert as MuiAlert,
   Typography,
-  Chip,
   Box,
+  Chip,
 } from "@mui/material";
 import {
   FaPlusCircle,
   FaSave,
   FaTimesCircle,
   FaMoneyBillWave,
-  FaBriefcase,
+  FaChalkboardTeacher,
+  FaUserGraduate,
   FaCalendarAlt,
   FaEdit,
-  FaBuilding,
+  FaBriefcase,
 } from "react-icons/fa";
 import {
   MuiInput,
   MuiDatePicker,
 } from "./customcomponents/MuiCustomFormFields";
 import { useSelector, useDispatch } from "react-redux";
-import { addExpenditure, updateExpenditure } from "../redux/actions";
+import { addAcademyEarning } from "../redux/actions";
 
-const AddExpenditure = () => {
+const AddAcademyEarning = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
 
   // --- Check for Edit Mode ---
-  const expenditureToEdit = location.state?.expenditureToEdit;
-  const isUpdating = !!expenditureToEdit;
-  
-  // --- Check if it's a company expense ---
-  const isCompanyExpense = location.state?.isCompanyExpense || false;
-console.log("isCompanyExpense",isCompanyExpense)
+  const earningToEdit = location.state?.earningToEdit;
+  const isUpdating = !!earningToEdit;
+
   // --- Component State ---
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -47,6 +45,8 @@ console.log("isCompanyExpense",isCompanyExpense)
     severity: "success",
   });
   const [formData, setFormData] = useState({
+    tutorName: "",
+    studentNames: "",
     purpose: "",
     work: "",
     amount: "",
@@ -54,19 +54,21 @@ console.log("isCompanyExpense",isCompanyExpense)
   });
 
   const { user } = useSelector((state) => state.auth);
-  
+
   useEffect(() => {
-    if (isUpdating && expenditureToEdit) {
+    if (isUpdating && earningToEdit) {
       setFormData({
-        purpose: expenditureToEdit.purpose || "",
-        work: expenditureToEdit.work || "",
-        amount: expenditureToEdit.amount || "",
-        date: expenditureToEdit.date
-          ? new Date(expenditureToEdit.date)
+        tutorName: earningToEdit.tutorName || "",
+        studentNames: earningToEdit.studentNames || "",
+        purpose: earningToEdit.purpose || "",
+        work: earningToEdit.work || "",
+        amount: earningToEdit.amount || "",
+        date: earningToEdit.date
+          ? new Date(earningToEdit.date)
           : new Date(),
       });
     }
-  }, [isUpdating, expenditureToEdit]);
+  }, [isUpdating, earningToEdit]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -83,11 +85,13 @@ console.log("isCompanyExpense",isCompanyExpense)
     if (isUpdating) {
       // Compare formData with existing data
       const hasChanged =
-        formData.purpose !== expenditureToEdit.purpose ||
-        formData.work !== expenditureToEdit.work ||
-        Number(formData.amount) !== Number(expenditureToEdit.amount) ||
+        formData.tutorName !== earningToEdit.tutorName ||
+        formData.studentNames !== earningToEdit.studentNames ||
+        formData.purpose !== earningToEdit.purpose ||
+        formData.work !== earningToEdit.work ||
+        Number(formData.amount) !== Number(earningToEdit.amount) ||
         new Date(formData.date).toISOString().slice(0, 10) !==
-          new Date(expenditureToEdit.date).toISOString().slice(0, 10);
+          new Date(earningToEdit.date).toISOString().slice(0, 10);
 
       if (!hasChanged) {
         setSnackbar({
@@ -101,38 +105,36 @@ console.log("isCompanyExpense",isCompanyExpense)
     
     setLoading(true);
 
-    const expenditurePayload = {
+    const earningPayload = {
       ...formData,
       amount: Number(formData.amount),
       lastModifiedBy: user.subject,
-      // Add company expense flag to the payload
-      isCompanyExpense: isCompanyExpense,
     };
 
     try {
       if (isUpdating) {
-        await dispatch(
-          updateExpenditure(expenditureToEdit.id, expenditurePayload)
-        );
-        setSnackbar({
-          open: true,
-          message: "Expenditure updated successfully!",
-          severity: "success",
-        });
+        // await dispatch(
+        //   updateAcademyEarning(earningToEdit.id, earningPayload)
+        // );
+        // setSnackbar({
+        //   open: true,
+        //   message: "Academy earning updated successfully!",
+        //   severity: "success",
+        // });
       } else {
         const finalPayload = { 
-          ...expenditurePayload, 
+          ...earningPayload, 
           createdBy: user.subject 
         };
-        await dispatch(addExpenditure(finalPayload));
+        await dispatch(addAcademyEarning(finalPayload));
         setSnackbar({
           open: true,
-          message: `Expenditure ${isCompanyExpense ? '(Company Expense) ' : ''}added successfully!`,
+          message: "Academy earning added successfully!",
           severity: "success",
         });
       }
       
-      setTimeout(() => navigate("/expenditure"), 1500);
+      setTimeout(() => navigate("/academy-finance-dashboard"), 1500);
     } catch (error) {
       setSnackbar({
         open: true,
@@ -144,13 +146,8 @@ console.log("isCompanyExpense",isCompanyExpense)
     }
   };
 
-  // Determine where to navigate back based on where we came from
   const handleCancel = () => {
-    if (isCompanyExpense) {
-      navigate("/academy-finance"); // Navigate back to academy finance dashboard
-    } else {
-      navigate("/expenditure"); // Navigate back to regular expenditure page
-    }
+    navigate("/academy-finance-dashboard");
   };
 
   return (
@@ -163,15 +160,14 @@ console.log("isCompanyExpense",isCompanyExpense)
             sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
           >
             {isUpdating ? <FaEdit /> : <FaPlusCircle />}
-            {isUpdating ? "Update Expenditure" : "Add New Expenditure"}
+            {isUpdating ? "Update Academy Earning" : "Add New Academy Earning"}
           </Typography>
           
-          {/* Show company expense badge if applicable */}
-          {isCompanyExpense && !isUpdating && (
+          {!isUpdating && (
             <Chip 
-              icon={<FaBuilding />}
-              label="Company Expense"
-              color="primary"
+              icon={<FaChalkboardTeacher />}
+              label="Academy Earning"
+              color="success"
               variant="filled"
               sx={{ fontWeight: 'bold' }}
             />
@@ -181,12 +177,29 @@ console.log("isCompanyExpense",isCompanyExpense)
         <form onSubmit={handleSubmit}>
           <div className="add-student-form-grid">
             <MuiInput
+              label="Tutor Name"
+              name="tutorName"
+              icon={FaChalkboardTeacher}
+              value={formData.tutorName}
+              onChange={handleChange}
+              placeholder="e.g., Rajju Sir, Math Tutor"
+              required
+            />
+            <MuiInput
+              label="Student Names"
+              name="studentNames"
+              icon={FaUserGraduate}
+              value={formData.studentNames}
+              onChange={handleChange}
+              placeholder="e.g., Student 1, Student 2"
+            />
+            <MuiInput
               label="Purpose"
               name="purpose"
               icon={FaMoneyBillWave}
               value={formData.purpose}
               onChange={handleChange}
-              placeholder="e.g., Office Rent, Software, Staff Salary"
+              placeholder="e.g., Monthly Tuition, Course Fee"
               required
             />
             <MuiInput
@@ -195,7 +208,7 @@ console.log("isCompanyExpense",isCompanyExpense)
               icon={FaBriefcase}
               value={formData.work}
               onChange={handleChange}
-              placeholder="e.g., Monthly Rent, Zoom Subscription, Marketing"
+              placeholder="e.g., Physics Classes, Math Course"
             />
             <MuiInput
               label="Amount (INR)"
@@ -227,14 +240,20 @@ console.log("isCompanyExpense",isCompanyExpense)
                   <FaSave />
                 )
               }
+              sx={{
+                background: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #26a69a 0%, #00796b 100%)'
+                }
+              }}
             >
               {loading
                 ? isUpdating
                   ? "Updating..."
                   : "Saving..."
                 : isUpdating
-                ? "Update Expenditure"
-                : `Save ${isCompanyExpense ? 'Company ' : ''}Expenditure`}
+                ? "Update Earning"
+                : "Save Academy Earning"}
             </MuiButton>
             <MuiButton
               variant="outlined"
@@ -268,4 +287,4 @@ console.log("isCompanyExpense",isCompanyExpense)
   );
 };
 
-export default AddExpenditure;
+export default AddAcademyEarning;

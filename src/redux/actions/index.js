@@ -1,4 +1,22 @@
 import {
+   UPLOAD_STUDY_MATERIAL_REQUEST,
+  UPLOAD_STUDY_MATERIAL_SUCCESS,
+  UPLOAD_STUDY_MATERIAL_FAILURE,
+  UPLOAD_QUESTION_PAPER_REQUEST,
+  UPLOAD_QUESTION_PAPER_SUCCESS,
+  UPLOAD_QUESTION_PAPER_FAILURE,
+  FETCH_STUDY_MATERIALS_REQUEST,
+  FETCH_STUDY_MATERIALS_SUCCESS,
+  FETCH_STUDY_MATERIALS_FAILURE,
+  FETCH_QUESTION_PAPERS_REQUEST,
+  FETCH_QUESTION_PAPERS_SUCCESS,
+  FETCH_QUESTION_PAPERS_FAILURE,
+  FETCH_ACADEMY_FINANCE_SUCCESS,
+  FETCH_ACADEMY_FINANCE_FAILURE,
+  FETCH_ACADEMY_FINANCE_REQUEST,
+  ADD_ACADEMY_EARNING_FAILURE,
+  ADD_ACADEMY_EARNING_SUCCESS,
+  ADD_ACADEMY_EARNING_REQUEST,
   FETCH_YEAR_STATISTICS_REQUEST,
   FETCH_YEAR_STATISTICS_SUCCESS,
   FETCH_YEAR_STATISTICS_FAILURE,
@@ -217,6 +235,11 @@ import {
   FETCH_STUDENT_WORKSHEETS_REQUEST,
   FETCH_STUDENT_WORKSHEETS_SUCCESS,
   FETCH_STUDENT_WORKSHEETS_FAILURE,
+  FETCH_MONTHLY_PAYMENT_DETAILS_REQUEST,
+  FETCH_MONTHLY_PAYMENT_DETAILS_SUCCESS,
+  FETCH_MONTHLY_PAYMENT_DETAILS_FAILURE,
+  CLEAR_MONTHLY_PAYMENT_DETAILS
+
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -281,7 +304,9 @@ export const logoutUser = () => {
   };
 };
 // In your Redux actions file
-
+export const clearMonthlyPaymentDetails = () => ({
+  type: CLEAR_MONTHLY_PAYMENT_DETAILS,
+});
 export const updateStudentField = (
   studentId,
   fieldName,
@@ -2341,6 +2366,147 @@ export const fetchStudentWorksheets = (studentId) =>
         type: FETCH_STUDENT_WORKSHEETS_FAILURE,
         payload: { error: error.message || "Failed to fetch worksheets" },
       });
+    },
+    authRequired: true,
+  });
+
+  export const fetchAcademyFinance = (year, month, compareType = null) =>
+  apiRequest({
+    url: `/api/expenditures/academy-finance?year=${year}&month=${month}${
+      compareType ? `&compare=${compareType}` : ""
+    }`,
+    method: "GET",
+    onStart: FETCH_ACADEMY_FINANCE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_ACADEMY_FINANCE_SUCCESS,
+        payload: data,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching academy finance:", error);
+      dispatch({
+        type: FETCH_ACADEMY_FINANCE_FAILURE,
+        payload: { error: error.message || "Failed to fetch academy finance data" },
+      });
+    },
+    authRequired: true,
+  });
+
+// Add Academy Earning Action
+export const addAcademyEarning = (earningData, callback) =>
+  apiRequest({
+    url: "/api/expenditures/add-academy-finance",
+    method: "POST",
+    data: earningData,
+    onStart: ADD_ACADEMY_EARNING_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: ADD_ACADEMY_EARNING_SUCCESS,
+        payload: data,
+      });
+      if (callback) callback();
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error adding academy earning:", error);
+      dispatch({
+        type: ADD_ACADEMY_EARNING_FAILURE,
+        payload: { error: error.message || "Failed to add academy earning" },
+      });
+      throw new Error(error.message || "Failed to add academy earning");
+    },
+    authRequired: true,
+  });
+
+  export const uploadStudyMaterial = (studentId, formData) =>
+  apiRequest({
+    url: `/api/materials/upload-study-material/${studentId}`,
+    method: "POST",
+    data: formData,
+    onStart: UPLOAD_STUDY_MATERIAL_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: UPLOAD_STUDY_MATERIAL_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPLOAD_STUDY_MATERIAL_FAILURE,
+        payload: { error: error.message || "Failed to upload study material" },
+      });
+    },
+    authRequired: true,
+  });
+
+// Upload Question Paper
+export const uploadQuestionPaper = (studentId, formData) =>
+  apiRequest({
+    url: `/api/materials/upload-question-paper/${studentId}`,
+    method: "POST",
+    data: formData,
+    onStart: UPLOAD_QUESTION_PAPER_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: UPLOAD_QUESTION_PAPER_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPLOAD_QUESTION_PAPER_FAILURE,
+        payload: { error: error.message || "Failed to upload question paper" },
+      });
+    },
+    authRequired: true,
+  });
+
+// Fetch Study Materials
+export const fetchStudyMaterials = (studentId) =>
+  apiRequest({
+    url: `/api/materials/study-materials/${studentId}`,
+    method: "GET",
+    onStart: FETCH_STUDY_MATERIALS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: FETCH_STUDY_MATERIALS_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_STUDY_MATERIALS_FAILURE,
+        payload: { error: error.message || "Failed to fetch study materials" },
+      });
+    },
+    authRequired: true,
+  });
+
+// Fetch Question Papers
+export const fetchQuestionPapers = (studentId) =>
+  apiRequest({
+    url: `/api/materials/question-papers/${studentId}`,
+    method: "GET",
+    onStart: FETCH_QUESTION_PAPERS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: FETCH_QUESTION_PAPERS_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_QUESTION_PAPERS_FAILURE,
+        payload: { error: error.message || "Failed to fetch question papers" },
+      });
+    },
+    authRequired: true,
+  });
+    export const fetchMonthlyPaymentDetails = (monthYear) =>
+  apiRequest({
+    url: `/api/data/payments/monthly/${monthYear}`,
+    method: "GET",
+    onStart: FETCH_MONTHLY_PAYMENT_DETAILS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type:FETCH_MONTHLY_PAYMENT_DETAILS_SUCCESS,
+        payload: data,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_MONTHLY_PAYMENT_DETAILS_FAILURE,
+        payload: error,
+      });
+      console.error("Error fetching monthly payment details:", error);
     },
     authRequired: true,
   });
