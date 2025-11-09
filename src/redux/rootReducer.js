@@ -13,6 +13,7 @@ import { lectureMaterialsReducer } from "./reducers/lectureReducer";
 import classScheduleReducer from "./reducers/classScheduleReducer";
 import revisionExamsReducer from "./reducers/revisionExamsReducer";
 import demoBookingsReducer from "./reducers/demoBookingsReducer";
+import tutorIdeasReducer from "./reducers/tutorIdeasReducer";
 const rootReducer = combineReducers({
   auth: authReducer, 
   classes: classReducer,
@@ -28,6 +29,7 @@ const rootReducer = combineReducers({
   classSchedule: classScheduleReducer, 
  demoBookings: demoBookingsReducer,
    revisionExams: revisionExamsReducer, 
+   tutorIdeas:tutorIdeasReducer
 });
 
 export default rootReducer;

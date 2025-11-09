@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useLocation, useParams } from "react-router-dom";
 import {
+  FaLightbulb,
   FaChalkboardTeacher,
   FaBars,
   FaTimes,
@@ -106,6 +107,11 @@ const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student 
       name: "Upload Question Papers",
       path: "/upload-question-papers",
       icon: <FaFileAlt  />,
+    },
+     {
+      name: "Ideas",
+      path: "/Ideas",
+      icon: <FaLightbulb   />,
     },
   ];
 

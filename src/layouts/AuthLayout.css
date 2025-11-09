@@ -51,6 +51,9 @@
     .auth-layout-container {
         flex-direction: column; /* Stack sidebar and content */
     }
+    .auth-layout-content {
+        width:100% !important
+    }
 
     /* Sidebar will be positioned absolutely or fixed for overlay */
     /* .sidebar-component { ... } */

@@ -1,4 +1,13 @@
 import {
+  FETCH_TUTOR_IDEAS_REQUEST,
+  FETCH_TUTOR_IDEAS_SUCCESS,
+  FETCH_TUTOR_IDEAS_FAILURE,
+  ADD_TUTOR_IDEA_REQUEST,
+  ADD_TUTOR_IDEA_SUCCESS,
+  ADD_TUTOR_IDEA_FAILURE,
+  UPDATE_TUTOR_IDEA_SUCCESS,
+  UPDATE_TUTOR_IDEA_FAILURE,
+  UPDATE_TUTOR_IDEA_REQUEST,
   SET_STUDENTS_NEED_REFRESH,
   UPLOAD_STUDY_MATERIAL_REQUEST,
   UPLOAD_STUDY_MATERIAL_SUCCESS,
@@ -2503,3 +2512,69 @@ export const fetchMonthlyPaymentDetails = (monthYear) =>
     },
     authRequired: true,
   });
+export const fetchTutorIdeas = () => {
+  return apiRequest({
+    url: `/api/ideas`,
+    method: "GET",
+    onStart: FETCH_TUTOR_IDEAS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_TUTOR_IDEAS_SUCCESS,
+        payload: data.ideas || [],
+      });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_TUTOR_IDEAS_FAILURE,
+        payload: { error: error.message || "Failed to fetch ideas" },
+      });
+    },
+    authRequired: true,
+  });
+};
+
+export const addTutorIdea = (ideaData) => {
+  return apiRequest({
+    url: `/api/ideas`,
+    method: "POST",
+    data: ideaData,
+    onStart: ADD_TUTOR_IDEA_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: ADD_TUTOR_IDEA_SUCCESS,
+        payload: data.idea,
+      });
+      dispatch(showNotification("Idea added successfully!", "success"));
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: ADD_TUTOR_IDEA_FAILURE,
+        payload: { error: error.message || "Failed to add idea" },
+      });
+    },
+    authRequired: true,
+  });
+};
+
+export const updateTutorIdea = (ideaId, updates) => {
+  return apiRequest({
+    url: `/api/ideas/${ideaId}`,
+    method: "PUT",
+    data: updates,
+    onStart: UPDATE_TUTOR_IDEA_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_TUTOR_IDEA_SUCCESS,
+        payload: data.idea,
+      });
+      dispatch(showNotification("Idea updated successfully!", "success"));
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPDATE_TUTOR_IDEA_FAILURE,
+        payload: { error: error.message || "Failed to update idea" },
+      });
+    },
+    authRequired: true,
+  });
+};

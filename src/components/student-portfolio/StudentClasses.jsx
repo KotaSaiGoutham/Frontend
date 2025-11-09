@@ -114,7 +114,7 @@ const StudentClasses = () => {
     <Zoom in={true} style={{ transitionDelay: `${delay}ms` }}>
       <Card 
         sx={{ 
-          background: `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`,
+          background: "white",
           border: `1px solid ${alpha(color, 0.2)}`,
           borderRadius: 3,
           boxShadow: `0 8px 32px ${alpha(color, 0.1)}`,

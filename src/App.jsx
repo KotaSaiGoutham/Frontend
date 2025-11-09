@@ -91,6 +91,7 @@ import AcademyFinanceDashboard from "./components/AcademyFinanceDashboard";
 import AddAcademyEarning from "./components/AddAcademyEarning";
 import StudyMaterialUpload from "./components/StudyMaterialUpload";
 import QuestionPaperUpload from "./components/QuestionPaperUpload";
+import TutorIdeasPage from "./components/TutorIdeas/TutorIdeasPage";
 
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -169,6 +170,10 @@ function App() {
                 <Route
                   path="/add-academy-earnings"
                   element={<AddAcademyEarning />}
+                />
+                  <Route
+                  path="/Ideas"
+                  element={<TutorIdeasPage />}
                 />
 
                 <Route path="/expenditure" element={<ExpenditureDashboard />} />
