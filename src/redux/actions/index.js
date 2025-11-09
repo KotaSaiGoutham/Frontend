@@ -1,6 +1,6 @@
 import {
   SET_STUDENTS_NEED_REFRESH,
-   UPLOAD_STUDY_MATERIAL_REQUEST,
+  UPLOAD_STUDY_MATERIAL_REQUEST,
   UPLOAD_STUDY_MATERIAL_SUCCESS,
   UPLOAD_STUDY_MATERIAL_FAILURE,
   UPLOAD_QUESTION_PAPER_REQUEST,
@@ -215,22 +215,22 @@ import {
   UPDATE_CLASS_SCHEDULE_REQUEST,
   UPDATE_CLASS_SCHEDULE_SUCCESS,
   UPDATE_CLASS_SCHEDULE_FAILURE,
-   SEARCH_STUDENT_CLASSES_SUCCESS,
+  SEARCH_STUDENT_CLASSES_SUCCESS,
   SEARCH_STUDENT_CLASSES_FAILURE,
   SEARCH_STUDENT_CLASSES_REQUEST,
   FETCH_ATTENDANCE_SUMMARY_SUCCESS,
   FETCH_ATTENDANCE_SUMMARY_REQUEST,
   FETCH_ATTENDANCE_SUMMARY_FAILURE,
-   UPDATE_DEMO_STATUS_SUCCESS,
-    FETCH_DEMO_BOOKINGS_FAILURE,
-    UPDATE_DEMO_STATUS_FAILURE,
-    BOOK_DEMO_REQUEST,
-    FETCH_DEMO_BOOKINGS_REQUEST,
-    FETCH_DEMO_BOOKINGS_SUCCESS,
-    UPDATE_DEMO_STATUS_REQUEST,
-    BOOK_DEMO_SUCCESS,
-    BOOK_DEMO_FAILURE,
-     FETCH_STUDENT_PPTS_REQUEST,
+  UPDATE_DEMO_STATUS_SUCCESS,
+  FETCH_DEMO_BOOKINGS_FAILURE,
+  UPDATE_DEMO_STATUS_FAILURE,
+  BOOK_DEMO_REQUEST,
+  FETCH_DEMO_BOOKINGS_REQUEST,
+  FETCH_DEMO_BOOKINGS_SUCCESS,
+  UPDATE_DEMO_STATUS_REQUEST,
+  BOOK_DEMO_SUCCESS,
+  BOOK_DEMO_FAILURE,
+  FETCH_STUDENT_PPTS_REQUEST,
   FETCH_STUDENT_PPTS_SUCCESS,
   FETCH_STUDENT_PPTS_FAILURE,
   FETCH_STUDENT_WORKSHEETS_REQUEST,
@@ -239,8 +239,7 @@ import {
   FETCH_MONTHLY_PAYMENT_DETAILS_REQUEST,
   FETCH_MONTHLY_PAYMENT_DETAILS_SUCCESS,
   FETCH_MONTHLY_PAYMENT_DETAILS_FAILURE,
-  CLEAR_MONTHLY_PAYMENT_DETAILS
-
+  CLEAR_MONTHLY_PAYMENT_DETAILS,
 } from "../types";
 import dayjs from "dayjs"; // ← added
 import { toJsDate } from "../../mockdata/function";
@@ -405,7 +404,7 @@ export const resetLoadingState = () => ({
   type: RESET_LOADING_STATE,
 });
 export const resetEmployeeLoadingState = () => ({
-  type: 'RESET_EMPlOYEE_LOADING_STATE',
+  type: "RESET_EMPlOYEE_LOADING_STATE",
 });
 export const loginUser = ({ username, password }) =>
   apiRequest({
@@ -549,7 +548,7 @@ export const fetchStudents = () =>
     },
     authRequired: true,
   });
-  export const fetchClassSchedule = () =>
+export const fetchClassSchedule = () =>
   apiRequest({
     url: "/api/data/students-class-details", // New optimized endpoint
     method: "GET",
@@ -563,12 +562,13 @@ export const fetchStudents = () =>
     },
     onFailure: (error, dispatch) => {
       console.error("Error fetching class schedule from API:", error);
-      const errorMessage = error.error || error.message || "Failed to fetch class schedule";
-      
+      const errorMessage =
+        error.error || error.message || "Failed to fetch class schedule";
+
       if (error.status === 401 || error.status === 403) {
         dispatch(setAuthError("Session expired please login again"));
       }
-      
+
       dispatch({
         type: FETCH_CLASS_SCHEDULE_FAILURE,
         payload: errorMessage, // Store as string directly
@@ -576,7 +576,7 @@ export const fetchStudents = () =>
     },
     authRequired: true,
   });
-  export const updateClassSchedule = (studentId, updateData) =>
+export const updateClassSchedule = (studentId, updateData) =>
   apiRequest({
     url: `/api/data/students/${studentId}/schedule`,
     method: "PUT",
@@ -587,14 +587,15 @@ export const fetchStudents = () =>
         type: UPDATE_CLASS_SCHEDULE_SUCCESS,
         payload: {
           studentId,
-          updatedSchedules: data.classDateandTime
-        }
+          updatedSchedules: data.classDateandTime,
+        },
       });
     },
     onFailure: (error, dispatch) => {
       console.error("Error updating class schedule:", error);
-      const errorMessage = error.error || error.message || "Failed to update schedule";
-      
+      const errorMessage =
+        error.error || error.message || "Failed to update schedule";
+
       dispatch({
         type: UPDATE_CLASS_SCHEDULE_FAILURE,
         payload: errorMessage,
@@ -808,19 +809,19 @@ export const fetchEmployees = () =>
     },
     onFailure: (error, dispatch) => {
       console.error("Error fetching employees from API:", error);
-      
+
       // Extract error message properly
       let errorMessage = "Failed to fetch employees";
-      if (typeof error === 'string') {
+      if (typeof error === "string") {
         errorMessage = error;
       } else if (error?.error) {
         errorMessage = error.error;
       } else if (error?.message) {
         errorMessage = error.message;
-      } else if (typeof error === 'object') {
+      } else if (typeof error === "object") {
         errorMessage = JSON.stringify(error);
       }
-      
+
       if (error?.status === 401 || error?.status === 403) {
         dispatch(setAuthError("Session expired please login again"));
       }
@@ -846,19 +847,19 @@ export const updateEmployeeData = (employeeId, updatedData) =>
     },
     onFailure: (error, dispatch) => {
       console.error(`Error updating employee ${employeeId}:`, error);
-      
+
       // Extract error message properly
       let errorMessage = "Failed to update employee";
-      if (typeof error === 'string') {
+      if (typeof error === "string") {
         errorMessage = error;
       } else if (error?.error) {
         errorMessage = error.error;
       } else if (error?.message) {
         errorMessage = error.message;
-      } else if (typeof error === 'object') {
+      } else if (typeof error === "object") {
         errorMessage = JSON.stringify(error);
       }
-      
+
       dispatch({
         type: UPDATE_EMPLOYEE_FAILURE,
         payload: {
@@ -884,10 +885,13 @@ export const addEmployee = (employeeData) =>
     },
     onFailure: (error, dispatch) => {
       console.error("Error adding employee:", error);
-      const errorMessage = error.error || error.message || "Failed to add employee";
+      const errorMessage =
+        error.error || error.message || "Failed to add employee";
       if (error.status === 401 || error.status === 403) {
         dispatch(
-          setAuthError("Authentication failed or session expired. Please log in again.")
+          setAuthError(
+            "Authentication failed or session expired. Please log in again."
+          )
         );
       }
       dispatch({
@@ -1001,7 +1005,6 @@ export const deleteTimetable = (timetableId) =>
         payload: timetableId, // Send the ID of the deleted item for potential UI updates
       });
       // Re-fetch to update the list immediately after successful deletion
-   
     },
     onFailure: (error, dispatch) => {
       console.error("Error deleting timetable entry:", error);
@@ -1528,7 +1531,7 @@ export const updateExpenditure = (expenditureId, expenditureData) =>
   });
 export const fetchStudentExams = (examType = "") =>
   apiRequest({
-url: `/api/data/studentexams${examType ? `?examType=${examType}` : ""}`,
+    url: `/api/data/studentexams${examType ? `?examType=${examType}` : ""}`,
     method: "GET",
     onStart: FETCH_STUDENT_EXAMS_REQUEST,
     onSuccess: (data, dispatch) => {
@@ -1553,45 +1556,48 @@ export const addStudentExam = (examData) =>
     onStart: ADD_STUDENT_EXAM_REQUEST,
     onSuccess: (data, dispatch) => {
       console.log("Add exam response:", data);
-      
-      dispatch({ 
-        type: ADD_STUDENT_EXAM_SUCCESS, 
-        payload: data.exam 
+
+      dispatch({
+        type: ADD_STUDENT_EXAM_SUCCESS,
+        payload: data.exam,
       });
-      
+
       // CRITICAL: Update the revision classes state for both present and absent
       if (examData.classId && data.exam) {
         dispatch({
           type: "ADD_REVISION_CLASS_EXAM_SUCCESS",
           payload: {
             classId: examData.classId,
-            examData: examData.status === "Absent" ? {
-              studentId: examData.studentId,
-              studentName: examData.studentName,
-              examRecordId: data.exam.id,
-              status: "Absent",
-              absentReason: examData.absentReason,
-              isAbsent: true,
-              physics: 0,
-              chemistry: 0,
-              maths: 0,
-              total: 0
-            } : {
-              studentId: examData.studentId,
-              studentName: examData.studentName,
-              examRecordId: data.exam.id,
-              physics: examData.physics || 0,
-              chemistry: examData.chemistry || 0,
-              maths: examData.maths || 0,
-              total: examData.total || 0,
-              subject: examData.Subject,
-              stream: examData.stream,
-              status: "Present"
-            }
-          }
+            examData:
+              examData.status === "Absent"
+                ? {
+                    studentId: examData.studentId,
+                    studentName: examData.studentName,
+                    examRecordId: data.exam.id,
+                    status: "Absent",
+                    absentReason: examData.absentReason,
+                    isAbsent: true,
+                    physics: 0,
+                    chemistry: 0,
+                    maths: 0,
+                    total: 0,
+                  }
+                : {
+                    studentId: examData.studentId,
+                    studentName: examData.studentName,
+                    examRecordId: data.exam.id,
+                    physics: examData.physics || 0,
+                    chemistry: examData.chemistry || 0,
+                    maths: examData.maths || 0,
+                    total: examData.total || 0,
+                    subject: examData.Subject,
+                    stream: examData.stream,
+                    status: "Present",
+                  },
+          },
         });
       }
-      
+
       return data;
     },
     onFailure: (error, dispatch) => {
@@ -1612,12 +1618,12 @@ export const updateStudentExam = (examData) =>
     onStart: UPDATE_STUDENT_EXAM_REQUEST,
     onSuccess: (data, dispatch) => {
       console.log("Update exam response:", data);
-      
-      dispatch({ 
-        type: UPDATE_STUDENT_EXAM_SUCCESS, 
-        payload: data 
+
+      dispatch({
+        type: UPDATE_STUDENT_EXAM_SUCCESS,
+        payload: data,
       });
-      
+
       // Update revision classes state
       if (examData.classId) {
         dispatch({
@@ -1625,27 +1631,30 @@ export const updateStudentExam = (examData) =>
           payload: {
             classId: examData.classId,
             studentId: examData.studentId,
-            examData: examData.status === "Absent" ? {
-              status: "Absent",
-              absentReason: examData.absentReason,
-              isAbsent: true,
-              physics: 0,
-              chemistry: 0,
-              maths: 0,
-              total: 0
-            } : {
-              physics: examData.physics,
-              chemistry: examData.chemistry,
-              maths: examData.maths,
-              total: examData.total,
-              subject: examData.Subject,
-              status: "Present",
-              isAbsent: false
-            }
-          }
+            examData:
+              examData.status === "Absent"
+                ? {
+                    status: "Absent",
+                    absentReason: examData.absentReason,
+                    isAbsent: true,
+                    physics: 0,
+                    chemistry: 0,
+                    maths: 0,
+                    total: 0,
+                  }
+                : {
+                    physics: examData.physics,
+                    chemistry: examData.chemistry,
+                    maths: examData.maths,
+                    total: examData.total,
+                    subject: examData.Subject,
+                    status: "Present",
+                    isAbsent: false,
+                  },
+          },
         });
       }
-      
+
       return data;
     },
     onFailure: (error, dispatch) => {
@@ -1656,8 +1665,6 @@ export const updateStudentExam = (examData) =>
       throw error;
     },
   });
-
-
 
 // Delete Exam
 export const deleteStudentExam = (examId) =>
@@ -1773,7 +1780,6 @@ export const updateWeeklySyllabus = (studentId, updatedLessons) =>
       });
     },
   });
-
 
 export const fetchStudentExamsByStudent = (studentId) =>
   apiRequest({
@@ -1964,15 +1970,17 @@ export const deleteLectureMaterial = (fileId, googleDriveId) =>
     },
     authRequired: true,
   });
-export const fetchRevisionClasses = (requestParams = {}) => { // Rename to avoid conflict
+export const fetchRevisionClasses = (requestParams = {}) => {
+  // Rename to avoid conflict
   console.log("🔍 fetchRevisionClasses called with:", requestParams);
-  
+
   return apiRequest({
     url: `/api/data/revisionClasses`,
     method: "GET",
-    params: { // Use requestParams instead of params
+    params: {
+      // Use requestParams instead of params
       cursorDate: requestParams.cursorDate, // FIX: Use requestParams
-      direction: requestParams.direction    // FIX: Use requestParams
+      direction: requestParams.direction, // FIX: Use requestParams
     },
     onStart: FETCH_REVISION_CLASSES_REQUEST,
     onSuccess: (data, dispatch) => {
@@ -1982,12 +1990,13 @@ export const fetchRevisionClasses = (requestParams = {}) => { // Rename to avoid
         payload: {
           classes: data.classes || [],
           hasMore: data.hasMore !== undefined ? data.hasMore : false,
-          hasPrevious: data.hasPrevious !== undefined ? data.hasPrevious : false,
+          hasPrevious:
+            data.hasPrevious !== undefined ? data.hasPrevious : false,
           nextCursor: data.nextCursor || null,
           prevCursor: data.prevCursor || null,
-          append: requestParams.direction === 'next', // FIX: Use requestParams
-          prepend: requestParams.direction === 'prev', // FIX: Use requestParams
-          replace: !requestParams.direction // FIX: Use requestParams
+          append: requestParams.direction === "next", // FIX: Use requestParams
+          prepend: requestParams.direction === "prev", // FIX: Use requestParams
+          replace: !requestParams.direction, // FIX: Use requestParams
         },
       });
     },
@@ -2002,7 +2011,7 @@ export const fetchRevisionClasses = (requestParams = {}) => { // Rename to avoid
   });
 };
 // export const fetchStudentClasses = () => {
-  
+
 //   return apiRequest({
 //     url: `/api/data/studentRevisionClassesbyId`,
 //     method: "GET",
@@ -2032,7 +2041,7 @@ export const fetchRevisionClasses = (requestParams = {}) => { // Rename to avoid
 // Search classes by topic/lesson
 export const searchStudentClasses = (requestParams = {}) => {
   console.log("🔍 searchStudentClasses called with:", requestParams);
-  
+
   return apiRequest({
     url: `/api/data/studentClassesSearch`,
     method: "GET",
@@ -2047,7 +2056,7 @@ export const searchStudentClasses = (requestParams = {}) => {
         type: SEARCH_STUDENT_CLASSES_SUCCESS,
         payload: {
           searchResults: data.classes || [],
-          searchQuery: data.searchQuery || '',
+          searchQuery: data.searchQuery || "",
           totalResults: data.totalResults || 0,
           studentId: data.studentId || null,
         },
@@ -2066,7 +2075,7 @@ export const searchStudentClasses = (requestParams = {}) => {
 
 // Clear search results
 export const clearSearchResults = () => ({
-  type: CLEAR_SEARCH_RESULTS
+  type: CLEAR_SEARCH_RESULTS,
 });
 export const updateStudentAttendance = (classId, studentId, status) =>
   apiRequest({
@@ -2095,7 +2104,7 @@ export const updateStudentAttendance = (classId, studentId, status) =>
 
 export const fetchRevisionExams = (requestParams = {}) => {
   console.log("🔍 fetchRevisionExams called");
-  
+
   return apiRequest({
     url: `/api/data/revisionExams`,
     method: "GET",
@@ -2121,10 +2130,8 @@ export const fetchRevisionExams = (requestParams = {}) => {
   });
 };
 
-
-
 // Update revision fee installment
-export const updateRevisionFee = (studentId, installmentData) => 
+export const updateRevisionFee = (studentId, installmentData) =>
   apiRequest({
     url: `/api/data/revision-fee/${studentId}`,
     method: "PUT",
@@ -2133,7 +2140,7 @@ export const updateRevisionFee = (studentId, installmentData) =>
     onSuccess: (data, dispatch) => {
       dispatch({
         type: UPDATE_REVISION_FEE_SUCCESS,
-        payload: { studentId, data: data.data }
+        payload: { studentId, data: data.data },
       });
       return data;
     },
@@ -2141,100 +2148,90 @@ export const updateRevisionFee = (studentId, installmentData) =>
       console.error("Error updating revision fee:", error);
       dispatch({
         type: UPDATE_REVISION_FEE_FAILURE,
-        payload: { error: error.error || error.message || "Failed to update fee" }
+        payload: {
+          error: error.error || error.message || "Failed to update fee",
+        },
       });
     },
     authRequired: true,
   });
 
-
-  export const setCurrentStudent = (studentData) => ({
+export const setCurrentStudent = (studentData) => ({
   type: SET_CURRENT_STUDENT,
-  payload: studentData
+  payload: studentData,
 });
 
 export const clearCurrentStudent = () => ({
-  type: CLEAR_CURRENT_STUDENT
+  type: CLEAR_CURRENT_STUDENT,
 });
-export const fetchStudentClasses = () => async (dispatch) => {
-  dispatch({ type: FETCH_STUDENT_CLASSES_REQUEST });
-  
-  try {
-    let data;
-    
-
-      // Use original API call
-      const response = await apiRequest({
-        url: `/api/data/studentRevisionClassesbyId`,
-        method: "GET",
-        authRequired: true,
+export const fetchStudentClasses = () => {
+  return apiRequest({
+    url: `/api/data/studentRevisionClassesbyId`,
+    method: "GET",
+    onStart: FETCH_STUDENT_CLASSES_REQUEST,
+    onSuccess: (data, dispatch) => {
+      console.log("✅ Student Classes Response:", data);
+      dispatch({
+        type: FETCH_STUDENT_CLASSES_SUCCESS,
+        payload: {
+          pastClasses: data.pastClasses || [],
+          futureClasses: data.futureClasses || [],
+          studentId: data.studentId || null,
+        },
       });
-      data = response.payload || {};
-    
-    console.log("✅ Student Classes Response:", data);
-    dispatch({
-      type: FETCH_STUDENT_CLASSES_SUCCESS,
-      payload: {
-        pastClasses: data.pastClasses || [],
-        futureClasses: data.futureClasses || [],
-        studentId: data.studentId || null,
-      },
-    });
-  } catch (error) {
-    console.error("❌ Error fetching student classes:", error);
-    dispatch({
-      type: FETCH_STUDENT_CLASSES_FAILURE,
-      payload: { error: error.message || "Failed to fetch student classes" },
-    });
-  }
+    },
+    onFailure: (error, dispatch) => {
+      console.error("❌ Error fetching student classes:", error);
+      dispatch({
+        type: FETCH_STUDENT_CLASSES_FAILURE,
+        payload: { error: error.message || "Failed to fetch student classes" },
+      });
+    },
+    authRequired: true,
+  });
 };
 
-export const fetchYearStatistics = (requestParams = {}) => async (dispatch) => {
-  dispatch({ type: FETCH_YEAR_STATISTICS_REQUEST });
-  
-  try {
-    let data;
-    
-      // Use original API call
-      const response = await apiRequest({
-        url: `/api/data/studentYearStats`,
-        method: "GET",
-        params: {
-          studentId: requestParams.studentId,
+export const fetchYearStatistics = (requestParams = {}) => {
+  return apiRequest({
+    url: `/api/data/studentYearStats`,
+    method: "GET",
+    params: {
+      studentId: requestParams.studentId,
+    },
+    onStart: FETCH_YEAR_STATISTICS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      console.log("✅ Year Statistics Response:", data);
+      dispatch({
+        type: FETCH_YEAR_STATISTICS_SUCCESS,
+        payload: {
+          firstYear: {
+            total: data.firstYear?.total || 0,
+            completed: data.firstYear?.completed || 0,
+            pending: data.firstYear?.pending || 0,
+            completedLessons: data.firstYear?.completedLessons || [],
+            pendingLessons: data.firstYear?.pendingLessons || [],
+          },
+          secondYear: {
+            total: data.secondYear?.total || 0,
+            completed: data.secondYear?.completed || 0,
+            pending: data.secondYear?.pending || 0,
+            completedLessons: data.secondYear?.completedLessons || [],
+            pendingLessons: data.secondYear?.pendingLessons || [],
+          },
+          dateRange: data.dateRange || {},
+          studentId: data.studentId || null,
         },
-        authRequired: true,
       });
-      data = response.payload || {};
-    
-    console.log("✅ Year Statistics Response:", data);
-    dispatch({
-      type: FETCH_YEAR_STATISTICS_SUCCESS,
-      payload: {
-        firstYear: {
-          total: data.firstYear?.total || 0,
-          completed: data.firstYear?.completed || 0,
-          pending: data.firstYear?.pending || 0,
-          completedLessons: data.firstYear?.completedLessons || [],
-          pendingLessons: data.firstYear?.pendingLessons || []
-        },
-        secondYear: {
-          total: data.secondYear?.total || 0,
-          completed: data.secondYear?.completed || 0,
-          pending: data.secondYear?.pending || 0,
-          completedLessons: data.secondYear?.completedLessons || [],
-          pendingLessons: data.secondYear?.pendingLessons || []
-        },
-        dateRange: data.dateRange || {},
-        studentId: data.studentId || null,
-      },
-    });
-  } catch (error) {
-    console.error("❌ Error fetching year statistics:", error);
-    dispatch({
-      type: FETCH_YEAR_STATISTICS_FAILURE,
-      payload: { error: error.message || "Failed to fetch year statistics" },
-    });
-  }
+    },
+    onFailure: (error, dispatch) => {
+      console.error("❌ Error fetching year statistics:", error);
+      dispatch({
+        type: FETCH_YEAR_STATISTICS_FAILURE,
+        payload: { error: error.message || "Failed to fetch year statistics" },
+      });
+    },
+    authRequired: true,
+  });
 };
 export const fetchAttendanceSummary = (studentId, sessions = "all") => {
   return apiRequest({
@@ -2242,19 +2239,21 @@ export const fetchAttendanceSummary = (studentId, sessions = "all") => {
     method: "GET",
     params: {
       studentId,
-      sessions
+      sessions,
     },
     onStart: FETCH_ATTENDANCE_SUMMARY_REQUEST,
     onSuccess: (data, dispatch) => {
       dispatch({
         type: FETCH_ATTENDANCE_SUMMARY_SUCCESS,
-        payload: data
+        payload: data,
       });
     },
     onFailure: (error, dispatch) => {
       dispatch({
         type: FETCH_ATTENDANCE_SUMMARY_FAILURE,
-        payload: { error: error.message || "Failed to fetch attendance summary" }
+        payload: {
+          error: error.message || "Failed to fetch attendance summary",
+        },
       });
     },
     authRequired: true,
@@ -2282,7 +2281,7 @@ export const bookDemo = (demoData) =>
     authRequired: false,
   });
 
-export const fetchDemoBookings = (status = "all") => 
+export const fetchDemoBookings = (status = "all") =>
   apiRequest({
     url: `/api/data/demo-bookings?status=${status}`,
     method: "GET",
@@ -2290,19 +2289,19 @@ export const fetchDemoBookings = (status = "all") =>
     onSuccess: (data, dispatch) => {
       dispatch({
         type: FETCH_DEMO_BOOKINGS_SUCCESS,
-        payload: data
+        payload: data,
       });
     },
     onFailure: (error, dispatch) => {
       dispatch({
         type: FETCH_DEMO_BOOKINGS_FAILURE,
-        payload: { error: error.message || "Failed to fetch demo bookings" }
+        payload: { error: error.message || "Failed to fetch demo bookings" },
       });
     },
     authRequired: true,
   });
 
-export const updateDemoStatus = (demoId, status, contactReason = "") => 
+export const updateDemoStatus = (demoId, status, contactReason = "") =>
   apiRequest({
     url: `/api/data/demo-bookings/${demoId}`,
     method: "PUT",
@@ -2311,7 +2310,7 @@ export const updateDemoStatus = (demoId, status, contactReason = "") =>
     onSuccess: (data, dispatch) => {
       dispatch({
         type: UPDATE_DEMO_STATUS_SUCCESS,
-        payload: { demoId, status, contactReason }
+        payload: { demoId, status, contactReason },
       });
       // Refresh the list
       dispatch(fetchDemoBookings());
@@ -2319,12 +2318,12 @@ export const updateDemoStatus = (demoId, status, contactReason = "") =>
     onFailure: (error, dispatch) => {
       dispatch({
         type: UPDATE_DEMO_STATUS_FAILURE,
-        payload: { error: error.message || "Failed to update demo status" }
+        payload: { error: error.message || "Failed to update demo status" },
       });
     },
     authRequired: true,
   });
-  // Add these to your existing actions file
+// Add these to your existing actions file
 
 // Fetch Student PPTs
 export const fetchStudentPPTs = (studentId) =>
@@ -2362,7 +2361,7 @@ export const fetchStudentWorksheets = (studentId) =>
     authRequired: true,
   });
 
-  export const fetchAcademyFinance = (year, month, compareType = null) =>
+export const fetchAcademyFinance = (year, month, compareType = null) =>
   apiRequest({
     url: `/api/expenditures/academy-finance?year=${year}&month=${month}${
       compareType ? `&compare=${compareType}` : ""
@@ -2379,7 +2378,9 @@ export const fetchStudentWorksheets = (studentId) =>
       console.error("Error fetching academy finance:", error);
       dispatch({
         type: FETCH_ACADEMY_FINANCE_FAILURE,
-        payload: { error: error.message || "Failed to fetch academy finance data" },
+        payload: {
+          error: error.message || "Failed to fetch academy finance data",
+        },
       });
     },
     authRequired: true,
@@ -2410,7 +2411,7 @@ export const addAcademyEarning = (earningData, callback) =>
     authRequired: true,
   });
 
-  export const uploadStudyMaterial = (studentId, formData) =>
+export const uploadStudyMaterial = (studentId, formData) =>
   apiRequest({
     url: `/api/materials/upload-study-material/${studentId}`,
     method: "POST",
@@ -2482,14 +2483,14 @@ export const fetchQuestionPapers = (studentId) =>
     },
     authRequired: true,
   });
-    export const fetchMonthlyPaymentDetails = (monthYear) =>
+export const fetchMonthlyPaymentDetails = (monthYear) =>
   apiRequest({
     url: `/api/data/payments/monthly/${monthYear}`,
     method: "GET",
     onStart: FETCH_MONTHLY_PAYMENT_DETAILS_REQUEST,
     onSuccess: (data, dispatch) => {
       dispatch({
-        type:FETCH_MONTHLY_PAYMENT_DETAILS_SUCCESS,
+        type: FETCH_MONTHLY_PAYMENT_DETAILS_SUCCESS,
         payload: data,
       });
     },
