@@ -38,6 +38,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
   const location = useLocation();
   const { studentId } = useParams();
   const currentStudent = useSelector((state) => state.auth?.currentStudent);
+const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student || false
+  // Check if we're on any student portfolio page
   const isStudentPortfolioPage =
     location.pathname.includes("/student/") &&
     location.pathname.match(/\/student\/([^\/]+)/)?.[1];
@@ -146,16 +148,16 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: `/student/${extractedStudentId}/upload`,
       icon: <FaFileUpload />,
     },
-    {
-      name: "Class PPT's",
-      path: `/student/${extractedStudentId}/ppts`,
-      icon: <FaFilePowerpoint />,
-    },
-    {
-      name: "Worksheets",
-      path: `/student/${extractedStudentId}/worksheets`,
-      icon: <FaTasks />,
-    },
+    // {
+    //   name: "Class PPT's",
+    //   path: `/student/${extractedStudentId}/ppts`,
+    //   icon: <FaFilePowerpoint />,
+    // },
+    // {
+    //   name: "Worksheets",
+    //   path: `/student/${extractedStudentId}/worksheets`,
+    //   icon: <FaTasks />,
+    // },
     {
       name: "Study Materials",
       path: `/student/${extractedStudentId}/study-materials`,
