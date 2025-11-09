@@ -39,6 +39,8 @@ import {
   School as SchoolIcon,
   PieChart as PieChartIcon,
   TableChart as TableChartIcon,
+  Book as BookIcon,
+  CalendarToday as CalendarTodayIcon,
 } from "@mui/icons-material";
 import DetailCard from "./components/DetailCard";
 import {
@@ -75,12 +77,9 @@ const StudentWeekend = () => {
     loading: statsLoading,
     error: statsError,
   } = yearStatistics;
-  // Add debugging logs
-  console.log("🔍 Year Statistics State:", yearStatistics);
-  console.log("🔍 First Year Data:", firstYear);
-  console.log("🔍 Second Year Data:", secondYear);
 
   const currentStudent = useSelector((state) => state.auth?.currentStudent);
+  const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student;
 
   useEffect(() => {
     dispatch(fetchStudentClasses());
@@ -100,12 +99,44 @@ const StudentWeekend = () => {
       );
     }
   };
-const shouldShowSearchResults = searchTerm.trim() && searchQuery;
+
+  const shouldShowSearchResults = searchTerm.trim() && searchQuery;
   const shouldShowRegularClasses = !searchTerm.trim() || !searchQuery;
+  
   const handleClearSearch = () => {
     setSearchTerm("");
     dispatch(clearSearchResults());
     dispatch(fetchStudentClasses());
+  };
+
+  // Process weekSyllabus data for non-revision students
+  const getWeekSyllabusData = () => {
+    if (!currentStudent?.weekSyllabus || !Array.isArray(currentStudent.weekSyllabus)) {
+      return [];
+    }
+
+    // Sort syllabus by date (latest first)
+    return currentStudent.weekSyllabus
+      .filter(syllabus => syllabus && syllabus.date && syllabus.topic)
+      .sort((a, b) => {
+        const dateA = a.date?._seconds ? new Date(a.date._seconds * 1000) : new Date(0);
+        const dateB = b.date?._seconds ? new Date(b.date._seconds * 1000) : new Date(0);
+        return dateB - dateA; // Latest first
+      });
+  };
+
+  const weekSyllabusData = getWeekSyllabusData();
+
+  const formatSyllabusDate = (dateObj) => {
+    if (!dateObj || !dateObj._seconds) return "Date not available";
+    
+    const date = new Date(dateObj._seconds * 1000);
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   const parseDate = (dateStr) => {
@@ -256,46 +287,138 @@ const shouldShowSearchResults = searchTerm.trim() && searchQuery;
     </ListItem>
   );
 
+  // Render Week Syllabus for non-revision students
+  const renderWeekSyllabus = () => {
+    if (weekSyllabusData.length === 0) {
+      return (
+        <Paper elevation={3} sx={{ p: 4, textAlign: "center", mb: 3 }}>
+          <BookIcon sx={{ fontSize: 48, color: "text.secondary", mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No Syllabus Available
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Weekly syllabus data will appear here when available.
+          </Typography>
+        </Paper>
+      );
+    }
+
+    return (
+      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+          <BookIcon sx={{ fontSize: 32, color: "primary.main", mr: 2 }} />
+          <Typography variant="h5" sx={{ fontWeight: 600, flexGrow: 1 }}>
+            Weekly Syllabus
+          </Typography>
+          <Chip
+            label={`${weekSyllabusData.length} topics`}
+            color="primary"
+            variant="filled"
+          />
+        </Box>
+
+        <List sx={{ maxHeight: 500, overflow: "auto" }}>
+          {weekSyllabusData.map((syllabus, index) => (
+            <ListItem
+              key={syllabus.id || index}
+              sx={{
+                mb: 2,
+                p: 2,
+                borderRadius: 3,
+                background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+                border: "1px solid #dee2e6",
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                  transition: "all 0.3s ease-in-out",
+                  boxShadow: 2,
+                },
+              }}
+            >
+              <ListItemIcon>
+                <Avatar
+                  sx={{
+                    bgcolor: "primary.main",
+                    width: 50,
+                    height: 50,
+                  }}
+                >
+                  <CalendarTodayIcon />
+                </Avatar>
+              </ListItemIcon>
+
+              <ListItemText
+                primary={
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: "1.1rem",
+                      fontWeight: 600,
+                      mb: 1,
+                      color: "text.primary",
+                    }}
+                  >
+                    {syllabus.topic}
+                  </Typography>
+                }
+                secondary={
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mt: 1,
+                    }}
+                  >
+                    <CalendarTodayIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {formatSyllabusDate(syllabus.date)}
+                    </Typography>
+                  </Box>
+                }
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+    );
+  };
+
   const pieChartData = [
     {
       name: "1st Year Completed",
-      value: firstYear.completed || 0,
+      value: firstYear?.completed || 0,
       color: "#F26E26",
-    }, // orange
+    },
     {
       name: "1st Year Pending",
-      value: firstYear.pending || 0,
+      value: firstYear?.pending || 0,
       color: "#292551",
-    }, // dark-indigo
+    },
     {
       name: "2nd Year Completed",
-      value: secondYear.completed || 0,
+      value: secondYear?.completed || 0,
       color: "#DB1A66",
-    }, // hot-pink
+    },
     {
       name: "2nd Year Pending",
-      value: secondYear.pending || 0,
+      value: secondYear?.pending || 0,
       color: "#454E5B",
-    }, // slate-gray
+    },
   ];
-  const StyledText = styled("text")(({ theme }) => ({
-    fill: theme.palette.text.primary,
-    textAnchor: "middle",
-    dominantBaseline: "central",
-    fontSize: 14,
-    fontWeight: 500,
-  }));
+
   const renderPieChart = () => {
     const total = pieChartData.reduce((sum, item) => sum + item.value, 0);
-
-    // Better color scheme that matches the cards and has good contrast
     const improvedColors = [
-      "#667eea", // Purple-blue (matches 1st year card)
-      "#86efac", // Green (completed)
-      "#fbbf24", // Yellow (pending)
-      "#059669", // Emerald (matches 2nd year card)
-      "#bbf7d0", // Light green (2nd year completed)
-      "#fde68a", // Light yellow (2nd year pending)
+      "#667eea",
+      "#86efac",
+      "#fbbf24",
+      "#059669",
+      "#bbf7d0",
+      "#fde68a",
     ];
 
     const muiPieData = pieChartData.map((item, index) => ({
@@ -314,7 +437,6 @@ const shouldShowSearchResults = searchTerm.trim() && searchQuery;
           height: "100%",
         }}
       >
-        {/* Pie Chart */}
         <Box
           sx={{
             flex: 1,
@@ -392,8 +514,6 @@ const shouldShowSearchResults = searchTerm.trim() && searchQuery;
       );
     }
 
-    // For "Recent Classes", reverse to show most recent first
-    // For "Upcoming Classes", keep in chronological order
     const displayClasses =
       title === "Recent Classes" ? [...classes].reverse() : classes;
 
@@ -422,7 +542,7 @@ const shouldShowSearchResults = searchTerm.trim() && searchQuery;
             }}
           >
             {title === "Recent Classes"
-              ? "Last 7 classs"
+              ? "Last 7 classes"
               : "Upcoming 7 classes"}
           </Typography>
         </Box>
@@ -504,8 +624,10 @@ const shouldShowSearchResults = searchTerm.trim() && searchQuery;
 
   const showSearchResults =
     searchQuery && (searchResults.length > 0 || searchLoading || searchError);
+
+  // Rest of your existing functions (renderStatisticsCards, etc.) remain the same
   const renderStatisticsCards = () => {
-    // Add safety checks
+    // ... (keep your existing renderStatisticsCards function exactly as is)
     if (!firstYear || !secondYear) {
       return (
         <Alert severity="warning" sx={{ mb: 3 }}>
@@ -514,7 +636,6 @@ const shouldShowSearchResults = searchTerm.trim() && searchQuery;
       );
     }
 
-    // Tooltip component for lessons
     const LessonsTooltip = ({ lessons, title, children }) => (
       <Tooltip
         title={
@@ -824,7 +945,7 @@ const shouldShowSearchResults = searchTerm.trim() && searchQuery;
                     <Typography
                       variant="caption"
                       sx={{ opacity: 0.9, fontSize: "0.75rem" }}
-                    >
+                  >
                       Completed
                     </Typography>
                   </Box>
@@ -904,195 +1025,196 @@ const shouldShowSearchResults = searchTerm.trim() && searchQuery;
 
   return (
     <div className="student-portfolio-tab premium light-theme">
-      <div className="tab-content premium">
-        <div className="weekend-syllabus-container">
-          <Box sx={{ p: 1 }}>
-            {/* Search Section */}
+  <div className="tab-content premium">
+    <div className="weekend-syllabus-container">
+      <Box sx={{ p: 1 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+            Error loading classes: {error}
+          </Alert>
+        )}
 
-            {error && (
-              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                Error loading classes: {error}
-              </Alert>
-            )}
-
-            {statsLoading ? (
-              <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-                <CircularProgress />
-              </Box>
-            ) : statsError ? (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                Error loading statistics: {statsError}
-              </Alert>
-            ) : (
-              <Grid container spacing={3} sx={{ mb: 4 }}>
-                {/* Statistics Cards - Left Side */}
-                <Grid item xs={12} lg={7}>
-                  {renderStatisticsCards()}
-                </Grid>
-
-                {/* Pie Chart - Right Side */}
-                <Grid item xs={12} lg={5}>
-                  <Card
-                    elevation={4}
-                    sx={{
-                      p: 2, // Reduced padding
-                      height: "100%",
-                      minHeight: 200, // Reduced min-height
-                      display: "flex",
-                      flexDirection: "column",
-                      background:
-                        "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
-                      borderRadius: "16px",
-                      border: "1px solid rgba(255,255,255,0.3)",
-                      backdropFilter: "blur(10px)",
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        fontWeight: 700,
-                        mb: 2, // Reduced margin
-                        color: "text.primary",
-                        fontSize: "1rem", // Slightly smaller
-                      }}
-                    >
-                      <PieChartIcon
-                        sx={{
-                          mr: 1,
-                          color: "primary.main",
-                          fontSize: "1.2rem",
-                        }}
-                      />
-                      Progress Overview
-                    </Typography>
-                    <Box
-                      sx={{
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {renderPieChart()}
-                    </Box>
-                  </Card>
-                </Grid>
+        {statsLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : statsError ? (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            Error loading statistics: {statsError}
+          </Alert>
+        ) : (
+          isRevisonStudent && (
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid item xs={12} lg={7}>
+                {renderStatisticsCards()}
               </Grid>
-            )}
-
-            <>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 3,
-                  mb: 4,
-                  background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  borderRadius: 3,
-                }}
-              >
-                <Typography
-                  variant="h5"
-                  gutterBottom
+              <Grid item xs={12} lg={5}>
+                <Card
+                  elevation={4}
                   sx={{
+                    p: 2,
+                    height: "100%",
+                    minHeight: 200,
                     display: "flex",
-                    alignItems: "center",
-                    color: "white",
-                    mb: 3,
-                    fontWeight: 600,
+                    flexDirection: "column",
+                    background:
+                      "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+                    borderRadius: "16px",
+                    border: "1px solid rgba(255,255,255,0.3)",
+                    backdropFilter: "blur(10px)",
                   }}
                 >
-                  <SearchIcon sx={{ mr: 2 }} /> Search Classes
-                </Typography>
-                <form onSubmit={handleSearch}>
-                  <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                    <TextField
-                      fullWidth
-                      placeholder="Search by topic or subject (e.g., 'Current Electricity')"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SubjectIcon sx={{ color: "#667eea" }} />
-                          </InputAdornment>
-                        ),
-                        endAdornment: searchTerm && (
-                          <InputAdornment position="end">
-                            <IconButton
-                              size="small"
-                              onClick={() => setSearchTerm("")}
-                              edge="end"
-                              sx={{ color: "#667eea" }}
-                            >
-                              <ClearIcon />
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                        sx: { backgroundColor: "white", borderRadius: 2 },
-                      }}
-                      size="medium"
-                    />
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      startIcon={
-                        searchLoading ? (
-                          <CircularProgress size={20} sx={{ color: "white" }} />
-                        ) : (
-                          <SearchIcon />
-                        )
-                      }
-                      // disabled={searchLoading || !searchTerm.trim()}
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      fontWeight: 700,
+                      mb: 2,
+                      color: "text.primary",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    <PieChartIcon
                       sx={{
-                        minWidth: 140,
-                        height: 56,
-                        background: "rgba(255,255,255,0.9)",
-                        color: "#667eea",
-                        borderRadius: 2,
-                        fontWeight: 600,
+                        mr: 1,
+                        color: "primary.main",
+                        fontSize: "1.2rem",
                       }}
-                    >
-                      {searchLoading ? "Searching" : "Search"}
-                    </Button>
+                    />
+                    Progress Overview
+                  </Typography>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {renderPieChart()}
                   </Box>
-                </form>
-              </Paper>
-                    {shouldShowSearchResults  ? (
-              // Show only search results when there's an active search
-              renderSearchResults()
+                </Card>
+              </Grid>
+            </Grid>
+          )
+        )}
+
+            {/* Show different content based on revision status */}
+            {isRevisonStudent ? (
+              // Revision Student Content
+              <>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 3,
+                    mb: 4,
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    borderRadius: 3,
+                  }}
+                >
+                  <Typography
+                    variant="h5"
+                    gutterBottom
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: "white",
+                      mb: 3,
+                      fontWeight: 600,
+                    }}
+                  >
+                    <SearchIcon sx={{ mr: 2 }} /> Search Classes
+                  </Typography>
+                  <form onSubmit={handleSearch}>
+                    <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+                      <TextField
+                        fullWidth
+                        placeholder="Search by topic or subject (e.g., 'Current Electricity')"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SubjectIcon sx={{ color: "#667eea" }} />
+                            </InputAdornment>
+                          ),
+                          endAdornment: searchTerm && (
+                            <InputAdornment position="end">
+                              <IconButton
+                                size="small"
+                                onClick={() => setSearchTerm("")}
+                                edge="end"
+                                sx={{ color: "#667eea" }}
+                              >
+                                <ClearIcon />
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                          sx: { backgroundColor: "white", borderRadius: 2 },
+                        }}
+                        size="medium"
+                      />
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        startIcon={
+                          searchLoading ? (
+                            <CircularProgress size={20} sx={{ color: "white" }} />
+                          ) : (
+                            <SearchIcon />
+                          )
+                        }
+                        sx={{
+                          minWidth: 140,
+                          height: 56,
+                          background: "rgba(255,255,255,0.9)",
+                          color: "#667eea",
+                          borderRadius: 2,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {searchLoading ? "Searching" : "Search"}
+                      </Button>
+                    </Box>
+                  </form>
+                </Paper>
+
+                {shouldShowSearchResults ? (
+                  renderSearchResults()
+                ) : (
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                      gap: 3,
+                      width: "100%",
+                    }}
+                  >
+                    <Box>
+                      {renderClassSection(
+                        pastClasses,
+                        "Recent Classes",
+                        HistoryIcon,
+                        "No past classes available"
+                      )}
+                    </Box>
+                    <Box>
+                      {renderClassSection(
+                        futureClasses,
+                        "Upcoming Classes",
+                        EventIcon,
+                        "No upcoming classes scheduled"
+                      )}
+                    </Box>
+                  </Box>
+                )}
+              </>
             ) : (
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                  gap: 3,
-                  width: "100%",
-                }}
-              >
-                <Box>
-                  {renderClassSection(
-                    pastClasses,
-                    "Recent Classes",
-                    HistoryIcon,
-                    "No past classes available"
-                  )}
-                </Box>
-                <Box>
-                  {renderClassSection(
-                    futureClasses,
-                    "Upcoming Classes",
-                    EventIcon,
-                    "No upcoming classes scheduled"
-                  )}
-                </Box>
-              </Box>
+              // Non-Revision Student Content (Week Syllabus)
+              renderWeekSyllabus()
             )}
-            </>
-
-
           </Box>
         </div>
       </div>

@@ -31,13 +31,13 @@ import {
   FaBook,
 } from "react-icons/fa";
 import "./Sidebar.css";
+import { useSelector } from "react-redux";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
   console.log("userRole", userRole);
   const location = useLocation();
   const { studentId } = useParams();
-
-  // Check if we're on any student portfolio page
+  const currentStudent = useSelector((state) => state.auth?.currentStudent);
   const isStudentPortfolioPage =
     location.pathname.includes("/student/") &&
     location.pathname.match(/\/student\/([^\/]+)/)?.[1];
@@ -130,11 +130,12 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: `/student/${extractedStudentId}/results`,
       icon: <FaClipboardCheck />,
     },
+...isRevisonStudent ? [ // <-- Wrap the conditional in a spread
     {
       name: "Classes Info",
       path: `/student/${extractedStudentId}/classes`,
       icon: <FaChalkboardTeacher />,
-    },
+    }] : [], // <-- Spread an empty array if false
     {
       name: "Payments",
       path: `/student/${extractedStudentId}/payments`,
@@ -184,21 +185,22 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: `/student/${extractedStudentId}/results`,
       icon: <FaClipboardCheck />,
     },
+...isRevisonStudent ? [ // <-- Wrap the conditional in a spread
     {
       name: "Classes Info",
       path: `/student/${extractedStudentId}/classes`,
       icon: <FaChalkboardTeacher />,
-    },
-    {
-      name: "Class PPT's",
-      path: `/student/${extractedStudentId}/ppts`,
-      icon: <FaFilePowerpoint />,
-    },
-    {
-      name: "Worksheets",
-      path: `/student/${extractedStudentId}/worksheets`,
-      icon: <FaTasks />,
-    },
+    }] : [], // <-- Spread an empty array if false
+    // {
+    //   name: "Class PPT's",
+    //   path: `/student/${extractedStudentId}/ppts`,
+    //   icon: <FaFilePowerpoint />,
+    // },
+    // {
+    //   name: "Worksheets",
+    //   path: `/student/${extractedStudentId}/worksheets`,
+    //   icon: <FaTasks />,
+    // },
     {
       name: "Study Materials",
       path: `/student/${extractedStudentId}/study-materials`,

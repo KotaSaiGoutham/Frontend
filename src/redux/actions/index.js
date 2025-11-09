@@ -1,4 +1,5 @@
 import {
+  SET_STUDENTS_NEED_REFRESH,
    UPLOAD_STUDY_MATERIAL_REQUEST,
   UPLOAD_STUDY_MATERIAL_SUCCESS,
   UPLOAD_STUDY_MATERIAL_FAILURE,
@@ -336,7 +337,7 @@ export const updateStudentField = (
       });
       // OPTIONAL BUT RECOMMENDED: Re-fetch all students to ensure UI consistency
       // Especially if the backend has complex logic (like date calculations)
-      dispatch(fetchStudents());
+      dispatch({ type: SET_STUDENTS_NEED_REFRESH });
     },
     onFailure: (error, dispatch) => {
       console.error(
@@ -644,7 +645,7 @@ export const addStudent = (studentData) =>
         payload: data, // The response from the backend (e.g., confirmation message, new student ID)
       });
       // Optionally, you might refetch the entire student list to update UI
-      dispatch(fetchStudents());
+      dispatch({ type: SET_STUDENTS_NEED_REFRESH });
     },
     onFailure: (error, dispatch) => {
       console.error("Error adding student:", error);
@@ -677,7 +678,7 @@ export const updateStudent = (studentId, studentData) =>
       });
       // You can either refetch all students or update the student list locally.
       // Refetching is simpler but less performant for large lists.
-      dispatch(fetchStudents());
+      dispatch({ type: SET_STUDENTS_NEED_REFRESH });
     },
     onFailure: (error, dispatch) => {
       console.error("Error updating student:", error);
@@ -708,7 +709,7 @@ export const deleteStudent = (studentId) =>
         payload: data,
       });
       // Refresh the student list after a successful delete
-      dispatch(fetchStudents());
+      dispatch({ type: SET_STUDENTS_NEED_REFRESH });
     },
     onFailure: (error, dispatch) => {
       console.error("Error deleting student:", error);
@@ -1762,7 +1763,7 @@ export const updateWeeklySyllabus = (studentId, updatedLessons) =>
         },
       });
       // Optionally, refetch the data to ensure UI consistency
-      dispatch(fetchStudents());
+      dispatch({ type: SET_STUDENTS_NEED_REFRESH });
     },
     onFailure: (error, dispatch) => {
       console.error(`Error updating syllabus for student ${studentId}:`, error);
@@ -2161,10 +2162,7 @@ export const fetchStudentClasses = () => async (dispatch) => {
   try {
     let data;
     
-    if (USE_FIXTURES) {
-      console.log("📚 Using fixture data for student classes");
-      data = studentsSyllabusFixture;
-    } else {
+
       // Use original API call
       const response = await apiRequest({
         url: `/api/data/studentRevisionClassesbyId`,
@@ -2172,7 +2170,6 @@ export const fetchStudentClasses = () => async (dispatch) => {
         authRequired: true,
       });
       data = response.payload || {};
-    }
     
     console.log("✅ Student Classes Response:", data);
     dispatch({
@@ -2198,10 +2195,6 @@ export const fetchYearStatistics = (requestParams = {}) => async (dispatch) => {
   try {
     let data;
     
-    if (USE_FIXTURES) {
-      console.log("📊 Using fixture data for year statistics");
-      data = studentsYearStatsFixture;
-    } else {
       // Use original API call
       const response = await apiRequest({
         url: `/api/data/studentYearStats`,
@@ -2212,7 +2205,6 @@ export const fetchYearStatistics = (requestParams = {}) => async (dispatch) => {
         authRequired: true,
       });
       data = response.payload || {};
-    }
     
     console.log("✅ Year Statistics Response:", data);
     dispatch({

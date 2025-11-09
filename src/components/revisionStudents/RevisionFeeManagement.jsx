@@ -243,10 +243,6 @@ const RevisionFeeManagement = () => {
     }
   };
 
-  const handleRefresh = () => {
-    dispatch(fetchStudents());
-  };
-
   const getPaymentInfo = (student) => {
     const subject = student.Subject?.toLowerCase();
     
@@ -359,11 +355,6 @@ const RevisionFeeManagement = () => {
                 <Typography variant="h6" sx={{ color: "#64748b", fontSize: '1.1rem' }}> {/* Increased font size */}
                   Total Students: {revisionStudents.length}
                 </Typography>
-                <Tooltip title="Refresh Data">
-                  <IconButton onClick={handleRefresh} size="large"> {/* Increased icon size */}
-                    <Refresh fontSize="medium" />
-                  </IconButton>
-                </Tooltip>
               </Box>
             </Box>
 

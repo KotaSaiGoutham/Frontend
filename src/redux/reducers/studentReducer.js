@@ -1,5 +1,6 @@
 // src/redux/reducers/studentReducer.js
 import {
+  SET_STUDENTS_NEED_REFRESH,
   FETCH_STUDENTS_REQUEST,
   FETCH_STUDENTS_SUCCESS,
   FETCH_STUDENTS_FAILURE,
@@ -39,6 +40,8 @@ import {
 
 const initialState = {
   students: [], // For the list of all students
+    needsRefresh: true, // Add this flag
+
   loading: false, // For the list of all students
   error: null, // For errors related to fetching all students
 
@@ -94,8 +97,15 @@ const studentReducer = (state = initialState, action) => {
           loading: false,
           data: action.payload,
           error: null,
+              needsRefresh: false, // Reset flag after successful fetch
+
         }
       };
+      case SET_STUDENTS_NEED_REFRESH:
+  return {
+    ...state,
+    needsRefresh: true
+  };
     case FETCH_CLASS_SCHEDULE_FAILURE:
       return {
         ...state,

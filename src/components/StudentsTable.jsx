@@ -150,6 +150,7 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
     students,
     loading: studentsLoading,
     error: studentsError,
+    needsRefresh
   } = useSelector((state) => state.students);
   const {
     timetables,
@@ -268,13 +269,15 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
   }, [students]);
 
   useEffect(() => {
-    dispatch(fetchStudents());
+      if (needsRefresh || students.length === 0) {
+      dispatch(fetchStudents());
+    }
     // dispatch(fetchClassUpdates());
     dispatch(
       fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
     );
     dispatch(fetchAutoTimetablesForToday());
-  }, [dispatch]);
+  }, [dispatch, needsRefresh, students.length]);
 
   useEffect(() => {
     setIsLoading(studentsLoading || classesLoading); // True if either students or classes are loading

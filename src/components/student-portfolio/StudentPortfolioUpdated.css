@@ -1,0 +1,123 @@
+.profile-card {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--card-border);
+  padding: 24px 28px;
+  transition: all 0.3s var(--ease-smooth);
+}
+.profile-card:hover {
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-bottom: 16px;
+}
+
+.info-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.info-icon {
+  color: var(--primary);
+  font-size: 1.1rem;
+  margin-top: 4px;
+}
+.info-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+.info-value {
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.status.active {
+  color: var(--success);
+}
+.status.inactive {
+  color: var(--error);
+}
+
+.payment-chip {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.payment-chip.paid {
+  background: var(--success-light);
+  color: var(--success);
+}
+.payment-chip.pending {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+.payment-chip.unpaid {
+  background: var(--error-light);
+  color: var(--error);
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.schedule-card {
+  background: var(--primary-light);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+.installment {
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: var(--background);
+  margin-top: 10px;
+}
+.installment-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+}
+.installment-status.paid {
+  color: var(--success);
+}
+.installment-status.pending {
+  color: var(--warning);
+}
+.installment-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 0.9rem;
+  margin-top: 8px;
+  color: var(--text-secondary);
+}
