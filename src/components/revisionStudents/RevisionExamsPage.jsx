@@ -486,169 +486,233 @@ const RevisionExamsPage = () => {
       };
     }, [exams]);
 
-  // Calculate average marks for each student and exam type
-  const calculateAverages = useMemo(() => {
-    const averages = {
-      weekend: {},
-      cumulative: {},
-      grand: {},
-      overall: {},
+// Calculate average marks for each student and exam type - FIXED VERSION
+const calculateAverages = useMemo(() => {
+  const averages = {
+    weekend: {},
+    cumulative: {},
+    grand: {},
+    overall: {},
+  };
+
+  // Initialize student averages
+  revisionStudents.forEach((student) => {
+    averages.weekend[student.id] = {
+      physics: 0,
+      chemistry: 0,
+      total: 0,
+      count: 0,
     };
+    averages.cumulative[student.id] = {
+      physics: 0,
+      chemistry: 0,
+      total: 0,
+      count: 0,
+    };
+    averages.grand[student.id] = {
+      physics: 0,
+      chemistry: 0,
+      total: 0,
+      count: 0,
+    };
+    averages.overall[student.id] = {
+      physics: 0,
+      chemistry: 0,
+      total: 0,
+      count: 0,
+    };
+  });
 
-    // Initialize student averages
-    revisionStudents.forEach((student) => {
-      averages.weekend[student.id] = {
-        physics: 0,
-        chemistry: 0,
-        total: 0,
-        count: 0,
-      };
-      averages.cumulative[student.id] = {
-        physics: 0,
-        chemistry: 0,
-        total: 0,
-        count: 0,
-      };
-      averages.grand[student.id] = {
-        physics: 0,
-        chemistry: 0,
-        total: 0,
-        count: 0,
-      };
-      averages.overall[student.id] = {
-        physics: 0,
-        chemistry: 0,
-        total: 0,
-        count: 0,
-      };
-    });
+  // Calculate averages from exam data - ONLY COUNT VALID MARKS
+  Object.keys(examData).forEach((examKey) => {
+    const [examId, studentId] = examKey.split("_");
+    const examRecord = examData[examKey];
+    const examItem = exams.find((e) => e.id === examId);
 
-    // Calculate averages from exam data
-    Object.keys(examData).forEach((examKey) => {
-      const [examId, studentId] = examKey.split("_");
-      const examRecord = examData[examKey];
-      const examItem = exams.find((e) => e.id === examId);
+    if (!examItem || !examRecord) return;
 
-      if (!examItem || !examRecord) return;
+    const examType = getExamType(examItem.exam);
+    const student = revisionStudents.find((s) => s.id === studentId);
 
-      const examType = getExamType(examItem.exam);
-      const student = revisionStudents.find((s) => s.id === studentId);
+    if (!student) return;
 
-      if (!student) return;
+    // Check if student is absent for this exam
+    const isAbsent = examRecord.status === "Absent" || examRecord.isAbsent;
+    
+    // Only count marks that are actually entered (greater than 0) and student is not absent
+    const hasValidPhysicsMarks = (examRecord.physics || 0) > 0 && !isAbsent;
+    const hasValidChemistryMarks = (examRecord.chemistry || 0) > 0 && !isAbsent;
+    const hasValidTotal = (examRecord.total || 0) > 0 && !isAbsent;
 
-      // Add to specific exam type average
-      if (examType === "weekend" && averages.weekend[studentId]) {
-        averages.weekend[studentId].physics += examRecord.physics || 0;
-        averages.weekend[studentId].chemistry += examRecord.chemistry || 0;
-        averages.weekend[studentId].total += examRecord.total || 0;
+    // Add to specific exam type average only if valid marks exist
+    if (examType === "weekend" && averages.weekend[studentId]) {
+      if (hasValidPhysicsMarks) {
+        averages.weekend[studentId].physics += examRecord.physics;
+      }
+      if (hasValidChemistryMarks) {
+        averages.weekend[studentId].chemistry += examRecord.chemistry;
+      }
+      if (hasValidTotal) {
+        averages.weekend[studentId].total += examRecord.total;
         averages.weekend[studentId].count += 1;
-      } else if (examType === "cumulative" && averages.cumulative[studentId]) {
-        averages.cumulative[studentId].physics += examRecord.physics || 0;
-        averages.cumulative[studentId].chemistry += examRecord.chemistry || 0;
-        averages.cumulative[studentId].total += examRecord.total || 0;
+      }
+    } else if (examType === "cumulative" && averages.cumulative[studentId]) {
+      if (hasValidPhysicsMarks) {
+        averages.cumulative[studentId].physics += examRecord.physics;
+      }
+      if (hasValidChemistryMarks) {
+        averages.cumulative[studentId].chemistry += examRecord.chemistry;
+      }
+      if (hasValidTotal) {
+        averages.cumulative[studentId].total += examRecord.total;
         averages.cumulative[studentId].count += 1;
-      } else if (examType === "grand" && averages.grand[studentId]) {
-        averages.grand[studentId].physics += examRecord.physics || 0;
-        averages.grand[studentId].chemistry += examRecord.chemistry || 0;
-        averages.grand[studentId].total += examRecord.total || 0;
+      }
+    } else if (examType === "grand" && averages.grand[studentId]) {
+      if (hasValidPhysicsMarks) {
+        averages.grand[studentId].physics += examRecord.physics;
+      }
+      if (hasValidChemistryMarks) {
+        averages.grand[studentId].chemistry += examRecord.chemistry;
+      }
+      if (hasValidTotal) {
+        averages.grand[studentId].total += examRecord.total;
         averages.grand[studentId].count += 1;
       }
+    }
 
-      // Add to overall average
-      if (averages.overall[studentId]) {
-        averages.overall[studentId].physics += examRecord.physics || 0;
-        averages.overall[studentId].chemistry += examRecord.chemistry || 0;
-        averages.overall[studentId].total += examRecord.total || 0;
+    // Add to overall average only if valid marks exist
+    if (averages.overall[studentId]) {
+      if (hasValidPhysicsMarks) {
+        averages.overall[studentId].physics += examRecord.physics;
+      }
+      if (hasValidChemistryMarks) {
+        averages.overall[studentId].chemistry += examRecord.chemistry;
+      }
+      if (hasValidTotal) {
+        averages.overall[studentId].total += examRecord.total;
         averages.overall[studentId].count += 1;
       }
-    });
+    }
+  });
 
-    // Calculate final averages
-    Object.keys(averages).forEach((examType) => {
-      Object.keys(averages[examType]).forEach((studentId) => {
-        const studentAvg = averages[examType][studentId];
-        if (studentAvg.count > 0) {
-          studentAvg.physics = Math.round(
-            studentAvg.physics / studentAvg.count
+  // Calculate final averages
+  Object.keys(averages).forEach((examType) => {
+    Object.keys(averages[examType]).forEach((studentId) => {
+      const studentAvg = averages[examType][studentId];
+      
+      // Only calculate averages if we have valid data points
+      if (studentAvg.count > 0) {
+        // Calculate subject averages only if we have data for those subjects
+        if (studentAvg.physics > 0) {
+          const physicsCount = Math.max(
+            studentAvg.count,
+            Object.keys(examData).filter(key => {
+              const [examId, studId] = key.split('_');
+              const record = examData[key];
+              const examItem = exams.find(e => e.id === examId);
+              return studId === studentId && 
+                     (record.physics || 0) > 0 && 
+                     !(record.status === "Absent" || record.isAbsent) &&
+                     getExamType(examItem?.exam) === (examType === "overall" ? getExamType(examItem?.exam) : examType);
+            }).length
           );
-          studentAvg.chemistry = Math.round(
-            studentAvg.chemistry / studentAvg.count
-          );
-          studentAvg.total = Math.round(studentAvg.total / studentAvg.count);
+          studentAvg.physics = Math.round(studentAvg.physics / physicsCount);
         }
-      });
-    });
-
-    return averages;
-  }, [examData, exams, revisionStudents]);
-  // Calculate expected marks for finals (200 target) - FIXED FOR JEE
-  const calculateExpectedMarks = useMemo(() => {
-    const expected = {};
-
-    revisionStudents.forEach((student) => {
-      const weekendAvg = calculateAverages.weekend[student.id];
-      const cumulativeAvg = calculateAverages.cumulative[student.id];
-      const grandAvg = calculateAverages.grand[student.id];
-      const overallAvg = calculateAverages.overall[student.id];
-
-      // Get the most relevant average
-      const currentAvg =
-        grandAvg.count > 0
-          ? grandAvg
-          : cumulativeAvg.count > 0
-          ? cumulativeAvg
-          : weekendAvg.count > 0
-          ? weekendAvg
-          : overallAvg;
-
-      if (currentAvg.count > 0) {
-        if (student.isCommonStudent) {
-          // For common students: Physics (100) + Chemistry (100) = Total 200
-          const predictedPhysics = Math.round((currentAvg.physics / 100) * 100);
-          const predictedChemistry = Math.round(
-            (currentAvg.chemistry / 100) * 100
+        
+        if (studentAvg.chemistry > 0) {
+          const chemistryCount = Math.max(
+            studentAvg.count,
+            Object.keys(examData).filter(key => {
+              const [examId, studId] = key.split('_');
+              const record = examData[key];
+              const examItem = exams.find(e => e.id === examId);
+              return studId === studentId && 
+                     (record.chemistry || 0) > 0 && 
+                     !(record.status === "Absent" || record.isAbsent) &&
+                     getExamType(examItem?.exam) === (examType === "overall" ? getExamType(examItem?.exam) : examType);
+            }).length
           );
-          const predictedTotal = predictedPhysics + predictedChemistry;
-
-          expected[student.id] = {
-            predictedTotal,
-            predictedPhysics,
-            predictedChemistry,
-            currentAverage: currentAvg.total,
-            currentPercentage: Math.round((currentAvg.total / 200) * 100),
-            improvementNeeded: 200 - predictedTotal,
-            progressPercentage: Math.round((predictedTotal / 200) * 100),
-          };
-        } else {
-          // For single subject students: Total 100 only
-          const predictedTotal = Math.round((currentAvg.physics / 100) * 100);
-
-          expected[student.id] = {
-            predictedTotal,
-            predictedPhysics: predictedTotal,
-            predictedChemistry: 0,
-            currentAverage: currentAvg.physics,
-            currentPercentage: Math.round(currentAvg.physics),
-            improvementNeeded: 100 - predictedTotal,
-            progressPercentage: Math.round((predictedTotal / 100) * 100),
-          };
+          studentAvg.chemistry = Math.round(studentAvg.chemistry / chemistryCount);
         }
-      } else {
-        // No data available
-        expected[student.id] = {
-          predictedTotal: 0,
-          predictedPhysics: 0,
-          predictedChemistry: 0,
-          currentAverage: 0,
-          currentPercentage: 0,
-          improvementNeeded: student.isCommonStudent ? 200 : 100,
-          progressPercentage: 0,
-        };
+        
+        studentAvg.total = Math.round(studentAvg.total / studentAvg.count);
       }
     });
+  });
 
-    return expected;
-  }, [calculateAverages, revisionStudents]);
+  return averages;
+}, [examData, exams, revisionStudents]);
+ // Calculate expected marks for finals (200 target) - UPDATED
+const calculateExpectedMarks = useMemo(() => {
+  const expected = {};
+
+  revisionStudents.forEach((student) => {
+    const weekendAvg = calculateAverages.weekend[student.id];
+    const cumulativeAvg = calculateAverages.cumulative[student.id];
+    const grandAvg = calculateAverages.grand[student.id];
+    const overallAvg = calculateAverages.overall[student.id];
+
+    // Get the most relevant average that has actual data
+    const currentAvg =
+      grandAvg.count > 0
+        ? grandAvg
+        : cumulativeAvg.count > 0
+        ? cumulativeAvg
+        : weekendAvg.count > 0
+        ? weekendAvg
+        : overallAvg.count > 0
+        ? overallAvg
+        : null;
+
+    if (currentAvg && currentAvg.count > 0) {
+      if (student.isCommonStudent) {
+        // For common students: Physics (100) + Chemistry (100) = Total 200
+        const predictedPhysics = Math.round((currentAvg.physics / 100) * 100);
+        const predictedChemistry = Math.round(
+          (currentAvg.chemistry / 100) * 100
+        );
+        const predictedTotal = predictedPhysics + predictedChemistry;
+
+        expected[student.id] = {
+          predictedTotal,
+          predictedPhysics,
+          predictedChemistry,
+          currentAverage: currentAvg.total,
+          currentPercentage: Math.round((currentAvg.total / 200) * 100),
+          improvementNeeded: 200 - predictedTotal,
+          progressPercentage: Math.round((predictedTotal / 200) * 100),
+        };
+      } else {
+        // For single subject students: Total 100 only
+        const predictedTotal = Math.round((currentAvg.physics / 100) * 100);
+
+        expected[student.id] = {
+          predictedTotal,
+          predictedPhysics: predictedTotal,
+          predictedChemistry: 0,
+          currentAverage: currentAvg.physics,
+          currentPercentage: Math.round(currentAvg.physics),
+          improvementNeeded: 100 - predictedTotal,
+          progressPercentage: Math.round((predictedTotal / 100) * 100),
+        };
+      }
+    } else {
+      // No valid data available
+      expected[student.id] = {
+        predictedTotal: 0,
+        predictedPhysics: 0,
+        predictedChemistry: 0,
+        currentAverage: 0,
+        currentPercentage: 0,
+        improvementNeeded: student.isCommonStudent ? 200 : 100,
+        progressPercentage: 0,
+        noData: true, // Flag to indicate no valid data
+      };
+    }
+  });
+
+  return expected;
+}, [calculateAverages, revisionStudents]);
 
   const handleEditExam = (examId, studentId, subject, existingData = null) => {
     if (!globalEditMode) return;
@@ -1128,200 +1192,204 @@ const renderSubjectMarks = (examItem, student, subject) => {
     </Dialog>
   );
 
-  // Render table footer with averages
-  const renderTableFooter = (examsList, examType) => {
-    const averages = calculateAverages[examType] || calculateAverages.overall;
+const renderTableFooter = (examsList, examType) => {
+  const averages = calculateAverages[examType] || calculateAverages.overall;
 
-    return (
-      <TableFooter>
-        <TableRow>
-          <FooterCell colSpan={3} sx={{ textAlign: "left", fontWeight: 700 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <TrendingUp sx={{ fontSize: 18, color: "#3b82f6" }} />
-              Average Marks (
-              {examType.charAt(0).toUpperCase() + examType.slice(1)})
-            </Box>
-          </FooterCell>
-          {revisionStudents.map((student) => {
-            const studentAvg = averages[student.id];
-            return student.isCommonStudent ? (
-              <React.Fragment key={student.id}>
-                <FooterCell>
-                  {studentAvg?.count > 0 ? `${studentAvg.physics}P` : "-"}
-                </FooterCell>
-                <FooterCell>
-                  {studentAvg?.count > 0 ? `${studentAvg.chemistry}C` : "-"}
-                </FooterCell>
-              </React.Fragment>
-            ) : (
-              <FooterCell key={student.id}>
-                {studentAvg?.count > 0 ? `${studentAvg.physics}P` : "-"}
-              </FooterCell>
-            );
-          })}
-        </TableRow>
-      </TableFooter>
-    );
-  };
-
-  const renderPredictionsRow = () => {
-    return (
-      <PredictionRow>
-        <TableCell
-          colSpan={3}
-          sx={{ textAlign: "left", fontWeight: 700, padding: "16px 8px" }}
-        >
+  return (
+    <TableFooter>
+      <TableRow>
+        <FooterCell colSpan={3} sx={{ textAlign: "left", fontWeight: 700 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <EmojiEvents sx={{ fontSize: 20, color: "#f59e0b" }} />
-            Final JEE Predictions (Target:{" "}
-            {revisionStudents.some((s) => !s.isCommonStudent)
-              ? "100 (Single) / 200 (Common)"
-              : "200"}
-            )
+            <TrendingUp sx={{ fontSize: 18, color: "#3b82f6" }} />
+            Average Marks (
+            {examType.charAt(0).toUpperCase() + examType.slice(1)})
             <Typography variant="caption" sx={{ color: "#64748b", ml: 1 }}>
-              Based on current performance
+              (Based on entered marks only)
             </Typography>
           </Box>
-        </TableCell>
+        </FooterCell>
         {revisionStudents.map((student) => {
-          const prediction = calculateExpectedMarks[student.id];
+          const studentAvg = averages[student.id];
+          const hasValidData = studentAvg?.count > 0;
+          
           return student.isCommonStudent ? (
             <React.Fragment key={student.id}>
-              <TableCell
-                sx={{
-                  textAlign: "center",
-                  padding: "16px 8px",
-                  fontWeight: 600,
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 700, color: "#dc2626" }}
-                  >
-                    {prediction?.predictedPhysics || 0}/100
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "#64748b" }}>
-                    {Math.round((prediction?.predictedPhysics / 100) * 100)}%
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={
-                      prediction
-                        ? Math.min(
-                            100,
-                            (prediction.predictedPhysics / 100) * 100
-                          )
-                        : 0
-                    }
-                    sx={{
-                      height: 6,
-                      borderRadius: 3,
-                      mt: 0.5,
-                      backgroundColor: "#fecaca",
-                      "& .MuiLinearProgress-bar": {
-                        backgroundColor:
-                          prediction?.predictedPhysics >= 90
-                            ? "#10b981"
-                            : prediction?.predictedPhysics >= 70
-                            ? "#3b82f6"
-                            : "#dc2626",
-                      },
-                    }}
-                  />
-                </Box>
-              </TableCell>
-              <TableCell
-                sx={{
-                  textAlign: "center",
-                  padding: "16px 8px",
-                  fontWeight: 600,
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 700, color: "#dc2626" }}
-                  >
-                    {prediction?.predictedChemistry || 0}/100
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "#64748b" }}>
-                    {Math.round((prediction?.predictedChemistry / 100) * 100)}%
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={
-                      prediction
-                        ? Math.min(
-                            100,
-                            (prediction.predictedChemistry / 100) * 100
-                          )
-                        : 0
-                    }
-                    sx={{
-                      height: 6,
-                      borderRadius: 3,
-                      mt: 0.5,
-                      backgroundColor: "#fecaca",
-                      "& .MuiLinearProgress-bar": {
-                        backgroundColor:
-                          prediction?.predictedChemistry >= 90
-                            ? "#10b981"
-                            : prediction?.predictedChemistry >= 70
-                            ? "#3b82f6"
-                            : "#dc2626",
-                      },
-                    }}
-                  />
-                </Box>
-              </TableCell>
+              <FooterCell>
+                {hasValidData ? `${studentAvg.physics}P` : "No data"}
+              </FooterCell>
+              <FooterCell>
+                {hasValidData ? `${studentAvg.chemistry}C` : "No data"}
+              </FooterCell>
             </React.Fragment>
           ) : (
-            <TableCell
-              key={student.id}
-              sx={{ textAlign: "center", padding: "16px 8px", fontWeight: 600 }}
-            >
-              <Box>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 700, color: "#dc2626" }}
-                >
-                  {prediction?.predictedTotal || 0}/100
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#64748b" }}>
-                  {prediction?.currentPercentage || 0}% current
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={prediction?.progressPercentage || 0}
-                  sx={{
-                    height: 6,
-                    borderRadius: 3,
-                    mt: 0.5,
-                    backgroundColor: "#fecaca",
-                    "& .MuiLinearProgress-bar": {
-                      backgroundColor:
-                        prediction?.progressPercentage >= 85
-                          ? "#10b981"
-                          : prediction?.progressPercentage >= 70
-                          ? "#3b82f6"
-                          : "#dc2626",
-                    },
-                  }}
-                />
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#64748b", mt: 0.5, display: "block" }}
-                >
-                  Need: +{prediction?.improvementNeeded || 100}
-                </Typography>
-              </Box>
-            </TableCell>
+            <FooterCell key={student.id}>
+              {hasValidData ? `${studentAvg.physics}P` : "No data"}
+            </FooterCell>
           );
         })}
-      </PredictionRow>
-    );
-  };
+      </TableRow>
+    </TableFooter>
+  );
+};
+
+  // const renderPredictionsRow = () => {
+  //   return (
+  //     <PredictionRow>
+  //       <TableCell
+  //         colSpan={3}
+  //         sx={{ textAlign: "left", fontWeight: 700, padding: "16px 8px" }}
+  //       >
+  //         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+  //           <EmojiEvents sx={{ fontSize: 20, color: "#f59e0b" }} />
+  //           Final JEE Predictions (Target:{" "}
+  //           {revisionStudents.some((s) => !s.isCommonStudent)
+  //             ? "100 (Single) / 200 (Common)"
+  //             : "200"}
+  //           )
+  //           <Typography variant="caption" sx={{ color: "#64748b", ml: 1 }}>
+  //             Based on current performance
+  //           </Typography>
+  //         </Box>
+  //       </TableCell>
+  //       {revisionStudents.map((student) => {
+  //         const prediction = calculateExpectedMarks[student.id];
+  //         return student.isCommonStudent ? (
+  //           <React.Fragment key={student.id}>
+  //             <TableCell
+  //               sx={{
+  //                 textAlign: "center",
+  //                 padding: "16px 8px",
+  //                 fontWeight: 600,
+  //               }}
+  //             >
+  //               <Box>
+  //                 <Typography
+  //                   variant="body2"
+  //                   sx={{ fontWeight: 700, color: "#dc2626" }}
+  //                 >
+  //                   {prediction?.predictedPhysics || 0}/100
+  //                 </Typography>
+  //                 <Typography variant="caption" sx={{ color: "#64748b" }}>
+  //                   {Math.round((prediction?.predictedPhysics / 100) * 100)}%
+  //                 </Typography>
+  //                 <LinearProgress
+  //                   variant="determinate"
+  //                   value={
+  //                     prediction
+  //                       ? Math.min(
+  //                           100,
+  //                           (prediction.predictedPhysics / 100) * 100
+  //                         )
+  //                       : 0
+  //                   }
+  //                   sx={{
+  //                     height: 6,
+  //                     borderRadius: 3,
+  //                     mt: 0.5,
+  //                     backgroundColor: "#fecaca",
+  //                     "& .MuiLinearProgress-bar": {
+  //                       backgroundColor:
+  //                         prediction?.predictedPhysics >= 90
+  //                           ? "#10b981"
+  //                           : prediction?.predictedPhysics >= 70
+  //                           ? "#3b82f6"
+  //                           : "#dc2626",
+  //                     },
+  //                   }}
+  //                 />
+  //               </Box>
+  //             </TableCell>
+  //             <TableCell
+  //               sx={{
+  //                 textAlign: "center",
+  //                 padding: "16px 8px",
+  //                 fontWeight: 600,
+  //               }}
+  //             >
+  //               <Box>
+  //                 <Typography
+  //                   variant="body2"
+  //                   sx={{ fontWeight: 700, color: "#dc2626" }}
+  //                 >
+  //                   {prediction?.predictedChemistry || 0}/100
+  //                 </Typography>
+  //                 <Typography variant="caption" sx={{ color: "#64748b" }}>
+  //                   {Math.round((prediction?.predictedChemistry / 100) * 100)}%
+  //                 </Typography>
+  //                 <LinearProgress
+  //                   variant="determinate"
+  //                   value={
+  //                     prediction
+  //                       ? Math.min(
+  //                           100,
+  //                           (prediction.predictedChemistry / 100) * 100
+  //                         )
+  //                       : 0
+  //                   }
+  //                   sx={{
+  //                     height: 6,
+  //                     borderRadius: 3,
+  //                     mt: 0.5,
+  //                     backgroundColor: "#fecaca",
+  //                     "& .MuiLinearProgress-bar": {
+  //                       backgroundColor:
+  //                         prediction?.predictedChemistry >= 90
+  //                           ? "#10b981"
+  //                           : prediction?.predictedChemistry >= 70
+  //                           ? "#3b82f6"
+  //                           : "#dc2626",
+  //                     },
+  //                   }}
+  //                 />
+  //               </Box>
+  //             </TableCell>
+  //           </React.Fragment>
+  //         ) : (
+  //           <TableCell
+  //             key={student.id}
+  //             sx={{ textAlign: "center", padding: "16px 8px", fontWeight: 600 }}
+  //           >
+  //             <Box>
+  //               <Typography
+  //                 variant="body2"
+  //                 sx={{ fontWeight: 700, color: "#dc2626" }}
+  //               >
+  //                 {prediction?.predictedTotal || 0}/100
+  //               </Typography>
+  //               <Typography variant="caption" sx={{ color: "#64748b" }}>
+  //                 {prediction?.currentPercentage || 0}% current
+  //               </Typography>
+  //               <LinearProgress
+  //                 variant="determinate"
+  //                 value={prediction?.progressPercentage || 0}
+  //                 sx={{
+  //                   height: 6,
+  //                   borderRadius: 3,
+  //                   mt: 0.5,
+  //                   backgroundColor: "#fecaca",
+  //                   "& .MuiLinearProgress-bar": {
+  //                     backgroundColor:
+  //                       prediction?.progressPercentage >= 85
+  //                         ? "#10b981"
+  //                         : prediction?.progressPercentage >= 70
+  //                         ? "#3b82f6"
+  //                         : "#dc2626",
+  //                   },
+  //                 }}
+  //               />
+  //               <Typography
+  //                 variant="caption"
+  //                 sx={{ color: "#64748b", mt: 0.5, display: "block" }}
+  //               >
+  //                 Need: +{prediction?.improvementNeeded || 100}
+  //               </Typography>
+  //             </Box>
+  //           </TableCell>
+  //         );
+  //       })}
+  //     </PredictionRow>
+  //   );
+  // };
   const renderExamTable = (examsList, title, examType = "overall") => {
     return (
       <Box sx={{ mb: 4 }}>
@@ -1581,7 +1649,7 @@ const renderSubjectMarks = (examItem, student, subject) => {
 
             {/* Averages Footer */}
             {renderTableFooter(examsList, examType)}
-            {renderPredictionsRow()}
+            {/* {renderPredictionsRow()} */}
 
             {/* Final Predictions Row */}
           </Table>

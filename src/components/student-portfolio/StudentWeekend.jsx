@@ -463,8 +463,8 @@ const StudentWeekend = () => {
                 highlightScope: { fade: "global", highlight: "item" },
               },
             ]}
-            height={190}
-            width={200}
+            height={170}
+            width={170}
             slotProps={{
               legend: {
                 hidden: true,
@@ -635,6 +635,23 @@ const StudentWeekend = () => {
         </Alert>
       );
     }
+ // Calculate total progress across both years
+  const totalCompleted = (firstYear.completed || 0) + (secondYear.completed || 0);
+  const totalPending = (firstYear.pending || 0) + (secondYear.pending || 0);
+  const totalLessons = (firstYear.total || 0) + (secondYear.total || 0);
+  const totalProgressPercentage = totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0;
+
+  // Combine completed lessons from both years
+  const allCompletedLessons = [
+    ...(firstYear.completedLessons || []).map(lesson => `1st Year: ${lesson}`),
+    ...(secondYear.completedLessons || []).map(lesson => `2nd Year: ${lesson}`)
+  ];
+
+  // Combine pending lessons from both years
+  const allPendingLessons = [
+    ...(firstYear.pendingLessons || []).map(lesson => `1st Year: ${lesson}`),
+    ...(secondYear.pendingLessons || []).map(lesson => `2nd Year: ${lesson}`)
+  ];
 
     const LessonsTooltip = ({ lessons, title, children }) => (
       <Tooltip
@@ -678,6 +695,167 @@ const StudentWeekend = () => {
     return (
       <Grid container spacing={3} sx={{ height: "100%" }}>
         {/* 1st Year Card */}
+        <Grid item xs={12} lg={4}>
+        <Card
+          elevation={4}
+          sx={{
+            background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+            borderRadius: "16px",
+            color: "white",
+            position: "relative",
+            overflow: "visible",
+            height: "100%",
+            minHeight: 220,
+            display: "flex",
+            flexDirection: "column",
+            "&:before": {
+              content: '""',
+              position: "absolute",
+              top: -2,
+              left: -2,
+              right: -2,
+              bottom: -2,
+              background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+              borderRadius: "18px",
+              zIndex: -1,
+              opacity: 0.6,
+              filter: "blur(10px)",
+            },
+          }}
+        >
+          <CardContent
+            sx={{
+              p: 1,
+              position: "relative",
+              zIndex: 1,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+              <Box
+                sx={{
+                  background: "rgba(255,255,255,0.2)",
+                  borderRadius: "12px",
+                  p: 1,
+                  mr: 2,
+                  backdropFilter: "blur(10px)",
+                }}
+              >
+                <SchoolIcon sx={{ fontSize: 28, color: "white" }} />
+              </Box>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, fontSize: "1.1rem" }}
+              >
+                Total Progress
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 2,
+                textAlign: "center",
+                mb: 3,
+                flex: 1,
+              }}
+            >
+              {/* Total */}
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
+                  {totalLessons}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ opacity: 0.9, fontSize: "0.75rem" }}
+                >
+                  Total
+                </Typography>
+              </Box>
+
+              {/* Completed */}
+              <LessonsTooltip
+                lessons={allCompletedLessons}
+                title="All Completed Lessons"
+              >
+                <Box>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontWeight: 800, mb: 0.5, color: "#86efac" }}
+                  >
+                    {totalCompleted}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ opacity: 0.9, fontSize: "0.75rem" }}
+                  >
+                    Completed
+                  </Typography>
+                </Box>
+              </LessonsTooltip>
+
+              {/* Pending */}
+              <LessonsTooltip
+                lessons={allPendingLessons}
+                title="All Pending Lessons"
+              >
+                <Box>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontWeight: 800, mb: 0.5, color: "#fbbf24" }}
+                  >
+                    {totalPending}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ opacity: 0.9, fontSize: "0.75rem" }}
+                  >
+                    Pending
+                  </Typography>
+                </Box>
+              </LessonsTooltip>
+            </Box>
+
+            {/* Progress bar */}
+            <Box sx={{ mt: "auto" }}>
+              <Box
+                sx={{
+                  background: "rgba(255,255,255,0.2)",
+                  borderRadius: "10px",
+                  height: "6px",
+                  overflow: "hidden",
+                  mb: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    background:
+                      "linear-gradient(90deg, #86efac 0%, #4ade80 100%)",
+                    height: "100%",
+                    width: `${totalProgressPercentage}%`,
+                    borderRadius: "10px",
+                    transition: "width 0.5s ease-in-out",
+                  }}
+                />
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  textAlign: "center",
+                  opacity: 0.8,
+                }}
+              >
+                {totalProgressPercentage}% Complete
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      </Grid>
+
         <Grid item xs={12} lg={6}>
           <Card
             elevation={4}
@@ -708,7 +886,7 @@ const StudentWeekend = () => {
           >
             <CardContent
               sx={{
-                p: 3,
+                p: 1,
                 position: "relative",
                 zIndex: 1,
                 flex: 1,
@@ -879,7 +1057,7 @@ const StudentWeekend = () => {
           >
             <CardContent
               sx={{
-                p: 3,
+                p: 1,
                 position: "relative",
                 zIndex: 1,
                 flex: 1,
