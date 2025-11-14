@@ -22,13 +22,16 @@ import {
   AccountBalanceWallet,
   CalendarToday,
   TrendingUp,
+  Schedule,
 } from "@mui/icons-material";
+import { useSelector } from "react-redux";
 
-const PaymentHistoryTable = ({ payments = [] }) => {
-  const { rows, totalPaid, paidCount, totalAmount } = useMemo(() => {
+const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
+  const { rows, totalPaid, paidCount, totalAmount, pendingInstallment } = useMemo(() => {
     let total = 0;
     let paid = 0;
     let totalPossible = 0;
+    let pendingInstallment = null;
 
     const rows = payments
       .map((p) => {
@@ -69,14 +72,34 @@ const PaymentHistoryTable = ({ payments = [] }) => {
       .filter(Boolean);
 
     rows.sort((a, b) => b.rawDate - a.rawDate);
+
+    // Check for pending revision program installment
+    const currentStudent = useSelector((state) => state.auth?.currentStudent);
+    if (currentStudent?.isRevisionProgramJEEMains2026Student && currentStudent?.revisionProgramFee) {
+      const { installments } = currentStudent.revisionProgramFee;
+      
+      if (installments.installment2 && installments.installment2.status === "unpaid") {
+        pendingInstallment = {
+          id: "pending-installment-2",
+          date: installments.installment2.dueDate,
+          month: "2025-11", // November 2025
+          paid: false,
+          amount: installments.installment2.amount,
+          rawDate: new Date(2025, 10, 15), // Nov 15, 2025
+          isPending: true,
+          dueDate: installments.installment2.dueDate
+        };
+      }
+    }
+
     return {
       rows,
       totalPaid: total,
       paidCount: paid,
       totalAmount: totalPossible,
+      pendingInstallment,
     };
-  }, [payments]);
-  console.log("rows",rows)
+  }, [payments, monthlyFee]);
 
   const currencyFormatter = new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -88,7 +111,7 @@ const PaymentHistoryTable = ({ payments = [] }) => {
   const paymentRate =
     payments.length > 0 ? (paidCount / payments.length) * 100 : 0;
 
-  if (!rows.length) {
+  if (!rows.length && !pendingInstallment) {
     return (
       <Box
         sx={{
@@ -185,14 +208,113 @@ const PaymentHistoryTable = ({ payments = [] }) => {
           </TableHead>
 
           <TableBody>
+            {/* Show pending installment first if exists */}
+            {pendingInstallment && (
+              <TableRow
+                key={pendingInstallment.id}
+                sx={{
+                  "&:last-child td, &:last-child th": { border: 0 },
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #fffbf0 0%, #fef3c7 100%)",
+                    transform: "translateY(-1px)",
+                    transition: "all 0.2s ease",
+                  },
+                  background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+                  border: "2px solid #f59e0b",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <TableCell
+                  sx={{
+                    textAlign: "center",
+                    py: 2.5,
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    sx={{ fontSize: "15px", color: "#d97706" }}
+                  >
+                    {pendingInstallment.month
+                      ? dayjs(pendingInstallment.month, "YYYY-MM").format("MMM YYYY")
+                      : "N/A"}
+                  </Typography>
+                </TableCell>
+
+                <TableCell
+                  sx={{
+                    textAlign: "center",
+                    py: 2.5,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <Schedule sx={{ fontSize: 18, color: "#d97706" }} />
+                    <Typography
+                      variant="body1"
+                      sx={{ fontSize: "15px", color: "#d97706", fontWeight: 600 }}
+                    >
+                      Due: {pendingInstallment.dueDate}
+                    </Typography>
+                  </Box>
+                </TableCell>
+
+                <TableCell
+                  sx={{
+                    textAlign: "center",
+                    py: 2.5,
+                  }}
+                >
+                  <Chip
+                    icon={<Schedule />}
+                    label="Pending"
+                    color="warning"
+                    size="medium"
+                    variant="filled"
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: "14px",
+                      px: 1,
+                      minWidth: 100,
+                      background: "#f59e0b",
+                    }}
+                  />
+                </TableCell>
+
+                <TableCell
+                  sx={{
+                    textAlign: "center",
+                    py: 2.5,
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    sx={{
+                      fontSize: "15px",
+                      color: "warning.main",
+                    }}
+                  >
+                    {currencyFormatter.format(pendingInstallment.amount)}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+
+            {/* Regular payment rows */}
             {rows.map((row, index) => (
               <TableRow
                 key={row.id}
                 sx={{
                   "&:last-child td, &:last-child th": { border: 0 },
                   "&:hover": {
-                    background:
-                      "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
+                    background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
                     transform: "translateY(-1px)",
                     transition: "all 0.2s ease",
                   },
@@ -284,6 +406,7 @@ const PaymentHistoryTable = ({ payments = [] }) => {
                 </TableCell>
               </TableRow>
             ))}
+            
             <TableRow
               sx={{
                 background: "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)",
@@ -348,6 +471,7 @@ PaymentHistoryTable.propTypes = {
       month: PropTypes.string,
     })
   ).isRequired,
+  monthlyFee: PropTypes.number,
 };
 
 export default PaymentHistoryTable;

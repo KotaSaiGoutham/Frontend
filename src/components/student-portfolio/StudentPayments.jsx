@@ -14,6 +14,8 @@ const StudentPayments = () => {
     }
   }, [currentStudent?.id, dispatch]);
 console.log("payments",payments)
+console.log("currentStudent",currentStudent)
+
   return (
     <div className="student-portfolio-tab premium light-theme">
       <div className="tab-content premium">

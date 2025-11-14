@@ -333,3 +333,174 @@
 .sidebar-nav-scroll-container {
     overflow-x: hidden;
 }
+
+/* Student Search Styles */
+.student-search-container {
+  padding: 15px 20px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent; /* Changed from #f8f9fa */
+}
+
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--sidebar-text); /* Changed from #666 */
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.student-search-input {
+  width: 100%;
+  padding: 10px 10px 10px 35px;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Changed from #ddd */
+  border-radius: 8px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.1); /* Changed from white */
+  color: var(--sidebar-text); /* Added text color */
+  transition: all 0.3s ease;
+}
+
+.student-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5); /* Placeholder color */
+}
+
+.student-search-input:focus {
+  outline: none;
+  border-color: var(--bright-yellow); /* Changed from #667eea */
+  box-shadow: 0 0 0 2px rgba(242, 110, 38, 0.2); /* Using your orange color */
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.search-results-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--sidebar-active-bg); /* Changed from white */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 5px;
+}
+
+.search-result-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease;
+  color: var(--sidebar-text);
+}
+
+.search-result-item:hover {
+  background-color: var(--sidebar-hover-bg); /* Changed from #f5f5f5 */
+  color: var(--sidebar-active-text);
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.student-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--sidebar-text); /* Changed from #333 */
+  margin-bottom: 2px;
+}
+
+.student-details {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7); /* Changed from #666 */
+  opacity: 0.8;
+}
+
+.no-results {
+  padding: 15px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6); /* Changed from #999 */
+  font-style: italic;
+}
+
+/* Navigation Toggle Styles - Fixed to match dark theme */
+.navigation-toggle-container {
+  padding: 15px 20px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent; /* Changed from #f8f9fa */
+}
+
+.navigation-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.1); /* Changed from #e9ecef */
+  border-radius: 8px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7); /* Changed from #666 */
+  transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.toggle-btn.active {
+  background: rgba(255, 255, 255, 0.2); /* Changed from white */
+  color: var(--bright-yellow); /* Changed from #667eea */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-icon {
+  font-size: 12px;
+}
+
+.toggle-text {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Ensure sidebar has proper z-index for dropdown */
+.sidebar {
+  z-index: 1000;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .student-search-container {
+    padding: 10px 15px 5px;
+  }
+  
+  .navigation-toggle-container {
+    padding: 10px 15px 5px;
+  }
+  
+  .search-results-dropdown {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    max-height: 150px;
+  }
+}

@@ -19,14 +19,17 @@ import {
 import { Close as CloseIcon } from "@mui/icons-material";
 import { useSelector, useDispatch } from "react-redux";
 import { clearMonthlyPaymentDetails } from "../../redux/actions";
+
 const MonthlyPaymentDetailsDialog = () => {
   const dispatch = useDispatch();
   const { monthlyPaymentDetails, selectedMonth, paymentDetailsLoading } = useSelector(
     state => state.expenditures
   );
-const handleClose = () => {
-    dispatch(clearMonthlyPaymentDetails()); // This will clear the data and close the dialog
+
+  const handleClose = () => {
+    dispatch(clearMonthlyPaymentDetails());
   };
+
   const formatMonthYear = (monthYear) => {
     if (!monthYear) return '';
     const [year, month] = monthYear.split('-');
@@ -74,20 +77,21 @@ const handleClose = () => {
         color: 'white',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        py: 2
       }}>
         <Box>
-          <Typography variant="h6" component="div">
+          <Typography variant="h6" component="div" fontSize="1.25rem">
             Payment Details - {formatMonthYear(selectedMonth)}
           </Typography>
-          <Typography variant="subtitle2" sx={{ opacity: 0.9, mt: 0.5 }}>
+          <Typography variant="subtitle2" sx={{ opacity: 0.9, mt: 0.5 }} fontSize="0.9rem">
             Total: {formatAmount(totalAmount)} • {monthlyPaymentDetails.length} payments
           </Typography>
         </Box>
         <IconButton
           onClick={handleClose}
           sx={{ color: 'white' }}
-          size="large"
+          size="medium"
         >
           <CloseIcon />
         </IconButton>
@@ -98,12 +102,61 @@ const handleClose = () => {
           <Table sx={{ minWidth: 650 }}>
             <TableHead sx={{ bgcolor: 'grey.50' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Student Name</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Stream</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Year</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Source</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Paid On</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'right' }}>Amount</TableCell>
+                <TableCell 
+                  sx={{ 
+                    fontWeight: 'bold', 
+                    fontSize: '1.3rem',
+                    textAlign: 'center',
+                    px: 1.5,
+                    py: 1.5
+                  }}
+                >
+                  Student Name
+                </TableCell>
+                <TableCell 
+                  sx={{ 
+                    fontWeight: 'bold', 
+                    fontSize: '1.3rem',
+                    textAlign: 'center',
+                    px: 1.5,
+                    py: 1.5
+                  }}
+                >
+                  Stream
+                </TableCell>
+                <TableCell 
+                  sx={{ 
+                    fontWeight: 'bold', 
+                    fontSize: '1.3rem',
+                    textAlign: 'center',
+                    px: 1.5,
+                    py: 1.5
+                  }}
+                >
+                  Year
+                </TableCell>
+                <TableCell 
+                  sx={{ 
+                    fontWeight: 'bold', 
+                    fontSize: '1.3rem',
+                    textAlign: 'center',
+                    px: 1.5,
+                    py: 1.5
+                  }}
+                >
+                  Paid On
+                </TableCell>
+                <TableCell 
+                  sx={{ 
+                    fontWeight: 'bold', 
+                    fontSize: '1.3rem',
+                    textAlign: 'center',
+                    px: 1.5,
+                    py: 1.5
+                  }}
+                >
+                  Amount
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -115,36 +168,58 @@ const handleClose = () => {
                     '&:hover': { bgcolor: 'action.hover' }
                   }}
                 >
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="medium">
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center',
+                      px: 1.5,
+                      py: 1.25
+                    }}
+                  >
+                    <Typography variant="body1" fontWeight="medium" fontSize="1.2rem">
                       {payment.studentName}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center',
+                      px: 1.5,
+                      py: 1.25
+                    }}
+                  >
+                    <Typography variant="body1" fontSize="1.2rem">
                       {payment.stream}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center',
+                      px: 1.5,
+                      py: 1.25
+                    }}
+                  >
+                    <Typography variant="body1" fontSize="1.2rem">
                       {payment.year}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={payment.source} 
-                      size="small" 
-                      color="secondary" 
-                      variant="filled"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary">
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center',
+                      px: 1.5,
+                      py: 1.25
+                    }}
+                  >
+                    <Typography variant="body1" color="text.secondary" fontSize="1.2rem">
                       {formatDate(payment.paidOn)}
                     </Typography>
                   </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body1" fontWeight="bold" color="success.main">
+                  <TableCell 
+                    sx={{ 
+                      textAlign: 'center',
+                      px: 1.5,
+                      py: 1.25
+                    }}
+                  >
+                    <Typography variant="body1" fontWeight="bold" color="success.main" fontSize="1.2rem">
                       {formatAmount(payment.amount)}
                     </Typography>
                   </TableCell>
@@ -156,20 +231,27 @@ const handleClose = () => {
       </DialogContent>
 
       <DialogActions sx={{ 
-        p: 3, 
-        bgcolor: 'grey.50',
-        borderTop: '1px solid',
-        borderColor: 'divider'
-      }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-          <Typography variant="h6" color="primary.main">
-            Total Collection
-          </Typography>
-          <Typography variant="h5" fontWeight="bold" color="success.main">
-            {formatAmount(totalAmount)}
-          </Typography>
-        </Box>
-      </DialogActions>
+  p: 2, 
+  bgcolor: 'grey.50',
+  borderTop: '1px solid',
+  borderColor: 'divider'
+}}>
+  <Box sx={{ 
+    display: 'flex', 
+    justifyContent: 'flex-end', 
+    width: '100%', 
+    alignItems: 'center',
+    gap: 2,
+    pr: 4.5 // Adjust this value to align with the Amount column
+  }}>
+    <Typography variant="h6" color="primary.main" fontSize="1.1rem">
+      Total Collection
+    </Typography>
+    <Typography variant="h5" fontWeight="bold" color="success.main" fontSize="1.3rem" sx={{ minWidth: '120px', textAlign: 'center' }}>
+      {formatAmount(totalAmount)}
+    </Typography>
+  </Box>
+</DialogActions>
     </Dialog>
   );
 };

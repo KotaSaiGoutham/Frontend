@@ -102,7 +102,7 @@ const StudentResults = () => {
             loading={studentExamsLoading}
           />
         </div>
-      </div>
+      </div> 
 
       {/* Add Marks Modal */}
       {showAddMarksModal && currentStudent && (

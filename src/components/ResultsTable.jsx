@@ -555,7 +555,6 @@ const ResultsTable = ({
 
   // Prepare chart series data
   const dates = chartData.map((item) => item.date);
-  console;
   const excellentSeries = chartData.map((item) =>
     item.percentage > 90 ? item.subjectMarks : null
   );
@@ -569,421 +568,224 @@ const ResultsTable = ({
     item.percentage < 50 ? item.subjectMarks : null
   );
 
+  // Fixed renderExamTable function using regular HTML table
+const renderExamTable = (examsList) => {
+  return (
+    <div style={{ marginBottom: "25px" }}>
+      <div
+        style={{
+          border: "1px solid #e2e8f0",
+          borderRadius: "8px",
+          background: "white",
+          overflow: "auto",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          <thead>
+            <tr>
+              <th
+                style={{
+                  padding: "18px 8px",
+                  textAlign: "center",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  fontWeight: "700",
+                  color: "white",
+                  fontSize: "16px",
+                }}
+              >
+                S.No.
+              </th>
+              <th
+                style={{
+                  padding: "18px 8px",
+                  textAlign: "center",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  fontWeight: "700",
+                  color: "white",
+                  fontSize: "16px",
+                }}
+              >
+                Date & Day
+              </th>
+              <th
+                style={{
+                  padding: "18px 8px",
+                  textAlign: "center",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  fontWeight: "700",
+                  color: "white",
+                  fontSize: "16px",
+                }}
+              >
+                Type of Exam
+              </th>
+              <th
+                style={{
+                  padding: "18px 8px",
+                  textAlign: "center",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  fontWeight: "700",
+                  color: "#f59e0b",
+                  fontSize: "16px",
+                }}
+              >
+                Physics
+              </th>
+              <th
+                style={{
+                  padding: "18px 8px",
+                  textAlign: "center",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  fontWeight: "700",
+                  color: "#10b981",
+                  fontSize: "16px",
+                }}
+              >
+                Chemistry
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {examsList.map((exam, index) => {
+              const examDate = new Date(exam.date);
+              const dayOfWeek = examDate.toLocaleDateString("en-IN", {
+                weekday: "long",
+              });
+              const formattedDate = examDate.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              });
+
+              return (
+                <tr
+                  key={exam.id}
+                  style={{
+                    borderBottom: "1px solid #e2e8f0",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#f8fafc";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }}
+                >
+                  <td
+                    style={{
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      fontSize: "16px",
+                      color: "#475569",
+                      fontWeight: "700",
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
+                    }}
+                  >
+                    {index + 1}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      fontSize: "15px",
+                      color: "#1e293b",
+                      fontWeight: "600",
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
+                      
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: "700", marginBottom: "4px" }}>
+                        {formattedDate}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          color: "#64748b",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {dayOfWeek}
+                      </div>
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 8px",
+                      fontSize: "15px",
+                      color: "#475569",
+                      fontWeight: "600",
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
+                                            textAlign: "center",
+
+                    }}
+                  >
+                    {exam.examName}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      fontSize: "16px",
+                      fontWeight: "800",
+                      color: "#f59e0b",
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
+                    }}
+                  >
+                    {exam.physics || 0}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      fontSize: "16px",
+                      fontWeight: "800",
+                      color: "#10b981",
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
+                    }}
+                  >
+                    {exam.chemistry || 0}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
   return (
     <div style={{ padding: "0" }}>
       {/* Table and Charts Side by Side - 70% Table, 30% Chart */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "70% 28%", // 70% for table, 28% for chart (2% gap)
-          gap: "2%", // Reduced gap to fit better
+          gridTemplateColumns: "70% 28%",
+          gap: "2%",
           marginBottom: "25px",
         }}
       >
-        {/* Results Table - 70% width */}
-        <div
-          style={{
-            background: "white",
-            borderRadius: "16px",
-            border: "1px solid #e5e7eb",
-            overflow: "hidden",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-          }}
-        >
-          <div
-            style={{
-              background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-              padding: "16px 20px",
-              color: "white",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.2)",
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "10px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backdropFilter: "blur(10px)",
-                }}
-              >
-                <FaUserGraduate style={{ fontSize: "18px" }} />
-              </div>
-              <div>
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: "18px",
-                    fontWeight: "700",
-                    marginBottom: "4px",
-                  }}
-                >
-                  Exam Performance History
-                </h3>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "12px",
-                    opacity: 0.9,
-                  }}
-                >
-                  Detailed analysis of all assessments
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "12px",
-              }}
-            >
-              <thead>
-                <tr style={{ background: "#f8fafc" }}>
-                  <th
-                    onClick={() => handleSort("examName")}
-                    style={{
-                      padding: "16px 20px",
-                      textAlign: "left",
-                      fontWeight: "600",
-                      color: "#374151",
-                      borderBottom: "2px solid #e5e7eb",
-                      cursor: "pointer",
-                      userSelect: "none",
-                      minWidth: "180px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      <FaBook style={{ color: "#4f46e5", fontSize: "12px" }} />
-                      Exam & Topic
-                      {getSortIcon("examName")}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort("examDate")}
-                    style={{
-                      padding: "16px 20px",
-                      textAlign: "left",
-                      fontWeight: "600",
-                      color: "#374151",
-                      borderBottom: "2px solid #e5e7eb",
-                      cursor: "pointer",
-                      userSelect: "none",
-                      minWidth: "100px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      <FaCalendarAlt
-                        style={{ color: "#4f46e5", fontSize: "12px" }}
-                      />
-                      Date
-                      {getSortIcon("examDate")}
-                    </div>
-                  </th>
-                  <th
-                    style={{
-                      padding: "16px 20px",
-                      textAlign: "left",
-                      fontWeight: "600",
-                      color: "#374151",
-                      borderBottom: "2px solid #e5e7eb",
-                      minWidth: "200px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      <FaChartLine
-                        style={{ color: "#4f46e5", fontSize: "12px" }}
-                      />
-                      Subject Scores
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort("percentage")}
-                    style={{
-                      padding: "16px 20px",
-                      textAlign: "left",
-                      fontWeight: "600",
-                      color: "#374151",
-                      borderBottom: "2px solid #e5e7eb",
-                      cursor: "pointer",
-                      userSelect: "none",
-                      minWidth: "120px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      Performance
-                      {getSortIcon("percentage")}
-                    </div>
-                  </th>
-                  <th
-                    style={{
-                      padding: "16px 20px",
-                      textAlign: "left",
-                      fontWeight: "600",
-                      color: "#374151",
-                      borderBottom: "2px solid #e5e7eb",
-                      minWidth: "100px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      <FaAward style={{ color: "#4f46e5", fontSize: "12px" }} />
-                      Grade
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedExams.map((exam, index) => {
-                  const previousExam =
-                    index > 0 ? sortedExams[index - 1] : null;
-                  const trend = getPerformanceTrend(
-                    exam.percentage,
-                    previousExam?.percentage
-                  );
-
-                  return (
-                    <tr
-                      key={exam.id || index}
-                      style={{
-                        borderBottom:
-                          index === sortedExams.length - 1
-                            ? "none"
-                            : "1px solid #f3f4f6",
-                        background: index % 2 === 0 ? "white" : "#fafafa",
-                        transition: "all 0.3s ease",
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#f0f9ff";
-                        e.currentTarget.style.transform = "translateY(-1px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background =
-                          index % 2 === 0 ? "white" : "#fafafa";
-                        e.currentTarget.style.transform = "translateY(0)";
-                      }}
-                    >
-                      <td style={{ padding: "16px 20px" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: "12px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              background:
-                                "linear-gradient(135deg, #4f46e5, #7c3aed)",
-                              width: "40px",
-                              height: "40px",
-                              borderRadius: "10px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "white",
-                              fontSize: "14px",
-                              fontWeight: "600",
-                            }}
-                          >
-                            {index + 1}
-                          </div>
-                          <div>
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                                marginBottom: "6px",
-                              }}
-                            >
-                              <strong
-                                style={{
-                                  color: "#1f2937",
-                                  fontSize: "14px",
-                                  fontWeight: "600",
-                                }}
-                              >
-                                {exam.examName}
-                              </strong>
-                              {getTrendIcon(trend)}
-                            </div>
-                            {exam.topic && exam.topic !== exam.examName && (
-                              <div
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#6b7280",
-                                  background: "#f3f4f6",
-                                  padding: "4px 8px",
-                                  borderRadius: "6px",
-                                  display: "inline-block",
-                                }}
-                              >
-                                {exam.topic}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      <td style={{ padding: "16px 20px", color: "#374151" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <FaCalendarAlt
-                            style={{ color: "#4f46e5", fontSize: "14px" }}
-                          />
-                          <div>
-                            <div
-                              style={{ fontWeight: "600", fontSize: "14px" }}
-                            >
-                              {new Date(exam.date).toLocaleDateString("en-IN", {
-                                day: "2-digit",
-                                month: "short",
-                              })}
-                            </div>
-                            <div style={{ fontSize: "12px", color: "#9ca3af" }}>
-                              {new Date(exam.date).getFullYear()}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td style={{ padding: "16px 20px" }}>
-                        {renderSubjectScores(exam)}
-                      </td>
-
-                      <td style={{ padding: "16px 20px" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "12px",
-                          }}
-                        >
-                          <div
-                            style={{ textAlign: "center", minWidth: "60px" }}
-                          >
-                            <span
-                              style={{
-                                fontSize: "14px",
-                                fontWeight: "700",
-                                color: exam.grade.color,
-                              }}
-                            >
-                              {exam.percentage}%
-                            </span>
-                            <div
-                              style={{
-                                fontSize: "11px",
-                                color: "#9ca3af",
-                                marginTop: "2px",
-                              }}
-                            >
-                              Score
-                            </div>
-                          </div>
-                          <div style={{ flex: 1, width: 40 }}>
-                            <ProgressBar
-                              percentage={exam.percentage}
-                              color={exam.grade.color}
-                            />
-                          </div>
-                        </div>
-                      </td>
-
-                      <td style={{ padding: "16px 20px" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              background: exam.grade.bgColor,
-                              color: exam.grade.color,
-                              padding: "8px 12px",
-                              borderRadius: "8px",
-                              fontSize: "14px",
-                              fontWeight: "800",
-                              display: "inline-block",
-                              border: `2px solid ${exam.grade.color}30`,
-                              textAlign: "center",
-                              minWidth: "70px",
-                            }}
-                          >
-                            {exam.grade.grade}
-                          </div>
-                          <span style={{ fontSize: "14px" }}>
-                            {exam.grade.icon}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "11px",
-                            color: exam.grade.color,
-                            fontWeight: "600",
-                            marginTop: "4px",
-                            textAlign: "center",
-                          }}
-                        >
-                          {exam.grade.label}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {/* Exam Table - 70% width */}
+        <div>{renderExamTable(sortedExams)}</div>
 
         {/* Bar Charts Section - 30% width */}
         <div
@@ -1023,7 +825,7 @@ const ResultsTable = ({
                 <BarChart
                   width={370}
                   height={350}
-                  layout="vertical" // Switch to vertical for different control
+                  layout="vertical"
                   series={[
                     {
                       data: excellentSeries,
@@ -1069,8 +871,7 @@ const ResultsTable = ({
                       onClick: (event, data) => {
                         console.log("Bar clicked:", data);
                       },
-                      // For vertical layout, control bar width differently
-                      width: 30, // Fixed width for bars
+                      width: 30,
                     },
                   }}
                   margin={{ top: 30, right: 20, bottom: 10, left: 20 }}
@@ -1080,6 +881,8 @@ const ResultsTable = ({
           )}
         </div>
       </div>
+
+      {/* Performance Summary Section */}
       <div
         style={{
           background: "linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)",

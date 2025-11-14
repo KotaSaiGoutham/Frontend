@@ -1,6 +1,7 @@
 // src/components/Sidebar.jsx
 import React, { useState, useEffect } from "react";
-import { NavLink, useLocation, useParams } from "react-router-dom";
+import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import {
   FaLightbulb,
   FaChalkboardTeacher,
@@ -30,16 +31,25 @@ import {
   FaRupeeSign,
   FaCalendarCheck,
   FaBook,
+  FaSearch,
 } from "react-icons/fa";
 import "./Sidebar.css";
 import { useSelector } from "react-redux";
+import {  setCurrentStudent } from "../redux/actions";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
   console.log("userRole", userRole);
+  const dispatch = useDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   const { studentId } = useParams();
   const currentStudent = useSelector((state) => state.auth?.currentStudent);
-const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student || false
+  const students = useSelector((state) => state.students?.students || []);
+  const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student || false;
+  
+  console.log("currentStudent", currentStudent);
+  console.log("all students", students);
+
   // Check if we're on any student portfolio page
   const isStudentPortfolioPage =
     location.pathname.includes("/student/") &&
@@ -58,168 +68,113 @@ const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student 
   );
 
   // NEW: Toggle state for navigation mode on student portfolio pages
-  const [navigationMode, setNavigationMode] = useState("faculty"); // "faculty" or "student"
+  const [navigationMode, setNavigationMode] = useState("faculty");
 
-  // ORIGINAL Faculty navigation items - ALL EXISTING ITEMS
+  // NEW: Student search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Faculty navigation items
   const facultyNavItems = [
     { name: "Dashboard", path: "/dashboard", icon: <FaHome /> },
-    {
-      name: "Students",
-      path: "/students",
-      icon: <FaUsers />,
-      isParent: true,
-    },
+    { name: "Students", path: "/students", icon: <FaUsers />, isParent: true },
     { name: "Timetable", path: "/timetable", icon: <FaCalendarAlt /> },
-    {
-      name: "Earning & Expenditure",
-      path: "/expenditure",
-      icon: <FaMoneyBillAlt />,
-    },
+    { name: "Earning & Expenditure", path: "/expenditure", icon: <FaMoneyBillAlt /> },
     { name: "Reports", path: "/reports", icon: <FaFileAlt /> },
-    {
-      name: "Demo Class",
-      path: "/demo-classes",
-      icon: <FaChalkboardTeacher />,
-    },
+    { name: "Demo Class", path: "/demo-classes", icon: <FaChalkboardTeacher /> },
     { name: "Employees", path: "/employees", icon: <FaUsers /> },
     { name: "Analytics", path: "/analytics", icon: <FaChartBar /> },
-    {
-      name: "JEE Mains(2026) students",
-      path: "/revision-students",
-      icon: <FaGraduationCap />,
-    },
-    {
-      name: "Demo Booked",
-      path: "/demo-bookings",
-      icon: <FaCalendarCheck />,
-    },
-    {
-      name: "Academy Finance",
-      path: "/academy-finance-dashboard",
-      icon: <FaMoneyBillAlt  />,
-    },
-     {
-      name: "Upload Study Materials",
-      path: "/upload-study-materials",
-      icon: <FaFileUpload  />,
-    },
-    {
-      name: "Upload Question Papers",
-      path: "/upload-question-papers",
-      icon: <FaFileAlt  />,
-    },
-     {
-      name: "Ideas",
-      path: "/Ideas",
-      icon: <FaLightbulb   />,
-    },
+    { name: "JEE Mains(2026) students", path: "/revision-students", icon: <FaGraduationCap /> },
+    { name: "Demo Booked", path: "/demo-bookings", icon: <FaCalendarCheck /> },
+    { name: "Academy Finance", path: "/academy-finance-dashboard", icon: <FaMoneyBillAlt /> },
+    { name: "Upload Study Materials", path: "/upload-study-materials", icon: <FaFileUpload /> },
+    { name: "Upload Question Papers", path: "/upload-question-papers", icon: <FaFileAlt /> },
+    { name: "Ideas", path: "/Ideas", icon: <FaLightbulb /> },
   ];
 
-  // ORIGINAL Student management sub-items
+  // Student management sub-items
   const studentManagementSubItems = [
     { name: "Marks", path: "/student-exams", icon: <FaBookOpen /> },
     { name: "Syllabus", path: "/week-syllabus", icon: <FaListAlt /> },
   ];
 
-  // Student portfolio sub-items - for faculty when viewing student portfolio
+  // Student portfolio sub-items
   const studentPortfolioSubItems = [
-    {
-      name: "Profile",
-      path: `/student/${extractedStudentId}/profile`,
-      icon: <FaUserCircle />,
-    },
-    {
-      name: "Syllabus",
-      path: `/student/${extractedStudentId}/weekend`,
-      icon: <FaCalendarAlt />,
-    },
-    {
-      name: "Results & Marks",
-      path: `/student/${extractedStudentId}/results`,
-      icon: <FaClipboardCheck />,
-    },
-...isRevisonStudent ? [ // <-- Wrap the conditional in a spread
-    {
-      name: "Classes Info",
-      path: `/student/${extractedStudentId}/classes`,
-      icon: <FaChalkboardTeacher />,
-    }] : [], // <-- Spread an empty array if false
-    {
-      name: "Payments",
-      path: `/student/${extractedStudentId}/payments`,
-      icon: <FaRupeeSign />,
-    },
-    {
-      name: "Upload Files",
-      path: `/student/${extractedStudentId}/upload`,
-      icon: <FaFileUpload />,
-    },
-    // {
-    //   name: "Class PPT's",
-    //   path: `/student/${extractedStudentId}/ppts`,
-    //   icon: <FaFilePowerpoint />,
-    // },
-    // {
-    //   name: "Worksheets",
-    //   path: `/student/${extractedStudentId}/worksheets`,
-    //   icon: <FaTasks />,
-    // },
-    {
-      name: "Study Materials",
-      path: `/student/${extractedStudentId}/study-materials`,
-      icon: <FaBook />, // Changed to be more generic for study materials
-    },
-    {
-      name: "Question Papers",
-      path: `/student/${extractedStudentId}/papers`,
-      icon: <FaFileAlt />,
-    },
+    { name: "Profile", path: `/student/${extractedStudentId}/profile`, icon: <FaUserCircle /> },
+    { name: "Syllabus", path: `/student/${extractedStudentId}/weekend`, icon: <FaCalendarAlt /> },
+    { name: "Results & Marks", path: `/student/${extractedStudentId}/results`, icon: <FaClipboardCheck /> },
+    ...(isRevisonStudent ? [
+      { name: "Classes Info", path: `/student/${extractedStudentId}/classes`, icon: <FaChalkboardTeacher /> }
+    ] : []),
+    { name: "Payments", path: `/student/${extractedStudentId}/payments`, icon: <FaRupeeSign /> },
+    { name: "Upload Files", path: `/student/${extractedStudentId}/upload`, icon: <FaFileUpload /> },
+    { name: "Study Materials", path: `/student/${extractedStudentId}/study-materials`, icon: <FaBook /> },
+    { name: "Question Papers", path: `/student/${extractedStudentId}/papers`, icon: <FaFileAlt /> },
   ];
 
-  // Student role navigation - limited access to their own portfolio
+  // Student role navigation
   const studentRoleNavItems = [
-    {
-      name: "Profile",
-      path: `/student/${extractedStudentId}/profile`,
-      icon: <FaUserCircle />,
-    },
-    {
-      name: "Syllabus",
-      path: `/student/${extractedStudentId}/weekend`,
-      icon: <FaCalendarAlt />,
-    },
-    {
-      name: "Results & Marks",
-      path: `/student/${extractedStudentId}/results`,
-      icon: <FaClipboardCheck />,
-    },
-...isRevisonStudent ? [ // <-- Wrap the conditional in a spread
-    {
-      name: "Classes Info",
-      path: `/student/${extractedStudentId}/classes`,
-      icon: <FaChalkboardTeacher />,
-    }] : [], // <-- Spread an empty array if false
-    // {
-    //   name: "Class PPT's",
-    //   path: `/student/${extractedStudentId}/ppts`,
-    //   icon: <FaFilePowerpoint />,
-    // },
-    // {
-    //   name: "Worksheets",
-    //   path: `/student/${extractedStudentId}/worksheets`,
-    //   icon: <FaTasks />,
-    // },
-    {
-      name: "Study Materials",
-      path: `/student/${extractedStudentId}/study-materials`,
-      icon: <FaBook />, // Changed to be more generic for study materials
-    },
-    {
-      name: "Question Papers",
-      path: `/student/${extractedStudentId}/papers`,
-      icon: <FaFileAlt />,
-    },
+    { name: "Profile", path: `/student/${extractedStudentId}/profile`, icon: <FaUserCircle /> },
+    { name: "Syllabus", path: `/student/${extractedStudentId}/weekend`, icon: <FaCalendarAlt /> },
+    { name: "Results & Marks", path: `/student/${extractedStudentId}/results`, icon: <FaClipboardCheck /> },
+    ...(isRevisonStudent ? [
+      { name: "Classes Info", path: `/student/${extractedStudentId}/classes`, icon: <FaChalkboardTeacher /> }
+    ] : []),
+    { name: "Study Materials", path: `/student/${extractedStudentId}/study-materials`, icon: <FaBook /> },
+    { name: "Question Papers", path: `/student/${extractedStudentId}/papers`, icon: <FaFileAlt /> },
   ];
+
+  // NEW: Improved Student search functionality
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.length > 0) {
+      const filtered = students.filter(student => 
+        student.Name?.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(filtered);
+      setShowSearchResults(true);
+    } else {
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }
+  };
+
+// Add this useEffect to debug
+useEffect(() => {
+  console.log("Current student updated:", currentStudent);
+}, [currentStudent]);
+
+const handleStudentSelect = async (student) => {
+  console.log("=== STARTING STUDENT SELECTION ===");
+  console.log("Selected student:", student);
+  console.log("Current student before:", currentStudent);
+  
+  // Reset search state first
+  setSearchQuery("");
+  setShowSearchResults(false);
+  setSearchResults([]);
+  
+  console.log("Dispatching setCurrentStudent...");
+  dispatch(setCurrentStudent(student));
+  
+  console.log("Navigating...");
+  navigate(`/student/${student.id}/profile`);
+  
+  // Switch to student mode
+  if (navigationMode === "faculty") {
+    setNavigationMode("student");
+  }
+  
+  console.log("=== STUDENT SELECTION COMPLETED ===");
+};
+  const handleSearchBlur = () => {
+    setTimeout(() => {
+      setShowSearchResults(false);
+    }, 200);
+  };
 
   const toggleStudentsDropdown = () => {
     setIsStudentsExpanded((prev) => !prev);
@@ -245,12 +200,7 @@ const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student 
     if (isStudentPortfolioPage && isFaculty && !isStudentsExpanded) {
       setIsStudentsExpanded(true);
     }
-  }, [
-    isStudentPortfolioPage,
-    isFaculty,
-    isStudentsExpanded,
-    extractedStudentId,
-  ]);
+  }, [isStudentPortfolioPage, isFaculty, isStudentsExpanded, extractedStudentId]);
 
   // Reset navigation mode when leaving student portfolio
   useEffect(() => {
@@ -267,21 +217,16 @@ const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student 
       return studentRoleNavItems;
     }
 
-    // For faculty on student portfolio pages with toggle
     if (isStudentPortfolioPage && isFaculty) {
-      return navigationMode === "student"
-        ? studentPortfolioSubItems
-        : facultyNavItems;
+      return navigationMode === "student" ? studentPortfolioSubItems : facultyNavItems;
     }
 
-    // Default: faculty navigation
     return facultyNavItems;
   };
 
   // Get student sub-items for faculty
   const getStudentSubItems = () => {
     if (!isFaculty) return [];
-
     return studentManagementSubItems;
   };
 
@@ -294,28 +239,61 @@ const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student 
         {isSidebarOpen ? <FaTimes /> : <FaBars />}
       </div>
 
-      <aside
-        className={`sidebar ${isSidebarOpen ? "open" : ""} ${
-          isStudent ? "student-role" : "faculty-role"
-        }`}
-      >
-        {/* NEW: Navigation Toggle for Faculty on Student Portfolio Pages */}
+      <aside className={`sidebar ${isSidebarOpen ? "open" : ""} ${isStudent ? "student-role" : "faculty-role"}`}>
+        {/* Student Search for Faculty on Student Portfolio Pages */}
+        {isFaculty && isStudentPortfolioPage && navigationMode === "student" && (
+          <div className="student-search-container">
+            <div className="search-input-wrapper">
+              <FaSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search students by name..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onBlur={handleSearchBlur}
+                onFocus={() => searchQuery.length > 0 && setShowSearchResults(true)}
+                className="student-search-input"
+              />
+              
+              {showSearchResults && searchResults.length > 0 && (
+                <div className="search-results-dropdown">
+                  {searchResults.map((student) => (
+                    <div
+                      key={student.id}
+                      className="search-result-item"
+                      onClick={() => handleStudentSelect(student)}
+                    >
+                      <div className="student-name">{student.Name}</div>
+                      <div className="student-details">
+                        {student.Stream} • {student.Year}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {showSearchResults && searchQuery.length > 0 && searchResults.length === 0 && (
+                <div className="search-results-dropdown">
+                  <div className="no-results">No students found</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Navigation Toggle for Faculty on Student Portfolio Pages */}
         {isFaculty && isStudentPortfolioPage && (
           <div className="navigation-toggle-container">
             <div className="navigation-toggle">
               <button
-                className={`toggle-btn ${
-                  navigationMode === "faculty" ? "active" : ""
-                }`}
+                className={`toggle-btn ${navigationMode === "faculty" ? "active" : ""}`}
                 onClick={() => setNavigationMode("faculty")}
               >
                 <FaUserTie className="toggle-icon" />
                 <span className="toggle-text">Faculty</span>
               </button>
               <button
-                className={`toggle-btn ${
-                  navigationMode === "student" ? "active" : ""
-                }`}
+                className={`toggle-btn ${navigationMode === "student" ? "active" : ""}`}
                 onClick={() => setNavigationMode("student")}
               >
                 <FaUserGraduate className="toggle-icon" />
@@ -331,21 +309,15 @@ const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student 
               {navItemsToShow.map((item) => (
                 <React.Fragment key={item.name}>
                   <li>
-                    {item.isParent &&
-                    isFaculty &&
-                    navigationMode === "faculty" ? (
-                      // PARENT LINK (Students) - Only for faculty in faculty mode
+                    {item.isParent && isFaculty && navigationMode === "faculty" ? (
                       <NavLink
                         to={item.path}
-                        className={`sidebar-nav-item ${
-                          isStudentsSectionActive ? "active" : ""
-                        }`}
+                        className={`sidebar-nav-item ${isStudentsSectionActive ? "active" : ""}`}
                         onClick={handleLinkClick}
                         style={{ cursor: "pointer" }}
                       >
                         {item.icon}
                         <span>{item.name}</span>
-                        {/* Expand icon only for faculty in faculty mode */}
                         {isFaculty && navigationMode === "faculty" && (
                           <span
                             className="expand-icon"
@@ -354,30 +326,15 @@ const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student 
                               e.preventDefault();
                               toggleStudentsDropdown();
                             }}
-                            style={{
-                              marginLeft: "auto",
-                              display: "flex",
-                              alignItems: "center",
-                              fontSize: "0.9em",
-                              padding: "8px 0 8px 10px",
-                              marginRight: "-10px",
-                            }}
                           >
-                            {isStudentsExpanded ? (
-                              <FaChevronUp size={12} />
-                            ) : (
-                              <FaChevronDown size={12} />
-                            )}
+                            {isStudentsExpanded ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
                           </span>
                         )}
                       </NavLink>
                     ) : (
-                      // REGULAR NAV LINK for both roles and modes
                       <NavLink
                         to={item.path}
-                        className={({ isActive }) =>
-                          `sidebar-nav-item ${isActive ? "active" : ""}`
-                        }
+                        className={({ isActive }) => `sidebar-nav-item ${isActive ? "active" : ""}`}
                         onClick={handleLinkClick}
                       >
                         {item.icon}
@@ -386,53 +343,26 @@ const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student 
                     )}
                   </li>
 
-                  {/* SUB-LINKS (Only for faculty in faculty mode on Students section) */}
-                  {item.name === "Students" &&
-                    isFaculty &&
-                    navigationMode === "faculty" &&
-                    isStudentsExpanded &&
-                    studentSubItemsToShow.length > 0 && (
-                      <div className="sidebar-sub-menu">
-                        <ul>
-                          {studentSubItemsToShow.map((subItem) => (
-                            <li key={subItem.name}>
-                              <NavLink
-                                to={subItem.path}
-                                className={({ isActive }) =>
-                                  `sidebar-nav-item sidebar-sub-item ${
-                                    isStudentPortfolioPage
-                                      ? "portfolio-sub-item"
-                                      : "management-sub-item"
-                                  } ${isActive ? "active-sub" : ""}`
-                                }
-                                onClick={handleLinkClick}
-                                style={({ isActive }) => ({
-                                  paddingLeft: "45px",
-                                  fontSize: "0.9em",
-                                  backgroundColor: isActive
-                                    ? isStudentPortfolioPage
-                                      ? "#fff3e0"
-                                      : "#e5f0ff"
-                                    : "transparent",
-                                  color: isActive
-                                    ? isStudentPortfolioPage
-                                      ? "#e65100"
-                                      : "#1976d2"
-                                    : isStudentPortfolioPage
-                                    ? "#ff9800"
-                                    : "white",
-                                  fontWeight: isActive ? 600 : 400,
-                                  borderRadius: "0",
-                                })}
-                              >
-                                {subItem.icon}
-                                <span>{subItem.name}</span>
-                              </NavLink>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                  {item.name === "Students" && isFaculty && navigationMode === "faculty" && isStudentsExpanded && studentSubItemsToShow.length > 0 && (
+                    <div className="sidebar-sub-menu">
+                      <ul>
+                        {studentSubItemsToShow.map((subItem) => (
+                          <li key={subItem.name}>
+                            <NavLink
+                              to={subItem.path}
+                              className={({ isActive }) =>
+                                `sidebar-nav-item sidebar-sub-item ${isActive ? "active-sub" : ""}`
+                              }
+                              onClick={handleLinkClick}
+                            >
+                              {subItem.icon}
+                              <span>{subItem.name}</span>
+                            </NavLink>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </React.Fragment>
               ))}
             </ul>

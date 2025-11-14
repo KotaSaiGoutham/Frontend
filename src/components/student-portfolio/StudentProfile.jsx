@@ -30,7 +30,7 @@ import {
   FaEdit,
   FaDownload
 } from "react-icons/fa";
-import { setCurrentStudent, clearCurrentStudent } from "../../redux/actions";
+import { setCurrentStudent } from "../../redux/actions";
 import { formatFirebaseDate, formatPhone } from "../../mockdata/function";
 
 const StudentProfile = () => {
@@ -42,10 +42,8 @@ const StudentProfile = () => {
   useEffect(() => {
     if (location.state?.studentData) {
       dispatch(setCurrentStudent(location.state.studentData));
-    } else if (currentStudent && currentStudent.id !== studentId) {
-      dispatch(clearCurrentStudent());
     }
-  }, [location.state, studentId, dispatch, currentStudent]);
+  }, [location.state, studentId, dispatch]);
 
   const studentData = currentStudent || location.state?.studentData;
 
