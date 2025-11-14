@@ -8,7 +8,10 @@ import {
   UPDATE_REVISION_EXAM_SUCCESS,
   FETCH_ATTENDANCE_SUMMARY_REQUEST,
   FETCH_ATTENDANCE_SUMMARY_SUCCESS,
-  FETCH_ATTENDANCE_SUMMARY_FAILURE
+  FETCH_ATTENDANCE_SUMMARY_FAILURE,
+  FETCH_EXAM_CONSOLIDATION_REQUEST,
+  FETCH_EXAM_CONSOLIDATION_SUCCESS,
+  FETCH_EXAM_CONSOLIDATION_FAILURE
 } from "../types";
 
 const initialState = {
@@ -26,6 +29,14 @@ const initialState = {
     attendanceSummary: null,
     loading: false,
     error: null
+  },
+  examConsolidation: {
+    exams: [],
+    summary: {},
+    totalExams: 0,
+    loading: false,
+    error: null,
+    success: false
   }
 };
 
@@ -68,6 +79,46 @@ const revisionExamsReducer = (state = initialState, action) => {
         ...state,
         loading: false,
         error: action.payload.error,
+      };
+
+    // Exam Consolidation Cases
+    case FETCH_EXAM_CONSOLIDATION_REQUEST:
+      return {
+        ...state,
+        examConsolidation: {
+          ...state.examConsolidation,
+          loading: true,
+          error: null,
+          success: false
+        }
+      };
+    
+    case FETCH_EXAM_CONSOLIDATION_SUCCESS:
+      return {
+        ...state,
+        examConsolidation: {
+          ...state.examConsolidation,
+          loading: false,
+          exams: action.payload.exams || [],
+          summary: action.payload.summary || {},
+          totalExams: action.payload.totalExams || 0,
+          success: action.payload.success || false,
+          error: null
+        }
+      };
+    
+    case FETCH_EXAM_CONSOLIDATION_FAILURE:
+      return {
+        ...state,
+        examConsolidation: {
+          ...state.examConsolidation,
+          loading: false,
+          error: action.payload.error,
+          success: false,
+          exams: [],
+          summary: {},
+          totalExams: 0
+        }
       };
 
     // Handle adding exam data to revision class

@@ -1,4 +1,7 @@
 import {
+  FETCH_EXAM_CONSOLIDATION_SUCCESS,
+  FETCH_EXAM_CONSOLIDATION_FAILURE,
+  FETCH_EXAM_CONSOLIDATION_REQUEST,
   FETCH_TUTOR_IDEAS_REQUEST,
   FETCH_TUTOR_IDEAS_SUCCESS,
   FETCH_TUTOR_IDEAS_FAILURE,
@@ -2573,6 +2576,35 @@ export const updateTutorIdea = (ideaId, updates) => {
       dispatch({
         type: UPDATE_TUTOR_IDEA_FAILURE,
         payload: { error: error.message || "Failed to update idea" },
+      });
+    },
+    authRequired: true,
+  });
+};
+
+export const fetchRevisionExamConsolidation = () => {
+
+  return apiRequest({
+    url: `/api/data/revisionExamConsolidation`,
+    method: "GET",
+    onStart: FETCH_EXAM_CONSOLIDATION_REQUEST, // Define this constant
+    onSuccess: (data, dispatch) => {
+      console.log("✅ Exam Consolidation API Response:", data);
+      dispatch({
+        type: FETCH_EXAM_CONSOLIDATION_SUCCESS,
+        payload: {
+          exams: data.exams || [],
+          summary: data.summary || {},
+          totalExams: data.totalExams || 0,
+          success: data.success || false,
+        },
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("❌ Error fetching exam consolidation:", error);
+      dispatch({
+        type: FETCH_EXAM_CONSOLIDATION_FAILURE,
+        payload: { error: error.message || "Failed to fetch exam consolidation data" },
       });
     },
     authRequired: true,
