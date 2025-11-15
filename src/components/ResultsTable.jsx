@@ -603,94 +603,101 @@ const lowestChemistry = Math.min(
   );
 
   const renderExamTable = (examsList) => {
-    console.log("consolidatedExam", consolidatedExams);
-    console.log("examsList", examsList);
+  console.log("consolidatedExam", consolidatedExams);
+  console.log("examsList", examsList);
 
-    return (
-      <div style={{ marginBottom: "25px" }}>
-        <div
+  // Check if we should show Chemistry column
+  const shouldShowChemistry = examsList.some(
+    (exam) => exam.chemistry > 0 || exam.isCommonStudent
+  );
+
+  return (
+    <div style={{ marginBottom: "25px" }}>
+      <div
+        style={{
+          border: "1px solid #e2e8f0",
+          borderRadius: "8px",
+          background: "white",
+          overflow: "auto",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <table
           style={{
-            border: "1px solid #e2e8f0",
-            borderRadius: "8px",
-            background: "white",
-            overflow: "auto",
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+            width: "100%",
+            borderCollapse: "collapse",
+            fontFamily: "Arial, sans-serif",
           }}
         >
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontFamily: "Arial, sans-serif",
-            }}
-          >
-            <thead>
-              <tr>
-                <th
-                  style={{
-                    padding: "18px 8px",
-                    textAlign: "center",
-                    backgroundColor: "#1e293b",
-                    border: "1px solid #334155",
-                    fontWeight: "700",
-                    color: "white",
-                    fontSize: "16px",
-                  }}
-                >
-                  S.No.
-                </th>
-                <th
-                  style={{
-                    padding: "18px 8px",
-                    textAlign: "center",
-                    backgroundColor: "#1e293b",
-                    border: "1px solid #334155",
-                    fontWeight: "700",
-                    color: "white",
-                    fontSize: "16px",
-                  }}
-                >
-                  Date & Day
-                </th>
-                <th
-                  style={{
-                    padding: "18px 8px",
-                    textAlign: "center",
-                    backgroundColor: "#1e293b",
-                    border: "1px solid #334155",
-                    fontWeight: "700",
-                    color: "white",
-                    fontSize: "16px",
-                  }}
-                >
-                  Type of Exam
-                </th>
-                <th
-                  style={{
-                    padding: "18px 8px",
-                    textAlign: "center",
-                    backgroundColor: "#1e293b",
-                    border: "1px solid #334155",
-                    fontWeight: "700",
-                    color: "white",
-                    fontSize: "16px",
-                  }}
-                >
-                  Topics Covered
-                </th>
-                <th
-                  style={{
-                    padding: "18px 8px",
-                    textAlign: "center",
-                    backgroundColor: "#1e293b",
-                    border: "1px solid #334155",
-                    fontWeight: "700",
-                    color: "#f59e0b",
-                    fontSize: "16px",
-                  }}
-                >
-                  Physics
-                </th>
+          <thead>
+            <tr>
+              <th
+                style={{
+                  padding: "18px 8px",
+                  textAlign: "center",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  fontWeight: "700",
+                  color: "white",
+                  fontSize: "16px",
+                }}
+              >
+                S.No.
+              </th>
+              <th
+                style={{
+                  padding: "18px 8px",
+                  textAlign: "center",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  fontWeight: "700",
+                  color: "white",
+                  fontSize: "16px",
+                }}
+              >
+                Date & Day
+              </th>
+              <th
+                style={{
+                  padding: "18px 8px",
+                  textAlign: "center",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  fontWeight: "700",
+                  color: "white",
+                  fontSize: "16px",
+                }}
+              >
+                Type of Exam
+              </th>
+              <th
+                style={{
+                  padding: "18px 8px",
+                  textAlign: "center",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  fontWeight: "700",
+                  color: "white",
+                  fontSize: "16px",
+                }}
+              >
+                Topics Covered
+              </th>
+              <th
+                style={{
+                  padding: "18px 8px",
+                  textAlign: "center",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #334155",
+                  fontWeight: "700",
+                  color: "#f59e0b",
+                  fontSize: "16px",
+                }}
+              >
+                Physics
+              </th>
+              {/* Conditionally render Chemistry column */}
+              {shouldShowChemistry && (
                 <th
                   style={{
                     padding: "18px 8px",
@@ -704,182 +711,185 @@ const lowestChemistry = Math.min(
                 >
                   Chemistry
                 </th>
-              </tr>
-            </thead>
-            <tbody>
-              {examsList.map((exam, index) => {
-                const examDate = new Date(exam.date);
-                const dayOfWeek = examDate.toLocaleDateString("en-IN", {
-                  weekday: "long",
-                });
-                const formattedDate = examDate.toLocaleDateString("en-IN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                });
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {examsList.map((exam, index) => {
+              const examDate = new Date(exam.date);
+              const dayOfWeek = examDate.toLocaleDateString("en-IN", {
+                weekday: "long",
+              });
+              const formattedDate = examDate.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              });
 
-                // Convert exam ISO date to DD.MM.YYYY format for comparison
-                const examDateFormatted = isoToDDMMYYYY(exam.date);
+              // Convert exam ISO date to DD.MM.YYYY format for comparison
+              const examDateFormatted = isoToDDMMYYYY(exam.date);
 
-                // Find matching consolidated exam data
-                const consolidatedExam = consolidatedExams?.find(
-                  (consolidated) => consolidated.examDate === examDateFormatted
-                );
+              // Find matching consolidated exam data
+              const consolidatedExam = consolidatedExams?.find(
+                (consolidated) => consolidated.examDate === examDateFormatted
+              );
 
-                // Debug logging for each exam
-                console.log(`Exam ${index}:`, {
-                  examDate: exam.date,
-                  examDateFormatted,
-                  consolidatedExamDate: consolidatedExam?.examDate,
-                  match: consolidatedExam?.examDate === examDateFormatted,
-                  uniqueTopics: consolidatedExam?.uniqueTopics,
-                });
+              // Debug logging for each exam
+              console.log(`Exam ${index}:`, {
+                examDate: exam.date,
+                examDateFormatted,
+                consolidatedExamDate: consolidatedExam?.examDate,
+                match: consolidatedExam?.examDate === examDateFormatted,
+                uniqueTopics: consolidatedExam?.uniqueTopics,
+              });
 
-                // Get unique topics for this exam
-                const uniqueTopics = consolidatedExam?.uniqueTopics || [];
+              // Get unique topics for this exam
+              const uniqueTopics = consolidatedExam?.uniqueTopics || [];
 
-                return (
-                  <tr
-                    key={exam.id}
+              return (
+                <tr
+                  key={exam.id}
+                  style={{
+                    borderBottom: "1px solid #e2e8f0",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#f8fafc";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }}
+                >
+                  <td
                     style={{
-                      borderBottom: "1px solid #e2e8f0",
-                      transition: "background-color 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#f8fafc";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      fontSize: "16px",
+                      color: "#475569",
+                      fontWeight: "700",
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
                     }}
                   >
-                    <td
-                      style={{
-                        padding: "16px 8px",
-                        textAlign: "center",
-                        fontSize: "16px",
-                        color: "#475569",
-                        fontWeight: "700",
-                        border: "1px solid #e2e8f0",
-                        backgroundColor: "white",
-                      }}
-                    >
-                      {index + 1}
-                    </td>
-                    <td
-                      style={{
-                        padding: "16px 8px",
-                        textAlign: "center",
-                        fontSize: "15px",
-                        color: "#1e293b",
-                        fontWeight: "600",
-                        border: "1px solid #e2e8f0",
-                        backgroundColor: "white",
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: "700", marginBottom: "4px" }}>
-                          {formattedDate}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "14px",
-                            color: "#64748b",
-                            fontWeight: "500",
-                          }}
-                        >
-                          {dayOfWeek}
-                        </div>
+                    {index + 1}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      fontSize: "15px",
+                      color: "#1e293b",
+                      fontWeight: "600",
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: "700", marginBottom: "4px" }}>
+                        {formattedDate}
                       </div>
-                    </td>
-                    <td
-                      style={{
-                        padding: "16px 8px",
-                        fontSize: "15px",
-                        color: "#475569",
-                        fontWeight: "600",
-                        border: "1px solid #e2e8f0",
-                        backgroundColor: "white",
-                        textAlign: "center",
-                      }}
-                    >
-                      {exam.examName}
-                    </td>
-                    <td
-                      style={{
-                        padding: "16px 8px",
-                        border: "1px solid #e2e8f0",
-                        backgroundColor: "white",
-                        textAlign: "left",
-                        maxWidth: "300px",
-                      }}
-                    >
-                      {uniqueTopics.length > 0 ? (
-                        <div
-                          style={{
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: "4px",
-                          }}
-                        >
-                          {uniqueTopics.map((topic, topicIndex) => (
-                            <div
-                              key={topicIndex}
-                              style={{
-                                padding: "2px 6px",
-                                background:
-                                  consolidatedExam?.type === "weekend"
-                                    ? "rgba(59, 130, 246, 0.1)"
-                                    : consolidatedExam?.type === "cumulative"
-                                    ? "rgba(139, 92, 246, 0.1)"
-                                    : "rgba(16, 185, 129, 0.1)",
-                                borderRadius: "4px",
-                                border:
-                                  consolidatedExam?.type === "weekend"
-                                    ? "1px solid rgba(59, 130, 246, 0.2)"
-                                    : consolidatedExam?.type === "cumulative"
-                                    ? "1px solid rgba(139, 92, 246, 0.2)"
-                                    : "1px solid rgba(16, 185, 129, 0.2)",
-                                fontSize: "11px",
-                                fontWeight: "500",
-                                color:
-                                  consolidatedExam?.type === "weekend"
-                                    ? "#1e40af"
-                                    : consolidatedExam?.type === "cumulative"
-                                    ? "#7c3aed"
-                                    : "#047857",
-                                whiteSpace: "nowrap",
-                                lineHeight: "1.2",
-                              }}
-                            >
-                              {topic}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div
-                          style={{
-                            color: "#9ca3af",
-                            fontStyle: "italic",
-                            fontSize: "12px",
-                          }}
-                        >
-                          No topics data
-                        </div>
-                      )}
-                    </td>
-                    <td
-                      style={{
-                        padding: "16px 8px",
-                        textAlign: "center",
-                        fontSize: "16px",
-                        fontWeight: "800",
-                        color: "#f59e0b",
-                        border: "1px solid #e2e8f0",
-                        backgroundColor: "white",
-                      }}
-                    >
-                      {exam.physics || 0}
-                    </td>
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          color: "#64748b",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {dayOfWeek}
+                      </div>
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 8px",
+                      fontSize: "15px",
+                      color: "#475569",
+                      fontWeight: "600",
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
+                      textAlign: "center",
+                    }}
+                  >
+                    {exam.examName}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 8px",
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
+                      textAlign: "left",
+                      maxWidth: "300px",
+                    }}
+                  >
+                    {uniqueTopics.length > 0 ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "4px",
+                        }}
+                      >
+                        {uniqueTopics.map((topic, topicIndex) => (
+                          <div
+                            key={topicIndex}
+                            style={{
+                              padding: "2px 6px",
+                              background:
+                                consolidatedExam?.type === "weekend"
+                                  ? "rgba(59, 130, 246, 0.1)"
+                                  : consolidatedExam?.type === "cumulative"
+                                  ? "rgba(139, 92, 246, 0.1)"
+                                  : "rgba(16, 185, 129, 0.1)",
+                              borderRadius: "4px",
+                              border:
+                                consolidatedExam?.type === "weekend"
+                                  ? "1px solid rgba(59, 130, 246, 0.2)"
+                                  : consolidatedExam?.type === "cumulative"
+                                  ? "1px solid rgba(139, 92, 246, 0.2)"
+                                  : "1px solid rgba(16, 185, 129, 0.2)",
+                              fontSize: "11px",
+                              fontWeight: "500",
+                              color:
+                                consolidatedExam?.type === "weekend"
+                                  ? "#1e40af"
+                                  : consolidatedExam?.type === "cumulative"
+                                  ? "#7c3aed"
+                                  : "#047857",
+                              whiteSpace: "nowrap",
+                              lineHeight: "1.2",
+                            }}
+                          >
+                            {topic}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          color: "#9ca3af",
+                          fontStyle: "italic",
+                          fontSize: "12px",
+                        }}
+                      >
+                        No topics data
+                      </div>
+                    )}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      fontSize: "16px",
+                      fontWeight: "800",
+                      color: "#f59e0b",
+                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
+                    }}
+                  >
+                    {exam.physics || 0}
+                  </td>
+                  {/* Conditionally render Chemistry cell */}
+                  {shouldShowChemistry && (
                     <td
                       style={{
                         padding: "16px 8px",
@@ -893,15 +903,16 @@ const lowestChemistry = Math.min(
                     >
                       {exam.chemistry || 0}
                     </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-    );
-  };
+    </div>
+  );
+};
   return (
     <div style={{ padding: "0" }}>
       {/* Table and Charts Side by Side - 70% Table, 30% Chart */}
