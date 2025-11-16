@@ -79,8 +79,9 @@ const StudentWeekend = () => {
   } = yearStatistics;
 
   const currentStudent = useSelector((state) => state.auth?.currentStudent);
-  const isRevisonStudent = !!currentStudent?.isRevisionProgramJEEMains2026Student;
-
+  const isRevisonStudent =
+    !!currentStudent?.isRevisionProgramJEEMains2026Student;
+  console.log("currentStudent", currentStudent);
   useEffect(() => {
     dispatch(fetchStudentClasses());
     if (currentStudent?.id) {
@@ -102,7 +103,7 @@ const StudentWeekend = () => {
 
   const shouldShowSearchResults = searchTerm.trim() && searchQuery;
   const shouldShowRegularClasses = !searchTerm.trim() || !searchQuery;
-  
+
   const handleClearSearch = () => {
     setSearchTerm("");
     dispatch(clearSearchResults());
@@ -111,16 +112,23 @@ const StudentWeekend = () => {
 
   // Process weekSyllabus data for non-revision students
   const getWeekSyllabusData = () => {
-    if (!currentStudent?.weekSyllabus || !Array.isArray(currentStudent.weekSyllabus)) {
+    if (
+      !currentStudent?.weekSyllabus ||
+      !Array.isArray(currentStudent.weekSyllabus)
+    ) {
       return [];
     }
 
     // Sort syllabus by date (latest first)
     return currentStudent.weekSyllabus
-      .filter(syllabus => syllabus && syllabus.date && syllabus.topic)
+      .filter((syllabus) => syllabus && syllabus.date && syllabus.topic)
       .sort((a, b) => {
-        const dateA = a.date?._seconds ? new Date(a.date._seconds * 1000) : new Date(0);
-        const dateB = b.date?._seconds ? new Date(b.date._seconds * 1000) : new Date(0);
+        const dateA = a.date?._seconds
+          ? new Date(a.date._seconds * 1000)
+          : new Date(0);
+        const dateB = b.date?._seconds
+          ? new Date(b.date._seconds * 1000)
+          : new Date(0);
         return dateB - dateA; // Latest first
       });
   };
@@ -129,7 +137,7 @@ const StudentWeekend = () => {
 
   const formatSyllabusDate = (dateObj) => {
     if (!dateObj || !dateObj._seconds) return "Date not available";
-    
+
     const date = new Date(dateObj._seconds * 1000);
     return date.toLocaleDateString("en-US", {
       weekday: "long",
@@ -369,7 +377,9 @@ const StudentWeekend = () => {
                       mt: 1,
                     }}
                   >
-                    <CalendarTodayIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+                    <CalendarTodayIcon
+                      sx={{ fontSize: 16, color: "text.secondary" }}
+                    />
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -411,78 +421,70 @@ const StudentWeekend = () => {
   ];
 
   const renderPieChart = () => {
-    const total = pieChartData.reduce((sum, item) => sum + item.value, 0);
-    const improvedColors = [
-      "#667eea",
-      "#86efac",
-      "#fbbf24",
-      "#059669",
-      "#bbf7d0",
-      "#fde68a",
-    ];
+  const total = pieChartData.reduce((sum, item) => sum + item.value, 0);
+  const improvedColors = [
+    "#667eea",
+    "#86efac", 
+    "#fbbf24",
+    "#059669",
+    "#bbf7d0",
+    "#fde68a",
+  ];
 
-    const muiPieData = pieChartData.map((item, index) => ({
-      id: index,
-      value: item.value,
-      label: item.name,
-      color: improvedColors[index % improvedColors.length],
-    }));
+  const muiPieData = pieChartData.map((item, index) => ({
+    id: index,
+    value: item.value,
+    label: item.name,
+    color: improvedColors[index % improvedColors.length],
+  }));
 
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          alignItems: "center",
-          height: "100%",
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
+      }}
+    >
+      <PieChart
+        series={[
+          {
+            data: muiPieData,
+            innerRadius: 25,
+            outerRadius: 55,
+            paddingAngle: 1,
+            cornerRadius: 2,
+            arcLabel: (params) => {
+              const percentage =
+                total > 0 ? ((params.value / total) * 100).toFixed(0) : "0";
+              return `${percentage}%`;
+            },
+            arcLabelMinAngle: 20,
+            arcLabelRadius: "70%",
+            highlightScope: { fade: "global", highlight: "item" },
+          },
+        ]}
+        height={150}
+        width={150}
+        slotProps={{
+          legend: {
+            hidden: true,
+          },
         }}
-      >
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            justifyContent: "center",
-            mb: { xs: 2, md: 0 },
-          }}
-        >
-          <PieChart
-            series={[
-              {
-                data: muiPieData,
-                innerRadius: 30,
-                outerRadius: 80,
-                paddingAngle: 2,
-                cornerRadius: 4,
-                arcLabel: (params) => {
-                  const percentage =
-                    total > 0 ? ((params.value / total) * 100).toFixed(0) : "0";
-                  return `${percentage}%`;
-                },
-                arcLabelMinAngle: 15,
-                arcLabelRadius: "65%",
-                highlightScope: { fade: "global", highlight: "item" },
-              },
-            ]}
-            height={170}
-            width={170}
-            slotProps={{
-              legend: {
-                hidden: true,
-              },
-            }}
-            sx={{
-              [`& .MuiChartsArc-label`]: {
-                fill: "white",
-                fontWeight: "bold",
-                fontSize: "14px",
-                filter: "drop-shadow(1px 1px 2px rgba(0,0,0,0.5))",
-              },
-            }}
-          />
-        </Box>
-      </Box>
-    );
-  };
+        sx={{
+          [`& .MuiChartsArc-label`]: {
+            fill: "white",
+            fontWeight: "bold",
+            fontSize: "10px",
+            filter: "drop-shadow(1px 1px 1px rgba(0,0,0,0.5))",
+          },
+        }}
+      />
+    </Box>
+  );
+};
 
   const renderClassSection = (
     classes,
@@ -627,7 +629,6 @@ const StudentWeekend = () => {
 
   // Rest of your existing functions (renderStatisticsCards, etc.) remain the same
   const renderStatisticsCards = () => {
-    // ... (keep your existing renderStatisticsCards function exactly as is)
     if (!firstYear || !secondYear) {
       return (
         <Alert severity="warning" sx={{ mb: 3 }}>
@@ -635,648 +636,916 @@ const StudentWeekend = () => {
         </Alert>
       );
     }
- // Calculate total progress across both years
-  const totalCompleted = (firstYear.completed || 0) + (secondYear.completed || 0);
-  const totalPending = (firstYear.pending || 0) + (secondYear.pending || 0);
-  const totalLessons = (firstYear.total || 0) + (secondYear.total || 0);
-  const totalProgressPercentage = totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0;
 
-  // Combine completed lessons from both years
-  const allCompletedLessons = [
-    ...(firstYear.completedLessons || []).map(lesson => `1st Year: ${lesson}`),
-    ...(secondYear.completedLessons || []).map(lesson => `2nd Year: ${lesson}`)
-  ];
+    const adjustedStats = getAdjustedStatistics();
+    const laggingTopics = getDetailedLaggingTopics();
 
-  // Combine pending lessons from both years
-  const allPendingLessons = [
-    ...(firstYear.pendingLessons || []).map(lesson => `1st Year: ${lesson}`),
-    ...(secondYear.pendingLessons || []).map(lesson => `2nd Year: ${lesson}`)
-  ];
+    // Calculate total progress across both years (adjusted)
+    const totalCompleted =
+      adjustedStats.firstYear.adjustedCompleted +
+      adjustedStats.secondYear.adjustedCompleted;
+    const totalPending =
+      adjustedStats.firstYear.adjustedPending +
+      adjustedStats.secondYear.adjustedPending;
+    const totalLagging = adjustedStats.totalLagging;
+    const totalLessons = (firstYear.total || 0) + (secondYear.total || 0);
+    const totalProgressPercentage =
+      totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0;
 
-    const LessonsTooltip = ({ lessons, title, children }) => (
-      <Tooltip
-        title={
-          <Box sx={{ p: 1 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1 }}>
-              {title} ({(lessons || []).length})
-            </Typography>
-            {lessons && lessons.length > 0 ? (
-              <Box sx={{ maxHeight: "150px", overflow: "auto" }}>
-                {lessons.map((lesson, index) => (
-                  <Typography key={index} variant="body2" sx={{ mb: 0.5 }}>
-                    • {lesson}
-                  </Typography>
-                ))}
-              </Box>
-            ) : (
-              <Typography variant="body2">No lessons available</Typography>
-            )}
-          </Box>
+    // Combine lessons for tooltips
+    const allCompletedLessons = [
+      ...(firstYear.completedLessons || []).map(
+        (lesson) => `1st Year: ${lesson}`
+      ),
+      ...(secondYear.completedLessons || []).map(
+        (lesson) => `2nd Year: ${lesson}`
+      ),
+    ];
+
+    const allPendingLessons = [
+      ...(firstYear.pendingLessons || []).map(
+        (lesson) => `1st Year: ${lesson}`
+      ),
+      ...(secondYear.pendingLessons || []).map(
+        (lesson) => `2nd Year: ${lesson}`
+      ),
+    ];
+
+    const allLaggingLessons = [
+      ...laggingTopics.firstYear.map((lesson) => `1st Year: ${lesson}`),
+      ...laggingTopics.secondYear.map((lesson) => `2nd Year: ${lesson}`),
+    ];
+    const LessonsTooltip = ({ lessons, title, children, type = "default" }) => {
+      const getBorderColor = () => {
+        switch (type) {
+          case "completed":
+            return "#10b981";
+          case "pending":
+            return "#f59e0b";
+          case "lagging":
+            return "#ef4444";
+          default:
+            return "primary.main";
         }
-        arrow
-        placement="top"
-        componentsProps={{
-          tooltip: {
-            sx: {
-              bgcolor: "background.paper",
-              color: "text.primary",
-              boxShadow: 3,
-              border: "1px solid",
-              borderColor: "divider",
-              maxWidth: "300px",
-            },
-          },
-        }}
-      >
-        <Box sx={{ cursor: "pointer", textAlign: "center" }}>{children}</Box>
-      </Tooltip>
-    );
+      };
 
-    return (
-      <Grid container spacing={3} sx={{ height: "100%" }}>
-        {/* 1st Year Card */}
-        <Grid item xs={12} lg={4}>
-        <Card
-          elevation={4}
-          sx={{
-            background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
-            borderRadius: "16px",
-            color: "white",
-            position: "relative",
-            overflow: "visible",
-            height: "100%",
-            minHeight: 220,
-            display: "flex",
-            flexDirection: "column",
-            "&:before": {
-              content: '""',
-              position: "absolute",
-              top: -2,
-              left: -2,
-              right: -2,
-              bottom: -2,
-              background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
-              borderRadius: "18px",
-              zIndex: -1,
-              opacity: 0.6,
-              filter: "blur(10px)",
+      return (
+        <Tooltip
+          title={
+            <Box sx={{ p: 2, maxWidth: 400 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: "bold",
+                  mb: 2,
+                  color: getBorderColor(),
+                  borderBottom: "2px solid",
+                  borderColor: getBorderColor(),
+                  pb: 1,
+                }}
+              >
+                {title} ({lessons?.length || 0})
+              </Typography>
+              {lessons && lessons.length > 0 ? (
+                <Box sx={{ maxHeight: "200px", overflow: "auto" }}>
+                  {lessons.map((lesson, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        mb: 1.5,
+                        p: 1,
+                        borderRadius: 2,
+                        backgroundColor:
+                          index % 2 === 0 ? "rgba(0,0,0,0.02)" : "transparent",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          backgroundColor: "rgba(0,0,0,0.04)",
+                          transform: "translateX(4px)",
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          minWidth: 24,
+                          height: 24,
+                          borderRadius: "50%",
+                          backgroundColor: getBorderColor(),
+                          color: "white",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.75rem",
+                          fontWeight: "bold",
+                          mr: 2,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {index + 1}
+                      </Box>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          lineHeight: 1.4,
+                          color: "text.primary",
+                        }}
+                      >
+                        {lesson}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    textAlign: "center",
+                    py: 3,
+                    color: "text.secondary",
+                  }}
+                >
+                  <Typography variant="body2">No lessons available</Typography>
+                </Box>
+              )}
+            </Box>
+          }
+          arrow
+          placement="top"
+          componentsProps={{
+            tooltip: {
+              sx: {
+                bgcolor: "background.paper",
+                color: "text.primary",
+                boxShadow: 3,
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 2,
+                "& .MuiTooltip-arrow": {
+                  color: "background.paper",
+                },
+              },
             },
           }}
         >
-          <CardContent
+          <Box
             sx={{
-              p: 1,
-              position: "relative",
-              zIndex: 1,
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-              <Box
-                sx={{
-                  background: "rgba(255,255,255,0.2)",
-                  borderRadius: "12px",
-                  p: 1,
-                  mr: 2,
-                  backdropFilter: "blur(10px)",
-                }}
-              >
-                <SchoolIcon sx={{ fontSize: 28, color: "white" }} />
-              </Box>
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: 700, fontSize: "1.1rem" }}
-              >
-                Total Progress
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr",
-                gap: 2,
-                textAlign: "center",
-                mb: 3,
-                flex: 1,
-              }}
-            >
-              {/* Total */}
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
-                  {totalLessons}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ opacity: 0.9, fontSize: "0.75rem" }}
-                >
-                  Total
-                </Typography>
-              </Box>
-
-              {/* Completed */}
-              <LessonsTooltip
-                lessons={allCompletedLessons}
-                title="All Completed Lessons"
-              >
-                <Box>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 800, mb: 0.5, color: "#86efac" }}
-                  >
-                    {totalCompleted}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ opacity: 0.9, fontSize: "0.75rem" }}
-                  >
-                    Completed
-                  </Typography>
-                </Box>
-              </LessonsTooltip>
-
-              {/* Pending */}
-              <LessonsTooltip
-                lessons={allPendingLessons}
-                title="All Pending Lessons"
-              >
-                <Box>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 800, mb: 0.5, color: "#fbbf24" }}
-                  >
-                    {totalPending}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ opacity: 0.9, fontSize: "0.75rem" }}
-                  >
-                    Pending
-                  </Typography>
-                </Box>
-              </LessonsTooltip>
-            </Box>
-
-            {/* Progress bar */}
-            <Box sx={{ mt: "auto" }}>
-              <Box
-                sx={{
-                  background: "rgba(255,255,255,0.2)",
-                  borderRadius: "10px",
-                  height: "6px",
-                  overflow: "hidden",
-                  mb: 1,
-                }}
-              >
-                <Box
-                  sx={{
-                    background:
-                      "linear-gradient(90deg, #86efac 0%, #4ade80 100%)",
-                    height: "100%",
-                    width: `${totalProgressPercentage}%`,
-                    borderRadius: "10px",
-                    transition: "width 0.5s ease-in-out",
-                  }}
-                />
-              </Box>
-              <Typography
-                variant="caption"
-                sx={{
-                  display: "block",
-                  textAlign: "center",
-                  opacity: 0.8,
-                }}
-              >
-                {totalProgressPercentage}% Complete
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-
-        <Grid item xs={12} lg={6}>
-          <Card
-            elevation={4}
-            sx={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              borderRadius: "16px",
-              color: "white",
-              position: "relative",
-              overflow: "visible",
-              height: "100%",
-              minHeight: 220,
-              display: "flex",
-              flexDirection: "column",
-              "&:before": {
-                content: '""',
-                position: "absolute",
-                top: -2,
-                left: -2,
-                right: -2,
-                bottom: -2,
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                borderRadius: "18px",
-                zIndex: -1,
-                opacity: 0.6,
-                filter: "blur(10px)",
+              cursor: "pointer",
+              textAlign: "center",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                transform: "scale(1.05)",
               },
             }}
           >
-            <CardContent
-              sx={{
-                p: 1,
-                position: "relative",
-                zIndex: 1,
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <Box
-                  sx={{
-                    background: "rgba(255,255,255,0.2)",
-                    borderRadius: "12px",
-                    p: 1,
-                    mr: 2,
-                    backdropFilter: "blur(10px)",
-                  }}
-                >
-                  <SchoolIcon sx={{ fontSize: 28, color: "white" }} />
-                </Box>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 700, fontSize: "1.1rem" }}
-                >
-                  1st Year Progress
-                </Typography>
-              </Box>
+            {children}
+          </Box>
+        </Tooltip>
+      );
+    };
+    return (
+      <Grid container spacing={3} sx={{ height: "100%" }}>
+        {/* Total Progress Card */}
+      <Grid item xs={12} lg={4}>
+  <Card
+    elevation={4}
+    sx={{
+      background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+      borderRadius: "16px",
+      color: "white",
+      position: "relative",
+      overflow: "visible",
+      // height: "100%",
+      minHeight: 150,
+      display: "flex",
+      flexDirection: "column",
+      "&:before": {
+        content: '""',
+        position: "absolute",
+        top: -2,
+        left: -2,
+        right: -2,
+        bottom: -2,
+        background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+        borderRadius: "18px",
+        zIndex: -1,
+        opacity: 0.6,
+        filter: "blur(10px)",
+      },
+    }}
+  >
+    <CardContent
+      sx={{
+        p: 1,
+        position: "relative",
+        zIndex: 1,
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+        <Box
+          sx={{
+            background: "rgba(255,255,255,0.2)",
+            borderRadius: "10px",
+            p: 0.8,
+            mr: 1.5,
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <SchoolIcon sx={{ fontSize: 22, color: "white" }} />
+        </Box>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, fontSize: "0.9rem" }}
+        >
+          Total Progress
+        </Typography>
+      </Box>
 
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: 2,
-                  textAlign: "center",
-                  mb: 3,
-                  flex: 1,
-                }}
-              >
-                {/* Total */}
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
-                    {firstYear.total || 0}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ opacity: 0.9, fontSize: "0.75rem" }}
-                  >
-                    Total
-                  </Typography>
-                </Box>
-
-                {/* Completed */}
-                <LessonsTooltip
-                  lessons={firstYear.completedLessons || []}
-                  title="Completed Lessons"
-                >
-                  <Box>
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 800, mb: 0.5, color: "#86efac" }}
-                    >
-                      {firstYear.completed || 0}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ opacity: 0.9, fontSize: "0.75rem" }}
-                    >
-                      Completed
-                    </Typography>
-                  </Box>
-                </LessonsTooltip>
-
-                {/* Pending */}
-                <LessonsTooltip
-                  lessons={firstYear.pendingLessons || []}
-                  title="Pending Lessons"
-                >
-                  <Box>
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 800, mb: 0.5, color: "#fbbf24" }}
-                    >
-                      {firstYear.pending || 0}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ opacity: 0.9, fontSize: "0.75rem" }}
-                    >
-                      Pending
-                    </Typography>
-                  </Box>
-                </LessonsTooltip>
-              </Box>
-
-              {/* Progress bar */}
-              <Box sx={{ mt: "auto" }}>
-                <Box
-                  sx={{
-                    background: "rgba(255,255,255,0.2)",
-                    borderRadius: "10px",
-                    height: "6px",
-                    overflow: "hidden",
-                    mb: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      background:
-                        "linear-gradient(90deg, #86efac 0%, #4ade80 100%)",
-                      height: "100%",
-                      width: `${
-                        firstYear.total
-                          ? ((firstYear.completed || 0) / firstYear.total) * 100
-                          : 0
-                      }%`,
-                      borderRadius: "10px",
-                      transition: "width 0.5s ease-in-out",
-                    }}
-                  />
-                </Box>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    display: "block",
-                    textAlign: "center",
-                    opacity: 0.8,
-                  }}
-                >
-                  {firstYear.total
-                    ? Math.round(
-                        ((firstYear.completed || 0) / firstYear.total) * 100
-                      )
-                    : 0}
-                  % Complete
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* 2nd Year Card */}
-        <Grid item xs={12} lg={6}>
-          <Card
-            elevation={4}
-            sx={{
-              background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-              borderRadius: "16px",
-              color: "white",
-              position: "relative",
-              overflow: "visible",
-              height: "100%",
-              minHeight: 220,
-              display: "flex",
-              flexDirection: "column",
-              "&:before": {
-                content: '""',
-                position: "absolute",
-                top: -2,
-                left: -2,
-                right: -2,
-                bottom: -2,
-                background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                borderRadius: "18px",
-                zIndex: -1,
-                opacity: 0.6,
-                filter: "blur(10px)",
-              },
-            }}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr 1fr",
+          gap: 0.5,
+          textAlign: "center",
+          mb: 2,
+          flex: 1,
+        }}
+      >
+        {/* Total */}
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.3, fontSize: "1.5rem" }}>
+            {totalLessons}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ opacity: 0.9, fontSize: "0.65rem" }}
           >
-            <CardContent
-              sx={{
-                p: 1,
-                position: "relative",
-                zIndex: 1,
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-              }}
+            Total
+          </Typography>
+        </Box>
+
+        {/* Completed */}
+        <LessonsTooltip
+          lessons={allCompletedLessons}
+          title="Completed Lessons"
+          type="completed"
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, mb: 0.3, color: "#86efac", fontSize: "1.5rem" }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <Box
-                  sx={{
-                    background: "rgba(255,255,255,0.2)",
-                    borderRadius: "12px",
-                    p: 1,
-                    mr: 2,
-                    backdropFilter: "blur(10px)",
-                  }}
-                >
-                  <SchoolIcon sx={{ fontSize: 28, color: "white" }} />
-                </Box>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 700, fontSize: "1.1rem" }}
-                >
-                  2nd Year Progress
-                </Typography>
-              </Box>
+              {totalCompleted}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+            >
+              Completed
+            </Typography>
+          </Box>
+        </LessonsTooltip>
 
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: 2,
-                  textAlign: "center",
-                  mb: 3,
-                  flex: 1,
-                }}
-              >
-                {/* Total */}
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
-                    {secondYear.total || 0}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ opacity: 0.9, fontSize: "0.75rem" }}
-                  >
-                    Total
-                  </Typography>
-                </Box>
+        {/* Pending */}
+        <LessonsTooltip
+          lessons={allPendingLessons}
+          title="Pending Lessons"
+          type="pending"
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, mb: 0.3, color: "#fbbf24", fontSize: "1.5rem" }}
+            >
+              {totalPending}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+            >
+              Pending
+            </Typography>
+          </Box>
+        </LessonsTooltip>
 
-                {/* Completed */}
-                <LessonsTooltip
-                  lessons={secondYear.completedLessons || []}
-                  title="Completed Lessons"
-                >
-                  <Box>
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 800, mb: 0.5, color: "#bbf7d0" }}
-                    >
-                      {secondYear.completed || 0}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ opacity: 0.9, fontSize: "0.75rem" }}
-                  >
-                      Completed
-                    </Typography>
-                  </Box>
-                </LessonsTooltip>
+        {/* Lagging */}
+        <LessonsTooltip
+          lessons={allLaggingLessons}
+          title="Lagging Topics"
+          type="lagging"
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, mb: 0.3, color: "#f87171", fontSize: "1.5rem" }}
+            >
+              {totalLagging}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+            >
+              Lagging
+            </Typography>
+          </Box>
+        </LessonsTooltip>
+      </Box>
 
-                {/* Pending */}
-                <LessonsTooltip
-                  lessons={secondYear.pendingLessons || []}
-                  title="Pending Lessons"
-                >
-                  <Box>
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 800, mb: 0.5, color: "#fde68a" }}
-                    >
-                      {secondYear.pending || 0}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ opacity: 0.9, fontSize: "0.75rem" }}
-                    >
-                      Pending
-                    </Typography>
-                  </Box>
-                </LessonsTooltip>
-              </Box>
+      {/* Progress bar */}
+      <Box sx={{ mt: "auto" }}>
+        <Box
+          sx={{
+            background: "rgba(255,255,255,0.2)",
+            borderRadius: "8px",
+            height: "5px",
+            overflow: "hidden",
+            mb: 0.8,
+          }}
+        >
+          <Box
+            sx={{
+              background:
+                "linear-gradient(90deg, #86efac 0%, #4ade80 100%)",
+              height: "100%",
+              width: `${totalProgressPercentage}%`,
+              borderRadius: "8px",
+              transition: "width 0.5s ease-in-out",
+            }}
+          />
+        </Box>
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            textAlign: "center",
+            opacity: 0.8,
+            fontSize: "0.65rem"
+          }}
+        >
+          {totalProgressPercentage}% Complete
+        </Typography>
+      </Box>
+    </CardContent>
+  </Card>
+</Grid>
 
-              {/* Progress bar */}
-              <Box sx={{ mt: "auto" }}>
-                <Box
-                  sx={{
-                    background: "rgba(255,255,255,0.2)",
-                    borderRadius: "10px",
-                    height: "6px",
-                    overflow: "hidden",
-                    mb: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      background:
-                        "linear-gradient(90deg, #bbf7d0 0%, #86efac 100%)",
-                      height: "100%",
-                      width: `${
-                        secondYear.total
-                          ? ((secondYear.completed || 0) / secondYear.total) *
-                            100
-                          : 0
-                      }%`,
-                      borderRadius: "10px",
-                      transition: "width 0.5s ease-in-out",
-                    }}
-                  />
-                </Box>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    display: "block",
-                    textAlign: "center",
-                    opacity: 0.8,
-                  }}
-                >
-                  {secondYear.total
-                    ? Math.round(
-                        ((secondYear.completed || 0) / secondYear.total) * 100
-                      )
-                    : 0}
-                  % Complete
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        {/* 1st Year Card */}
+     <Grid item xs={12} lg={4}>
+  <Card
+    elevation={4}
+    sx={{
+      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      borderRadius: "16px",
+      color: "white",
+      position: "relative",
+      overflow: "visible",
+      // height: "100%",
+      minHeight: 180,
+      display: "flex",
+      flexDirection: "column",
+      "&:before": {
+        content: '""',
+        position: "absolute",
+        top: -2,
+        left: -2,
+        right: -2,
+        bottom: -2,
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        borderRadius: "18px",
+        zIndex: -1,
+        opacity: 0.6,
+        filter: "blur(10px)",
+      },
+    }}
+  >
+    <CardContent
+      sx={{
+        p: 1,
+        position: "relative",
+        zIndex: 1,
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+        <Box
+          sx={{
+            background: "rgba(255,255,255,0.2)",
+            borderRadius: "10px",
+            p: 0.8,
+            mr: 1.5,
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <SchoolIcon sx={{ fontSize: 22, color: "white" }} />
+        </Box>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, fontSize: "0.9rem" }}
+        >
+          1st Year Progress
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr 1fr",
+          gap: 0.5,
+          textAlign: "center",
+          mb: 2,
+          flex: 1,
+        }}
+      >
+        {/* Total */}
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.3, fontSize: "1.5rem" }}>
+            {firstYear.total || 0}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+          >
+            Total
+          </Typography>
+        </Box>
+
+        {/* Completed */}
+        <LessonsTooltip
+          lessons={firstYear.completedLessons || []}
+          title="Completed Lessons"
+          type="completed"
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, mb: 0.3, color: "#86efac", fontSize: "1.5rem" }}
+            >
+              {adjustedStats.firstYear.adjustedCompleted}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+            >
+              Completed
+            </Typography>
+          </Box>
+        </LessonsTooltip>
+
+        {/* Pending */}
+        <LessonsTooltip
+          lessons={firstYear.pendingLessons || []}
+          title="Pending Lessons"
+          type="pending"
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, mb: 0.3, color: "#fbbf24", fontSize: "1.5rem" }}
+            >
+              {adjustedStats.firstYear.adjustedPending}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+            >
+              Pending
+            </Typography>
+          </Box>
+        </LessonsTooltip>
+
+        {/* Lagging */}
+        <LessonsTooltip
+          lessons={laggingTopics.firstYear}
+          title="Lagging Topics"
+          type="lagging"
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, mb: 0.3, color: "#f87171", fontSize: "1.5rem" }}
+            >
+              {adjustedStats.firstYear.lagging}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+            >
+              Lagging
+            </Typography>
+          </Box>
+        </LessonsTooltip>
+      </Box>
+
+      {/* Progress bar */}
+      <Box sx={{ mt: "auto" }}>
+        <Box
+          sx={{
+            background: "rgba(255,255,255,0.2)",
+            borderRadius: "8px",
+            height: "5px",
+            overflow: "hidden",
+            mb: 0.8,
+          }}
+        >
+          <Box
+            sx={{
+              background: "linear-gradient(90deg, #86efac 0%, #4ade80 100%)",
+              height: "100%",
+              width: `${firstYear.total ? Math.round((adjustedStats.firstYear.adjustedCompleted / firstYear.total) * 100) : 0}%`,
+              borderRadius: "8px",
+              transition: "width 0.5s ease-in-out",
+            }}
+          />
+        </Box>
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            textAlign: "center",
+            opacity: 0.8,
+            fontSize: "0.65rem"
+          }}
+        >
+          {firstYear.total ? Math.round((adjustedStats.firstYear.adjustedCompleted / firstYear.total) * 100) : 0}% Complete
+        </Typography>
+      </Box>
+    </CardContent>
+  </Card>
+</Grid>
+
+{/* 2nd Year Card */}
+<Grid item xs={12} lg={4}>
+  <Card
+    elevation={4}
+    sx={{
+      background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+      borderRadius: "16px",
+      color: "white",
+      position: "relative",
+      overflow: "visible",
+      // height: "100%",
+      minHeight: 180,
+      display: "flex",
+      flexDirection: "column",
+      "&:before": {
+        content: '""',
+        position: "absolute",
+        top: -2,
+        left: -2,
+        right: -2,
+        bottom: -2,
+        background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+        borderRadius: "18px",
+        zIndex: -1,
+        opacity: 0.6,
+        filter: "blur(10px)",
+      },
+    }}
+  >
+    <CardContent
+      sx={{
+        p: 1,
+        position: "relative",
+        zIndex: 1,
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+        <Box
+          sx={{
+            background: "rgba(255,255,255,0.2)",
+            borderRadius: "10px",
+            p: 0.8,
+            mr: 1.5,
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <SchoolIcon sx={{ fontSize: 22, color: "white" }} />
+        </Box>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, fontSize: "0.9rem" }}
+        >
+          2nd Year Progress
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr 1fr",
+          gap: 0.5,
+          textAlign: "center",
+          mb: 2,
+          flex: 1,
+        }}
+      >
+        {/* Total */}
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.3, fontSize: "1.5rem" }}>
+            {secondYear.total || 0}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+          >
+            Total
+          </Typography>
+        </Box>
+
+        {/* Completed */}
+        <LessonsTooltip
+          lessons={secondYear.completedLessons || []}
+          title="Completed Lessons"
+          type="completed"
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, mb: 0.3, color: "#bbf7d0", fontSize: "1.5rem" }}
+            >
+              {adjustedStats.secondYear.adjustedCompleted}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+            >
+              Completed
+            </Typography>
+          </Box>
+        </LessonsTooltip>
+
+        {/* Pending */}
+        <LessonsTooltip
+          lessons={secondYear.pendingLessons || []}
+          title="Pending Lessons"
+          type="pending"
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, mb: 0.3, color: "#fde68a", fontSize: "1.5rem" }}
+            >
+              {adjustedStats.secondYear.adjustedPending}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+            >
+              Pending
+            </Typography>
+          </Box>
+        </LessonsTooltip>
+
+        {/* Lagging */}
+        <LessonsTooltip
+          lessons={laggingTopics.secondYear}
+          title="Lagging Topics"
+          type="lagging"
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, mb: 0.3, color: "#f87171", fontSize: "1.5rem" }}
+            >
+              {adjustedStats.secondYear.lagging}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, fontSize: "0.65rem" }}
+            >
+              Lagging
+            </Typography>
+          </Box>
+        </LessonsTooltip>
+      </Box>
+
+      {/* Progress bar */}
+      <Box sx={{ mt: "auto" }}>
+        <Box
+          sx={{
+            background: "rgba(255,255,255,0.2)",
+            borderRadius: "8px",
+            height: "5px",
+            overflow: "hidden",
+            mb: 0.8,
+          }}
+        >
+          <Box
+            sx={{
+              background: "linear-gradient(90deg, #bbf7d0 0%, #86efac 100%)",
+              height: "100%",
+              width: `${secondYear.total ? Math.round((adjustedStats.secondYear.adjustedCompleted / secondYear.total) * 100) : 0}%`,
+              borderRadius: "8px",
+              transition: "width 0.5s ease-in-out",
+            }}
+          />
+        </Box>
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            textAlign: "center",
+            opacity: 0.8,
+            fontSize: "0.65rem"
+          }}
+        >
+          {secondYear.total ? Math.round((adjustedStats.secondYear.adjustedCompleted / secondYear.total) * 100) : 0}% Complete
+        </Typography>
+      </Box>
+    </CardContent>
+  </Card>
+</Grid>
       </Grid>
     );
   };
+  const getLaggingTopics = () => {
+    if (!currentStudent?.Name) return [];
 
+    const studentName = currentStudent.Name.toLowerCase();
+
+    // Static mapping of lagging topics by student name
+    const laggingTopicsMap = {
+      // Gagan - no lagging topics
+      gagan: [],
+
+      // Amal - no lagging topics
+      amal: [],
+
+      // Ananya - no lagging topics
+      ananya: [],
+
+      // Navya - specific lagging topics
+      navya: ["ELECTROMAGNETIC INDUCTION"],
+
+      // Nithya - specific lagging topics
+      nithya: ["ELECTROMAGNETIC INDUCTION"],
+
+      // Sriya - specific lagging topics
+      sriya: ["ELECTROSTATIC POTENTIAL AND CAPACITANCE", "CURRENT ELECTRICITY"],
+    };
+
+    // Find matching student name (case insensitive)
+    const matchedKey = Object.keys(laggingTopicsMap).find((key) =>
+      studentName.includes(key.toLowerCase())
+    );
+
+    return matchedKey ? laggingTopicsMap[matchedKey] : [];
+  };
+  const getDetailedLaggingTopics = () => {
+    const laggingTopics = getLaggingTopics();
+
+    if (laggingTopics.length === 0) return { firstYear: [], secondYear: [] };
+
+    const laggingByYear = {
+      firstYear: [],
+      secondYear: [],
+    };
+
+    laggingTopics.forEach((topic) => {
+      // Determine which year this topic belongs to
+      if (
+        firstYear?.completedLessons?.includes(topic) ||
+        firstYear?.pendingLessons?.includes(topic)
+      ) {
+        laggingByYear.firstYear.push(topic);
+      } else if (
+        secondYear?.completedLessons?.includes(topic) ||
+        secondYear?.pendingLessons?.includes(topic)
+      ) {
+        laggingByYear.secondYear.push(topic);
+      } else {
+        // Default to 2nd year if not found
+        laggingByYear.secondYear.push(topic);
+      }
+    });
+
+    return laggingByYear;
+  };
+  const getAdjustedStatistics = () => {
+    const laggingTopics = getDetailedLaggingTopics();
+
+    const firstYearLaggingCount = laggingTopics.firstYear.length;
+    const secondYearLaggingCount = laggingTopics.secondYear.length;
+
+    // Adjust completed count by subtracting lagging topics
+    const adjustedFirstYearCompleted = Math.max(
+      0,
+      (firstYear?.completed || 0) - firstYearLaggingCount
+    );
+    const adjustedSecondYearCompleted = Math.max(
+      0,
+      (secondYear?.completed || 0) - secondYearLaggingCount
+    );
+
+    // Adjust pending count by subtracting lagging topics (if they were in pending)
+    const adjustedFirstYearPending = Math.max(
+      0,
+      (firstYear?.pending || 0) - firstYearLaggingCount
+    );
+    const adjustedSecondYearPending = Math.max(
+      0,
+      (secondYear?.pending || 0) - secondYearLaggingCount
+    );
+
+    return {
+      firstYear: {
+        ...firstYear,
+        adjustedCompleted: adjustedFirstYearCompleted,
+        adjustedPending: adjustedFirstYearPending,
+        lagging: firstYearLaggingCount,
+      },
+      secondYear: {
+        ...secondYear,
+        adjustedCompleted: adjustedSecondYearCompleted,
+        adjustedPending: adjustedSecondYearPending,
+        lagging: secondYearLaggingCount,
+      },
+      totalLagging: firstYearLaggingCount + secondYearLaggingCount,
+    };
+  };
   return (
     <div className="student-portfolio-tab premium light-theme">
-  <div className="tab-content premium">
-    <div className="weekend-syllabus-container">
-      <Box sx={{ p: 1 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-            Error loading classes: {error}
-          </Alert>
-        )}
+      <div className="tab-content premium">
+        <div className="weekend-syllabus-container">
+          <Box sx={{ p: 1 }}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                Error loading classes: {error}
+              </Alert>
+            )}
 
-        {statsLoading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : statsError ? (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            Error loading statistics: {statsError}
-          </Alert>
-        ) : (
-          isRevisonStudent && (
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} lg={7}>
-                {renderStatisticsCards()}
-              </Grid>
-              <Grid item xs={12} lg={5}>
-                <Card
-                  elevation={4}
-                  sx={{
-                    p: 2,
-                    height: "100%",
-                    minHeight: 200,
-                    display: "flex",
-                    flexDirection: "column",
-                    background:
-                      "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
-                    borderRadius: "16px",
-                    border: "1px solid rgba(255,255,255,0.3)",
-                    backdropFilter: "blur(10px)",
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      fontWeight: 700,
-                      mb: 2,
-                      color: "text.primary",
-                      fontSize: "1rem",
-                    }}
-                  >
-                    <PieChartIcon
-                      sx={{
-                        mr: 1,
-                        color: "primary.main",
-                        fontSize: "1.2rem",
-                      }}
-                    />
-                    Progress Overview
-                  </Typography>
-                  <Box
-                    sx={{
-                      flex: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {renderPieChart()}
-                  </Box>
-                </Card>
-              </Grid>
-            </Grid>
-          )
-        )}
+            {statsLoading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : statsError ? (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                Error loading statistics: {statsError}
+              </Alert>
+            ) : (
+              isRevisonStudent && (
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                  <Grid item xs={12} lg={7}>
+                    {renderStatisticsCards()}
+                  </Grid>
+                <Grid item xs={12} lg={5}>
+  <Card
+    elevation={4}
+    sx={{
+      p: 1.5,
+      height: "100%",
+      minHeight: 180,
+      display: "flex",
+      flexDirection: "column",
+      background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+      borderRadius: "16px",
+      border: "1px solid rgba(255,255,255,0.3)",
+      backdropFilter: "blur(10px)",
+    }}
+  >
+    <Typography
+      variant="h6"
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        fontWeight: 700,
+        mb: 1.5,
+        color: "text.primary",
+        fontSize: "0.9rem",
+      }}
+    >
+      <PieChartIcon
+        sx={{
+          mr: 1,
+          color: "primary.main",
+          fontSize: "1rem",
+        }}
+      />
+      Progress Overview
+    </Typography>
+    <Box
+      sx={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      {renderPieChart()}
+    </Box>
+  </Card>
+</Grid>
+                </Grid>
+              )
+            )}
 
             {/* Show different content based on revision status */}
             {isRevisonStudent ? (
@@ -1339,7 +1608,10 @@ const StudentWeekend = () => {
                         variant="contained"
                         startIcon={
                           searchLoading ? (
-                            <CircularProgress size={20} sx={{ color: "white" }} />
+                            <CircularProgress
+                              size={20}
+                              sx={{ color: "white" }}
+                            />
                           ) : (
                             <SearchIcon />
                           )

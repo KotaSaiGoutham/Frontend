@@ -104,13 +104,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
     { name: "Profile", path: `/student/${extractedStudentId}/profile`, icon: <FaUserCircle /> },
     { name: "Syllabus", path: `/student/${extractedStudentId}/weekend`, icon: <FaCalendarAlt /> },
     { name: "Results & Marks", path: `/student/${extractedStudentId}/results`, icon: <FaClipboardCheck /> },
-    ...(isRevisonStudent ? [
-      { name: "Classes Info", path: `/student/${extractedStudentId}/classes`, icon: <FaChalkboardTeacher /> }
-    ] : []),
+    // ...(isRevisonStudent ? [
+    //   { name: "Classes Info", path: `/student/${extractedStudentId}/classes`, icon: <FaChalkboardTeacher /> }
+    // ] : []),
     { name: "Payments", path: `/student/${extractedStudentId}/payments`, icon: <FaRupeeSign /> },
-    { name: "Upload Files", path: `/student/${extractedStudentId}/upload`, icon: <FaFileUpload /> },
-    { name: "Study Materials", path: `/student/${extractedStudentId}/study-materials`, icon: <FaBook /> },
-    { name: "Question Papers", path: `/student/${extractedStudentId}/papers`, icon: <FaFileAlt /> },
+    // { name: "Upload Files", path: `/student/${extractedStudentId}/upload`, icon: <FaFileUpload /> },
+    // { name: "Study Materials", path: `/student/${extractedStudentId}/study-materials`, icon: <FaBook /> },
+    // { name: "Question Papers", path: `/student/${extractedStudentId}/papers`, icon: <FaFileAlt /> },
   ];
 
   // Student role navigation

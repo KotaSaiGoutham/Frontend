@@ -28,7 +28,9 @@ import {
   FaAward,
   FaChartLine,
   FaEdit,
-  FaDownload
+  FaDownload,
+  FaFileAlt,
+  FaClipboardList
 } from "react-icons/fa";
 import { setCurrentStudent } from "../../redux/actions";
 import { formatFirebaseDate, formatPhone } from "../../mockdata/function";
@@ -62,7 +64,11 @@ const StudentProfile = () => {
     purple: "#8b5cf6",
     purpleLight: "#ede9fe",
     indigo: "#6366f1",
-    indigoLight: "#e0e7ff"
+    indigoLight: "#e0e7ff",
+    pink: "#ec4899",
+    pinkLight: "#fce7f3",
+    teal: "#14b8a6",
+    tealLight: "#ccfbf1"
   };
 
   // Format currency
@@ -163,99 +169,99 @@ const StudentProfile = () => {
     </div>
   );
 
-// Premium StatCard with gradient option
-const StatCard = ({ icon: Icon, value, label, color = colors.primary, trend, subtitle, gradient }) => (
-  <div style={{
-    display:"flex",
-    justifyContent:"center",
-    alignItems:"center",
-    background: gradient ? `linear-gradient(135deg, ${color}15, ${color}08)` : "white",
-    padding: "24px",
-    borderRadius: "20px",
-    border: `1px solid ${color}20`,
-    boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    position: "relative",
-    overflow: "hidden",
-    cursor: "pointer",
-    minHeight: "120px",
-    ':hover': {
-      transform: "translateY(-4px)",
-      boxShadow: "0 12px 40px rgba(0,0,0,0.15)"
-    }
-  }}>
-    {/* Background pattern */}
+  // Premium StatCard with gradient option
+  const StatCard = ({ icon: Icon, value, label, color = colors.primary, trend, subtitle, gradient }) => (
     <div style={{
-      position: "absolute",
-      top: 0,
-      right: 0,
-      width: "80px",
-      height: "80px",
-      background: `radial-gradient(circle, ${color}10 0%, transparent 70%)`,
-      opacity: 0.4
-    }} />
-
-    <div style={{ display: "flex", alignItems: "center", gap: "16px", position: "relative", zIndex: 2 }}>
+      display:"flex",
+      justifyContent:"center",
+      alignItems:"center",
+      background: gradient ? `linear-gradient(135deg, ${color}15, ${color}08)` : "white",
+      padding: "24px",
+      borderRadius: "20px",
+      border: `1px solid ${color}20`,
+      boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      position: "relative",
+      overflow: "hidden",
+      cursor: "pointer",
+      minHeight: "120px",
+      ':hover': {
+        transform: "translateY(-4px)",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.15)"
+      }
+    }}>
+      {/* Background pattern */}
       <div style={{
-        width: "56px",
-        height: "56px",
-        borderRadius: "16px",
-        background: `linear-gradient(135deg, ${color}20, ${color}10)`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: color,
-        fontSize: "1.4rem",
-        border: `2px solid ${color}25`,
-        boxShadow: `0 4px 12px ${color}15`
-      }}>
-        <Icon />
-      </div>
-      <div style={{ flex: 1 }}>
+        position: "absolute",
+        top: 0,
+        right: 0,
+        width: "80px",
+        height: "80px",
+        background: `radial-gradient(circle, ${color}10 0%, transparent 70%)`,
+        opacity: 0.4
+      }} />
+
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", position: "relative", zIndex: 2 }}>
         <div style={{
-          fontSize: "1.8rem",
-          fontWeight: "800",
-          color: "#1a1a1a",
-          lineHeight: "1.1",
-          marginBottom: "4px",
-          background: gradient ? `linear-gradient(135deg, ${color}, ${color}dd)` : "none",
-          WebkitBackgroundClip: gradient ? "text" : "none",
-          WebkitTextFillColor: gradient ? "transparent" : "none"
+          width: "56px",
+          height: "56px",
+          borderRadius: "16px",
+          background: `linear-gradient(135deg, ${color}20, ${color}10)`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: color,
+          fontSize: "1.4rem",
+          border: `2px solid ${color}25`,
+          boxShadow: `0 4px 12px ${color}15`
         }}>
-          {value}
+          <Icon />
         </div>
-        <div style={{
-          fontSize: "0.85rem",
-          color: "#666",
-          fontWeight: "600",
-          textTransform: "uppercase",
-          letterSpacing: "0.5px",
-          marginBottom: "4px"
-        }}>
-          {label}
-        </div>
-        {subtitle && (
+        <div style={{ flex: 1 }}>
           <div style={{
-            fontSize: "0.75rem",
-            color: color,
-            fontWeight: "700",
-            display: "flex",
-            alignItems: "center",
-            gap: "4px"
+            fontSize: "1.8rem",
+            fontWeight: "800",
+            color: "#1a1a1a",
+            lineHeight: "1.1",
+            marginBottom: "4px",
+            background: gradient ? `linear-gradient(135deg, ${color}, ${color}dd)` : "none",
+            WebkitBackgroundClip: gradient ? "text" : "none",
+            WebkitTextFillColor: gradient ? "transparent" : "none"
           }}>
-            <div style={{
-              width: "6px",
-              height: "6px",
-              borderRadius: "50%",
-              background: color
-            }} />
-            {subtitle}
+            {value}
           </div>
-        )}
+          <div style={{
+            fontSize: "0.85rem",
+            color: "#666",
+            fontWeight: "600",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            marginBottom: "4px"
+          }}>
+            {label}
+          </div>
+          {subtitle && (
+            <div style={{
+              fontSize: "0.75rem",
+              color: color,
+              fontWeight: "700",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}>
+              <div style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: color
+              }} />
+              {subtitle}
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 
   // Enhanced Section Header
   const SectionHeader = ({ icon: Icon, title, subtitle, color = colors.primary, action }) => (
@@ -374,6 +380,65 @@ const StatCard = ({ icon: Icon, value, label, color = colors.primary, trend, sub
           {value || "N/A"}
         </div>
       </div>
+    </div>
+  );
+
+  // Quick Action Card Component
+  const QuickActionCard = ({ icon: Icon, title, description, color = colors.primary, onClick }) => (
+    <div 
+      onClick={onClick}
+      style={{
+        background: `linear-gradient(135deg, ${color}15, ${color}08)`,
+        padding: "24px",
+        borderRadius: "20px",
+        border: `2px solid ${color}20`,
+        boxShadow: "0 8px 25px rgba(0,0,0,0.08)",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        cursor: "pointer",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        textAlign: "center",
+        minHeight: "140px",
+        ':hover': {
+          transform: "translateY(-5px)",
+          boxShadow: `0 15px 35px ${color}25`
+        }
+      }}
+    >
+      <div style={{
+        width: "60px",
+        height: "60px",
+        borderRadius: "16px",
+        background: `linear-gradient(135deg, ${color}, ${color}dd)`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "white",
+        fontSize: "1.5rem",
+        marginBottom: "16px",
+        boxShadow: `0 6px 20px ${color}40`
+      }}>
+        <Icon />
+      </div>
+      <h4 style={{
+        fontSize: "1.1rem",
+        fontWeight: "700",
+        color: "#1a1a1a",
+        margin: "0 0 8px 0"
+      }}>
+        {title}
+      </h4>
+      <p style={{
+        fontSize: "0.85rem",
+        color: "#666",
+        margin: 0,
+        lineHeight: "1.4"
+      }}>
+        {description}
+      </p>
     </div>
   );
 
@@ -683,8 +748,15 @@ const StatCard = ({ icon: Icon, value, label, color = colors.primary, trend, sub
                   value={formatPhone(studentData.mother_contact)}
                   color={colors.purple}
                 />
+                        <InfoItem
+                  icon={FaGraduationCap}
+                  label="Program Type"
+                  value={studentData.isRevisionProgramJEEMains2026Student ? "Revision Program" : "Regular"}
+                  color={colors.warning}
+                />
               </div>
             </div>
+
 
             {/* Class Schedule */}
             {studentData.classDateandTime && studentData.classDateandTime.length > 0 && (
@@ -788,12 +860,7 @@ const StatCard = ({ icon: Icon, value, label, color = colors.primary, trend, sub
                   value={studentData.Year}
                   color={colors.success}
                 />
-                <InfoItem
-                  icon={FaGraduationCap}
-                  label="Program Type"
-                  value={studentData.isRevisionProgramJEEMains2026Student ? "Revision Program" : "Regular"}
-                  color={colors.warning}
-                />
+        
               </div>
             </div>
 
@@ -1043,58 +1110,6 @@ const StatCard = ({ icon: Icon, value, label, color = colors.primary, trend, sub
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Recent Syllabus */}
-            {studentData.weekSyllabus && studentData.weekSyllabus.length > 0 && (
-              <div style={{
-                background: "rgba(255,255,255,0.8)",
-                borderRadius: "24px",
-                padding: "35px",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-                border: "1px solid rgba(255,255,255,0.5)",
-                backdropFilter: "blur(10px)"
-              }}>
-                <SectionHeader
-                  icon={FaBookOpen}
-                  title="Recent Syllabus"
-                  subtitle="Latest topics covered in classes"
-                  color={colors.success}
-                />
-                <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-                  {studentData.weekSyllabus.map((syllabus, index) => (
-                    <div key={index} style={{
-                      padding: "20px",
-                      background: index % 2 === 0 ? 
-                        "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.05))" : 
-                        "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))",
-                      borderRadius: "16px",
-                      border: "2px solid rgba(0,0,0,0.05)",
-                      transition: "all 0.3s ease",
-                      backdropFilter: "blur(10px)"
-                    }}>
-                      <div style={{
-                        fontWeight: "700",
-                        color: "#1a1a1a",
-                        marginBottom: "8px",
-                        fontSize: "1rem"
-                      }}>
-                        {syllabus.topic}
-                      </div>
-                      <div style={{
-                        color: "#666",
-                        fontSize: "0.9rem",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px"
-                      }}>
-                        <FaCalendarPlus />
-                        Covered on: {formatFirebaseDate(syllabus.date)}
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}

@@ -602,7 +602,7 @@ const lowestChemistry = Math.min(
     item.percentage < 50 ? item.subjectMarks : null
   );
 
-  const renderExamTable = (examsList) => {
+const renderExamTable = (examsList) => {
   console.log("consolidatedExam", consolidatedExams);
   console.log("examsList", examsList);
 
@@ -610,6 +610,16 @@ const lowestChemistry = Math.min(
   const shouldShowChemistry = examsList.some(
     (exam) => exam.chemistry > 0 || exam.isCommonStudent
   );
+
+  // Calculate totals and averages for footer
+  const totalPhysics = examsList.reduce((sum, exam) => sum + (exam.physics || 0), 0);
+  const totalChemistry = examsList.reduce((sum, exam) => sum + (exam.chemistry || 0), 0);
+  
+  const physicsExams = examsList.filter(exam => exam.physics > 0);
+  const chemistryExams = examsList.filter(exam => exam.chemistry > 0);
+  
+  const avgPhysics = physicsExams.length > 0 ? totalPhysics / physicsExams.length : 0;
+  const avgChemistry = chemistryExams.length > 0 ? totalChemistry / chemistryExams.length : 0;
 
   return (
     <div style={{ marginBottom: "25px" }}>
@@ -907,6 +917,60 @@ const lowestChemistry = Math.min(
                 </tr>
               );
             })}
+            
+            {/* NEW FOOTER SECTION */}
+            <tr style={{ borderTop: "2px solid #334155" }}>
+              <td
+                colSpan={shouldShowChemistry ? 4 : 3}
+                style={{
+                  padding: "16px 8px",
+                  textAlign: "right",
+                  fontSize: "15px",
+                  fontWeight: "700",
+                  color: "#1e293b",
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                }}
+              >
+             Averages:
+              </td>
+              <td
+                style={{
+                  padding: "16px 8px",
+                  textAlign: "center",
+                  fontSize: "15px",
+                  fontWeight: "700",
+                  color: "#f59e0b",
+                  backgroundColor: "#fefce8",
+                  border: "1px solid #e2e8f0",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "14px", color: "#d97706" }}>
+                 {avgPhysics.toFixed(1)}
+                  </div>
+                </div>
+              </td>
+              {shouldShowChemistry && (
+                <td
+                  style={{
+                    padding: "16px 8px",
+                    textAlign: "center",
+                    fontSize: "15px",
+                    fontWeight: "700",
+                    color: "#10b981",
+                    backgroundColor: "#f0fdf4",
+                    border: "1px solid #e2e8f0",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: "14px", color: "#059669" }}>
+                 {avgChemistry.toFixed(1)}
+                    </div>
+                  </div>
+                </td>
+              )}
+            </tr>
           </tbody>
         </table>
       </div>
