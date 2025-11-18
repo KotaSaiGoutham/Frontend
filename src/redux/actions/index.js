@@ -319,13 +319,8 @@ export const logoutUser = () => {
 export const clearMonthlyPaymentDetails = () => ({
   type: CLEAR_MONTHLY_PAYMENT_DETAILS,
 });
-export const updateStudentField = (
-  studentId,
-  fieldName,
-  newValue,
-  currentStudentsData
-) => {
-  // `currentStudentsData` is optional, might be useful for optimistic updates
+// src/redux/actions/studentActions.js
+export const updateStudentField = (studentId, fieldName, newValue) => {
   const updateData = { [fieldName]: newValue };
 
   return apiRequest({
@@ -334,7 +329,7 @@ export const updateStudentField = (
     data: updateData,
     onStart: () => ({
       type: UPDATE_STUDENT_FIELD_REQUEST,
-      payload: { studentId, fieldName, newValue }, // Include fieldName and newValue for tracking
+      payload: { studentId, fieldName, newValue },
     }),
     onSuccess: (data, dispatch) => {
       dispatch({
@@ -346,41 +341,36 @@ export const updateStudentField = (
           message: data.message || `${fieldName} updated.`,
         },
       });
-      // OPTIONAL BUT RECOMMENDED: Re-fetch all students to ensure UI consistency
-      // Especially if the backend has complex logic (like date calculations)
-      dispatch({ type: SET_STUDENTS_NEED_REFRESH });
+      // Only set needsRefresh for fields that affect sorting/filtering
+      const refreshFields = ['isActive', 'Payment Status', 'classesCompleted', 'revisionClassesCompleted'];
+      if (refreshFields.includes(fieldName)) {
+        dispatch({ type: SET_STUDENTS_NEED_REFRESH });
+      }
     },
     onFailure: (error, dispatch) => {
-      console.error(
-        `Error updating ${fieldName} for student ${studentId}:`,
-        error
-      );
-      const errorMessage =
-        (error && (error.error || error.message)) ||
-        `Failed to update ${fieldName}.`;
+      console.error(`Error updating ${fieldName} for student ${studentId}:`, error);
+      const errorMessage = error?.error || error?.message || `Failed to update ${fieldName}.`;
       dispatch({
         type: UPDATE_STUDENT_FIELD_FAILURE,
-        payload: {
-          studentId,
-          fieldName,
-          error: errorMessage,
-        },
+        payload: { studentId, fieldName, error: errorMessage },
       });
-      if (error && (error.status === 401 || error.status === 403)) {
-        dispatch(setAuthError("Session expired please login again"));
-        dispatch(logoutUser());
-      }
     },
     authRequired: true,
   });
 };
 
-// New action for active status toggle
+
+export const handlePaymentStatusToggle = (studentId, currentStatus, studentName) => {
+  const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid";
+  
+  return updateStudentField(studentId, "Payment Status", newStatus);
+};
+
+// Active status toggle - updates locally
 export const toggleStudentActiveStatus = (studentId, currentIsActive) => {
   const newIsActive = !currentIsActive;
   return updateStudentField(studentId, "isActive", newIsActive);
 };
-// --- NEW: Signup User Action Creator ---
 export const signupUser = ({ name, email, mobile, password }) =>
   apiRequest({
     url: "/api/auth/signup", // Correct signup endpoint
@@ -711,30 +701,37 @@ export const updateStudent = (studentId, studentData) =>
     },
     authRequired: true,
   });
-export const deleteStudent = (studentId) =>
-  apiRequest({
+// src/redux/actions/studentActions.js
+export const fetchStudentsIfNeeded = () => (dispatch, getState) => {
+  const { needsRefresh, students, loading } = getState().students;
+  
+  // Only fetch if we need refresh AND we're not already loading
+  if (needsRefresh && !loading) {
+    dispatch(fetchStudents());
+  }
+  // If no students at all, fetch them
+  else if (students.length === 0 && !loading) {
+    dispatch(fetchStudents());
+  }
+};
+export const deleteStudent = (studentId) => {
+  return apiRequest({
     url: `/api/data/deleteStudent/${studentId}`,
     method: "DELETE",
-    onStart: DELETE_STUDENT_REQUEST,
+    onStart: () => ({
+      type: DELETE_STUDENT_REQUEST,
+      payload: studentId,
+    }),
     onSuccess: (data, dispatch) => {
       dispatch({
         type: DELETE_STUDENT_SUCCESS,
-        payload: data,
+        payload: studentId,
       });
-      // Refresh the student list after a successful delete
-      dispatch({ type: SET_STUDENTS_NEED_REFRESH });
+      // No need to set needsRefresh since we remove the student locally
     },
     onFailure: (error, dispatch) => {
       console.error("Error deleting student:", error);
-      const errorMessage =
-        error.error || error.message || "Failed to delete student";
-      if (error.status === 401 || error.status === 403) {
-        dispatch(
-          setAuthError(
-            "Authentication failed or session expired. Please log in again."
-          )
-        );
-      }
+      const errorMessage = error?.error || error?.message || "Failed to delete student.";
       dispatch({
         type: DELETE_STUDENT_FAILURE,
         payload: { error: errorMessage },
@@ -742,6 +739,7 @@ export const deleteStudent = (studentId) =>
     },
     authRequired: true,
   });
+};
 export const fetchWeeklyMarks = (studentId) =>
   apiRequest({
     // IMPORTANT: Make sure this URL is correct and matches your backend API
@@ -977,34 +975,27 @@ export const updateTimetableEntry = (timetableData) =>
     authRequired: true,
   });
 
-// --------------------------------
-// studentsThunks.js
-// --------------------------------
-export const updateClassesCompleted =
-  (studentId, delta, faculty) => async (dispatch) => {
-    // Build the FSA-style action
-    const apiAction = apiRequest({
-      url: `/api/data/students/${studentId}/classes`,
-      method: "POST",
-      // Pass the faculty name/ID in the data payload
-      data: { delta, faculty },
-      authRequired: true,
-    });
+export const updateClassesCompleted = (studentId, delta, faculty) => async (dispatch) => {
+  const apiAction = apiRequest({
+    url: `/api/data/students/${studentId}/classes`,
+    method: "POST",
+    data: { delta, faculty },
+    authRequired: true,
+  });
 
-    // ⬇️ THIS dispatch actually triggers the middleware
-    dispatch(apiAction);
+  dispatch(apiAction);
+  const updated = await apiAction.promise;
 
-    // Wait for the middleware to resolve the deferred promise it
-    // attached to meta.deferred
-    const updated = await apiAction.promise; // ✔ server data here
+  dispatch({
+    type: UPDATE_STUDENT_CLASSES_SUCCESS,
+    payload: updated,
+  });
 
-    dispatch({
-      type: UPDATE_STUDENT_CLASSES_SUCCESS,
-      payload: updated,
-    });
+  // Set needsRefresh since classesCompleted affects sorting
+  dispatch({ type: SET_STUDENTS_NEED_REFRESH });
 
-    return updated;
-  };
+  return updated;
+};
 
 export const deleteTimetable = (timetableId) =>
   apiRequest({

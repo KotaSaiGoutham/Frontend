@@ -1,5 +1,7 @@
 // src/redux/reducers/studentReducer.js
 import {
+  UPDATE_STUDENT_FIELD_SUCCESS,
+  DELETE_STUDENT_SUCCESS,
   SET_STUDENTS_NEED_REFRESH,
   FETCH_STUDENTS_REQUEST,
   FETCH_STUDENTS_SUCCESS,
@@ -40,7 +42,7 @@ import {
 
 const initialState = {
   students: [], // For the list of all students
-    needsRefresh: true, // Add this flag
+    needsRefresh: false, // Add this flag
 
   loading: false, // For the list of all students
   error: null, // For errors related to fetching all students
@@ -162,6 +164,8 @@ const studentReducer = (state = initialState, action) => {
         loading: false,
         students: action.payload,
         error: null,
+                needsRefresh: false, // Reset after successful fetch
+
       };
     case FETCH_STUDENTS_FAILURE:
       return {
@@ -169,6 +173,8 @@ const studentReducer = (state = initialState, action) => {
         loading: false,
         students: [],
         error: action.payload, // Assuming payload is the error message directly here
+                needsRefresh: false,
+
       };
 
     // --- Cases for fetching a SINGLE student ---
@@ -258,28 +264,7 @@ const studentReducer = (state = initialState, action) => {
         updateError: null,
         updateSuccess: false,
       };
-    case UPDATE_STUDENT_PAYMENT_SUCCESS: // <-- NEW: Handle successful payment status update
-      return {
-        ...state,
-        updatingStudent: null,
-        updateSuccess: true,
-        updateError: null,
-        // Assuming your 'students' array might need a direct update here if fetchStudents() isn't always called
-        students: state.students.map((student) =>
-          student._id === action.payload.studentId // Use _id if that's your MongoDB ID field
-            ? { ...student, "Payment Status": action.payload.newStatus } // Update payment status directly
-            : student
-        ),
-        // If updating a single student's data that is currently selected:
-        selectedStudentData:
-          state.selectedStudentData &&
-          state.selectedStudentData._id === action.payload.studentId
-            ? {
-                ...state.selectedStudentData,
-                "Payment Status": action.payload.newStatus,
-              }
-            : state.selectedStudentData,
-      };
+
     case UPDATE_STUDENT_PAYMENT_FAILURE: // <-- NEW: Handle failed payment status update
       return {
         ...state,
@@ -368,6 +353,71 @@ const studentReducer = (state = initialState, action) => {
         loading: false,
         error: action.payload.error, // Set the error message
       };
+      case UPDATE_STUDENT_FIELD_SUCCESS: {
+      const { studentId, fieldName, newValue } = action.payload;
+      
+      return {
+        ...state,
+        students: state.students.map(student =>
+          student.id === studentId 
+            ? { ...student, [fieldName]: newValue }
+            : student
+        ),
+        // Also update selectedStudentData if it's the same student
+        selectedStudentData: state.selectedStudentData && state.selectedStudentData.id === studentId
+          ? { ...state.selectedStudentData, [fieldName]: newValue }
+          : state.selectedStudentData
+      };
+    }
+
+    // Handle classes completed updates
+    case UPDATE_STUDENT_CLASSES_SUCCESS: {
+      const updated = action.payload;
+      if (!updated || !updated.id) return state;
+
+      return {
+        ...state,
+        students: state.students.map(student =>
+          student.id === updated.id ? { ...student, ...updated } : student
+        ),
+        selectedStudentData: state.selectedStudentData && state.selectedStudentData.id === updated.id
+          ? { ...state.selectedStudentData, ...updated }
+          : state.selectedStudentData
+      };
+    }
+
+    // Handle payment status updates
+    case UPDATE_STUDENT_PAYMENT_SUCCESS: {
+      const { studentId, newStatus } = action.payload;
+      
+      return {
+        ...state,
+        updatingStudent: null,
+        updateSuccess: true,
+        updateError: null,
+        students: state.students.map(student =>
+          student.id === studentId 
+            ? { ...student, "Payment Status": newStatus }
+            : student
+        ),
+        selectedStudentData: state.selectedStudentData && state.selectedStudentData.id === studentId
+          ? { ...state.selectedStudentData, "Payment Status": newStatus }
+          : state.selectedStudentData
+      };
+    }
+
+    // Handle student deletion
+    case DELETE_STUDENT_SUCCESS: {
+      const studentId = action.payload;
+      
+      return {
+        ...state,
+        students: state.students.filter(student => student.id !== studentId),
+        selectedStudentData: state.selectedStudentData && state.selectedStudentData.id === studentId
+          ? null
+          : state.selectedStudentData
+      };
+    }
     default:
       return state;
   }

@@ -79,6 +79,7 @@ import {
 // Redux actions
 import {
   fetchStudents,
+  fetchStudentsIfNeeded,
   updateStudentField,
   updateClassesCompleted,
   fetchUpcomingClasses,
@@ -269,15 +270,13 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
   }, [students]);
 
   useEffect(() => {
-      if (needsRefresh || students.length === 0) {
-      dispatch(fetchStudents());
-    }
-    // dispatch(fetchClassUpdates());
+  dispatch(fetchStudentsIfNeeded());
+
     dispatch(
       fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
     );
     dispatch(fetchAutoTimetablesForToday());
-  }, [dispatch, needsRefresh, students.length]);
+  }, [dispatch, needsRefresh]);
 
   useEffect(() => {
     setIsLoading(studentsLoading || classesLoading); // True if either students or classes are loading
@@ -586,32 +585,25 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
     setSnackbarOpen(false);
   };
 
-  const handlePaymentStatusToggle = async (
-    studentId,
-    currentStatus,
-    studentName
-  ) => {
+// In StudentsTable component - FIX THIS FUNCTION
+const handlePaymentStatusToggle = async (studentId, currentStatus, studentName) => {
+  setUpdatingStudent(studentId);
+  try {
     const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid";
-    setUpdatingStudent(studentId);
-    try {
-      await dispatch(
-        updateStudentField(studentId, "Payment Status", newStatus)
-      ); // Use generic action
-      setSnackbarSeverity(newStatus === "Paid" ? "success" : "error");
-      setSnackbarMessage(
-        `Payment status updated to "${newStatus}" for ${studentName}!`
-      );
-      setSnackbarOpen(true);
-    } catch (err) {
-      setSnackbarMessage(
-        `Failed to update payment status for ${studentName}: ${err.message}`
-      );
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-    } finally {
-      setUpdatingStudent(null);
-    }
-  };
+    // Correct call to updateStudentField
+    await dispatch(updateStudentField(studentId, "Payment Status", newStatus));
+    
+    setSnackbarSeverity(newStatus === "Paid" ? "success" : "error");
+    setSnackbarMessage(`Payment status updated to "${newStatus}" for ${studentName}!`);
+    setSnackbarOpen(true);
+  } catch (err) {
+    setSnackbarMessage(`Failed to update payment status for ${studentName}: ${err.message}`);
+    setSnackbarSeverity("error");
+    setSnackbarOpen(true);
+  } finally {
+    setUpdatingStudent(null);
+  }
+};
   const handleSortRequest = (property) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
