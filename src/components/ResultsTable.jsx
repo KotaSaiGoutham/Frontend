@@ -49,7 +49,6 @@ const ResultsTable = ({
     summary,
     error,
   } = useSelector((state) => state.revisionExams.examConsolidation);
-  console.log("consolidatedExams", consolidatedExams);
 
   useEffect(() => {
     dispatch(fetchRevisionExamConsolidation());
@@ -339,15 +338,13 @@ const ResultsTable = ({
       return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
     }
   });
-console.log("sortedExams",sortedExams)
-  // Enhanced statistics calculation
+
   const totalExams = sortedExams.length;
   const averagePercentage =
     sortedExams.length > 0
       ? sortedExams.reduce((sum, exam) => sum + exam.percentage, 0) / totalExams
       : 0;
 
-// Calculate highest and lowest scores in actual marks
 const highestScore = Math.max(
   ...sortedExams.map((exam) => exam.obtainedMarks)
 );
@@ -603,23 +600,21 @@ const lowestChemistry = Math.min(
   );
 
 const renderExamTable = (examsList) => {
-  console.log("consolidatedExam", consolidatedExams);
-  console.log("examsList", examsList);
 
-  // Check if we should show Chemistry column
   const shouldShowChemistry = examsList.some(
     (exam) => exam.chemistry > 0 || exam.isCommonStudent
   );
 
-  // Calculate totals and averages for footer
-  const totalPhysics = examsList.reduce((sum, exam) => sum + (exam.physics || 0), 0);
-  const totalChemistry = examsList.reduce((sum, exam) => sum + (exam.chemistry || 0), 0);
-  
   const physicsExams = examsList.filter(exam => exam.physics > 0);
   const chemistryExams = examsList.filter(exam => exam.chemistry > 0);
   
-  const avgPhysics = physicsExams.length > 0 ? totalPhysics / physicsExams.length : 0;
-  const avgChemistry = chemistryExams.length > 0 ? totalChemistry / chemistryExams.length : 0;
+  const avgPhysics = physicsExams.length > 0 
+    ? physicsExams.reduce((sum, exam) => sum + exam.physics, 0) / physicsExams.length 
+    : 0;
+  
+  const avgChemistry = chemistryExams.length > 0 
+    ? chemistryExams.reduce((sum, exam) => sum + exam.chemistry, 0) / chemistryExams.length 
+    : 0;
 
   return (
     <div style={{ marginBottom: "25px" }}>
@@ -736,24 +731,13 @@ const renderExamTable = (examsList) => {
                 year: "numeric",
               });
 
-              // Convert exam ISO date to DD.MM.YYYY format for comparison
               const examDateFormatted = isoToDDMMYYYY(exam.date);
 
-              // Find matching consolidated exam data
               const consolidatedExam = consolidatedExams?.find(
                 (consolidated) => consolidated.examDate === examDateFormatted
               );
 
-              // Debug logging for each exam
-              console.log(`Exam ${index}:`, {
-                examDate: exam.date,
-                examDateFormatted,
-                consolidatedExamDate: consolidatedExam?.examDate,
-                match: consolidatedExam?.examDate === examDateFormatted,
-                uniqueTopics: consolidatedExam?.uniqueTopics,
-              });
 
-              // Get unique topics for this exam
               const uniqueTopics = consolidatedExam?.uniqueTopics || [];
 
               return (
@@ -918,59 +902,83 @@ const renderExamTable = (examsList) => {
               );
             })}
             
-            {/* NEW FOOTER SECTION */}
-            <tr style={{ borderTop: "2px solid #334155" }}>
-              <td
-                colSpan={shouldShowChemistry ? 4 : 3}
-                style={{
-                  padding: "16px 8px",
-                  textAlign: "right",
-                  fontSize: "15px",
-                  fontWeight: "700",
-                  color: "#1e293b",
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                }}
-              >
-             Averages:
-              </td>
-              <td
-                style={{
-                  padding: "16px 8px",
-                  textAlign: "center",
-                  fontSize: "15px",
-                  fontWeight: "700",
-                  color: "#f59e0b",
-                  backgroundColor: "#fefce8",
-                  border: "1px solid #e2e8f0",
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: "14px", color: "#d97706" }}>
-                 {avgPhysics.toFixed(1)}
-                  </div>
-                </div>
-              </td>
-              {shouldShowChemistry && (
+            {/* NEW FOOTER SECTION - Show averages only for subjects that have data */}
+            {(physicsExams.length > 0 || (shouldShowChemistry && chemistryExams.length > 0)) && (
+              <tr style={{ borderTop: "2px solid #334155" }}>
+                <td
+                  colSpan={4}
+                  style={{
+                    padding: "16px 8px",
+                    textAlign: "right",
+                    fontSize: "15px",
+                    fontWeight: "700",
+                    color: "#1e293b",
+                    backgroundColor: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                  }}
+                >
+                  Subject Averages:
+                </td>
+                
+                {/* Physics Average - Only show if there are physics exams */}
                 <td
                   style={{
                     padding: "16px 8px",
                     textAlign: "center",
                     fontSize: "15px",
                     fontWeight: "700",
-                    color: "#10b981",
-                    backgroundColor: "#f0fdf4",
+                    color: "#f59e0b",
+                    backgroundColor: "#fefce8",
                     border: "1px solid #e2e8f0",
                   }}
                 >
-                  <div>
-                    <div style={{ fontSize: "14px", color: "#059669" }}>
-                 {avgChemistry.toFixed(1)}
+                  {physicsExams.length > 0 ? (
+                    <div>
+                      <div style={{ fontSize: "14px", color: "#d97706" }}>
+                        Avg: {avgPhysics.toFixed(1)}
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#92400e", fontWeight: "600" }}>
+                        ({physicsExams.length} exams)
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div style={{ fontSize: "12px", color: "#9ca3af", fontStyle: "italic" }}>
+                      No data
+                    </div>
+                  )}
                 </td>
-              )}
-            </tr>
+                
+                {/* Chemistry Average - Only show if there are chemistry exams and column is shown */}
+                {shouldShowChemistry && (
+                  <td
+                    style={{
+                      padding: "16px 8px",
+                      textAlign: "center",
+                      fontSize: "15px",
+                      fontWeight: "700",
+                      color: "#10b981",
+                      backgroundColor: "#f0fdf4",
+                      border: "1px solid #e2e8f0",
+                    }}
+                  >
+                    {chemistryExams.length > 0 ? (
+                      <div>
+                        <div style={{ fontSize: "14px", color: "#059669" }}>
+                          Avg: {avgChemistry.toFixed(1)}
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#047857", fontWeight: "600" }}>
+                          ({chemistryExams.length} exams)
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "12px", color: "#9ca3af", fontStyle: "italic" }}>
+                        No data
+                      </div>
+                    )}
+                  </td>
+                )}
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

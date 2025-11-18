@@ -283,123 +283,116 @@ const RevisionExamsPage = () => {
     });
     setAbsentReason("");
   };
-  const handleMarkAbsent = async () => {
-    const { examItem, student, subject } = markAbsentDialog;
+const handleMarkAbsent = async () => {
+  const { examItem, student, subject } = markAbsentDialog;
 
-    if (!absentReason) {
-      setSaveMessage({
-        text: "Please select an absent reason",
-        severity: "error",
-      });
-      return;
-    }
+  if (!absentReason) {
+    setSaveMessage({
+      text: "Please select an absent reason",
+      severity: "error",
+    });
+    return;
+  }
 
-    const examDataToSave = {
-      classId: examItem.id,
-      studentId: student.id,
-      studentName: student.studentName,
-      originalStudentName: student.originalName,
-      examDate: new Date(
-        examItem.date.split(".").reverse().join("-")
-      ).toISOString(),
-      examName: examItem.exam || "Revision Exam",
-      status: "Absent",
-      absentReason: `${subject.toUpperCase()}: ${absentReason}`, // Include subject in reason
-      topic: [examItem.exam || "General"],
-      testType: getTestTypeFromExam(examItem.exam),
-      isRevisionProgramJEEMains2026Student: true,
-      Subject:
-        subject === "physics"
-          ? "Physics"
-          : subject === "chemistry"
-          ? "Chemistry"
-          : subject === "maths"
-          ? "Maths"
-          : "General",
-      isCommonStudent: student.isCommonStudent,
-      stream: student.Stream,
-    };
-
-    try {
-      setSavingState((prev) => ({
-        ...prev,
-        [`${examItem.id}_${student.id}_absent`]: true,
-      }));
-
-      const result = await dispatch(addStudentExam(examDataToSave));
-
-      if (result) {
-        // Update the local examData state with absent information
-        const examKey = `${examItem.id}_${student.id}`;
-        const existingExam = examData[examKey] || {};
-
-        setExamData((prev) => ({
-          ...prev,
-          [examKey]: {
-            ...existingExam, // Keep existing data
-            examRecordId:
-              result.exam?.id ||
-              result.exam?.examRecordId ||
-              existingExam.examRecordId,
-            status: "Absent",
-            absentReason: `${subject.toUpperCase()}: ${absentReason}`,
-            isAbsent: true,
-            studentName: student.studentName,
-            studentId: student.id,
-            // Only clear the specific subject that was marked absent
-            [subject]: 0,
-            // Update total by subtracting the specific subject's marks
-            total: (existingExam.total || 0) - (existingExam[subject] || 0),
-          },
-        }));
-
-        setSaveMessage({
-          text: `Student marked absent for ${subject} successfully!`,
-          severity: "success",
-        });
-      }
-
-      // Close dialog and reset state - MOVED OUTSIDE THE if(result) BLOCK
-      setMarkAbsentDialog({
-        open: false,
-        examItem: null,
-        student: null,
-        subject: null,
-      });
-      setAbsentReason("");
-
-      // Then refresh the data to ensure consistency
-      setTimeout(() => {
-        handleRefresh();
-      }, 500);
-
-      setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 2000);
-    } catch (error) {
-      console.error("Error marking student absent:", error);
-      setSaveMessage({
-        text: "Failed to mark student absent",
-        severity: "error",
-      });
-
-      // Close dialog even on error
-      setMarkAbsentDialog({
-        open: false,
-        examItem: null,
-        student: null,
-        subject: null,
-      });
-      setAbsentReason("");
-
-      setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 4000);
-    } finally {
-      setSavingState((prev) => {
-        const newState = { ...prev };
-        delete newState[`${examItem.id}_${student.id}_absent`];
-        return newState;
-      });
-    }
+  const examDataToSave = {
+    classId: examItem.id,
+    studentId: student.id,
+    studentName: student.studentName,
+    originalStudentName: student.originalName,
+    examDate: new Date(
+      examItem.date.split(".").reverse().join("-")
+    ).toISOString(),
+    examName: examItem.exam || "Revision Exam",
+    status: "Absent",
+    absentReason: `${subject.toUpperCase()}: ${absentReason}`,
+    topic: [examItem.exam || "General"],
+    testType: getTestTypeFromExam(examItem.exam),
+    isRevisionProgramJEEMains2026Student: true,
+    Subject: "General", // Always set to General
+    isCommonStudent: student.isCommonStudent,
+    stream: student.Stream,
   };
 
+  try {
+    const absentKey = getSubjectKey(examItem.id, student, `${subject}_absent`);
+    setSavingState((prev) => ({
+      ...prev,
+      [absentKey]: true,
+    }));
+
+    const result = await dispatch(addStudentExam(examDataToSave));
+
+    if (result) {
+      // Update the local examData state with absent information
+      const examKey = getExamKey(examItem.id, student);
+      const existingExam = examData[examKey] || {};
+
+      setExamData((prev) => ({
+        ...prev,
+        [examKey]: {
+          ...existingExam, // Keep existing data
+          examRecordId:
+            result.exam?.id ||
+            result.exam?.examRecordId ||
+            existingExam.examRecordId,
+          status: "Absent",
+          absentReason: `${subject.toUpperCase()}: ${absentReason}`,
+          isAbsent: true,
+          studentName: student.studentName,
+          studentId: student.id,
+          // Only clear the specific subject that was marked absent
+          [subject]: 0,
+          // Update total by subtracting the specific subject's marks
+          total: (existingExam.total || 0) - (existingExam[subject] || 0),
+        },
+      }));
+
+      setSaveMessage({
+        text: `Student marked absent for ${subject} successfully!`,
+        severity: "success",
+      });
+    }
+
+    // Close dialog and reset state
+    setMarkAbsentDialog({
+      open: false,
+      examItem: null,
+      student: null,
+      subject: null,
+    });
+    setAbsentReason("");
+
+    // Then refresh the data to ensure consistency
+    setTimeout(() => {
+      handleRefresh();
+    }, 500);
+
+    setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 2000);
+  } catch (error) {
+    console.error("Error marking student absent:", error);
+    setSaveMessage({
+      text: "Failed to mark student absent",
+      severity: "error",
+    });
+
+    // Close dialog even on error
+    setMarkAbsentDialog({
+      open: false,
+      examItem: null,
+      student: null,
+      subject: null,
+    });
+    setAbsentReason("");
+
+    setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 4000);
+  } finally {
+    setSavingState((prev) => {
+      const newState = { ...prev };
+      delete newState[`${examItem.id}_${student.id}_absent`];
+      return newState;
+    });
+  }
+};
   // Student configuration
   const studentConfig = useMemo(
     () => [
@@ -524,15 +517,21 @@ const calculateAverages = useMemo(() => {
   });
 
   // Calculate averages from exam data - ONLY COUNT VALID MARKS
-  Object.keys(examData).forEach((examKey) => {
-    const [examId, studentId] = examKey.split("_");
-    const examRecord = examData[examKey];
-    const examItem = exams.find((e) => e.id === examId);
+Object.keys(examData).forEach((examKey) => {
+  const [examId, studentName] = examKey.split("_");
+  const examRecord = examData[examKey];
+  const examItem = exams.find((e) => e.id === examId);
 
-    if (!examItem || !examRecord) return;
+  if (!examItem || !examRecord) return;
 
-    const examType = getExamType(examItem.exam);
-    const student = revisionStudents.find((s) => s.id === studentId);
+  const examType = getExamType(examItem.exam);
+     const student = revisionStudents.find((s) => 
+    s.studentName.replace(/\s+/g, '_') === studentName
+  );
+
+  if (!student) return;
+
+  const studentId = student.id;
 
     if (!student) return;
 
@@ -714,194 +713,187 @@ const calculateExpectedMarks = useMemo(() => {
   return expected;
 }, [calculateAverages, revisionStudents]);
 
-  const handleEditExam = (examId, studentId, subject, existingData = null) => {
-    if (!globalEditMode) return;
+ const handleEditExam = (examId, student, subject, existingData = null) => {
+  if (!globalEditMode) return;
 
-    const examKey = `${examId}_${studentId}_${subject}`;
-    setEditingExam((prev) => ({ ...prev, [examKey]: true }));
+  const subjectKey = getSubjectKey(examId, student, subject);
+  setEditingExam((prev) => ({ ...prev, [subjectKey]: true }));
 
-    if (existingData) {
-      // Only set the mark for the specific subject being edited
-      setExamMarks((prev) => ({
-        ...prev,
-        [examKey]: {
-          [subject]: existingData[subject] || "",
-        },
-      }));
-    } else {
-      setExamMarks((prev) => ({
-        ...prev,
-        [examKey]: {
-          [subject]: "",
-        },
-      }));
-    }
-  };
-
-  const handleExamMarkChange = (examId, studentId, subject, value) => {
-    const examKey = `${examId}_${studentId}_${subject}`;
-    const validatedValue = Math.min(100, Math.max(0, Number(value) || 0));
+  if (existingData) {
     setExamMarks((prev) => ({
       ...prev,
-      [examKey]: {
-        [subject]: validatedValue,
+      [subjectKey]: {
+        [subject]: existingData[subject] || "",
       },
     }));
+  } else {
+    setExamMarks((prev) => ({
+      ...prev,
+      [subjectKey]: {
+        [subject]: "",
+      },
+    }));
+  }
+};
+
+const handleExamMarkChange = (examId, student, subject, value) => {
+  const subjectKey = getSubjectKey(examId, student, subject);
+  const validatedValue = Math.min(100, Math.max(0, Number(value) || 0));
+  setExamMarks((prev) => ({
+    ...prev,
+    [subjectKey]: {
+      [subject]: validatedValue,
+    },
+  }));
+};
+
+const handleSaveExam = async (examItem, student, subject) => {
+  console.log("student", student);
+  const examKey = getExamKey(examItem.id, student);
+  const subjectKey = getSubjectKey(examItem.id, student, subject);
+  const cellKey = getSubjectKey(examItem.id, student, subject);
+  
+  const marks = examMarks[subjectKey] || {};
+  const subjectMark = Number(marks[subject]) || 0;
+  const existingExam = examData[examKey];
+
+  // Get current marks for ALL subjects from the existing exam data
+  const currentPhysics = existingExam?.physics || 0;
+  const currentChemistry = existingExam?.chemistry || 0;
+  const currentMaths = existingExam?.maths || 0;
+
+  // Only update the subject that's being edited, keep others as they are
+  let physicsMarks = currentPhysics;
+  let chemistryMarks = currentChemistry;
+  let mathsMarks = currentMaths;
+
+  // Update only the specific subject that's being edited
+  if (subject === "physics") {
+    physicsMarks = subjectMark;
+  } else if (subject === "chemistry") {
+    chemistryMarks = subjectMark;
+  } else if (subject === "maths") {
+    mathsMarks = subjectMark;
+  }
+
+  const total = physicsMarks + chemistryMarks + mathsMarks;
+
+  const examDataToSave = {
+    classId: examItem.id,
+    studentId: student.id,
+    studentName: student.studentName,
+    originalStudentName: student.originalName,
+    examDate: new Date(
+      examItem.date.split(".").reverse().join("-")
+    ).toISOString(),
+    examName: examItem.exam || "Revision Exam",
+    status: "Present",
+    topic: [examItem.exam || "General"],
+    testType: getTestTypeFromExam(examItem.exam),
+    isRevisionProgramJEEMains2026Student: true,
+    Subject: "General", // Always set to General
+    total: total,
+    physics: physicsMarks,
+    chemistry: chemistryMarks,
+    maths: mathsMarks,
+    isCommonStudent: student.isCommonStudent,
+    stream: student.Stream,
   };
+  console.log("examDataToSave", examDataToSave);
 
-  const handleSaveExam = async (examItem, student, subject) => {
-    console.log("student", student);
-    const examKey = `${examItem.id}_${student.id}`;
-    const subjectKey = `${examItem.id}_${student.id}_${subject}`;
-    const marks = examMarks[subjectKey] || {};
-    const cellKey = `${examItem.id}_${student.id}_${subject}`;
+  try {
+    setSavingState((prev) => ({ ...prev, [cellKey]: true }));
 
-    const subjectMark = Number(marks[subject]) || 0;
+    let result;
 
-    const existingExam = examData[examKey];
+    const hasExistingRecord = existingExam && existingExam.examRecordId;
 
-    // Get current marks for ALL subjects from the existing exam data
-    const currentPhysics = existingExam?.physics || 0;
-    const currentChemistry = existingExam?.chemistry || 0;
-    const currentMaths = existingExam?.maths || 0;
-
-    // Only update the subject that's being edited, keep others as they are
-    let physicsMarks = currentPhysics;
-    let chemistryMarks = currentChemistry;
-    let mathsMarks = currentMaths;
-
-    // Update only the specific subject that's being edited
-    if (subject === "physics") {
-      physicsMarks = subjectMark;
-    } else if (subject === "chemistry") {
-      chemistryMarks = subjectMark;
-    } else if (subject === "maths") {
-      mathsMarks = subjectMark;
+    if (hasExistingRecord) {
+      examDataToSave.id = existingExam.examRecordId;
+      result = await dispatch(updateStudentExam(examDataToSave));
+    } else {
+      result = await dispatch(addStudentExam(examDataToSave));
     }
 
-    const total = physicsMarks + chemistryMarks + mathsMarks;
+    if (result) {
+      const updatedExamData = {
+        examRecordId:
+          result.exam?.id ||
+          result.exam?.examRecordId ||
+          existingExam?.examRecordId,
+        physics: physicsMarks,
+        chemistry: chemistryMarks,
+        maths: mathsMarks,
+        total: total,
+        subject: "General",
+        studentName: student.studentName,
+        studentId: student.id,
+        status: "Present",
+        isAbsent: false,
+      };
 
-    const examDataToSave = {
-      classId: examItem.id,
-      studentId: student.id,
-      studentName: student.studentName,
-      originalStudentName: student.originalName,
-      examDate: new Date(
-        examItem.date.split(".").reverse().join("-")
-      ).toISOString(),
-      examName: examItem.exam || "Revision Exam",
-      status: "Present",
-      topic: [examItem.exam || "General"],
-      testType: getTestTypeFromExam(examItem.exam),
-      isRevisionProgramJEEMains2026Student: true,
-      Subject: user?.isPhysics
-        ? "Physics"
-        : user?.isChemistry
-        ? "Chemistry"
-        : user?.isMaths
-        ? "Maths"
-        : "General",
-      total: total,
-      physics: physicsMarks,
-      chemistry: chemistryMarks,
-      maths: mathsMarks,
-      isCommonStudent: student.isCommonStudent,
-      stream: student.Stream,
-    };
-    console.log("examDataToSave", examDataToSave);
+      setExamData((prev) => ({
+        ...prev,
+        [examKey]: updatedExamData,
+      }));
 
-    try {
-      setSavingState((prev) => ({ ...prev, [cellKey]: true }));
-
-      let result;
-
-      const hasExistingRecord = existingExam && existingExam.examRecordId;
-
-      if (hasExistingRecord) {
-        examDataToSave.id = existingExam.examRecordId;
-        result = await dispatch(updateStudentExam(examDataToSave));
-      } else {
-        result = await dispatch(addStudentExam(examDataToSave));
-      }
-
-      if (result) {
-        const updatedExamData = {
-          examRecordId:
-            result.exam?.id ||
-            result.exam?.examRecordId ||
-            existingExam?.examRecordId,
-          physics: physicsMarks,
-          chemistry: chemistryMarks,
-          maths: mathsMarks,
-          total: total,
-          subject: examDataToSave.Subject,
-          studentName: student.studentName,
-          studentId: student.id,
-          status: "Present", // Ensure status is updated
-          isAbsent: false, // Ensure absent flag is updated
-        };
-
-        setExamData((prev) => ({
-          ...prev,
-          [examKey]: updatedExamData,
-        }));
-
-        setSaveMessage({
-          text: `${subject.charAt(0).toUpperCase() + subject.slice(1)} marks ${
-            hasExistingRecord ? "updated" : "saved"
-          } successfully!`,
-          severity: "success",
-        });
-      }
-
-      setEditingExam((prev) => {
-        const newState = { ...prev };
-        delete newState[subjectKey];
-        return newState;
-      });
-
-      setExamMarks((prev) => {
-        const newState = { ...prev };
-        delete newState[subjectKey];
-        return newState;
-      });
-
-      setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 2000);
-    } catch (error) {
-      console.error("Error saving exam:", error);
-      setSaveMessage({ text: "Failed to save exam marks", severity: "error" });
-
-      setEditingExam((prev) => {
-        const newState = { ...prev };
-        delete newState[subjectKey];
-        return newState;
-      });
-
-      setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 4000);
-    } finally {
-      setSavingState((prev) => {
-        const newState = { ...prev };
-        delete newState[cellKey];
-        return newState;
+      setSaveMessage({
+        text: `${subject.charAt(0).toUpperCase() + subject.slice(1)} marks ${
+          hasExistingRecord ? "updated" : "saved"
+        } successfully!`,
+        severity: "success",
       });
     }
-  };
-
-  const handleCancelExam = (examId, studentId, subject) => {
-    const examKey = `${examId}_${studentId}_${subject}`;
 
     setEditingExam((prev) => {
       const newState = { ...prev };
-      delete newState[examKey];
+      delete newState[subjectKey];
       return newState;
     });
 
     setExamMarks((prev) => {
       const newState = { ...prev };
-      delete newState[examKey];
+      delete newState[subjectKey];
       return newState;
     });
-  };
+
+    setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 2000);
+  } catch (error) {
+    console.error("Error saving exam:", error);
+    setSaveMessage({ text: "Failed to save exam marks", severity: "error" });
+
+    setEditingExam((prev) => {
+      const newState = { ...prev };
+      delete newState[subjectKey];
+      return newState;
+    });
+
+    setTimeout(() => setSaveMessage({ text: "", severity: "info" }), 4000);
+  } finally {
+    setSavingState((prev) => {
+      const newState = { ...prev };
+      delete newState[cellKey];
+      return newState;
+    });
+  }
+};
+
+
+const handleCancelExam = (examId, student, subject) => {
+  const subjectKey = getSubjectKey(examId, student, subject);
+
+  setEditingExam((prev) => {
+    const newState = { ...prev };
+    delete newState[subjectKey];
+    return newState;
+  });
+
+  setExamMarks((prev) => {
+    const newState = { ...prev };
+    delete newState[subjectKey];
+    return newState;
+  });
+};
 
   const getTestTypeFromExam = (examName) => {
     if (!examName) return [];
@@ -922,14 +914,16 @@ const calculateExpectedMarks = useMemo(() => {
       setExamMarks({});
     }
   };
-
+const getExamKey = (examId, student) => `${examId}_${student.studentName.replace(/\s+/g, '_')}`;
+const getSubjectKey = (examId, student, subject) => `${examId}_${student.studentName.replace(/\s+/g, '_')}_${subject}`;
 const renderSubjectMarks = (examItem, student, subject) => {
-  const examKey = `${examItem.id}_${student.id}`;
-  const subjectKey = `${examItem.id}_${student.id}_${subject}`;
+  const examKey = getExamKey(examItem.id, student);
+  const subjectKey = getSubjectKey(examItem.id, student, subject);
+  const cellKey = getSubjectKey(examItem.id, student, subject);
+  
   const isEditing = editingExam[subjectKey];
   const marks = examMarks[subjectKey] || {};
   const savedExam = examData[examKey];
-  const cellKey = `${examItem.id}_${student.id}_${subject}`;
   const isSaving = savingState[cellKey];
   const examType = getExamType(examItem.exam);
 
@@ -950,13 +944,6 @@ const renderSubjectMarks = (examItem, student, subject) => {
     return exam > today;
   };
 
-  console.log(`Rendering ${subject} for ${student.studentName}:`, {
-    isAbsent,
-    absentReasonText,
-    savedExam,
-    hasMarksEntered,
-    isFuture: isFutureExam()
-  });
 
   if (isEditing) {
     return (
@@ -968,7 +955,7 @@ const renderSubjectMarks = (examItem, student, subject) => {
           onChange={(e) =>
             handleExamMarkChange(
               examItem.id,
-              student.id,
+              student,
               subject,
               e.target.value
             )
@@ -1004,9 +991,7 @@ const renderSubjectMarks = (examItem, student, subject) => {
           <Tooltip title="Cancel">
             <IconButton
               size="small"
-              onClick={() =>
-                handleCancelExam(examItem.id, student.id, subject)
-              }
+              onClick={() => handleCancelExam(examItem.id, student, subject)}
               disabled={isSaving}
               sx={{ color: "#ef4444", padding: "3px" }}
             >
@@ -1096,7 +1081,7 @@ const renderSubjectMarks = (examItem, student, subject) => {
                   onClick={() =>
                     handleEditExam(
                       examItem.id,
-                      student.id,
+                      student,
                       subject,
                       savedExam
                     )
@@ -1106,7 +1091,6 @@ const renderSubjectMarks = (examItem, student, subject) => {
                   <Edit fontSize="small" />
                 </IconButton>
               </Tooltip>
-              {/* Show cross mark only if marks are NOT entered and it's NOT a future exam */}
               {!hasMarksEntered && !isFutureExam() && (
                 <Tooltip title={`Mark ${subject} absent`}>
                   <IconButton
@@ -1657,45 +1641,55 @@ const renderTableFooter = (examsList, examType) => {
       </Box>
     );
   };
-  useEffect(() => {
-    const loadExamData = () => {
-      if (!exams || exams.length === 0) return;
+ useEffect(() => {
+  const loadExamData = () => {
+    if (!exams || exams.length === 0) return;
 
-      const examDataMap = {};
-      console.log("Loading exam data from exams:", exams);
+    const examDataMap = {};
+    console.log("Loading exam data from exams:", exams);
 
-      exams.forEach((examItem) => {
-        if (examItem.examData && Array.isArray(examItem.examData)) {
-          examItem.examData.forEach((examRecord) => {
-            const examKey = `${examItem.id}_${examRecord.studentId}`;
+    exams.forEach((examItem) => {
+      if (examItem.examData && Array.isArray(examItem.examData)) {
+        examItem.examData.forEach((examRecord) => {
+          // Find the matching student by name
+          const matchedStudent = revisionStudents.find(student => 
+            student.studentName === examRecord.studentName || 
+            student.originalName === examRecord.studentName ||
+            student.originalName === examRecord.originalStudentName
+          );
 
+          if (matchedStudent) {
+            const examKey = getExamKey(examItem.id, matchedStudent);
+            
             // Check if student is absent
-            const isAbsent =
-              examRecord.status === "Absent" || examRecord.isAbsent;
+            const isAbsent = examRecord.status === "Absent" || examRecord.isAbsent;
 
+            // Merge data for the same student (same name, different IDs)
             examDataMap[examKey] = {
-              examRecordId: examRecord.id,
-              physics: examRecord.physics || 0,
-              chemistry: examRecord.chemistry || 0,
-              maths: examRecord.maths || 0,
-              total: examRecord.total || 0,
-              subject: examRecord.subject,
-              studentName: examRecord.studentName,
-              studentId: examRecord.studentId,
-              status: examRecord.status || "Present",
-              absentReason: examRecord.absentReason || "",
-              isAbsent: isAbsent,
+              ...examDataMap[examKey],
+              examRecordId: examRecord.id || examDataMap[examKey]?.examRecordId,
+              physics: examRecord.physics !== undefined ? examRecord.physics : (examDataMap[examKey]?.physics || 0),
+              chemistry: examRecord.chemistry !== undefined ? examRecord.chemistry : (examDataMap[examKey]?.chemistry || 0),
+              maths: examRecord.maths !== undefined ? examRecord.maths : (examDataMap[examKey]?.maths || 0),
+              total: examRecord.total !== undefined ? examRecord.total : (examDataMap[examKey]?.total || 0),
+              subject: "General",
+              studentName: matchedStudent.studentName,
+              studentId: matchedStudent.id,
+              status: examRecord.status || examDataMap[examKey]?.status || "Present",
+              absentReason: examRecord.absentReason || examDataMap[examKey]?.absentReason || "",
+              isAbsent: isAbsent || examDataMap[examKey]?.isAbsent || false,
             };
-          });
-        }
-      });
+          }
+        });
+      }
+    });
 
-      console.log("Final loaded exam data map:", examDataMap);
-      setExamData(examDataMap);
-    };
+    console.log("Final loaded exam data map:", examDataMap);
+    setExamData(examDataMap);
+  };
 
-    loadExamData();
-  }, [exams]);
+  loadExamData();
+}, [exams, revisionStudents]);
 
   useEffect(() => {
     if (exams.length === 0 && !loading) {
