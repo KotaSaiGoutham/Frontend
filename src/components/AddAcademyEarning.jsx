@@ -75,8 +75,9 @@ const AddAcademyEarning = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDateChange = (e) => {
-    setFormData((prev) => ({ ...prev, date: e.target.value }));
+  // FIXED: Handle date change properly
+  const handleDateChange = (dateValue) => {
+    setFormData((prev) => ({ ...prev, date: dateValue }));
   };
 
   const handleSubmit = async (e) => {
@@ -224,7 +225,7 @@ const AddAcademyEarning = () => {
               label="Date of Payment"
               icon={FaCalendarAlt}
               value={formData.date}
-              onChange={handleDateChange}
+              onChange={handleDateChange} // Fixed: Now passing the date value directly
               required
             />
           </div>

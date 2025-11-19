@@ -73,8 +73,8 @@ console.log("isCompanyExpense",isCompanyExpense)
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDateChange = (e) => {
-    setFormData((prev) => ({ ...prev, date: e.target.value }));
+  const handleDateChange = (dateValue) => {
+    setFormData((prev) => ({ ...prev, date:dateValue }));
   };
 
   const handleSubmit = async (e) => {
