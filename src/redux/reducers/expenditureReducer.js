@@ -1,4 +1,5 @@
 import {
+  DELETE_ACADEMY_EARNING_SUCCESS,
   FETCH_EXPENDITURES_REQUEST,
   FETCH_EXPENDITURES_SUCCESS,
   FETCH_EXPENDITURES_FAILURE,
@@ -217,7 +218,18 @@ export const expenditureReducer = (state = initialState, action) => {
     case FETCH_ACADEMY_FINANCE_FAILURE:
     case ADD_ACADEMY_EARNING_FAILURE:
 
-
+case DELETE_ACADEMY_EARNING_SUCCESS:
+  return {
+    ...state,
+    loading: false,
+    earnings: state.earnings.filter(earning => earning.id !== action.payload),
+    totalEarnings: state.earnings.reduce((total, earning) => {
+      if (earning.id !== action.payload) {
+        return total + (earning.amount || 0);
+      }
+      return total;
+    }, 0),
+  };
     default:
       return state;
   }

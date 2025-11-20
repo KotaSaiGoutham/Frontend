@@ -1,4 +1,10 @@
 import {
+  UPDATE_ACADEMY_EARNING_REQUEST,
+  UPDATE_ACADEMY_EARNING_SUCCESS,
+  UPDATE_ACADEMY_EARNING_FAILURE,
+  DELETE_ACADEMY_EARNING_SUCCESS,
+  DELETE_ACADEMY_EARNING_FAILURE,
+  DELETE_ACADEMY_EARNING_REQUEST,
   FETCH_EXAM_CONSOLIDATION_SUCCESS,
   FETCH_EXAM_CONSOLIDATION_FAILURE,
   FETCH_EXAM_CONSOLIDATION_REQUEST,
@@ -2413,6 +2419,29 @@ export const addAcademyEarning = (earningData, callback) =>
     },
     authRequired: true,
   });
+  // Delete Academy Earning Action
+export const deleteAcademyEarning = (earningId, callback) =>
+  apiRequest({
+    url: `/api/expenditures/delete-academy-earning/${earningId}`,
+    method: "DELETE",
+    onStart: DELETE_ACADEMY_EARNING_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: DELETE_ACADEMY_EARNING_SUCCESS,
+        payload: earningId,
+      });
+      if (callback) callback();
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error deleting academy earning:", error);
+      dispatch({
+        type: DELETE_ACADEMY_EARNING_FAILURE,
+        payload: { error: error.message || "Failed to delete academy earning" },
+      });
+      throw new Error(error.message || "Failed to delete academy earning");
+    },
+    authRequired: true,
+  });
 
 export const uploadStudyMaterial = (studentId, formData) =>
   apiRequest({
@@ -2601,3 +2630,28 @@ export const fetchRevisionExamConsolidation = () => {
     authRequired: true,
   });
 };
+
+// Add this action for updating academy earnings specifically
+export const updateAcademyEarning = (earningId, earningData, callback) =>
+  apiRequest({
+    url: `/api/expenditures/update-academy-earning/${earningId}`,
+    method: "PUT",
+    data: earningData,
+    onStart: UPDATE_ACADEMY_EARNING_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_ACADEMY_EARNING_SUCCESS,
+        payload: data,
+      });
+      if (callback) callback();
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error updating academy earning:", error);
+      dispatch({
+        type: UPDATE_ACADEMY_EARNING_FAILURE,
+        payload: { error: error.message || "Failed to update academy earning" },
+      });
+      throw new Error(error.message || "Failed to update academy earning");
+    },
+    authRequired: true,
+  });

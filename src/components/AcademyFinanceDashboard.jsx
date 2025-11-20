@@ -20,7 +20,8 @@ import {
   Tooltip,
   Card,
   CardContent,
-  LinearProgress
+  LinearProgress,
+  CircularProgress  
 } from "@mui/material";
 import {
   FaRupeeSign,
@@ -42,7 +43,7 @@ import { PieChart } from "@mui/x-charts";
 import { format, parseISO } from "date-fns";
 
 // Import your academy finance actions
-import { fetchAcademyFinance } from "../redux/actions";
+import { fetchAcademyFinance,deleteAcademyEarning  } from "../redux/actions";
 import { yearOptions, monthOptions } from "../mockdata/function";
 
 const AcademyFinanceDashboard = () => {
@@ -53,6 +54,11 @@ const AcademyFinanceDashboard = () => {
   const [selectedDate, setSelectedDate] = useState({
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
+  });
+ const [deleteConfirm, setDeleteConfirm] = useState({
+    open: false,
+    earning: null,
+    loading: false
   });
 
   // Try different possible paths for academy finance data
@@ -187,11 +193,52 @@ const AcademyFinanceDashboard = () => {
     navigate("/add-academy-earnings", { state: { earningToEdit: earning } });
   };
 
-  const handleDeleteEarning = (earning) => {
-    // Implement delete logic here
-    console.log("Delete academy earning:", earning);
+const handleDeleteEarning = async (earning) => {
+    // Set the earning to be deleted in state for confirmation
+    setDeleteConfirm({
+      open: true,
+      earning: earning,
+      loading: false
+    });
+  };
+ const confirmDelete = async () => {
+    if (!deleteConfirm.earning) return;
+
+    setDeleteConfirm(prev => ({ ...prev, loading: true }));
+
+    try {
+      await dispatch(deleteAcademyEarning(deleteConfirm.earning.id));
+      
+      // Refresh the data after successful deletion
+      dispatch(fetchAcademyFinance(selectedDate.year, selectedDate.month, "month"));
+      
+      // Close confirmation dialog
+      setDeleteConfirm({
+        open: false,
+        earning: null,
+        loading: false
+      });
+
+      // Optional: Show success message
+      // You can add a toast notification here if you have a notification system
+
+    } catch (error) {
+      console.error("Failed to delete earning:", error);
+      setDeleteConfirm(prev => ({ ...prev, loading: false }));
+      
+      // Optional: Show error message
+      // You can add an error toast notification here
+    }
   };
 
+  // Cancel delete function
+  const cancelDelete = () => {
+    setDeleteConfirm({
+      open: false,
+      earning: null,
+      loading: false
+    });
+  };
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -910,6 +957,71 @@ const ExpensesTable = () => (
           </motion.div>
         </Grid>
       </Grid>
+       {deleteConfirm.open && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Paper elevation={8} sx={{ p: 4, borderRadius: 3, maxWidth: 400, width: '90vw' }}>
+              <Typography variant="h5" gutterBottom color="error" fontWeight="bold">
+                Confirm Delete
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 3 }}>
+                Are you sure you want to delete this earning record?
+              </Typography>
+              {deleteConfirm.earning && (
+                <Box sx={{ mb: 3, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="body2" fontWeight="bold">
+                    {deleteConfirm.earning.tutorName} - {formatCurrency(deleteConfirm.earning.amount)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {deleteConfirm.earning.purpose}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatDate(deleteConfirm.earning.date)}
+                  </Typography>
+                </Box>
+              )}
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                <Button
+                  onClick={cancelDelete}
+                  disabled={deleteConfirm.loading}
+                  variant="outlined"
+                  size="large"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmDelete}
+                  disabled={deleteConfirm.loading}
+                  variant="contained"
+                  color="error"
+                  size="large"
+                  startIcon={deleteConfirm.loading ? <CircularProgress size={16} /> : <FaTrash />}
+                >
+                  {deleteConfirm.loading ? 'Deleting...' : 'Delete'}
+                </Button>
+              </Box>
+            </Paper>
+          </motion.div>
+        </Box>
+      )}
+
     </Box>
   );
 };

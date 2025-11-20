@@ -26,7 +26,8 @@ import {
   MuiDatePicker,
 } from "./customcomponents/MuiCustomFormFields";
 import { useSelector, useDispatch } from "react-redux";
-import { addAcademyEarning } from "../redux/actions";
+// Import the correct actions
+import { addAcademyEarning, updateAcademyEarning } from "../redux/actions"; // Changed to updateAcademyEarning
 
 const AddAcademyEarning = () => {
   const navigate = useNavigate();
@@ -57,6 +58,7 @@ const AddAcademyEarning = () => {
 
   useEffect(() => {
     if (isUpdating && earningToEdit) {
+      console.log("Setting form data from earningToEdit:", earningToEdit);
       setFormData({
         tutorName: earningToEdit.tutorName || "",
         studentNames: earningToEdit.studentNames || "",
@@ -75,7 +77,6 @@ const AddAcademyEarning = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // FIXED: Handle date change properly
   const handleDateChange = (dateValue) => {
     setFormData((prev) => ({ ...prev, date: dateValue }));
   };
@@ -83,6 +84,9 @@ const AddAcademyEarning = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log("Form Data:", formData);
+    console.log("isUpdating:", isUpdating);
+
     if (isUpdating) {
       // Compare formData with existing data
       const hasChanged =
@@ -93,6 +97,8 @@ const AddAcademyEarning = () => {
         Number(formData.amount) !== Number(earningToEdit.amount) ||
         new Date(formData.date).toISOString().slice(0, 10) !==
           new Date(earningToEdit.date).toISOString().slice(0, 10);
+
+      console.log("Has changes:", hasChanged);
 
       if (!hasChanged) {
         setSnackbar({
@@ -106,27 +112,37 @@ const AddAcademyEarning = () => {
     
     setLoading(true);
 
+    // Ensure date is properly formatted
+    const formattedDate = formData.date instanceof Date 
+      ? formData.date.toISOString() 
+      : new Date(formData.date).toISOString();
+
     const earningPayload = {
       ...formData,
       amount: Number(formData.amount),
+      date: formattedDate,
       lastModifiedBy: user.subject,
     };
 
+    console.log("Final payload:", earningPayload);
+
     try {
       if (isUpdating) {
-        // await dispatch(
-        //   updateAcademyEarning(earningToEdit.id, earningPayload)
-        // );
-        // setSnackbar({
-        //   open: true,
-        //   message: "Academy earning updated successfully!",
-        //   severity: "success",
-        // });
+        console.log("Dispatching updateAcademyEarning with ID:", earningToEdit.id);
+        await dispatch(
+          updateAcademyEarning(earningToEdit.id, earningPayload) // Use updateAcademyEarning
+        );
+        setSnackbar({
+          open: true,
+          message: "Academy earning updated successfully!",
+          severity: "success",
+        });
       } else {
         const finalPayload = { 
           ...earningPayload, 
           createdBy: user.subject 
         };
+        console.log("Dispatching addAcademyEarning");
         await dispatch(addAcademyEarning(finalPayload));
         setSnackbar({
           open: true,
@@ -137,6 +153,7 @@ const AddAcademyEarning = () => {
       
       setTimeout(() => navigate("/academy-finance-dashboard"), 1500);
     } catch (error) {
+      console.error("Operation failed:", error);
       setSnackbar({
         open: true,
         message: error.message || "Operation failed.",
@@ -164,7 +181,15 @@ const AddAcademyEarning = () => {
             {isUpdating ? "Update Academy Earning" : "Add New Academy Earning"}
           </Typography>
           
-          {!isUpdating && (
+          {isUpdating ? (
+            <Chip 
+              icon={<FaEdit />}
+              label="Edit Mode"
+              color="secondary"
+              variant="outlined"
+              sx={{ fontWeight: 'bold' }}
+            />
+          ) : (
             <Chip 
               icon={<FaChalkboardTeacher />}
               label="Academy Earning"
@@ -225,7 +250,7 @@ const AddAcademyEarning = () => {
               label="Date of Payment"
               icon={FaCalendarAlt}
               value={formData.date}
-              onChange={handleDateChange} // Fixed: Now passing the date value directly
+              onChange={handleDateChange}
               required
             />
           </div>

@@ -35,10 +35,10 @@ const AddExpenditure = () => {
   // --- Check for Edit Mode ---
   const expenditureToEdit = location.state?.expenditureToEdit;
   const isUpdating = !!expenditureToEdit;
-  
+
   // --- Check if it's a company expense ---
   const isCompanyExpense = location.state?.isCompanyExpense || false;
-console.log("isCompanyExpense",isCompanyExpense)
+  console.log("isCompanyExpense", isCompanyExpense);
   // --- Component State ---
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -54,7 +54,7 @@ console.log("isCompanyExpense",isCompanyExpense)
   });
 
   const { user } = useSelector((state) => state.auth);
-  
+
   useEffect(() => {
     if (isUpdating && expenditureToEdit) {
       setFormData({
@@ -74,12 +74,12 @@ console.log("isCompanyExpense",isCompanyExpense)
   };
 
   const handleDateChange = (dateValue) => {
-    setFormData((prev) => ({ ...prev, date:dateValue }));
+    setFormData((prev) => ({ ...prev, date: dateValue }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (isUpdating) {
       // Compare formData with existing data
       const hasChanged =
@@ -98,7 +98,7 @@ console.log("isCompanyExpense",isCompanyExpense)
         return;
       }
     }
-    
+
     setLoading(true);
 
     const expenditurePayload = {
@@ -120,19 +120,25 @@ console.log("isCompanyExpense",isCompanyExpense)
           severity: "success",
         });
       } else {
-        const finalPayload = { 
-          ...expenditurePayload, 
-          createdBy: user.subject 
+        const finalPayload = {
+          ...expenditurePayload,
+          createdBy: user.subject,
         };
         await dispatch(addExpenditure(finalPayload));
         setSnackbar({
           open: true,
-          message: `Expenditure ${isCompanyExpense ? '(Company Expense) ' : ''}added successfully!`,
+          message: `Expenditure ${
+            isCompanyExpense ? "(Company Expense) " : ""
+          }added successfully!`,
           severity: "success",
         });
       }
-      
-      setTimeout(() => navigate("/expenditure"), 1500);
+
+      if (isCompanyExpense) {
+        setTimeout(() => navigate("/academy-finance-dashboard"), 1500);
+      } else {
+        setTimeout(() => navigate("/expenditure"), 1500);
+      }
     } catch (error) {
       setSnackbar({
         open: true,
@@ -156,7 +162,14 @@ console.log("isCompanyExpense",isCompanyExpense)
   return (
     <div className="dashboard-container">
       <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 3,
+          }}
+        >
           <Typography
             variant="h5"
             component="h2"
@@ -165,19 +178,19 @@ console.log("isCompanyExpense",isCompanyExpense)
             {isUpdating ? <FaEdit /> : <FaPlusCircle />}
             {isUpdating ? "Update Expenditure" : "Add New Expenditure"}
           </Typography>
-          
+
           {/* Show company expense badge if applicable */}
           {isCompanyExpense && !isUpdating && (
-            <Chip 
+            <Chip
               icon={<FaBuilding />}
               label="Company Expense"
               color="primary"
               variant="filled"
-              sx={{ fontWeight: 'bold' }}
+              sx={{ fontWeight: "bold" }}
             />
           )}
         </Box>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="add-student-form-grid">
             <MuiInput
@@ -234,7 +247,7 @@ console.log("isCompanyExpense",isCompanyExpense)
                   : "Saving..."
                 : isUpdating
                 ? "Update Expenditure"
-                : `Save ${isCompanyExpense ? 'Company ' : ''}Expenditure`}
+                : `Save ${isCompanyExpense ? "Company " : ""}Expenditure`}
             </MuiButton>
             <MuiButton
               variant="outlined"
