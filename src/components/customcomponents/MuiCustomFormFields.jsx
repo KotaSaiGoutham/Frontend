@@ -14,12 +14,14 @@ import {
   InputLabel,
   Checkbox,
   useTheme,
+
 } from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import {
   LocalizationProvider,
   DatePicker,
   TimePicker,
+  DateTimePicker
 } from "@mui/x-date-pickers";
 import { format, isValid, parseISO } from "date-fns";
 import { FaTrashAlt } from "react-icons/fa";
@@ -550,5 +552,74 @@ export const MuiMultiSelectChip = ({
         })}
       </Select>
     </FormControl>
+  );
+};
+
+export const MuiDateTimePicker = ({
+  label,
+  icon: Icon,
+  value,
+  onChange,
+  name,
+  required = false,
+  error = false,
+  helperText = "",
+  minDate,
+  maxDate,
+  disabled = false,
+}) => {
+  // Convert string value to Date object for the picker
+  const dateTimeValue =
+    value && typeof value === "string" && isValid(parseISO(value))
+      ? parseISO(value)
+      : value instanceof Date && isValid(value)
+      ? value
+      : null;
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <DateTimePicker
+        label={
+          <span style={{ display: "flex", alignItems: "center" }}>
+            {Icon && (
+              <Icon style={{ marginRight: 8, fontSize: "1rem" }} />
+            )}
+            {label}
+          </span>
+        }
+        value={dateTimeValue}
+        onChange={(newValue) => {
+          if (newValue && isValid(newValue)) {
+            // Format as ISO string for consistent storage
+            onChange(format(newValue, "yyyy-MM-dd'T'HH:mm:ss"));
+          } else {
+            onChange("");
+          }
+        }}
+        format="dd/MM/yyyy hh:mm a"
+        minDate={minDate}
+        maxDate={maxDate}
+        disabled={disabled}
+        slotProps={{
+          textField: {
+            fullWidth: true,
+            variant: "outlined",
+            required: required,
+            error: error,
+            helperText: helperText,
+            InputLabelProps: {
+              shrink: true,
+            },
+            sx: {
+              margin: "0",
+              "& .MuiInputAdornment-root": {
+                marginTop: "0px !important",
+                height: "auto",
+              },
+            },
+          },
+        }}
+      />
+    </LocalizationProvider>
   );
 };

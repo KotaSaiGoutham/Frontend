@@ -41,6 +41,8 @@ import {
   Collapse,
   Drawer, // 👈 New: Import Drawer
   Divider, // 👈 New: Import Divider for separation
+  Skeleton, // 👈 NEW: Import Skeleton
+  TableHead, // 👈 NEW: Import TableHead for skeleton structure
 } from "@mui/material";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
 // Import ALL necessary icons from react-icons/fa
@@ -94,6 +96,68 @@ import { ClassCounterDisplay } from "../mockdata/function";
 import TableHeaders from "./students/TableHeaders";
 import { studentColumns } from "../mockdata/Options";
 import ClassesCompletedTable from "./students/ClassesCompletedTable";
+
+// 🚀 NEW: Table Skeleton Component
+const TableSkeleton = ({ rows = 10, columnVisibility }) => {
+  // Determine visible columns: Start with always visible columns, then add toggleable ones
+  const baseColumns = ["S.No.", "Name"]; // Columns that are always in the body
+  
+  const toggleableColumns = Object.entries(columnVisibility)
+    .filter(([key, isVisible]) => isVisible)
+    .map(([key]) => key);
+
+  // Map keys to display names to easily get the number of columns
+  const columnMap = {
+    // These need to match the actual display names or keys
+    "S.No.": "S.No.",
+    "Name": "Name",
+    ...columnVisibility, // Use this object keys directly for other columns
+  }
+
+  // Get the final list of column keys that will be rendered
+  const finalColumns = [
+    "sNo", 
+    "name", // Represents student name
+    ...Object.keys(columnVisibility).filter((key) => columnVisibility[key])
+    // The columns rendered in the body (e.g., gender, monthlyFee, etc.)
+  ];
+
+
+  return (
+    <TableContainer component={Paper} elevation={3} sx={{ borderRadius: 2 }}>
+      <Table sx={{ minWidth: 1200 }} aria-label="loading skeleton table">
+        {/* Table Head Skeleton */}
+        <TableHead>
+          <TableRow sx={{ backgroundColor: "#f0f0f0" }}>
+            {finalColumns.map((colKey, index) => (
+              <TableCell key={index} sx={{ py: 1.5, width: index === 1 ? '15%' : 'auto' }}>
+                <Skeleton animation="wave" width="80%" height={20} />
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+
+        {/* Table Body Skeleton */}
+        <TableBody>
+          {Array.from({ length: rows }).map((_, rowIndex) => (
+            <TableRow key={rowIndex}>
+              {finalColumns.map((colKey, colIndex) => (
+                <TableCell key={colIndex}>
+                  <Skeleton
+                    animation="wave"
+                    // Customize width for better simulation
+                    width={colKey === "name" ? "95%" : colKey.includes("classes") ? "60%" : "70%"}
+                    height={30}
+                  />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+};
 
 const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const [columnVisibility, setColumnVisibility] = useState({
@@ -585,25 +649,33 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
     setSnackbarOpen(false);
   };
 
-// In StudentsTable component - FIX THIS FUNCTION
-const handlePaymentStatusToggle = async (studentId, currentStatus, studentName) => {
-  setUpdatingStudent(studentId);
-  try {
-    const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid";
-    // Correct call to updateStudentField
-    await dispatch(updateStudentField(studentId, "Payment Status", newStatus));
-    
-    setSnackbarSeverity(newStatus === "Paid" ? "success" : "error");
-    setSnackbarMessage(`Payment status updated to "${newStatus}" for ${studentName}!`);
-    setSnackbarOpen(true);
-  } catch (err) {
-    setSnackbarMessage(`Failed to update payment status for ${studentName}: ${err.message}`);
-    setSnackbarSeverity("error");
-    setSnackbarOpen(true);
-  } finally {
-    setUpdatingStudent(null);
-  }
-};
+  // In StudentsTable component - FIX THIS FUNCTION
+  const handlePaymentStatusToggle = async (
+    studentId,
+    currentStatus,
+    studentName
+  ) => {
+    setUpdatingStudent(studentId);
+    try {
+      const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid";
+      // Correct call to updateStudentField
+      await dispatch(updateStudentField(studentId, "Payment Status", newStatus));
+
+      setSnackbarSeverity(newStatus === "Paid" ? "success" : "error");
+      setSnackbarMessage(
+        `Payment status updated to "${newStatus}" for ${studentName}!`
+      );
+      setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMessage(
+        `Failed to update payment status for ${studentName}: ${err.message}`
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUpdatingStudent(null);
+    }
+  };
   const handleSortRequest = (property) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
@@ -677,20 +749,28 @@ const handlePaymentStatusToggle = async (studentId, currentStatus, studentName) 
   const pdfHeaders = getPdfTableHeaders(columnVisibility);
   const pdfRows = getPdfTableRows(sortedFilteredStudents, columnVisibility);
 
+  // 🚀 UPDATED: Display Skeleton while loading
   if (isLoading) {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
+          p: 3,
+          backgroundColor: "#f7f8fc",
           minHeight: "80vh",
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
         }}
       >
-        <CircularProgress color="primary" size={60} />
-        <Typography variant="h6" color="text.secondary" sx={{ ml: 2 }}>
+        <Typography
+          variant="h6"
+          color="text.secondary"
+          sx={{ mb: 2, textAlign: "center" }}
+        >
+          <CircularProgress color="primary" size={20} sx={{ mr: 1 }} />
           Loading student data...
         </Typography>
+        <TableSkeleton rows={10} columnVisibility={columnVisibility} />
       </Box>
     );
   }
@@ -1069,469 +1149,465 @@ const handlePaymentStatusToggle = async (studentId, currentStatus, studentName) 
       )}
 
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
-  
-          {sortedFilteredStudents.length > 0 ? (
-            <TableContainer
-              component={Paper}
-              elevation={3}
-              sx={{
-                borderRadius: 2,
-                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.08)",
-              }}
-            >
-              {" "}
-              <Table sx={{ minWidth: 1200 }} aria-label="student table">
-                <TableHeaders
-                  columns={studentColumns}
-                  order={order}
-                  orderBy={orderBy}
-                  handleSortRequest={handleSortRequest}
-                  columnVisibility={columnVisibility}
-                />
-                <TableBody>
-                  {sortedFilteredStudents.map((student, index) => (
-                    <TableRow
-                      key={student.id}
-                      sx={{
-                        backgroundColor: isRecentPayment(student)
-                          ? "#e8f5e9"
-                          : student.isActive // New condition for inactive status
-                          ? index % 2 === 0
-                            ? "#FFFFFF"
-                            : "#fbfbfb"
-                          : "#ffebee", // Light red for inactive rows (Material Design error.light)
-                        transition: "background-color 0.2s ease-in-out",
+        {sortedFilteredStudents.length > 0 ? (
+          <TableContainer
+            component={Paper}
+            elevation={3}
+            sx={{
+              borderRadius: 2,
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.08)",
+            }}
+          >
+            {" "}
+            <Table sx={{ minWidth: 1200 }} aria-label="student table">
+              <TableHeaders
+                columns={studentColumns}
+                order={order}
+                orderBy={orderBy}
+                handleSortRequest={handleSortRequest}
+                columnVisibility={columnVisibility}
+              />
+              <TableBody>
+                {sortedFilteredStudents.map((student, index) => (
+                  <TableRow
+                    key={student.id}
+                    sx={{
+                      backgroundColor: isRecentPayment(student)
+                        ? "#e8f5e9"
+                        : student.isActive // New condition for inactive status
+                        ? index % 2 === 0
+                          ? "#FFFFFF"
+                          : "#fbfbfb"
+                        : "#ffebee", // Light red for inactive rows (Material Design error.light)
+                      transition: "background-color 0.2s ease-in-out",
 
-                        animation: isRecentPayment(student)
-                          ? "highlightFade 2s ease-in-out infinite"
-                          : "none",
+                      animation: isRecentPayment(student)
+                        ? "highlightFade 2s ease-in-out infinite"
+                        : "none",
 
-                        "&:hover": {
-                          backgroundColor: student.isActive
-                            ? "#e1f5fe"
-                            : "#ffcdd2", // Slightly darker red on hover for inactive
-                        },
-                        "& > td": {
-                          borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
-                          fontSize: "0.95rem",
-                          color: student.isActive ? "#424242" : "#D32F2F", // Make text red for inactive rows
-                        },
+                      "&:hover": {
+                        backgroundColor: student.isActive
+                          ? "#e1f5fe"
+                          : "#ffcdd2", // Slightly darker red on hover for inactive
+                      },
+                      "& > td": {
+                        borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
+                        fontSize: "0.95rem",
+                        color: student.isActive ? "#424242" : "#D32F2F", // Make text red for inactive rows
+                      },
 
-                        // 👇 THIS is where you define @keyframes
-                        "@keyframes highlightFade": {
-                          "0%": {
-                            boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
-                          },
-                          "50%": {
-                            boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
-                          },
-                          "100%": {
-                            boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
-                          },
+                      // 👇 THIS is where you define @keyframes
+                      "@keyframes highlightFade": {
+                        "0%": {
+                          boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
                         },
-                      }}
+                        "50%": {
+                          boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
+                        },
+                        "100%": {
+                          boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
+                        },
+                      },
+                    }}
+                  >
+                    <TableCell
+                      component="th"
+                      scope="row"
+                      align="center"
+                      sx={{ fontSize: "0.9rem", fontWeight: "bold" }}
                     >
-                      <TableCell
-                        component="th"
-                        scope="row"
-                        align="center"
-                        sx={{ fontSize: "0.9rem", fontWeight: "bold" }}
+                      {index + 1}
+                    </TableCell>
+                    <TableCell
+                      component="th"
+                      scope="row"
+                      sx={{ fontSize: "0.9rem" }}
+                    >
+                      <Link
+                        to={`/student/${student.id}/profile`}
+                        state={{ studentData: student }}
+                        className="student-name-link"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          textDecoration: "underline",
+                          color: "inherit",
+                          fontWeight: 500,
+                        }}
                       >
-                        {index + 1}
+                        <FaUserGraduate
+                          style={{ marginRight: 8, color: "#007bff" }}
+                        />
+                        {student.Name}
+                      </Link>
+                    </TableCell>
+                    {columnVisibility.gender && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.Gender || "N/A"}
                       </TableCell>
+                    )}
+                    {columnVisibility.year && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.Year || "N/A"}
+                      </TableCell>
+                    )}
+                    {columnVisibility.stream && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.Stream || "N/A"}
+                      </TableCell>
+                    )}
+                    {columnVisibility.college && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.College || "N/A"}
+                      </TableCell>
+                    )}
+                    {columnVisibility.group && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student["Group "] || "N/A"}
+                      </TableCell>
+                    )}
+                    {columnVisibility.source && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.Source || "N/A"}
+                      </TableCell>
+                    )}
+                    {columnVisibility.contactNumber && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.ContactNumber || ""}
+                      </TableCell>
+                    )}
+                    {columnVisibility.motherContact && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.mother_contact || ""}
+                      </TableCell>
+                    )}
+                    {columnVisibility.fatherContact && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.father_contact || ""}
+                      </TableCell>
+                    )}
+                    {columnVisibility.monthlyFee && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        ₹
+                        {(typeof student["Monthly Fee"] === "number"
+                          ? student["Monthly Fee"]
+                          : parseFloat(student["Monthly Fee"]) || 0
+                        ).toLocaleString()}
+                      </TableCell>
+                    )}
+                    {columnVisibility.classesCompleted &&
+                    !student.isRevisionProgramJEEMains2026Student ? (
                       <TableCell
-                        component="th"
-                        scope="row"
-                        sx={{ fontSize: "0.9rem" }}
-                      > 
-                        <Link
-                          to={`/student/${student.id}/profile`}
-                          state={{ studentData: student }}
-                          className="student-name-link"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            textDecoration: "underline",
-                            color: "inherit",
-                            fontWeight: 500,
-                          }}
-                        >
-                          <FaUserGraduate
-                            style={{ marginRight: 8, color: "#007bff" }}
-                          />
-                          {student.Name}
-                        </Link>
-                      </TableCell>
-                      {columnVisibility.gender && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student.Gender || "N/A"}
-                        </TableCell>
-                      )}
-                      {columnVisibility.year && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student.Year || "N/A"}
-                        </TableCell>
-                      )}
-                      {columnVisibility.stream && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student.Stream || "N/A"}
-                        </TableCell>
-                      )}
-                      {columnVisibility.college && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student.College || "N/A"}
-                        </TableCell>
-                      )}
-                      {columnVisibility.group && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student["Group "] || "N/A"}
-                        </TableCell>
-                      )}
-                      {columnVisibility.source && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student.Source || "N/A"}
-                        </TableCell>
-                      )}
-                      {columnVisibility.contactNumber && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student.ContactNumber || ""}
-                        </TableCell>
-                      )}
-                      {columnVisibility.motherContact && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student.mother_contact || ""}
-                        </TableCell>
-                      )}
-                      {columnVisibility.fatherContact && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student.father_contact || ""}
-                        </TableCell>
-                      )}
-                      {columnVisibility.monthlyFee && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          ₹
-                          {(typeof student["Monthly Fee"] === "number"
-                            ? student["Monthly Fee"]
-                            : parseFloat(student["Monthly Fee"]) || 0
-                          ).toLocaleString()}
-                        </TableCell>
-                      )}
-                      {columnVisibility.classesCompleted &&
-                      !student.isRevisionProgramJEEMains2026Student ? (
-                        <TableCell
-                          align="center"
-                          sx={{ fontSize: "0.9rem", whiteSpace: "nowrap" }}
-                        >
-                          <Box
-                            sx={{
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                              gap: 0.2,
-                              pointerEvents:
-                                updatingClasses === student.id
-                                  ? "none"
-                                  : "auto",
-                              opacity: updatingClasses === student.id ? 0.7 : 1,
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.2,
-                              }}
-                            >
-                              <Tooltip title="Decrease classes completed">
-                                <IconButton
-                                  size="small"
-                                  onClick={() =>
-                                    handleClassChange(student.id, false)
-                                  } // Changed
-                                  color="error"
-                                  sx={{
-                                    transition:
-                                      "transform 0.2s ease-in-out, color 0.2s ease-in-out",
-                                    "&:hover": {
-                                      transform: "scale(1.1)",
-                                      color: "error.dark",
-                                    },
-                                    "&:active": {
-                                      transform: "scale(0.9)",
-                                    },
-                                  }}
-                                >
-                                  <FaMinusCircle fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-
-                              <ClassCounterDisplay
-                                student={student}
-                                updatingClasses={updatingClasses}
-                              />
-                              <Tooltip title="Increase classes completed">
-                                <IconButton
-                                  size="small"
-                                  onClick={() =>
-                                    handleClassChange(student.id, true)
-                                  } // Changed
-                                  color="success"
-                                  sx={{
-                                    transition:
-                                      "transform 0.2s ease-in-out, color 0.2s ease-in-out",
-                                    "&:hover": {
-                                      transform: "scale(1.1)",
-                                      color: "success.dark",
-                                    },
-                                    "&:active": {
-                                      transform: "scale(0.9)",
-                                    },
-                                  }}
-                                >
-                                  <FaPlusCircle fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                            {lastUpdatedTimestamps[student.id] && (
-                              <Fade in={true} timeout={1000}>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ fontSize: "0.7rem" }}
-                                >
-                                  Last Class Updated:{" "}
-                                  {format(
-                                    // Corrected: Convert the Firestore timestamp object to a JavaScript Date object
-                                    new Date(
-                                      lastUpdatedTimestamps[student.id]
-                                        ._seconds * 1000
-                                    ),
-                                    "MMM dd, hh:mm a"
-                                  )}
-                                </Typography>
-                              </Fade>
-                            )}
-                          </Box>
-                        </TableCell>
-                      ) : (
-                        <TableCell
-                          align="center"
+                        align="center"
+                        sx={{ fontSize: "0.9rem", whiteSpace: "nowrap" }}
+                      >
+                        <Box
                           sx={{
-                            fontSize: "0.9rem",
-                            whiteSpace: "nowrap",
-                            fontWeight: "medium",
-                          }}
-                        >
-                          {student.revisionClassesCompleted}
-                        </TableCell>
-                      )}
-                                           {" "}
-                      {columnVisibility.startDate && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                                                   {" "}
-                          {formatFirestoreDate(student.startDate)}             
-                                   {" "}
-                        </TableCell>
-                      )}
-                                            {/* Add End Date Column */}         
-                                 {" "}
-                      {columnVisibility.endDate && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                                                   {" "}
-                          <Box
-                            sx={{
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                            }}
-                          >
-                                                       {" "}
-                            {/* Display the original endDate from the backend */}
-                                                       {" "}
-                            <Typography variant="body2" fontWeight="bold">
-                                                           {" "}
-                              {formatFirestoreDate(student.endDate)}           
-                                             {" "}
-                            </Typography>
-                                                     {" "}
-                          </Box>
-                                                 {" "}
-                        </TableCell>
-                      )}
-                      {columnVisibility.nextClass && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                          {student.nextClass
-                            ? format(student.nextClass, "MMM dd, hh:mm a")
-                            : "-"}
-                        </TableCell>
-                      )}
-                      {columnVisibility.paymentStatus && (
-                        <TableCell
-                          sx={{
-                            fontSize: "0.9rem",
-                            pointerEvents:
-                              updatingStudent === student.id ? "none" : "auto",
-                            opacity: updatingStudent === student.id ? 0.7 : 1,
                             display: "flex",
                             flexDirection: "column",
-                            justifyContent: "center",
                             alignItems: "center",
-                            p: 1,
+                            gap: 0.2,
+                            pointerEvents:
+                              updatingClasses === student.id ? "none" : "auto",
+                            opacity: updatingClasses === student.id ? 0.7 : 1,
                           }}
                         >
-                          {updatingStudent === student.id ? (
-                            <CircularProgress size={20} color="primary" />
-                          ) : (
-                            <>
-                              <Chip
-                                label={student["Payment Status"]}
-                                icon={
-                                  student["Payment Status"] === "Unpaid" ? (
-                                    <FaExclamationCircle
-                                      style={{ fontSize: 16 }}
-                                    />
-                                  ) : (
-                                    <FaCheckCircle style={{ fontSize: 16 }} />
-                                  )
-                                }
-                                color={
-                                  student["Payment Status"] === "Unpaid"
-                                    ? "error"
-                                    : "success"
-                                }
-                                variant="outlined"
-                                onClick={() =>
-                                  handlePaymentStatusToggle(
-                                    student.id,
-                                    student["Payment Status"],
-                                    student.Name
-                                  )
-                                }
-                                sx={{
-                                  cursor: "pointer",
-                                  fontWeight: "bold",
-                                  "&:hover": { boxShadow: 1 },
-                                }}
-                              />
-                              {student["Payment Status"] === "Unpaid" &&
-                                !student.isRevisionProgramJEEMains2026Student &&
-                                (student.classesCompleted || 0) >= 12 && (
-                                  <Typography
-                                    variant="caption"
-                                    sx={{
-                                      color: "#ef5350",
-                                      fontWeight: "bold",
-                                      mt: 0.5,
-                                      fontSize: "0.75rem",
-                                      animation:
-                                        "pulse-red 1.5s infinite alternate",
-                                      "@keyframes pulse-red": {
-                                        "0%": { opacity: 0.7 },
-                                        "100%": { opacity: 1 },
-                                      },
-                                    }}
-                                  >
-                                    Payment Pending!
-                                  </Typography>
-                                )}
-
-                              {/* ✅ New Button to View Classes */}
-                              {student.startDate && (
-                                <Button
-                                  variant="outlined"
-                                  size="small"
-                                  startIcon={<FaEye />}
-                                  onClick={() => handleViewClasses(student)}
-                                  sx={{ mt: 1 }}
-                                >
-                                  View Classes
-                                </Button>
-                              )}
-                            </>
-                          )}
-                        </TableCell>
-                      )}
-                      {columnVisibility.status && (
-                        <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
                           <Box
-                            onClick={() =>
-                              handleToggleStatusClick(
-                                student.id,
-                                student.isActive,
-                                student.Name
-                              )
-                            }
                             sx={{
                               display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: 0.8, // Space between icon and text
-                              cursor: "pointer",
-                              padding: "6px 10px",
-                              borderRadius: "20px",
-                              border: `1px solid ${
-                                student.isActive ? "#4CAF50" : "#F44336"
-                              }`,
-                              backgroundColor: student.isActive
-                                ? "rgba(76, 175, 80, 0.1)"
-                                : "rgba(244, 67, 54, 0.1)", // Light background tint
-                              "&:hover": { boxShadow: 1 },
-                            }}
-                          >
-                            {student.isActive ? (
-                              <FaUserCheck style={{ color: "#4CAF50" }} />
-                            ) : (
-                              <FaUserTimes style={{ color: "#F44336" }} />
-                            )}
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontWeight: "bold",
-                                color: student.isActive ? "#4CAF50" : "#F44336",
-                              }}
-                            >
-                              {student.isActive ? "Active" : "Inactive"}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                      )}
-                      {columnVisibility.actions && (
-                        <TableCell align="center" sx={{ py: 1.5 }}>
-                          <Box
-                            sx={{
-                              display: "inline-flex",
                               alignItems: "center",
                               gap: 0.2,
                             }}
                           >
-                            <ActionButtons
-                              onEdit={() => {
-                                navigate("/add-student", {
-                                  state: {
-                                    studentData: student,
-                                    studentDataEdit: true,
+                            <Tooltip title="Decrease classes completed">
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  handleClassChange(student.id, false)
+                                } // Changed
+                                color="error"
+                                sx={{
+                                  transition:
+                                    "transform 0.2s ease-in-out, color 0.2s ease-in-out",
+                                  "&:hover": {
+                                    transform: "scale(1.1)",
+                                    color: "error.dark",
                                   },
-                                });
-                              }}
-                              onDelete={() => handleDeleteClick(student)}
-                              size="small"
+                                  "&:active": {
+                                    transform: "scale(0.9)",
+                                  },
+                                }}
+                              >
+                                <FaMinusCircle fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+
+                            <ClassCounterDisplay
+                              student={student}
+                              updatingClasses={updatingClasses}
                             />
+                            <Tooltip title="Increase classes completed">
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  handleClassChange(student.id, true)
+                                } // Changed
+                                color="success"
+                                sx={{
+                                  transition:
+                                    "transform 0.2s ease-in-out, color 0.2s ease-in-out",
+                                  "&:hover": {
+                                    transform: "scale(1.1)",
+                                    color: "success.dark",
+                                  },
+                                  "&:active": {
+                                    transform: "scale(0.9)",
+                                  },
+                                }}
+                              >
+                                <FaPlusCircle fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
                           </Box>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Typography
-              variant="body1"
-              sx={{ textAlign: "center", p: 3, color: "text.secondary" }}
-            >
-              No students match your criteria.
-            </Typography>
-          )}
+                          {lastUpdatedTimestamps[student.id] && (
+                            <Fade in={true} timeout={1000}>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontSize: "0.7rem" }}
+                              >
+                                Last Class Updated:{" "}
+                                {format(
+                                  // Corrected: Convert the Firestore timestamp object to a JavaScript Date object
+                                  new Date(
+                                    lastUpdatedTimestamps[student.id]._seconds *
+                                      1000
+                                  ),
+                                  "MMM dd, hh:mm a"
+                                )}
+                              </Typography>
+                            </Fade>
+                          )}
+                        </Box>
+                      </TableCell>
+                    ) : (
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontSize: "0.9rem",
+                          whiteSpace: "nowrap",
+                          fontWeight: "medium",
+                        }}
+                      >
+                        {student.revisionClassesCompleted}
+                      </TableCell>
+                    )}
+                    {" "}
+                    {columnVisibility.startDate && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {" "}
+                        {formatFirestoreDate(student.startDate)}          
+                        {" "}
+                      </TableCell>
+                    )}
+                    {" "}
+                    {columnVisibility.endDate && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {" "}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                          }}
+                        >
+                          {" "}
+                          {/* Display the original endDate from the backend */}
+                          {" "}
+                          <Typography variant="body2" fontWeight="bold">
+                            {" "}
+                            {formatFirestoreDate(student.endDate)}          
+                            {" "}
+                          </Typography>
+                          {" "}
+                        </Box>
+                        {" "}
+                      </TableCell>
+                    )}
+                    {columnVisibility.nextClass && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        {student.nextClass
+                          ? format(student.nextClass, "MMM dd, hh:mm a")
+                          : "-"}
+                      </TableCell>
+                    )}
+                    {columnVisibility.paymentStatus && (
+                      <TableCell
+                        sx={{
+                          fontSize: "0.9rem",
+                          pointerEvents:
+                            updatingStudent === student.id ? "none" : "auto",
+                          opacity: updatingStudent === student.id ? 0.7 : 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          p: 1,
+                        }}
+                      >
+                        {updatingStudent === student.id ? (
+                          <CircularProgress size={20} color="primary" />
+                        ) : (
+                          <>
+                            <Chip
+                              label={student["Payment Status"]}
+                              icon={
+                                student["Payment Status"] === "Unpaid" ? (
+                                  <FaExclamationCircle
+                                    style={{ fontSize: 16 }}
+                                  />
+                                ) : (
+                                  <FaCheckCircle style={{ fontSize: 16 }} />
+                                )
+                              }
+                              color={
+                                student["Payment Status"] === "Unpaid"
+                                  ? "error"
+                                  : "success"
+                              }
+                              variant="outlined"
+                              onClick={() =>
+                                handlePaymentStatusToggle(
+                                  student.id,
+                                  student["Payment Status"],
+                                  student.Name
+                                )
+                              }
+                              sx={{
+                                cursor: "pointer",
+                                fontWeight: "bold",
+                                "&:hover": { boxShadow: 1 },
+                              }}
+                            />
+                            {student["Payment Status"] === "Unpaid" &&
+                              !student.isRevisionProgramJEEMains2026Student &&
+                              (student.classesCompleted || 0) >= 12 && (
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: "#ef5350",
+                                    fontWeight: "bold",
+                                    mt: 0.5,
+                                    fontSize: "0.75rem",
+                                    animation:
+                                      "pulse-red 1.5s infinite alternate",
+                                    "@keyframes pulse-red": {
+                                      "0%": { opacity: 0.7 },
+                                      "100%": { opacity: 1 },
+                                    },
+                                  }}
+                                >
+                                  Payment Pending!
+                                </Typography>
+                              )}
+
+                            {/* ✅ New Button to View Classes */}
+                            {student.startDate && (
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<FaEye />}
+                                onClick={() => handleViewClasses(student)}
+                                sx={{ mt: 1 }}
+                              >
+                                View Classes
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </TableCell>
+                    )}
+                    {columnVisibility.status && (
+                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                        <Box
+                          onClick={() =>
+                            handleToggleStatusClick(
+                              student.id,
+                              student.isActive,
+                              student.Name
+                            )
+                          }
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 0.8, // Space between icon and text
+                            cursor: "pointer",
+                            padding: "6px 10px",
+                            borderRadius: "20px",
+                            border: `1px solid ${
+                              student.isActive ? "#4CAF50" : "#F44336"
+                            }`,
+                            backgroundColor: student.isActive
+                              ? "rgba(76, 175, 80, 0.1)"
+                              : "rgba(244, 67, 54, 0.1)", // Light background tint
+                            "&:hover": { boxShadow: 1 },
+                          }}
+                        >
+                          {student.isActive ? (
+                            <FaUserCheck style={{ color: "#4CAF50" }} />
+                          ) : (
+                            <FaUserTimes style={{ color: "#F44336" }} />
+                          )}
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: "bold",
+                              color: student.isActive ? "#4CAF50" : "#F44336",
+                            }}
+                          >
+                            {student.isActive ? "Active" : "Inactive"}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    )}
+                    {columnVisibility.actions && (
+                      <TableCell align="center" sx={{ py: 1.5 }}>
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.2,
+                          }}
+                        >
+                          <ActionButtons
+                            onEdit={() => {
+                              navigate("/add-student", {
+                                state: {
+                                  studentData: student,
+                                  studentDataEdit: true,
+                                },
+                              });
+                            }}
+                            onDelete={() => handleDeleteClick(student)}
+                            size="small"
+                          />
+                        </Box>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Typography
+            variant="body1"
+            sx={{ textAlign: "center", p: 3, color: "text.secondary" }}
+          >
+            No students match your criteria.
+          </Typography>
+        )}
         {/* </Paper> */}
       </Slide>
 

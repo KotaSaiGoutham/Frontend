@@ -2477,7 +2477,7 @@ export const uploadQuestionPaper = (studentId, formData) =>
         payload: { error: error.message || "Failed to upload question paper" },
       });
     },
-    authRequired: true,
+    authRequired: false,
   });
 
 // Fetch Study Materials

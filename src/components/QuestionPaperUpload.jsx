@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { 
-  TextField, 
   FormControl, 
   InputLabel, 
   Select, 
@@ -15,21 +14,25 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { uploadQuestionPaper } from "../redux/actions";
-import CustomDragDropUpload from "./customcomponents/CustomDragDropUpload";
-import { FaCloudUploadAlt, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage, FaTimes, FaUpload, FaCheck } from "react-icons/fa";
+import { FaCloudUploadAlt, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage, FaTimes, FaUpload, FaCheck, FaCalendarAlt } from "react-icons/fa";
+import { MuiDateTimePicker } from "./customcomponents/MuiCustomFormFields";
+import { format, parseISO, isValid } from "date-fns";
 
-const QuestionPaperUpload = ({ studentId, studentName }) => {
+const QuestionPaperUpload = () => {
   const dispatch = useDispatch();
   const { uploadingQuestionPaper, error } = useSelector((state) => state.lectureMaterials);
   const { user } = useSelector((state) => state.auth);
   
-  const [formData, setFormData] = useState({
-    title: "",
-    year: new Date().getFullYear(),
-    paperType: "Practice",
-    difficulty: "Medium",
-  });
+  // Get students from Redux store
+  const {
+    students,
+    loading: studentsLoading,
+    error: studentsError,
+  } = useSelector((state) => state.students);
+
+  const [selectedStudent, setSelectedStudent] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedDateTime, setSelectedDateTime] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [uploadAttempted, setUploadAttempted] = useState(false);
@@ -37,19 +40,14 @@ const QuestionPaperUpload = ({ studentId, studentName }) => {
 
   // Effect to handle successful upload
   useEffect(() => {
-    // If upload finished successfully and we had attempted an upload
     if (uploadAttempted && !uploadingQuestionPaper && !error) {
       setShowSuccess(true);
       setUploadAttempted(false);
       
       // Clear form state
-      setFormData({
-        title: "",
-        year: new Date().getFullYear(),
-        paperType: "Practice",
-        difficulty: "Medium",
-      });
+      setSelectedStudent("");
       setSelectedFile(null);
+      setSelectedDateTime("");
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -63,17 +61,12 @@ const QuestionPaperUpload = ({ studentId, studentName }) => {
     }
   }, [uploadingQuestionPaper, error, uploadAttempted]);
 
-  // Determine subject based on boolean values
-  const getSubject = () => {
-    if (user.isPhysics && user.isChemistry) return "Physics & Chemistry";
-    if (user.isPhysics) return "Physics";
-    if (user.isChemistry) return "Chemistry";
-    return "General";
+  const handleStudentChange = (e) => {
+    setSelectedStudent(e.target.value);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleDateTimeChange = (dateTimeString) => {
+    setSelectedDateTime(dateTimeString);
   };
 
   const handleFileSelect = (file) => {
@@ -171,38 +164,74 @@ const QuestionPaperUpload = ({ studentId, studentName }) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const formatDateTimeForDisplay = (dateTimeString) => {
+    if (!dateTimeString) return "Not selected";
+    try {
+      const date = parseISO(dateTimeString);
+      if (isValid(date)) {
+        return format(date, "dd/MM/yyyy hh:mm a");
+      }
+    } catch (error) {
+      console.error("Error formatting date:", error);
+    }
+    return dateTimeString;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate student selection
+    if (!selectedStudent) {
+      alert("Please select a student");
+      return;
+    }
+
     if (!selectedFile) {
       alert("Please select a file to upload");
       return;
     }
 
-    // Generate a better title if not provided
-    const title = formData.title || 
-      `${getSubject()} ${formData.paperType} Paper ${new Date().toLocaleDateString()}`;
+    // Find selected student data
+    const student = students.find(s => s.id === selectedStudent);
+    if (!student) {
+      alert("Selected student not found");
+      return;
+    }
 
-    // Use current year if not provided
-    const year = formData.year || new Date().getFullYear();
+    // Determine subject based on student data or user profile
+    const getSubject = () => {
+      if (student.Subject) return student.Subject;
+      if (user.isPhysics && user.isChemistry) return "Physics & Chemistry";
+      if (user.isPhysics) return "Physics";
+      if (user.isChemistry) return "Chemistry";
+      return "General";
+    };
 
-    // Ensure studentName is defined
-    const studentNameToUse = studentName || user.name || "Unknown Student";
+    // Generate title with current date
+    const currentDate = new Date();
+const formattedDate = currentDate.toLocaleDateString('en-GB'); 
+    const title = `${student.Name} - Question Paper - ${formattedDate}`;
+
+    // Use current year
+    const year = currentDate.getFullYear();
+
+    // Use selected date time or default to 2099-12-31 23:59:59 if not provided
+    const paperDateTime = selectedDateTime || "2099-12-31T23:59:59";
 
     const uploadFormData = new FormData();
     uploadFormData.append("file", selectedFile);
-    uploadFormData.append("studentName", studentNameToUse);
+    uploadFormData.append("studentName", student.Name); // Student name is mandatory
     uploadFormData.append("title", title);
     uploadFormData.append("subject", getSubject());
     uploadFormData.append("year", year);
-    uploadFormData.append("type", formData.paperType);
-    uploadFormData.append("difficulty", formData.difficulty);
+    uploadFormData.append("paperDateTime", paperDateTime); // Add the date time field
 
     // Reset success state and mark upload as attempted
     setShowSuccess(false);
     setUploadAttempted(true);
     
     // Dispatch the upload action
-    dispatch(uploadQuestionPaper(studentId, uploadFormData));
+    dispatch(uploadQuestionPaper(selectedStudent, uploadFormData));
   };
 
   const handleCloseSuccess = () => {
@@ -218,86 +247,59 @@ const QuestionPaperUpload = ({ studentId, studentName }) => {
 
   return (
     <>
-      <CustomDragDropUpload
-        title="Upload Question Paper"
-        error={error}
-      >
-        <TextField
-          label="Title (Optional)"
-          name="title"
-          value={formData.title}
-          onChange={handleInputChange}
-          placeholder="Leave empty to auto-generate title"
-          fullWidth
-          helperText="If left empty, a title will be generated automatically"
-          disabled={uploadingQuestionPaper}
-        />
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom color="primary">
+          Upload Question Paper
+        </Typography>
 
-        <TextField
-          label="Year (Optional)"
-          name="year"
-          type="number"
-          value={formData.year}
-          onChange={handleInputChange}
-          fullWidth
-          helperText={`Current year: ${new Date().getFullYear()}`}
-          InputProps={{
-            inputProps: { 
-              min: 2000, 
-              max: new Date().getFullYear() + 1 
+        {/* Student Dropdown */}
+        <FormControl fullWidth sx={{ mb: 3 }} disabled={uploadingQuestionPaper}>
+          <InputLabel>Select Student *</InputLabel>
+          <Select
+            value={selectedStudent}
+            onChange={handleStudentChange}
+            label="Select Student *"
+          >
+            {studentsLoading ? (
+              <MenuItem disabled>
+                <CircularProgress size={20} sx={{ mr: 1 }} />
+                Loading students...
+              </MenuItem>
+            ) : studentsError ? (
+              <MenuItem disabled>Error loading students</MenuItem>
+            ) : (
+            students
+  .filter(student => student.isActive && !student.deactivated)
+  .sort((a, b) => a.Name.localeCompare(b.Name)) // Sort A to Z by name
+  .map((student) => (
+    <MenuItem key={student.id} value={student.id}>
+      {student.Name} - {student.Subject || "General"} ({student.Stream || "No Stream"})
+    </MenuItem>
+  ))
+            )}
+          </Select>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+            Student name is mandatory for file organization
+          </Typography>
+        </FormControl>
+
+        {/* Date Time Picker */}
+        <Box sx={{ mb: 3 }}>
+          <MuiDateTimePicker
+            label="Question Paper Date & Time (Optional)"
+            icon={FaCalendarAlt}
+            value={selectedDateTime}
+            onChange={handleDateTimeChange}
+            helperText={
+              selectedDateTime 
+                ? `Selected: ${formatDateTimeForDisplay(selectedDateTime)}` 
+                : "If not selected, will use default date 2099-12-31 23:59:59"
             }
-          }}
-          disabled={uploadingQuestionPaper}
-        />
-        
-        <FormControl fullWidth disabled={uploadingQuestionPaper}>
-          <InputLabel>Paper Type</InputLabel>
-          <Select
-            name="paperType"
-            value={formData.paperType}
-            onChange={handleInputChange}
-            label="Paper Type"
-          >
-            <MenuItem value="Practice">Practice</MenuItem>
-            <MenuItem value="Main Exam">Main Exam</MenuItem>
-            <MenuItem value="Weekly Test">Weekly Test</MenuItem>
-            <MenuItem value="Mock Test">Mock Test</MenuItem>
-          </Select>
-        </FormControl>
-        
-        <FormControl fullWidth disabled={uploadingQuestionPaper}>
-          <InputLabel>Difficulty</InputLabel>
-          <Select
-            name="difficulty"
-            value={formData.difficulty}
-            onChange={handleInputChange}
-            label="Difficulty"
-          >
-            <MenuItem value="Easy">Easy</MenuItem>
-            <MenuItem value="Medium">Medium</MenuItem>
-            <MenuItem value="Hard">Hard</MenuItem>
-          </Select>
-        </FormControl>
+            disabled={uploadingQuestionPaper}
+          />
+        </Box>
 
-        {/* Subject Display */}
-        <Paper 
-          elevation={1} 
-          sx={{ 
-            p: 2, 
-            backgroundColor: 'background.default',
-            border: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-            Subject (Auto-detected from your profile)
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {getSubject()}
-          </Typography>
-        </Paper>
-
-        {/* Drag and Drop Area with Upload Button */}
+        {/* Drag and Drop File Upload Area */}
         <Box sx={{ mt: 2 }}>
           <input
             type="file"
@@ -305,30 +307,44 @@ const QuestionPaperUpload = ({ studentId, studentName }) => {
             onChange={handleFileInputChange}
             accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
             style={{ display: 'none' }}
-            disabled={uploadingQuestionPaper}
+            disabled={uploadingQuestionPaper || !selectedStudent}
           />
           
           <Paper
             elevation={isDragOver ? 8 : 2}
-            onClick={uploadingQuestionPaper ? undefined : handleBoxClick}
-            onDragOver={uploadingQuestionPaper ? undefined : handleDragOver}
-            onDragLeave={uploadingQuestionPaper ? undefined : handleDragLeave}
-            onDrop={uploadingQuestionPaper ? undefined : handleDrop}
+            onClick={(!uploadingQuestionPaper && selectedStudent) ? handleBoxClick : undefined}
+            onDragOver={(!uploadingQuestionPaper && selectedStudent) ? handleDragOver : undefined}
+            onDragLeave={(!uploadingQuestionPaper && selectedStudent) ? handleDragLeave : undefined}
+            onDrop={(!uploadingQuestionPaper && selectedStudent) ? handleDrop : undefined}
             sx={{
               border: isDragOver ? '2px dashed #1976d2' : '2px dashed #e0e0e0',
               borderRadius: 2,
               p: 4,
               textAlign: 'center',
-              cursor: uploadingQuestionPaper ? 'not-allowed' : 'pointer',
-              backgroundColor: uploadingQuestionPaper ? 'rgba(0, 0, 0, 0.04)' : (isDragOver ? 'rgba(25, 118, 210, 0.04)' : 'transparent'),
+              cursor: (!uploadingQuestionPaper && selectedStudent) ? 'pointer' : 'not-allowed',
+              backgroundColor: uploadingQuestionPaper ? 'rgba(0, 0, 0, 0.04)' : 
+                            !selectedStudent ? 'rgba(0, 0, 0, 0.02)' :
+                            (isDragOver ? 'rgba(25, 118, 210, 0.04)' : 'transparent'),
               transition: 'all 0.3s ease',
-              '&:hover': uploadingQuestionPaper ? {} : {
+              '&:hover': (!uploadingQuestionPaper && selectedStudent) ? {
                 backgroundColor: 'rgba(0, 0, 0, 0.02)',
                 borderColor: '#1976d2',
-              }
+              } : {}
             }}
           >
-            {uploadingQuestionPaper ? (
+            {!selectedStudent ? (
+              <Box>
+                <Box sx={{ color: '#9e9e9e', mb: 2 }}>
+                  <FaCloudUploadAlt size={48} />
+                </Box>
+                <Typography variant="h6" gutterBottom color="text.secondary">
+                  Please select a student first
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Choose a student from the dropdown above to enable file upload
+                </Typography>
+              </Box>
+            ) : uploadingQuestionPaper ? (
               <Box>
                 <CircularProgress size={48} sx={{ mb: 2, color: '#1976d2' }} />
                 <Typography variant="h6" gutterBottom color="primary">
@@ -396,8 +412,15 @@ const QuestionPaperUpload = ({ studentId, studentName }) => {
               </Box>
             )}
           </Paper>
+
+          {/* Error Display */}
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
         </Box>
-      </CustomDragDropUpload>
+      </Paper>
 
       {/* Success Message Snackbar */}
       <Snackbar

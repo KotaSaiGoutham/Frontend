@@ -45,13 +45,13 @@ const HistoricalTables = ({ students }) => {
     hasSavedToday: autoTimetablesHasSavedToday,
   } = useSelector((state) => state.autoTimetables);
   
+  const { monthlyPayments, loading: paymentsLoading } = useSelector((state) => state.expenditures);
+  
   useEffect(() => {
     dispatch(fetchAutoTimetablesForToday(user?.id));
     dispatch(fetchUpcomingClasses());
     dispatch(fetchMonthlyPayments());
   }, [dispatch]);
-
-  const { monthlyPayments } = useSelector((state) => state.expenditures);
 
   const allMonths = [
     "Jan",
@@ -247,6 +247,15 @@ const HistoricalTables = ({ students }) => {
     }
   };
 
+  const SkeletonCount = ({ width = "40px", height = "24px" }) => (
+    <div 
+      className="skeleton-count" 
+      style={{ width, height }}
+    ></div>
+  );
+
+  const isLoading = classesLoading || autoTimetablesLoading || paymentsLoading;
+
   return (
     <div className="historical-tables-container">
       {/* Render the dialog component */}
@@ -305,7 +314,13 @@ const HistoricalTables = ({ students }) => {
                               title={`Click to view timetable for ${dayAbbr}`}
                               placement="top"
                             >
-                              <span className="data-value">{count}</span>
+                              <span className="data-value">
+                                {isLoading ? (
+                                  <SkeletonCount width="30px" height="20px" />
+                                ) : (
+                                  count
+                                )}
+                              </span>
                             </Tooltip>
                           </td>
                         )
@@ -378,7 +393,13 @@ const HistoricalTables = ({ students }) => {
                           className="month-value"
                           data-future={isFuture}
                         >
-                          {isFuture ? "-" : `₹${amount.toLocaleString()}`}
+                          {isLoading ? (
+                            <SkeletonCount width="60px" height="20px" />
+                          ) : isFuture ? (
+                            "-"
+                          ) : (
+                            `₹${amount.toLocaleString()}`
+                          )}
                         </div>
                       </div>
                     );
@@ -454,7 +475,13 @@ const HistoricalTables = ({ students }) => {
                               monthKey === currentMonth ? "highlight-cell" : ""
                             }
                           >
-                            <span className="data-value">{count}</span>
+                            <span className="data-value">
+                              {isLoading ? (
+                                <SkeletonCount width="30px" height="20px" />
+                              ) : (
+                                count
+                              )}
+                            </span>
                           </td>
                         );
                       })}

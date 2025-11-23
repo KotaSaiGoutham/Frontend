@@ -156,7 +156,23 @@
 .data-table tbody tr:last-child td {
   border-bottom: none;
 }
+.skeleton-count {
+  background: linear-gradient(90deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%);
+  background-size: 400% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+  border-radius: 6px;
+  display: inline-block;
+  vertical-align: middle;
+}
 
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
 .data-value {
   display: inline-block;
   padding: 8px 12px;

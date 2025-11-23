@@ -232,12 +232,97 @@ const colorFlash = keyframes`
   100% { color: inherit; }
 `;
 
+
+const pulseGreen = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(46, 125, 50, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+`;
+
 export function ClassCounterDisplay({ student, updatingClasses }) {
   // Use a ref to store the previous classesCompleted value
   const prevClassesCompleted = useRef(student.classesCompleted || 0);
   // State to trigger the animation
   const [animate, setAnimate] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [autoCalculatedClasses, setAutoCalculatedClasses] = useState(0);
 
+  // Update time every minute to handle class time changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate automatic classes based on schedule
+  const calculateAutomaticClasses = (studentData) => {
+    if (!studentData.paidDate || !studentData.classDateandTime || studentData.classDateandTime.length === 0) {
+      return studentData.classesCompleted || 0;
+    }
+
+    const paidDate = studentData.paidDate._seconds ? 
+      new Date(studentData.paidDate._seconds * 1000) : 
+      new Date(studentData.paidDate);
+    
+    // Parse class schedule
+    const dayMap = {
+      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 
+      'Thursday': 4, 'Friday': 5, 'Saturday': 6
+    };
+
+    const classSchedule = studentData.classDateandTime.map(dayTime => {
+      const [day, time] = dayTime.split('-');
+      const isPM = time.includes('pm');
+      let [hours, minutes] = time.replace('pm', '').replace('am', '').split(':').map(Number);
+      
+      // Convert to 24-hour format
+      if (isPM && hours !== 12) hours += 12;
+      if (!isPM && hours === 12) hours = 0;
+      
+      return {
+        day: dayMap[day],
+        hours: hours,
+        minutes: minutes
+      };
+    });
+
+    let classCount = 0;
+    let tempDate = new Date(paidDate);
+
+    // Count classes from paid date to current date
+    while (tempDate <= currentTime) {
+      const dayOfWeek = tempDate.getDay();
+      
+      // Check if this day has a class that has already occurred
+      classSchedule.forEach(schedule => {
+        if (schedule.day === dayOfWeek) {
+          // Create class datetime for comparison
+          const classDateTime = new Date(tempDate);
+          classDateTime.setHours(schedule.hours, schedule.minutes, 0, 0);
+          
+          // If class time has passed by current time, count it
+          if (classDateTime <= currentTime) {
+            classCount++;
+          }
+        }
+      });
+
+      // Move to next day
+      tempDate.setDate(tempDate.getDate() + 1);
+    }
+
+    return classCount;
+  };
+
+  // Update auto-calculated classes when student data or time changes
+  useEffect(() => {
+    const calculated = calculateAutomaticClasses(student);
+    setAutoCalculatedClasses(calculated);
+  }, [student, currentTime]);
+
+  // Animation logic for manual updates
   useEffect(() => {
     // Check if classesCompleted has actually increased and is not currently updating
     if (
@@ -252,30 +337,50 @@ export function ClassCounterDisplay({ student, updatingClasses }) {
     }
     // Update the ref for the next render
     prevClassesCompleted.current = student.classesCompleted || 0;
-  }, [student.classesCompleted, updatingClasses]); // Depend on classesCompleted and updatingClasses
+  }, [student.classesCompleted, updatingClasses]);
+
+  // Determine the display value - use the higher of automatic or manual
+  const displayClasses = Math.max(autoCalculatedClasses, student.classesCompleted || 0);
+  const isAutoUpdated = autoCalculatedClasses > (student.classesCompleted || 0);
+  const hasManualUpdate = (student.classesCompleted || 0) > autoCalculatedClasses;
 
   return (
-    <>
+    <Box sx={{ 
+      textAlign: "center", 
+      minWidth: "60px",
+      position: 'relative'
+    }}>
       {updatingClasses === student.id ? (
         <CircularProgress size={20} color="primary" />
       ) : (
-        <Typography
-          variant="body1"
-          component="span"
-          sx={{
-            fontWeight: 600,
-            // Apply animation only when 'animate' state is true
-            animation: animate
-              ? `${popAnimation} 0.3s ease-out, ${colorFlash} 0.5s ease-out`
-              : "none",
-            display: "inline-block", // Important for transform to work correctly
-            transformOrigin: "center center", // Ensure scaling is from the center
-          }}
-        >
-          {student.classesCompleted || 0}
-        </Typography>
+        <>
+          <Typography
+            variant="body1"
+            component="span"
+            sx={{
+              fontWeight: 600,
+              fontSize: '1.1rem',
+              // Apply animation for manual updates
+              animation: animate
+                ? `${popAnimation} 0.3s ease-out, ${colorFlash} 0.5s ease-out`
+                : "none",
+              display: "inline-block",
+              transformOrigin: "center center",
+              // Different styling for auto-updated values
+              color: isAutoUpdated ? '#2e7d32' : 'inherit',
+              fontWeight: isAutoUpdated ? 700 : 600,
+              padding: '4px 8px',
+              borderRadius: '4px',
+              backgroundColor: isAutoUpdated ? 'rgba(46, 125, 50, 0.1)' : 'transparent',
+              animation: isAutoUpdated ? `${pulseGreen} 2s infinite` : (animate ? `${popAnimation} 0.3s ease-out, ${colorFlash} 0.5s ease-out` : 'none'),
+            }}
+          >
+            {displayClasses}
+          </Typography>
+          
+        </>
       )}
-    </>
+    </Box>
   );
 }
 // utils/convertFirestoreDate.js

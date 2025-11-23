@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from "react";
 import "./Signup.css";
 import { Link, useNavigate } from "react-router-dom";
-
-// Adjust paths as needed
-import Loader from "./Loader"; // Assuming components folder
-import Modal from "./Modal"; // Assuming components folder
+import Loader from "./Loader";
+import Modal from "./Modal";
 import {
   FaEye,
   FaEyeSlash,
   FaExclamationCircle,
   FaCheckCircle,
   FaSpinner,
+  FaUserSlash,
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser,clearAuthError,clearCurrentStudent,setCurrentStudent } from "../redux/actions";
+import { loginUser, clearAuthError, clearCurrentStudent, setCurrentStudent } from "../redux/actions";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
@@ -30,10 +29,11 @@ const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
-  
   const [activeTab, setActiveTab] = useState("student"); 
-  
   const [isFading, setIsFading] = useState(false);
+
+  // New state for deactivated student info
+  const [deactivatedStudentInfo, setDeactivatedStudentInfo] = useState(null);
 
   const modalStatus = isAuthenticated ? "success" : "error";
   const modalMessage = isAuthenticated
@@ -44,34 +44,87 @@ const LoginPage = () => {
     dispatch(clearAuthError());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (error) {
-      setModalOpen(true);
-    } else if (isAuthenticated && !loading) {
-      setModalOpen(true);
+ useEffect(() => {
+  if (error) {
+    setModalOpen(true);
+  } else if (isAuthenticated && !loading) {
+    setModalOpen(true);
+    
+    // Only auto-close for successful logins, NOT for deactivated students
+    if (user?.deactivated !== true) {
       const timer = setTimeout(() => {
         setModalOpen(false);
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [error, isAuthenticated, loading, user]);
-
+    // For deactivated students, don't set any timer - let user close manually
+  }
+}, [error, isAuthenticated, loading, user]);
   useEffect(() => {
     if (user) {
       if (user.role === "student") {
-        console.log("user",user)
-              dispatch(setCurrentStudent(user));
-
+        console.log("user", user);
+        
+        // Check if student is deactivated
+        if (user.deactivated === true) {
+          // Set deactivated student info
+          setDeactivatedStudentInfo({
+            name: user.Name || user.name,
+            deactivatedAt: user.deactivatedAt,
+            studentId: user.id
+          });
+          
+          // Show deactivation modal instead of navigating
+          setModalOpen(true);
+          
+          // Clear the user from auth state since they're deactivated
+          dispatch(clearCurrentStudent());
+          return;
+        }
+        
+        // If not deactivated, proceed normally
+        dispatch(setCurrentStudent(user));
         navigate(`/student/${user?.id}/profile`, {
           state: { studentData: user },
         });
       } else if (user.role === "admin" || user.role === "faculty") {
-                dispatch(clearCurrentStudent());
-
+        dispatch(clearCurrentStudent());
         navigate("/dashboard");
       }
     }
-  }, [user, navigate]);
+  }, [user, navigate, dispatch]);
+
+  // Function to format deactivated date
+  const formatDeactivatedDate = (deactivatedAt) => {
+    if (!deactivatedAt) return "Unknown date";
+    
+    try {
+      const date = deactivatedAt._seconds 
+        ? new Date(deactivatedAt._seconds * 1000)
+        : new Date(deactivatedAt);
+      
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error("Error formatting deactivated date:", error);
+      return "Unknown date";
+    }
+  };
+
+  // Function to get deactivation message
+  const getDeactivationMessage = () => {
+    if (!deactivatedStudentInfo) return "";
+    
+    const { name, deactivatedAt } = deactivatedStudentInfo;
+    const formattedDate = formatDeactivatedDate(deactivatedAt);
+    
+    return `Student "${name}" has left the organization. Account was deactivated on ${formattedDate}. Please contact administration for more information.`;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -130,6 +183,10 @@ const LoginPage = () => {
     if (!validateForm()) {
       return;
     }
+    
+    // Clear any previous deactivated student info
+    setDeactivatedStudentInfo(null);
+    
     const loginPayload = {
       username: formData.username,
       password: formData.password,
@@ -138,27 +195,23 @@ const LoginPage = () => {
     dispatch(loginUser(loginPayload));
   };
   
-  // --- NEW: Function to handle tab change with animation ---
   const handleTabChange = (newTab) => {
-    if (newTab === activeTab) return; // Do nothing if clicking the same tab
+    if (newTab === activeTab) return;
 
-    setIsFading(true); // Start fade-out
+    setIsFading(true);
     
-    // Wait for fade-out to complete (200ms) before changing content
     setTimeout(() => {
-      setActiveTab(newTab); // Change content
-      setIsFading(false); // Start fade-in
-    }, 200); // This duration must match the CSS transition duration
+      setActiveTab(newTab);
+      setIsFading(false);
+    }, 200);
   };
 
-  // --- Dynamic content based on tab ---
   const title = activeTab === "student" ? "Student Login" : "Faculty Login";
   const subtitle =
     activeTab === "student"
       ? "Log in to continue your learning journey."
       : "Log in to manage your courses and students.";
 
-  // --- Inline styles for tabs and animation ---
   const tabContainerStyle = {
     display: "flex",
     width: "100%",
@@ -176,13 +229,13 @@ const LoginPage = () => {
     backgroundColor: "transparent",
     fontSize: "16px",
     fontWeight: "600",
-    color: "#888", // Inactive color
+    color: "#888",
     transition: "color 0.3s ease",
   };
 
   const activeTabStyle = {
     ...tabStyle,
-    color: "#333", // Active color
+    color: "#333",
   };
 
   const sliderStyle = {
@@ -195,23 +248,20 @@ const LoginPage = () => {
     transition: "left 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0)", 
   };
   
-  // --- NEW: Inline style for the fading content wrapper ---
   const contentFadeStyle = {
     opacity: isFading ? 0 : 1,
-    transition: "opacity 0.2s ease-in-out", // This duration must match the setTimeout
+    transition: "opacity 0.2s ease-in-out",
   };
-
 
   return (
     <div className="signup-page-container">
       <div className="signup-card">
 
-        {/* --- Tabbed Interface --- */}
+        {/* Tabbed Interface */}
         <div style={tabContainerStyle}>
           <button
             type="button"
             style={activeTab === "student" ? activeTabStyle : tabStyle}
-            // --- MODIFIED: Use new handler ---
             onClick={() => handleTabChange("student")}
           >
             Student Login
@@ -219,19 +269,16 @@ const LoginPage = () => {
           <button
             type="button"
             style={activeTab === "faculty" ? activeTabStyle : tabStyle}
-            // --- MODIFIED: Use new handler ---
             onClick={() => handleTabChange("faculty")}
           >
             Faculty Login
           </button>
-          <div style={sliderStyle}></div> {/* Animated slider */}
+          <div style={sliderStyle}></div>
         </div>
 
-        {/* --- NEW: Fading content wrapper --- */}
         <div style={contentFadeStyle}>
-                  <p className="signup-subtitle">{subtitle}</p>
+          <p className="signup-subtitle">{subtitle}</p>
           
-          {/* --- The Form Itself --- */}
           <form onSubmit={handleSubmit} className="signup-form">
             <div className="form-group-signup">
               <label htmlFor="username">Email address or Mobile number</label>
@@ -286,8 +333,7 @@ const LoginPage = () => {
               )}
             </button>
           </form>
-        </div> {/* --- End of Fading Wrapper --- */}
-
+        </div>
 
         <p className="login-link">
           Don't have an account? <Link to="/signup">Sign Up</Link>
@@ -296,16 +342,40 @@ const LoginPage = () => {
           <Link to="/forgot-password">Forgot Password?</Link>
         </p>
       </div>
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
-        title={modalStatus === "success" ? "Success!" : "Login Failed!"}
-        message={modalMessage}
-        status={modalStatus}
-        icon={
-          modalStatus === "success" ? <FaCheckCircle /> : <FaExclamationCircle />
-        }
-      />
+
+      {/* Regular Error/Success Modal */}
+      {!deactivatedStudentInfo && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setModalOpen(false)}
+          title={modalStatus === "success" ? "Success!" : "Login Failed!"}
+          message={modalMessage}
+          status={modalStatus}
+          icon={
+            modalStatus === "success" ? <FaCheckCircle /> : <FaExclamationCircle />
+          }
+        />
+      )}
+
+      {/* Deactivated Student Modal */}
+      {deactivatedStudentInfo && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setDeactivatedStudentInfo(null);
+          }}
+          title="Account Deactivated"
+          message={getDeactivationMessage()}
+          status="error"
+          icon={<FaUserSlash />}
+          showCloseButton={true}
+          customStyle={{
+            backgroundColor: "#fff3f3",
+            border: "1px solid #ffcdd2"
+          }}
+        />
+      )}
     </div>
   );
 };
