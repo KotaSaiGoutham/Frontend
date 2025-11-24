@@ -9,6 +9,16 @@ import {
   Typography,
   Box,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Divider,
 } from "@mui/material";
 import {
   FaPlusCircle,
@@ -20,14 +30,18 @@ import {
   FaCalendarAlt,
   FaEdit,
   FaBriefcase,
+  FaCheckCircle,
+  FaUser,
+  FaDollarSign,
+  FaCalendar,
+  FaClipboardList,
 } from "react-icons/fa";
 import {
   MuiInput,
   MuiDatePicker,
 } from "./customcomponents/MuiCustomFormFields";
 import { useSelector, useDispatch } from "react-redux";
-// Import the correct actions
-import { addAcademyEarning, updateAcademyEarning } from "../redux/actions"; // Changed to updateAcademyEarning
+import { addAcademyEarning, updateAcademyEarning } from "../redux/actions";
 
 const AddAcademyEarning = () => {
   const navigate = useNavigate();
@@ -45,6 +59,7 @@ const AddAcademyEarning = () => {
     message: "",
     severity: "success",
   });
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     tutorName: "",
     studentNames: "",
@@ -81,9 +96,24 @@ const AddAcademyEarning = () => {
     setFormData((prev) => ({ ...prev, date: dateValue }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmitClick = (e) => {
     e.preventDefault();
     
+    // Basic validation
+    if (!formData.tutorName || !formData.purpose || !formData.amount) {
+      setSnackbar({
+        open: true,
+        message: "Please fill in all required fields (Tutor Name, Purpose, Amount).",
+        severity: "error",
+      });
+      return;
+    }
+
+    // Open confirmation dialog instead of submitting directly
+    setConfirmDialogOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
     console.log("Form Data:", formData);
     console.log("isUpdating:", isUpdating);
 
@@ -106,11 +136,13 @@ const AddAcademyEarning = () => {
           message: "No changes detected. Please modify before updating.",
           severity: "error",
         });
+        setConfirmDialogOpen(false);
         return;
       }
     }
     
     setLoading(true);
+    setConfirmDialogOpen(false); // Close dialog when starting API call
 
     // Ensure date is properly formatted
     const formattedDate = formData.date instanceof Date 
@@ -130,7 +162,7 @@ const AddAcademyEarning = () => {
       if (isUpdating) {
         console.log("Dispatching updateAcademyEarning with ID:", earningToEdit.id);
         await dispatch(
-          updateAcademyEarning(earningToEdit.id, earningPayload) // Use updateAcademyEarning
+          updateAcademyEarning(earningToEdit.id, earningPayload)
         );
         setSnackbar({
           open: true,
@@ -164,8 +196,27 @@ const AddAcademyEarning = () => {
     }
   };
 
+  const handleCancelConfirm = () => {
+    setConfirmDialogOpen(false);
+  };
+
   const handleCancel = () => {
     navigate("/academy-finance-dashboard");
+  };
+
+  // Format date for display
+  const formatDisplayDate = (date) => {
+    return date instanceof Date 
+      ? date.toLocaleDateString('en-IN', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        })
+      : new Date(date).toLocaleDateString('en-IN', {
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric'
+        });
   };
 
   return (
@@ -200,7 +251,7 @@ const AddAcademyEarning = () => {
           )}
         </Box>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmitClick}>
           <div className="add-student-form-grid">
             <MuiInput
               label="Tutor Name"
@@ -291,6 +342,137 @@ const AddAcademyEarning = () => {
           </div>
         </form>
       </Paper>
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={handleCancelConfirm}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          <FaCheckCircle style={{ color: '#4caf50' }} />
+          {isUpdating ? 'Confirm Update' : 'Confirm Academy Earning'}
+        </DialogTitle>
+        
+        <DialogContent sx={{ mt: 2 }}>
+          <DialogContentText sx={{ mb: 2, fontWeight: 'bold' }}>
+            Please review the details before {isUpdating ? 'updating' : 'adding'} this earning:
+          </DialogContentText>
+          
+          <List dense sx={{ width: '100%' }}>
+            <ListItem>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <FaChalkboardTeacher size={16} color="#1976d2" />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Tutor Name" 
+                secondary={formData.tutorName || 'Not provided'}
+              />
+            </ListItem>
+            
+            <ListItem>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <FaUserGraduate size={16} color="#1976d2" />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Student Names" 
+                secondary={formData.studentNames || 'Not provided'}
+              />
+            </ListItem>
+            
+            <ListItem>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <FaClipboardList size={16} color="#1976d2" />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Purpose" 
+                secondary={formData.purpose || 'Not provided'}
+              />
+            </ListItem>
+            
+            <ListItem>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <FaBriefcase size={16} color="#1976d2" />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Work/Details" 
+                secondary={formData.work || 'Not provided'}
+              />
+            </ListItem>
+            
+            <ListItem>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <FaDollarSign size={16} color="#4caf50" />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Amount" 
+                secondary={`₹${Number(formData.amount).toLocaleString('en-IN')}`}
+                sx={{ 
+                  '& .MuiListItemText-secondary': { 
+                    color: '#4caf50', 
+                    fontWeight: 'bold',
+                    fontSize: '1.1rem'
+                  } 
+                }}
+              />
+            </ListItem>
+            
+            <ListItem>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <FaCalendar size={16} color="#1976d2" />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Date" 
+                secondary={formatDisplayDate(formData.date)}
+              />
+            </ListItem>
+          </List>
+          
+          <Box sx={{ mt: 2, p: 2, backgroundColor: '#fffde7', borderRadius: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              <strong>Note:</strong> This {isUpdating ? 'update will modify' : 'entry will be added to'} the academy earnings records.
+            </Typography>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <MuiButton 
+            onClick={handleCancelConfirm}
+            variant="outlined"
+            startIcon={<FaTimesCircle />}
+          >
+            Cancel
+          </MuiButton>
+          <MuiButton 
+            onClick={handleConfirmSubmit}
+            variant="contained"
+            disabled={loading}
+            startIcon={
+              loading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <FaCheckCircle />
+              )
+            }
+            sx={{
+              background: 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #388e3c 0%, #2e7d32 100%)'
+              }
+            }}
+          >
+            {loading ? 'Processing...' : (isUpdating ? 'Update' : 'Confirm')}
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
