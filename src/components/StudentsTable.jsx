@@ -509,127 +509,139 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
     setConfirmDialogOpen(true);
   };
   // ...
-  const sortedFilteredStudents = useMemo(() => {
-    if (!sortEnabled) {
-      return displayedStudents;
+const sortedFilteredStudents = useMemo(() => {
+  if (!sortEnabled) {
+    return displayedStudents;
+  }
+
+  // Filter students based on isRevisionProgramJEEMains2026Student prop
+  let studentsToSort = [...filteredStudents].filter((student) => {
+    if (isRevisionProgramJEEMains2026Student) {
+      return student.isRevisionProgramJEEMains2026Student === true;
+    } else {
+      return student
     }
+  });
 
-    // Filter students based on isRevisionProgramJEEMains2026Student prop
-    let studentsToSort = [...filteredStudents].filter((student) => {
-      if (isRevisionProgramJEEMains2026Student) {
-        // If prop is true, only include revision program students
-        return student.isRevisionProgramJEEMains2026Student === true;
-      } else {
-        // If prop is false or not provided, include non-revision students
-        // This includes students with false or undefined isRevisionProgramJEEMains2026Student
-        return student;
+  // If no specific column is selected for sorting, apply default sorting
+  if (!orderBy) {
+    return studentsToSort.sort((a, b) => {
+      // 1. Primary: Active students first
+      if (a.isActive !== b.isActive) {
+        return a.isActive ? -1 : 1;
       }
+      
+      // 2. Secondary: Recently paid students first (within last 24 hours)
+      const aRecent = isRecentPayment(a);
+      const bRecent = isRecentPayment(b);
+      if (aRecent !== bRecent) {
+        return aRecent ? -1 : 1;
+      }
+      
+      // 3. Tertiary: Most classes completed (handle both regular and revision students)
+      const aClasses = a.isRevisionProgramJEEMains2026Student 
+        ? a.revisionClassesCompleted || 0 
+        : a.classesCompleted || 0;
+      const bClasses = b.isRevisionProgramJEEMains2026Student 
+        ? b.revisionClassesCompleted || 0 
+        : b.classesCompleted || 0;
+      return bClasses - aClasses;
     });
+  }
 
-    studentsToSort.sort((a, b) => {
-      // 1. Primary Sort: Inactive students move to the bottom
-      const aIsActive = a.isActive;
-      const bIsActive = b.isActive;
-      if (aIsActive !== bIsActive) {
-        return aIsActive ? -1 : 1; // Active students before inactive
-      }
+  // Custom column sorting when orderBy is specified
+  return studentsToSort.sort((a, b) => {
+    let aValue, bValue;
 
-      // 2. Secondary Sort: Group Paid students at the top
-      const aIsPaid = a["Payment Status"] === "Paid";
-      const bIsPaid = b["Payment Status"] === "Paid";
+    switch (orderBy) {
+      case "name":
+        aValue = a.Name?.toLowerCase() || "";
+        bValue = b.Name?.toLowerCase() || "";
+        return order === "asc" 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
 
-      if (aIsPaid && !bIsPaid) {
-        return -1; // Paid 'a' comes before unpaid 'b'
-      }
-      if (!aIsPaid && bIsPaid) {
-        return 1; // Unpaid 'a' comes after paid 'b'
-      }
+      case "classesCompleted":
+        // Handle both regular and revision students
+        aValue = a.isRevisionProgramJEEMains2026Student 
+          ? a.revisionClassesCompleted || 0 
+          : a.classesCompleted || 0;
+        bValue = b.isRevisionProgramJEEMains2026Student 
+          ? b.revisionClassesCompleted || 0 
+          : b.classesCompleted || 0;
+        return order === "asc" ? aValue - bValue : bValue - aValue;
 
-      // 3. Tertiary Sort: If both are Paid or both are Unpaid
-      if (aIsPaid === bIsPaid) {
-        // If both are PAID, sort by paidDate in descending order (latest first)
-        if (aIsPaid) {
-          const aPaidDate = a.paidDate?._seconds || 0;
-          const bPaidDate = b.paidDate?._seconds || 0;
-          return bPaidDate - aPaidDate; // Descending sort
-        }
+      case "paymentStatus":
+        aValue = a["Payment Status"] || "";
+        bValue = b["Payment Status"] || "";
+        return order === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
 
-        // If both are UNPAID or all other status, fall back to classesCompleted
-        const aClasses = a.classesCompleted || 0;
-        const bClasses = b.classesCompleted || 0;
-        return bClasses - aClasses; // Descending sort
-      }
+      case "monthlyFee":
+        aValue = typeof a["Monthly Fee"] === "number" 
+          ? a["Monthly Fee"] 
+          : parseFloat(a["Monthly Fee"]) || 0;
+        bValue = typeof b["Monthly Fee"] === "number" 
+          ? b["Monthly Fee"] 
+          : parseFloat(b["Monthly Fee"]) || 0;
+        return order === "asc" ? aValue - bValue : bValue - aValue;
 
-      // If all primary and secondary sorts are equal, fall back to the user's selected orderBy
-      if (!orderBy) {
-        return 0; // Maintain original relative order
-      }
+      case "isRevisionProgramJEEMains2026Student":
+        aValue = a.isRevisionProgramJEEMains2026Student === true;
+        bValue = b.isRevisionProgramJEEMains2026Student === true;
+        return order === "asc"
+          ? (aValue === bValue ? 0 : aValue ? -1 : 1)
+          : (aValue === bValue ? 0 : aValue ? 1 : -1);
 
-      // Custom column sorting
-      let aValue;
-      let bValue;
+      // Handle other string-based columns
+      case "gender":
+      case "subject":
+      case "year":
+      case "stream":
+      case "college":
+      case "group":
+      case "source":
+      case "contactNumber":
+      case "motherContact":
+      case "fatherContact":
+      case "startDate":
+      case "endDate":
+      case "nextClass":
+      case "status":
+        // For string-based columns
+        aValue = a[orderBy] || "";
+        bValue = b[orderBy] || "";
+        return order === "asc"
+          ? aValue.toString().localeCompare(bValue.toString())
+          : bValue.toString().localeCompare(aValue.toString());
 
-      switch (orderBy) {
-        case "name":
-          aValue = a.Name?.toLowerCase() || "";
-          bValue = b.Name?.toLowerCase() || "";
+      default:
+        // Generic fallback
+        aValue = a[orderBy];
+        bValue = b[orderBy];
+        
+        if (typeof aValue === "string" && typeof bValue === "string") {
           return order === "asc"
             ? aValue.localeCompare(bValue)
             : bValue.localeCompare(aValue);
-
-        case "isRevisionProgramJEEMains2026Student":
-          // Handle revision program flag sorting
-          aValue = a.isRevisionProgramJEEMains2026Student === true;
-          bValue = b.isRevisionProgramJEEMains2026Student === true;
-          return order === "asc"
-            ? aValue === bValue
-              ? 0
-              : aValue
-              ? -1
-              : 1
-            : aValue === bValue
-            ? 0
-            : aValue
-            ? 1
-            : -1;
-
-        // ... (Rest of your existing switch cases)
-        default:
-          // Default comparison logic
-          const valA = a[orderBy];
-          const valB = b[orderBy];
-
-          if (typeof valA === "string" && typeof valB === "string") {
-            return order === "asc"
-              ? valA.localeCompare(valB)
-              : valB.localeCompare(valA);
-          }
-          if (typeof valA === "boolean" && typeof valB === "boolean") {
-            return order === "asc"
-              ? valA === valB
-                ? 0
-                : valA
-                ? -1
-                : 1
-              : valA === valB
-              ? 0
-              : valA
-              ? 1
-              : -1;
-          }
-          return order === "asc" ? valA - valB || 0 : valB - valA || 0;
-      }
-    });
-
-    return studentsToSort;
-  }, [
-    filteredStudents,
-    orderBy,
-    order,
-    sortEnabled,
-    displayedStudents,
-    isRevisionProgramJEEMains2026Student,
-  ]); // Add isRevisionProgramJEEMains2026Student to dependencies
+        }
+        
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return order === "asc" ? aValue - bValue : bValue - aValue;
+        }
+        
+        return 0;
+    }
+  });
+}, [
+  filteredStudents,
+  orderBy,
+  order,
+  sortEnabled,
+  displayedStudents,
+  isRevisionProgramJEEMains2026Student,
+]);
 
   // Handles changes in filter input fields
   const handleFilterChange = (e) => {

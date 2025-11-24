@@ -47,18 +47,26 @@ const TableHeaders = ({ columns, order, orderBy, handleSortRequest, columnVisibi
               <TableCell
                 key={column.id}
                 align={column.align}
-                sx={{ ...commonSx, minWidth: column.minWidth }}
-                // Keep this line as is, it sets the overall sort direction for the table cell
+                sx={{ 
+                  ...commonSx, 
+                  minWidth: column.minWidth,
+                  // Add cursor pointer for better UX
+                  cursor: column.hasSort ? 'pointer' : 'default'
+                }}
                 sortDirection={isActive ? order : false}
               >
                 {column.hasSort ? (
                   <TableSortLabel
                     active={isActive}
-                    // This is the key change: always provide a direction,
-                    // even when not active. This forces the arrow to show.
-                    direction={isActive ? order : "asc"}
+                    direction={isActive ? order : 'asc'}
                     onClick={() => handleSortRequest(column.id)}
-                    hideSortIcon={false} // Ensure this is always false
+                    // Remove hideSortIcon to always show the icon
+                    sx={{
+                      '& .MuiTableSortLabel-icon': {
+                        opacity: 1, // Force the icon to be visible
+                        color: isActive ? '#1976d2' : 'rgba(0, 0, 0, 0.54)'
+                      }
+                    }}
                   >
                     {column.icon ? (
                       <Box sx={{ display: "flex", alignItems: "center" }}>

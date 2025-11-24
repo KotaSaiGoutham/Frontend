@@ -998,7 +998,7 @@ export const updateClassesCompleted = (studentId, delta, faculty) => async (disp
   });
 
   // Set needsRefresh since classesCompleted affects sorting
-  dispatch({ type: SET_STUDENTS_NEED_REFRESH });
+  // dispatch({ type: SET_STUDENTS_NEED_REFRESH });
 
   return updated;
 };
