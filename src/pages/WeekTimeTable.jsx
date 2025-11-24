@@ -47,6 +47,7 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import ListIcon from "@mui/icons-material/List";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { getTimeValue } from "../mockdata/function";
 
 // Enhanced Color definitions
 const colors = {
@@ -101,12 +102,12 @@ const controlsStyle = {
   border: `1px solid ${colors.border}`,
 };
 
-const tableContainerStyle = {
-  borderRadius: "16px",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-  border: `1px solid ${colors.border}`,
-  overflow: "hidden",
-  background: colors.cardBackground,
+// Enhanced sticky header styles
+const stickyHeaderStyle = {
+  position: "sticky",
+  top: 0,
+  zIndex: 10,
+  backgroundColor: colors.headerBackground,
 };
 
 // Enhanced Table cell styles
@@ -120,12 +121,17 @@ const headerCellStyle = {
   textAlign: "center",
   padding: "16px 12px",
   letterSpacing: "0.5px",
+  position: "sticky",
+  top: 0,
+  zIndex: 10,
 };
-
 const nameHeaderCellStyle = {
   ...headerCellStyle,
   textAlign: "left",
   backgroundColor: colors.headerBackground,
+  position: "sticky",
+  left: 0,
+  zIndex: 11, // Higher than other headers
 };
 
 const baseCellStyle = {
@@ -205,6 +211,7 @@ const ClassSchedule = () => {
     loading,
     error,
   } = useSelector((state) => state.students);
+  console.log("classSchedule",classSchedule)
 
   // Provide safe defaults for classSchedule properties
   const safeClassSchedule = {
@@ -465,12 +472,33 @@ const ClassSchedule = () => {
       ),
     [scheduleData, searchTerm, selectedDay]
   );
+  console.log("filteredScheduleData",filteredScheduleData)
 
-  const sortedData = useMemo(
-    () =>
-      [...filteredScheduleData].sort((a, b) => a.name.localeCompare(b.name)),
-    [filteredScheduleData]
-  );
+ const sortedData = useMemo(() => {
+  if (!filteredScheduleData.length) return [];
+  
+  return [...filteredScheduleData].sort((a, b) => {
+    // First, sort by earliest time across all days
+    const allATimes = days.map(day => a[day.toLowerCase()]).filter(Boolean);
+    const allBTimes = days.map(day => b[day.toLowerCase()]).filter(Boolean);
+    
+    if (allATimes.length === 0 && allBTimes.length === 0) return 0;
+    if (allATimes.length === 0) return 1; // a has no times, put at end
+    if (allBTimes.length === 0) return -1; // b has no times, put at end
+    
+    // Get the earliest time for each student across all days
+    const aEarliestTime = Math.min(...allATimes.map(time => getTimeValue(time)));
+    const bEarliestTime = Math.min(...allBTimes.map(time => getTimeValue(time)));
+    
+    if (aEarliestTime !== bEarliestTime) {
+      return aEarliestTime - bEarliestTime;
+    }
+    
+    // If same earliest time, sort by name
+    return a.name.localeCompare(b.name);
+  });
+}, [filteredScheduleData, days]);
+  console.log("sortedData",sortedData)
 
   // Calculate statistics - update to use scheduleData
   const stats = useMemo(() => {
@@ -503,27 +531,32 @@ const ClassSchedule = () => {
     };
   }, [scheduleData, days]);
 
-  const renderTimeSlots = (times) => {
-    if (!times) {
-      return <span>-</span>;
-    }
+const renderTimeSlots = (times) => {
+  if (!times) {
+    return <span style={{ color: '#95a5a6', fontStyle: 'italic' }}>-</span>;
+  }
 
-    const timeArray = times.split(",").map((time) => time.trim());
+  const timeArray = times.split(',').map((time) => time.trim());
 
-    if (timeArray.length === 1) {
-      return <span style={timeStyle}>{timeArray[0]}</span>;
-    }
+  // Sort times within the same cell
+  const sortedTimes = timeArray.sort((a, b) => {
+    return getTimeValue(a) - getTimeValue(b);
+  });
 
-    return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {timeArray.map((time, index) => (
-          <span key={index} style={timeStyle}>
-            {time}
-          </span>
-        ))}
-      </Box>
-    );
-  };
+  if (sortedTimes.length === 1) {
+    return <span style={timeStyle}>{sortedTimes[0]}</span>;
+  }
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      {sortedTimes.map((time, index) => (
+        <span key={index} style={timeStyle}>
+          {time}
+        </span>
+      ))}
+    </Box>
+  );
+};
 
   // NEW COMPONENT: Student Dropdown for Swap
   const StudentSwapDropdown = ({ studentId, studentName }) => {
@@ -762,204 +795,239 @@ const ClassSchedule = () => {
       )}
     </Box>
   );
-  // Render Grid View (Table) - Updated with swap feature
-  const renderGridView = () => (
-    <TableContainer component={Paper} style={tableContainerStyle}>
-      <Table stickyHeader sx={{ minWidth: 800 }}>
-        <TableHead>
-          <TableRow>
-            <TableCell
-              style={nameHeaderCellStyle}
-              sx={{ width: "80px", borderTopLeftRadius: "16px" }}
-            >
-              S.No
-            </TableCell>
-            <TableCell style={nameHeaderCellStyle} sx={{ minWidth: "180px" }}>
-              Student Name
-            </TableCell>
-            <TableCell
-              style={headerCellStyle}
-              sx={{ width: "150px", textAlign: "center" }}
-            >
-              Actions
-            </TableCell>
-            {days.map((day) => (
-              <TableCell key={day} style={headerCellStyle}>
-                {day}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {sortedData.map((student, index) => {
-            const isRevision = student.studentType === "revision";
-            const rowStyle = {
-              backgroundColor: isRevision ? colors.revision : colors.regular,
-              transition: "all 0.2s ease-in-out",
-              "&:hover": {
-                backgroundColor: isRevision
-                  ? "rgba(255, 114, 111, 0.9)"
-                  : "rgba(119, 221, 119, 0.9)",
-                transform: "translateY(-1px)",
-              },
-            };
-
-            const isSelectedForSwap = selectedStudentForSwap === student.id;
-            const highlightStyle = isSelectedForSwap
-              ? {
-                  boxShadow: "0 0 0 3px #9b59b6",
-                  backgroundColor: isRevision
-                    ? "rgba(255, 114, 111, 0.7)"
-                    : "rgba(119, 221, 119, 0.7)",
-                }
-              : {};
+const tableContainerStyle = {
+  borderRadius: "16px",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+  border: `1px solid ${colors.border}`,
+  overflow: "hidden",
+  background: colors.cardBackground,
+  position: "relative",
+};
+const renderGridView = () => (
+  <TableContainer 
+    component={Paper} 
+    sx={{ 
+      borderRadius: "16px",
+      boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+      border: `1px solid ${colors.border}`,
+      background: colors.cardBackground,
+      maxHeight: "70vh", // This controls the table height
+      overflow: "auto",
+    }}
+  >
+    <Table stickyHeader sx={{ minWidth: 800 }}>
+      <TableHead>
+        <TableRow>
+          <TableCell style={headerCellStyle} sx={{ width: "80px" }}>
+            S.No
+          </TableCell>
+          <TableCell style={nameHeaderCellStyle} sx={{ minWidth: "180px" }}>
+            Student Name
+          </TableCell>
+          <TableCell style={headerCellStyle} sx={{ width: "150px", textAlign: "center" }}>
+            Actions
+          </TableCell>
+          {days.map((day) => {
+            const dayKey = day.toLowerCase();
+            // Calculate number of classes for this day
+            const dayClassCount = sortedData.reduce((count, student) => {
+              const times = student[dayKey];
+              if (times) {
+                return count + times.split(',').length;
+              }
+              return count;
+            }, 0);
 
             return (
-              <TableRow
-                key={student.id}
-                sx={{ ...rowStyle, ...highlightStyle }}
-              >
-                <TableCell style={nameCellStyle}>
-                  <Chip
-                    label={index + 1}
-                    size="small"
-                    sx={{
-                      bgcolor: "white",
-                      color: colors.text,
-                      fontWeight: 700,
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              <TableCell key={day} style={headerCellStyle} sx={{ minWidth: "120px" }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <Typography variant="subtitle2" fontWeight="700">
+                    {day}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      backgroundColor: 'rgba(255,255,255,0.2)', 
+                      borderRadius: '10px', 
+                      px: 1, 
+                      py: 0.5,
+                      mt: 0.5,
+                      fontSize: '0.7rem'
                     }}
-                  />
-                </TableCell>
-                <TableCell style={nameCellStyle}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Typography
-                      variant="body1"
-                      fontWeight="800"
-                      color={isRevision ? "white" : "black"}
-                    >
-                      {student.name}
-                    </Typography>
-                  </Box>
-                </TableCell>
-
-                {/* NEW: Actions Cell with Swap Button */}
-                <TableCell style={baseCellStyle}>
-                  <Tooltip
-                    title={
-                      swapMode
-                        ? isSelectedForSwap
-                          ? "Select target student from dropdown"
-                          : "Click to select as target for swap"
-                        : "Swap schedule with another student"
-                    }
                   >
-                    <Button
-                      variant={isSelectedForSwap ? "contained" : "outlined"}
-                      color="secondary"
-                      size="small"
-                      startIcon={<SwapHorizIcon />}
-                      onClick={() => handleStudentSelectForSwap(student.id)}
-                      sx={{
-                        borderRadius: 2,
-                        textTransform: "none",
-                        fontWeight: 600,
-                        backgroundColor: isSelectedForSwap
-                          ? "#4B0082" // Dark indigo
-                          : "transparent",
-                        borderColor: isSelectedForSwap ? "#4B0082" : "#000080", // Navy blue
-                        color: isSelectedForSwap ? "white" : "#000080", // Navy blue text
-                        "&:hover": {
-                          backgroundColor: isSelectedForSwap
-                            ? "#3A0069"
-                            : "rgba(0, 0, 128, 0.1)",
-                          borderColor: "#000080",
-                        },
-                      }}
-                    >
-                      {swapMode
-                        ? isSelectedForSwap
-                          ? "Selected"
-                          : "Select"
-                        : "Swap"}
-                    </Button>
-                  </Tooltip>
-
-                  {/* Show dropdown when this student is selected for swap */}
-                  {isSelectedForSwap && (
-                    <Box sx={{ mt: 1 }}>
-                      <StudentSwapDropdown
-                        studentId={student.id}
-                        studentName={student.name}
-                      />
-                      {targetStudentForSwap && (
-                        <Button
-                          variant="contained"
-                          color="success"
-                          size="small"
-                          onClick={handleStudentSwap}
-                          sx={{
-                            mt: 1,
-                            width: "100%",
-                            backgroundColor: "#006400", // Dark green
-                            color: "white",
-                            "&:hover": {
-                              backgroundColor: "#004d00", // Darker green
-                            },
-                          }}
-                        >
-                          Confirm Swap
-                        </Button>
-                      )}
-                    </Box>
-                  )}
-                </TableCell>
-
-                {days.map((day) => {
-                  const dayKey = day.toLowerCase();
-                  const cellValue = student[dayKey];
-                  const isEditing =
-                    editingCell?.studentId === student.id &&
-                    editingCell?.day === dayKey;
-
-                  const cellStyle = isEditMode
-                    ? clickableCellStyle
-                    : baseCellStyle;
-
-                  return (
-                    <TableCell
-                      key={day}
-                      sx={cellStyle}
-                      onClick={() =>
-                        handleEditClick(student.id, dayKey, cellValue)
-                      }
-                    >
-                      {renderTimeSlots(cellValue)}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
+                    {dayClassCount} class{dayClassCount !== 1 ? 'es' : ''}
+                  </Typography>
+                </Box>
+              </TableCell>
             );
           })}
-        </TableBody>
-      </Table>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {sortedData.map((student, index) => {
+          const isRevision = student.studentType === "revision";
+          const rowStyle = {
+            backgroundColor: isRevision ? colors.revision : colors.regular,
+            transition: "all 0.2s ease-in-out",
+            "&:hover": {
+              backgroundColor: isRevision
+                ? "rgba(255, 114, 111, 0.9)"
+                : "rgba(119, 221, 119, 0.9)",
+              transform: "translateY(-1px)",
+            },
+          };
 
-      {sortedData.length === 0 && (
-        <Box sx={{ textAlign: "center", padding: "60px 20px" }}>
-          <Box sx={{ fontSize: "64px", mb: 2, opacity: 0.3 }}>📚</Box>
-          <Typography variant="h5" color="text.primary" gutterBottom>
-            No students found
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {searchTerm || selectedDay !== "all"
-              ? "Try adjusting your search criteria or filters"
-              : "No schedule data available for display"}
-          </Typography>
-        </Box>
-      )}
-    </TableContainer>
-  );
+          const isSelectedForSwap = selectedStudentForSwap === student.id;
+          const highlightStyle = isSelectedForSwap
+            ? {
+                boxShadow: "0 0 0 3px #9b59b6",
+                backgroundColor: isRevision
+                  ? "rgba(255, 114, 111, 0.7)"
+                  : "rgba(119, 221, 119, 0.7)",
+              }
+            : {};
 
+          return (
+            <TableRow key={student.id} sx={{ ...rowStyle, ...highlightStyle }}>
+              <TableCell style={nameCellStyle}>
+                <Chip
+                  label={index + 1}
+                  size="small"
+                  sx={{
+                    bgcolor: "white",
+                    color: colors.text,
+                    fontWeight: 700,
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  }}
+                />
+              </TableCell>
+              
+              <TableCell style={nameCellStyle}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography
+                    variant="body1"
+                    fontWeight="800"
+                    color={isRevision ? "white" : "black"}
+                  >
+                    {student.name}
+                  </Typography>
+                </Box>
+              </TableCell>
+
+              <TableCell style={baseCellStyle}>
+                <Tooltip
+                  title={
+                    swapMode
+                      ? isSelectedForSwap
+                        ? "Select target student from dropdown"
+                        : "Click to select as target for swap"
+                      : "Swap schedule with another student"
+                  }
+                >
+                  <Button
+                    variant={isSelectedForSwap ? "contained" : "outlined"}
+                    color="secondary"
+                    size="small"
+                    startIcon={<SwapHorizIcon />}
+                    onClick={() => handleStudentSelectForSwap(student.id)}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      backgroundColor: isSelectedForSwap
+                        ? "#4B0082"
+                        : "transparent",
+                      borderColor: isSelectedForSwap ? "#4B0082" : "#000080",
+                      color: isSelectedForSwap ? "white" : "#000080",
+                      "&:hover": {
+                        backgroundColor: isSelectedForSwap
+                          ? "#3A0069"
+                          : "rgba(0, 0, 128, 0.1)",
+                        borderColor: "#000080",
+                      },
+                    }}
+                  >
+                    {swapMode
+                      ? isSelectedForSwap
+                        ? "Selected"
+                        : "Select"
+                      : "Swap"}
+                  </Button>
+                </Tooltip>
+
+                {isSelectedForSwap && (
+                  <Box sx={{ mt: 1 }}>
+                    <StudentSwapDropdown
+                      studentId={student.id}
+                      studentName={student.name}
+                    />
+                    {targetStudentForSwap && (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        onClick={handleStudentSwap}
+                        sx={{
+                          mt: 1,
+                          width: "100%",
+                          backgroundColor: "#006400",
+                          color: "white",
+                          "&:hover": {
+                            backgroundColor: "#004d00",
+                          },
+                        }}
+                      >
+                        Confirm Swap
+                      </Button>
+                    )}
+                  </Box>
+                )}
+              </TableCell>
+
+              {days.map((day) => {
+                const dayKey = day.toLowerCase();
+                const cellValue = student[dayKey];
+                const isEditing =
+                  editingCell?.studentId === student.id &&
+                  editingCell?.day === dayKey;
+
+                const cellStyle = isEditMode
+                  ? clickableCellStyle
+                  : baseCellStyle;
+
+                return (
+                  <TableCell
+                    key={day}
+                    sx={cellStyle}
+                    onClick={() =>
+                      handleEditClick(student.id, dayKey, cellValue)
+                    }
+                  >
+                    {renderTimeSlots(cellValue)}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+
+    {sortedData.length === 0 && (
+      <Box sx={{ textAlign: "center", padding: "60px 20px" }}>
+        <Box sx={{ fontSize: "64px", mb: 2, opacity: 0.3 }}>📚</Box>
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          No students found
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          {searchTerm || selectedDay !== "all"
+            ? "Try adjusting your search criteria or filters"
+            : "No schedule data available for display"}
+        </Typography>
+      </Box>
+    )}
+  </TableContainer>
+);
   // Update loading state to use safeClassSchedule.loading
   if (safeClassSchedule.loading) {
     return (

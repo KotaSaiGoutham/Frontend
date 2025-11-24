@@ -882,3 +882,28 @@ export const calculateExpectedEndDate = (startDate, classDays, totalClasses) => 
   const year = date.getFullYear();
   return `${day}.${month}.${year}`;
 };
+
+// Add this function after the formatTimeForDisplay function
+export const getTimeValue = (timeString) => {
+  if (!timeString) return Infinity; // Put empty schedules at the end
+  
+  const times = timeString.split(',').map(t => t.trim());
+  const firstTime = times[0];
+  
+  // Convert time to 24-hour format for sorting
+  const timeMatch = firstTime.match(/(\d{1,2})(am|pm)/i);
+  if (timeMatch) {
+    let hour = parseInt(timeMatch[1]);
+    const period = timeMatch[2].toLowerCase();
+    
+    // Handle 12am and 12pm specially
+    if (period === 'am') {
+      if (hour === 12) return 0; // 12am = 0
+      return hour; // 1am-11am = 1-11
+    } else {
+      if (hour === 12) return 12; // 12pm = 12
+      return hour + 12; // 1pm-11pm = 13-23
+    }
+  }
+  return Infinity;
+};
