@@ -771,7 +771,7 @@ const ExpensesTable = () => (
                         {formatCurrency(financialData.earnings)}
                       </Typography>
                       <Typography variant="h6" color="text.secondary" sx={{ fontSize: '1.2rem', mt: 1 }}>
-                        Total Academy Earnings
+                        Revenue
                       </Typography>
                       <Chip 
                         icon={financialData.earningsChange >= 0 ? <FaArrowUp /> : <FaArrowDown />}
@@ -790,7 +790,7 @@ const ExpensesTable = () => (
                         {formatCurrency(financialData.expenses)}
                       </Typography>
                       <Typography variant="h6" color="text.secondary" sx={{ fontSize: '1.2rem', mt: 1 }}>
-                        Total Company Expenses
+                        Expenses 
                       </Typography>
                       <Chip 
                         icon={financialData.expensesChange >= 0 ? <FaArrowUp /> : <FaArrowDown />}
@@ -814,7 +814,7 @@ const ExpensesTable = () => (
                         {formatCurrency(financialData.netProfit)}
                       </Typography>
                       <Typography variant="h6" color="text.secondary" sx={{ fontSize: '1.2rem', mt: 1 }}>
-                        Academy Net {financialData.netProfit >= 0 ? "Profit" : "Loss"}
+                        Deficit
                       </Typography>
                       <Chip 
                         icon={financialData.profitChange >= 0 ? <FaArrowUp /> : <FaArrowDown />}

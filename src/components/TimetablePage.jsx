@@ -269,7 +269,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
           .map((student) => student.id)
       );
 
-      // Filter timetables to only include revision program students
+      // Filter timetables to only include revision prograapstudents
       permissionFilteredTimetables = permissionFilteredTimetables.filter(
         (item) => {
           // Check if the timetable item has a studentId that matches a revision program student
@@ -799,10 +799,9 @@ const handleTopicChange = useCallback(
     <Box
       sx={{
         minHeight: "100vh",
-        p: 3,
+        p: 1,
         display: "flex",
         flexDirection: "column",
-        gap: 3,
       }}
     >
       {isLoading && (
@@ -823,9 +822,9 @@ const handleTopicChange = useCallback(
     <Paper
       elevation={6}
       sx={{
-        p: 3,
+        p: 1,
         borderRadius: "12px",
-        mb: 3
+        mb: 1
       }}
     >
       {/* Main Content Row */}
@@ -909,7 +908,7 @@ const handleTopicChange = useCallback(
                 buttonLabel="Download PDF"
                 filename={`Timetable_Report_${getTodayDateForFilename()}.pdf`}
                 reportDate={new Date()}
-                disabled={hasMissingTopics}
+                // disabled={hasMissingTopics}
                 totalHours={sumHours}
                 totalFee={sumFee}
                 size="small"
@@ -1004,7 +1003,18 @@ const handleTopicChange = useCallback(
           {combinedAndFilteredTimetables.length > 0 ? (
             <TableContainer>
               <Table sx={{ minWidth: 800 }} aria-label="timetable">
-                <TableHead></TableHead>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Sl No</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Student Name</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Name of the Lesson</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Time</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Duration</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Fee/Hour</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
                 <TableBody>
                   {combinedAndFilteredTimetables.map((item, index) => {
                     const now = new Date();

@@ -62,65 +62,70 @@ const TimeTableManager = () => {
   return (
     <Box style={containerStyle}>
       <Box style={mainContainerStyle}>
-        {/* Navigation Tabs */}
-        <Paper style={navContainerStyle} elevation={0}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant="fullWidth"
-            textColor="primary"
-            indicatorColor="primary"
-            sx={{
-              minHeight: '48px',
-              '& .MuiTab-root': {
-                fontSize: '15px',
-                fontWeight: '600',
-                minHeight: '48px',
-                py: 1.5,
-                textTransform: 'none',
-              },
-              '& .Mui-selected': {
-                color: colors.primary,
-              }
-            }}
-          >
-            <Tab 
-              label="Weekly Timetable" 
-              id="tab-0"
-              sx={{
-                borderRight: `1px solid ${colors.border}`,
-              }}
-            />
-            <Tab 
-              label="Time Table" 
-              id="tab-1" 
-            />
-          </Tabs>
-        </Paper>
+   <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+  <Tabs
+    value={activeTab}
+    onChange={handleTabChange}
+    TabIndicatorProps={{ sx: { display: 'none' } }}
+    sx={{
+      border: `1px solid ${colors.border || '#ccc'}`,
+      borderRadius: '8px',
+      overflow: 'hidden', // Keeps the corners rounded
+      minHeight: '40px',
+      '& .MuiTab-root': {
+        textTransform: 'none',
+        fontWeight: 600,
+        fontSize: '14px',
+        color: '#666',
+        minHeight: '40px',
+        px: 3,
+        transition: 'all 0.2s',
+        // Add a divider line between tabs
+        '&:not(:last-of-type)': {
+           borderRight: `1px solid ${colors.border || '#ccc'}`,
+        },
+        '&:hover': {
+           bgcolor: '#f9f9f9',
+        },
+        // Active State
+        '&.Mui-selected': {
+          bgcolor: colors.primary, // Solid color background
+          color: '#fff',
+          fontWeight: 700,
+        }
+      }
+    }}
+  >
+        <Tab label="Daily Time Table" />
+
+    <Tab label="Weekly Timetable" />
+  </Tabs>
+</Box>
 
         {/* Content Area - No extra padding */}
         <Paper style={contentContainerStyle} elevation={0}>
-          <TabPanel value={activeTab} index={0}>
-            <div style={{ padding: '16px' }}>
-              <div style={{ 
-                textAlign: 'center', 
-                color: colors.text 
-              }}>
-                <p style={{ margin: 0, color: '#7f8c8d' }}>
-                  <ClassSchedule/>
-                </p>
-              </div>
-            </div>
-          </TabPanel>
+         
           
-          <TabPanel value={activeTab} index={1}>
-            <div style={{ padding: '16px' }}>
+          <TabPanel value={activeTab} index={0}>
+            <div style={{ padding: '5px' }}>
               <div style={{ 
                 textAlign: 'center', 
                 color: colors.text 
               }}>
                 <p style={{ margin: 0, color: '#7f8c8d' }}>
                   <TimetablePage/>
+                </p>
+              </div>
+            </div>
+          </TabPanel>
+           <TabPanel value={activeTab} index={1}>
+            <div style={{ padding: '5px' }}>
+              <div style={{ 
+                textAlign: 'center', 
+                color: colors.text 
+              }}>
+                <p style={{ margin: 0, color: '#7f8c8d' }}>
+                  <ClassSchedule/>
                 </p>
               </div>
             </div>
