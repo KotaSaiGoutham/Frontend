@@ -907,3 +907,9 @@ export const getTimeValue = (timeString) => {
   }
   return Infinity;
 };
+export const formatToLacs = (value) => {
+  if (!value) return "₹0";
+  const inLacs = value / 100000;
+  // parseFloat(toFixed(2)) ensures we get "1" instead of "1.00", but keeps "2.5"
+  return `₹${parseFloat(inLacs.toFixed(2))} Lac`;
+};

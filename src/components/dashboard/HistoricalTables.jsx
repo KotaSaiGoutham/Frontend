@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaGraduationCap, FaRupeeSign, FaCalendarAlt } from "react-icons/fa";
+import { FaGraduationCap, FaRupeeSign, FaCalendarAlt,FaInfoCircle } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import {
   fetchMonthlyPayments,
@@ -20,7 +20,7 @@ import {
   endOfMonth,
 } from "date-fns";
 import "./HistoricalTables.css";
-import { calculateQuartiles } from "../../mockdata/function";
+import { calculateQuartiles,formatToLacs } from "../../mockdata/function";
 import MonthlyPaymentDetailsDialog from "../customcomponents/MonthlyPaymentDetailsDialog"
 
 const HistoricalTables = ({ students }) => {
@@ -398,7 +398,7 @@ const HistoricalTables = ({ students }) => {
                           ) : isFuture ? (
                             "-"
                           ) : (
-                            `₹${amount.toLocaleString()}`
+                           formatToLacs(amount)
                           )}
                         </div>
                       </div>
@@ -437,88 +437,100 @@ const HistoricalTables = ({ students }) => {
       </div>
 
       {/* Third Row: Students per month */}
-      <div className="table-section">
-        <div className="row-container">
-          <div className="table-container">
-            <div className="table-card tertiary-card fixed-table-card">
-              <h3 className="table-heading">
-                <span className="heading-icon">
-                  <FaGraduationCap />
-                </span>
-                No of students per month
-              </h3>
-              {/* Scroll Wrapper */}
-              <div className="table-scroll-wrapper">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      {Object.keys(monthlyStudentData).map((month) => (
-                        <th
-                          key={month}
-                          className={
-                            month === currentMonth ? "highlight-cell pulse" : ""
-                          }
-                        >
-                          <span className="th-content">{month}</span>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      {Object.values(monthlyStudentData).map((count, index) => {
-                        const monthKey = Object.keys(monthlyStudentData)[index];
-                        return (
-                          <td
-                            key={index}
-                            className={
-                              monthKey === currentMonth ? "highlight-cell" : ""
-                            }
-                          >
-                            <span className="data-value">
-                              {isLoading ? (
-                                <SkeletonCount width="30px" height="20px" />
-                              ) : (
-                                count
-                              )}
-                            </span>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <div className="chart-container-history">
-            <Box className="chart-card">
-              {/* Bar Chart for Students per month */}
-              <BarChart
-                xAxis={[{ scaleType: "band", data: allMonths }]}
-                yAxis={[
-                  {
-                    min: 0,
-                    max: q3Students + q3Students * 0.1,
-                    tickNumber: 3,
-                    tickValues: [0, medianStudents, q3Students],
-                  },
-                ]}
-                series={[
-                  {
-                    data: Object.values(monthlyStudentData).map((val) =>
-                      val === "-" ? 0 : val
-                    ),
-                    color: "#292551",
-                  },
-                ]}
-                height={180}
-                margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
-              />
-            </Box>
-          </div>
+    <div className="table-section">
+  <div className="row-container">
+    <div className="table-container">
+      <div className="table-card-students tertiary-card fixed-table-card">
+        <h3 className="table-heading">
+          <span className="heading-icon">
+            <FaGraduationCap />
+          </span>
+          No of students per month
+        </h3>
+
+        {/* Scroll Wrapper */}
+        <div className="table-scroll-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                {Object.keys(monthlyStudentData).map((month) => (
+                  <th
+                    key={month}
+                    className={
+                      month === currentMonth ? "highlight-cell pulse" : ""
+                    }
+                  >
+                    <span className="th-content">{month}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {Object.values(monthlyStudentData).map((count, index) => {
+                  const monthKey = Object.keys(monthlyStudentData)[index];
+                  return (
+                    <td
+                      key={index}
+                      className={
+                        monthKey === currentMonth ? "highlight-cell" : ""
+                      }
+                    >
+                      <span className="data-value">
+                        {isLoading ? (
+                          <SkeletonCount width="30px" height="20px" />
+                        ) : (
+                          count
+                        )}
+                      </span>
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
         </div>
+
+        {/* --- ADDED NOTE SECTION HERE --- */}
+        <div className="data-note">
+          <FaInfoCircle className="note-icon" />
+          <span>
+            Real data is available from <strong>September 2025</strong> onwards.
+          </span>
+        </div>
+        {/* ------------------------------- */}
+        
       </div>
+    </div>
+
+    <div className="chart-container-history">
+      <Box className="chart-card">
+        {/* Bar Chart for Students per month */}
+        <BarChart
+          xAxis={[{ scaleType: "band", data: allMonths }]}
+          yAxis={[
+            {
+              min: 0,
+              max: q3Students + q3Students * 0.1,
+              tickNumber: 3,
+              tickValues: [0, medianStudents, q3Students],
+            },
+          ]}
+          series={[
+            {
+              data: Object.values(monthlyStudentData).map((val) =>
+                val === "-" ? 0 : val
+              ),
+              color: "#292551",
+            },
+          ]}
+          height={180}
+          margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
+        />
+      </Box>
+    </div>
+  </div>
+</div>
     </div>
   );
 };

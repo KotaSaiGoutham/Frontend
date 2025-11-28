@@ -1,5 +1,21 @@
 /* HistoricalTables.css */
+.data-note {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: #e3f2fd; /* Light Blue Background */
+  border-left: 4px solid #1976d2; /* Darker Blue Accent Border */
+  border-radius: 4px;
+  color: #0d47a1;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
+.note-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
 .historical-tables-container {
   padding: 25px;
   max-width: 1200px;
@@ -37,26 +53,36 @@
   padding-bottom: 5px; 
 }
 
-/* MODIFIED: The table-card must be a flex container */
-.table-card {
-  border-radius: 12px;
-  box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-  padding: 5px;
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
-  position: relative;
-  overflow: visible; 
-  height: 200px;
+/* 1. Shared Styles */
+.table-card,
+.table-card-students {
   display: flex;
   flex-direction: column;
+  height: 200px;
+  padding: 5px;
+  border-radius: 12px;
+  position: relative;
+  overflow: visible;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+}
+
+/* 2. Specific Differences (Min-Height) */
+.table-card {
   min-height: 210px;
 }
 
-.table-card:hover {
+.table-card-students {
+  min-height: 235px;
+}
+
+/* 3. Shared Hover Effect */
+.table-card:hover,
+.table-card-students:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
-
 .primary-card {
   background: #FCCD11;
 }
@@ -339,6 +365,12 @@
   }
   
   .table-card {
+    margin-bottom: 15px;
+    padding: 12px;
+    height: auto;
+    min-height: auto;
+  }
+  .table-card-students {
     margin-bottom: 15px;
     padding: 12px;
     height: auto;
