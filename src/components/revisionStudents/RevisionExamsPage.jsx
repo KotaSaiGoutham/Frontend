@@ -242,6 +242,26 @@ const PredictionRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
+// New styled components for fixed header and scrollable body
+const ScrollableTableContainer = styled(TableContainer)(({ theme }) => ({
+  border: "1px solid #e2e8f0",
+  borderRadius: "8px",
+  background: "white",
+  overflow: "auto",
+  height: "calc(100vh - 300px)", // Adjust height as needed
+  position: "relative",
+}));
+
+const StickyTableHead = styled(TableHead)(({ theme }) => ({
+  position: "sticky",
+  top: 0,
+  zIndex: 10,
+  "& th": {
+    position: "sticky",
+    top: 0,
+  },
+}));
+
 const RevisionExamsPage = () => {
   const [savingState, setSavingState] = useState({});
   const [saveMessage, setSaveMessage] = useState({
@@ -479,7 +499,7 @@ const handleMarkAbsent = async () => {
       };
     }, [exams]);
 
-// Calculate average marks for each student and exam type - FIXED VERSION
+// Calculate average marks for each student and exam type
 const calculateAverages = useMemo(() => {
   const averages = {
     weekend: {},
@@ -517,27 +537,34 @@ const calculateAverages = useMemo(() => {
   });
 
   // Calculate averages from exam data - ONLY COUNT VALID MARKS
-Object.keys(examData).forEach((examKey) => {
-  const [examId, studentName] = examKey.split("_");
-  const examRecord = examData[examKey];
-  const examItem = exams.find((e) => e.id === examId);
+  Object.keys(examData).forEach((examKey) => {
+    // --- FIX START: Handle names with spaces (which become underscores) correctly ---
+    const firstUnderscoreIndex = examKey.indexOf("_");
+    if (firstUnderscoreIndex === -1) return;
 
-  if (!examItem || !examRecord) return;
+    const examId = examKey.substring(0, firstUnderscoreIndex);
+    const studentNameFromKey = examKey.substring(firstUnderscoreIndex + 1);
+    // --- FIX END ---
 
-  const examType = getExamType(examItem.exam);
-     const student = revisionStudents.find((s) => 
-    s.studentName.replace(/\s+/g, '_') === studentName
-  );
+    const examRecord = examData[examKey];
+    const examItem = exams.find((e) => e.id === examId);
 
-  if (!student) return;
+    if (!examItem || !examRecord) return;
 
-  const studentId = student.id;
+    const examType = getExamType(examItem.exam);
+    
+    // Find student using the correctly extracted name string
+    const student = revisionStudents.find(
+      (s) => s.studentName.replace(/\s+/g, "_") === studentNameFromKey
+    );
 
     if (!student) return;
 
+    const studentId = student.id;
+
     // Check if student is absent for this exam
     const isAbsent = examRecord.status === "Absent" || examRecord.isAbsent;
-    
+
     // Only count marks that are actually entered (greater than 0) and student is not absent
     const hasValidPhysicsMarks = (examRecord.physics || 0) > 0 && !isAbsent;
     const hasValidChemistryMarks = (examRecord.chemistry || 0) > 0 && !isAbsent;
@@ -598,42 +625,69 @@ Object.keys(examData).forEach((examKey) => {
   Object.keys(averages).forEach((examType) => {
     Object.keys(averages[examType]).forEach((studentId) => {
       const studentAvg = averages[examType][studentId];
-      
+
       // Only calculate averages if we have valid data points
       if (studentAvg.count > 0) {
+        const targetStudent = revisionStudents.find((s) => s.id === studentId);
+        const targetNameKey = targetStudent
+          ? targetStudent.studentName.replace(/\s+/g, "_")
+          : "";
+
         // Calculate subject averages only if we have data for those subjects
         if (studentAvg.physics > 0) {
           const physicsCount = Math.max(
             studentAvg.count,
-            Object.keys(examData).filter(key => {
-              const [examId, studId] = key.split('_');
+            Object.keys(examData).filter((key) => {
+              // --- FIX START: Use indexOf logic here as well ---
+              const idx = key.indexOf("_");
+              if (idx === -1) return false;
+              const eId = key.substring(0, idx);
+              const sNameKey = key.substring(idx + 1);
+              // --- FIX END ---
+
               const record = examData[key];
-              const examItem = exams.find(e => e.id === examId);
-              return studId === studentId && 
-                     (record.physics || 0) > 0 && 
-                     !(record.status === "Absent" || record.isAbsent) &&
-                     getExamType(examItem?.exam) === (examType === "overall" ? getExamType(examItem?.exam) : examType);
+              const examItem = exams.find((e) => e.id === eId);
+              
+              return (
+                sNameKey === targetNameKey && // Match parsed name against target
+                (record.physics || 0) > 0 &&
+                !(record.status === "Absent" || record.isAbsent) &&
+                getExamType(examItem?.exam) ===
+                  (examType === "overall" ? getExamType(examItem?.exam) : examType)
+              );
             }).length
           );
           studentAvg.physics = Math.round(studentAvg.physics / physicsCount);
         }
-        
+
         if (studentAvg.chemistry > 0) {
           const chemistryCount = Math.max(
             studentAvg.count,
-            Object.keys(examData).filter(key => {
-              const [examId, studId] = key.split('_');
+            Object.keys(examData).filter((key) => {
+               // --- FIX START: Use indexOf logic here as well ---
+              const idx = key.indexOf("_");
+              if (idx === -1) return false;
+              const eId = key.substring(0, idx);
+              const sNameKey = key.substring(idx + 1);
+              // --- FIX END ---
+
               const record = examData[key];
-              const examItem = exams.find(e => e.id === examId);
-              return studId === studentId && 
-                     (record.chemistry || 0) > 0 && 
-                     !(record.status === "Absent" || record.isAbsent) &&
-                     getExamType(examItem?.exam) === (examType === "overall" ? getExamType(examItem?.exam) : examType);
+              const examItem = exams.find((e) => e.id === eId);
+              
+              return (
+                sNameKey === targetNameKey && // Match parsed name against target
+                (record.chemistry || 0) > 0 &&
+                !(record.status === "Absent" || record.isAbsent) &&
+                getExamType(examItem?.exam) ===
+                  (examType === "overall" ? getExamType(examItem?.exam) : examType)
+              );
             }).length
           );
-          studentAvg.chemistry = Math.round(studentAvg.chemistry / chemistryCount);
+          studentAvg.chemistry = Math.round(
+            studentAvg.chemistry / chemistryCount
+          );
         }
-        
+
         studentAvg.total = Math.round(studentAvg.total / studentAvg.count);
       }
     });
@@ -641,7 +695,6 @@ Object.keys(examData).forEach((examKey) => {
 
   return averages;
 }, [examData, exams, revisionStudents]);
- // Calculate expected marks for finals (200 target) - UPDATED
 const calculateExpectedMarks = useMemo(() => {
   const expected = {};
 
@@ -1216,164 +1269,6 @@ const renderTableFooter = (examsList, examType) => {
   );
 };
 
-  // const renderPredictionsRow = () => {
-  //   return (
-  //     <PredictionRow>
-  //       <TableCell
-  //         colSpan={3}
-  //         sx={{ textAlign: "left", fontWeight: 700, padding: "16px 8px" }}
-  //       >
-  //         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-  //           <EmojiEvents sx={{ fontSize: 20, color: "#f59e0b" }} />
-  //           Final JEE Predictions (Target:{" "}
-  //           {revisionStudents.some((s) => !s.isCommonStudent)
-  //             ? "100 (Single) / 200 (Common)"
-  //             : "200"}
-  //           )
-  //           <Typography variant="caption" sx={{ color: "#64748b", ml: 1 }}>
-  //             Based on current performance
-  //           </Typography>
-  //         </Box>
-  //       </TableCell>
-  //       {revisionStudents.map((student) => {
-  //         const prediction = calculateExpectedMarks[student.id];
-  //         return student.isCommonStudent ? (
-  //           <React.Fragment key={student.id}>
-  //             <TableCell
-  //               sx={{
-  //                 textAlign: "center",
-  //                 padding: "16px 8px",
-  //                 fontWeight: 600,
-  //               }}
-  //             >
-  //               <Box>
-  //                 <Typography
-  //                   variant="body2"
-  //                   sx={{ fontWeight: 700, color: "#dc2626" }}
-  //                 >
-  //                   {prediction?.predictedPhysics || 0}/100
-  //                 </Typography>
-  //                 <Typography variant="caption" sx={{ color: "#64748b" }}>
-  //                   {Math.round((prediction?.predictedPhysics / 100) * 100)}%
-  //                 </Typography>
-  //                 <LinearProgress
-  //                   variant="determinate"
-  //                   value={
-  //                     prediction
-  //                       ? Math.min(
-  //                           100,
-  //                           (prediction.predictedPhysics / 100) * 100
-  //                         )
-  //                       : 0
-  //                   }
-  //                   sx={{
-  //                     height: 6,
-  //                     borderRadius: 3,
-  //                     mt: 0.5,
-  //                     backgroundColor: "#fecaca",
-  //                     "& .MuiLinearProgress-bar": {
-  //                       backgroundColor:
-  //                         prediction?.predictedPhysics >= 90
-  //                           ? "#10b981"
-  //                           : prediction?.predictedPhysics >= 70
-  //                           ? "#3b82f6"
-  //                           : "#dc2626",
-  //                     },
-  //                   }}
-  //                 />
-  //               </Box>
-  //             </TableCell>
-  //             <TableCell
-  //               sx={{
-  //                 textAlign: "center",
-  //                 padding: "16px 8px",
-  //                 fontWeight: 600,
-  //               }}
-  //             >
-  //               <Box>
-  //                 <Typography
-  //                   variant="body2"
-  //                   sx={{ fontWeight: 700, color: "#dc2626" }}
-  //                 >
-  //                   {prediction?.predictedChemistry || 0}/100
-  //                 </Typography>
-  //                 <Typography variant="caption" sx={{ color: "#64748b" }}>
-  //                   {Math.round((prediction?.predictedChemistry / 100) * 100)}%
-  //                 </Typography>
-  //                 <LinearProgress
-  //                   variant="determinate"
-  //                   value={
-  //                     prediction
-  //                       ? Math.min(
-  //                           100,
-  //                           (prediction.predictedChemistry / 100) * 100
-  //                         )
-  //                       : 0
-  //                   }
-  //                   sx={{
-  //                     height: 6,
-  //                     borderRadius: 3,
-  //                     mt: 0.5,
-  //                     backgroundColor: "#fecaca",
-  //                     "& .MuiLinearProgress-bar": {
-  //                       backgroundColor:
-  //                         prediction?.predictedChemistry >= 90
-  //                           ? "#10b981"
-  //                           : prediction?.predictedChemistry >= 70
-  //                           ? "#3b82f6"
-  //                           : "#dc2626",
-  //                     },
-  //                   }}
-  //                 />
-  //               </Box>
-  //             </TableCell>
-  //           </React.Fragment>
-  //         ) : (
-  //           <TableCell
-  //             key={student.id}
-  //             sx={{ textAlign: "center", padding: "16px 8px", fontWeight: 600 }}
-  //           >
-  //             <Box>
-  //               <Typography
-  //                 variant="body2"
-  //                 sx={{ fontWeight: 700, color: "#dc2626" }}
-  //               >
-  //                 {prediction?.predictedTotal || 0}/100
-  //               </Typography>
-  //               <Typography variant="caption" sx={{ color: "#64748b" }}>
-  //                 {prediction?.currentPercentage || 0}% current
-  //               </Typography>
-  //               <LinearProgress
-  //                 variant="determinate"
-  //                 value={prediction?.progressPercentage || 0}
-  //                 sx={{
-  //                   height: 6,
-  //                   borderRadius: 3,
-  //                   mt: 0.5,
-  //                   backgroundColor: "#fecaca",
-  //                   "& .MuiLinearProgress-bar": {
-  //                     backgroundColor:
-  //                       prediction?.progressPercentage >= 85
-  //                         ? "#10b981"
-  //                         : prediction?.progressPercentage >= 70
-  //                         ? "#3b82f6"
-  //                         : "#dc2626",
-  //                   },
-  //                 }}
-  //               />
-  //               <Typography
-  //                 variant="caption"
-  //                 sx={{ color: "#64748b", mt: 0.5, display: "block" }}
-  //               >
-  //                 Need: +{prediction?.improvementNeeded || 100}
-  //               </Typography>
-  //             </Box>
-  //           </TableCell>
-  //         );
-  //       })}
-  //     </PredictionRow>
-  //   );
-  // };
   const renderExamTable = (examsList, title, examType = "overall") => {
     return (
       <Box sx={{ mb: 4 }}>
@@ -1383,16 +1278,9 @@ const renderTableFooter = (examsList, examType) => {
         >
           {title} ({examsList.length})
         </Typography>
-        <TableContainer
-          sx={{
-            border: "1px solid #e2e8f0",
-            borderRadius: "8px",
-            background: "white",
-            overflow: "auto",
-          }}
-        >
-          <Table size="small">
-            <TableHead>
+        <ScrollableTableContainer>
+          <Table size="small" stickyHeader>
+            <StickyTableHead>
               <StudentHeaderGroup>
                 <HeaderCell
                   rowSpan={2}
@@ -1474,7 +1362,7 @@ const renderTableFooter = (examsList, examType) => {
                   </React.Fragment>
                 ))}
               </TableRow>
-            </TableHead>
+            </StickyTableHead>
             <TableBody>
               {examsList.length > 0 ? (
                 examsList.map((examItem, index) => {
@@ -1633,11 +1521,8 @@ const renderTableFooter = (examsList, examType) => {
 
             {/* Averages Footer */}
             {renderTableFooter(examsList, examType)}
-            {/* {renderPredictionsRow()} */}
-
-            {/* Final Predictions Row */}
           </Table>
-        </TableContainer>
+        </ScrollableTableContainer>
       </Box>
     );
   };

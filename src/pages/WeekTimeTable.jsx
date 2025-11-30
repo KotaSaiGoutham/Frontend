@@ -474,27 +474,69 @@ const ClassSchedule = () => {
   );
   console.log("filteredScheduleData",filteredScheduleData)
 
- const sortedData = useMemo(() => {
+const sortedData = useMemo(() => {
   if (!filteredScheduleData.length) return [];
   
   return [...filteredScheduleData].sort((a, b) => {
-    // First, sort by earliest time across all days
-    const allATimes = days.map(day => a[day.toLowerCase()]).filter(Boolean);
-    const allBTimes = days.map(day => b[day.toLowerCase()]).filter(Boolean);
-    
-    if (allATimes.length === 0 && allBTimes.length === 0) return 0;
-    if (allATimes.length === 0) return 1; // a has no times, put at end
-    if (allBTimes.length === 0) return -1; // b has no times, put at end
-    
-    // Get the earliest time for each student across all days
-    const aEarliestTime = Math.min(...allATimes.map(time => getTimeValue(time)));
-    const bEarliestTime = Math.min(...allBTimes.map(time => getTimeValue(time)));
-    
+    // Find the earliest time across ALL days for each student
+    const findEarliestTime = (student) => {
+      let earliestTime = Infinity;
+      
+      days.forEach(day => {
+        const dayKey = day.toLowerCase();
+        const times = student[dayKey];
+        if (times) {
+          const timeArray = times.split(',').map(time => time.trim());
+          const minTimeForDay = Math.min(...timeArray.map(time => getTimeValue(time)));
+          earliestTime = Math.min(earliestTime, minTimeForDay);
+        }
+      });
+      
+      return earliestTime;
+    };
+
+    const aEarliestTime = findEarliestTime(a);
+    const bEarliestTime = findEarliestTime(b);
+
+    // If both have no classes
+    if (aEarliestTime === Infinity && bEarliestTime === Infinity) return 0;
+    if (aEarliestTime === Infinity) return 1; // a has no classes, put at end
+    if (bEarliestTime === Infinity) return -1; // b has no classes, put at end
+
+    // Compare by earliest time across the entire week
     if (aEarliestTime !== bEarliestTime) {
       return aEarliestTime - bEarliestTime;
     }
-    
-    // If same earliest time, sort by name
+
+    // If same earliest time, find the SECOND earliest time and compare
+    const findSecondEarliestTime = (student, firstEarliest) => {
+      let secondEarliest = Infinity;
+      
+      days.forEach(day => {
+        const dayKey = day.toLowerCase();
+        const times = student[dayKey];
+        if (times) {
+          const timeArray = times.split(',').map(time => time.trim());
+          timeArray.forEach(time => {
+            const timeValue = getTimeValue(time);
+            if (timeValue > firstEarliest && timeValue < secondEarliest) {
+              secondEarliest = timeValue;
+            }
+          });
+        }
+      });
+      
+      return secondEarliest;
+    };
+
+    const aSecondEarliest = findSecondEarliestTime(a, aEarliestTime);
+    const bSecondEarliest = findSecondEarliestTime(b, bEarliestTime);
+
+    if (aSecondEarliest !== bSecondEarliest) {
+      return aSecondEarliest - bSecondEarliest;
+    }
+
+    // If still same, sort by name
     return a.name.localeCompare(b.name);
   });
 }, [filteredScheduleData, days]);

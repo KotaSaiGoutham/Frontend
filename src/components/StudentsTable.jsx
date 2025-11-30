@@ -508,140 +508,132 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
     setNewStatus(!currentStatus); // If currently active, new status is inactive; if inactive, new status is active
     setConfirmDialogOpen(true);
   };
-  // ...
 const sortedFilteredStudents = useMemo(() => {
-  if (!sortEnabled) {
-    return displayedStudents;
-  }
-
-  // Filter students based on isRevisionProgramJEEMains2026Student prop
   let studentsToSort = [...filteredStudents].filter((student) => {
     if (isRevisionProgramJEEMains2026Student) {
       return student.isRevisionProgramJEEMains2026Student === true;
     } else {
-      return student
+      return student;
     }
   });
 
-  // If no specific column is selected for sorting, apply default sorting
-  if (!orderBy) {
+  // Apply sorting based on orderBy and order
+  if (orderBy && sortEnabled) {
+    studentsToSort.sort((a, b) => {
+      let aValue, bValue;
+
+      // Get the values to compare based on the column ID
+      switch (orderBy) {
+        case 'name': // Changed from 'Name' to match column ID
+          aValue = a.Name?.toLowerCase() || '';
+          bValue = b.Name?.toLowerCase() || '';
+          break;
+        case 'classesCompleted':
+          aValue = a.isRevisionProgramJEEMains2026Student 
+            ? a.revisionClassesCompleted || 0 
+            : a.classesCompleted || 0;
+          bValue = b.isRevisionProgramJEEMains2026Student 
+            ? b.revisionClassesCompleted || 0 
+            : b.classesCompleted || 0;
+          break;
+        case 'monthlyFee': // Changed from 'Monthly Fee' to match column ID
+          aValue = typeof a["Monthly Fee"] === "number"
+            ? a["Monthly Fee"]
+            : parseFloat(a["Monthly Fee"]) || 0;
+          bValue = typeof b["Monthly Fee"] === "number"
+            ? b["Monthly Fee"]
+            : parseFloat(b["Monthly Fee"]) || 0;
+          break;
+        case 'paymentStatus': // Changed from 'Payment Status' to match column ID
+          aValue = a["Payment Status"] || '';
+          bValue = b["Payment Status"] || '';
+          break;
+        case 'gender': // Changed from 'Gender' to match column ID
+          aValue = a.Gender || '';
+          bValue = b.Gender || '';
+          break;
+        case 'stream': // Changed from 'Stream' to match column ID
+          aValue = a.Stream || '';
+          bValue = b.Stream || '';
+          break;
+        case 'startDate':
+          aValue = a.startDate ? new Date(a.startDate._seconds * 1000) : new Date(0);
+          bValue = b.startDate ? new Date(b.startDate._seconds * 1000) : new Date(0);
+          break;
+        case 'endDate':
+          aValue = a.endDate ? new Date(a.endDate._seconds * 1000) : new Date(0);
+          bValue = b.endDate ? new Date(b.endDate._seconds * 1000) : new Date(0);
+          break;
+        default:
+          return 0;
+      }
+
+      // Handle different value types for comparison
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        if (order === 'asc') {
+          return aValue.localeCompare(bValue);
+        } else {
+          return bValue.localeCompare(aValue);
+        }
+      } else {
+        // For numbers and dates
+        if (order === 'asc') {
+          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        } else {
+          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+        }
+      }
+    });
+  } else {
+    // Default sorting when no specific column is selected
     return studentsToSort.sort((a, b) => {
-      // 1. Primary: Active students first
-      if (a.isActive !== b.isActive) {
-        return a.isActive ? -1 : 1;
+      // 1. Primary: Sort by payment status AND paid date
+      const aIsPaid = a["Payment Status"] === "Paid" && a.paidDate;
+      const bIsPaid = b["Payment Status"] === "Paid" && b.paidDate;
+      
+      // If both are properly paid (status = Paid AND have paidDate), sort by most recent payment date first
+      if (aIsPaid && bIsPaid) {
+        const aPaidDate = new Date(a.paidDate._seconds * 1000);
+        const bPaidDate = new Date(b.paidDate._seconds * 1000);
+        
+        if (aPaidDate.getTime() !== bPaidDate.getTime()) {
+          return bPaidDate.getTime() - aPaidDate.getTime(); // Most recent first
+        }
       }
       
-      // 2. Secondary: Recently paid students first (within last 24 hours)
-      const aRecent = isRecentPayment(a);
-      const bRecent = isRecentPayment(b);
-      if (aRecent !== bRecent) {
-        return aRecent ? -1 : 1;
+      // If one is properly paid and other is not, paid comes first
+      if (aIsPaid && !bIsPaid) return -1;
+      if (!aIsPaid && bIsPaid) return 1;
+      
+      // Handle edge cases:
+      const aHasPaymentRecord = a.paidDate;
+      const bHasPaymentRecord = b.paidDate;
+      
+      // If both have payment records but are currently unpaid, sort by payment date
+      if (aHasPaymentRecord && bHasPaymentRecord && !aIsPaid && !bIsPaid) {
+        const aPaidDate = new Date(a.paidDate._seconds * 1000);
+        const bPaidDate = new Date(b.paidDate._seconds * 1000);
+        return bPaidDate.getTime() - aPaidDate.getTime();
       }
       
-      // 3. Tertiary: Most classes completed (handle both regular and revision students)
+      // If one has payment record and other doesn't, the one with record comes first
+      if (aHasPaymentRecord && !bHasPaymentRecord) return -1;
+      if (!aHasPaymentRecord && bHasPaymentRecord) return 1;
+      
+      // 2. Secondary: For students with same payment status, sort by classes completed
       const aClasses = a.isRevisionProgramJEEMains2026Student 
         ? a.revisionClassesCompleted || 0 
         : a.classesCompleted || 0;
       const bClasses = b.isRevisionProgramJEEMains2026Student 
         ? b.revisionClassesCompleted || 0 
         : b.classesCompleted || 0;
+      
       return bClasses - aClasses;
     });
   }
 
-  // Custom column sorting when orderBy is specified
-  return studentsToSort.sort((a, b) => {
-    let aValue, bValue;
-
-    switch (orderBy) {
-      case "name":
-        aValue = a.Name?.toLowerCase() || "";
-        bValue = b.Name?.toLowerCase() || "";
-        return order === "asc" 
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-
-      case "classesCompleted":
-        // Handle both regular and revision students
-        aValue = a.isRevisionProgramJEEMains2026Student 
-          ? a.revisionClassesCompleted || 0 
-          : a.classesCompleted || 0;
-        bValue = b.isRevisionProgramJEEMains2026Student 
-          ? b.revisionClassesCompleted || 0 
-          : b.classesCompleted || 0;
-        return order === "asc" ? aValue - bValue : bValue - aValue;
-
-      case "paymentStatus":
-        aValue = a["Payment Status"] || "";
-        bValue = b["Payment Status"] || "";
-        return order === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-
-      case "monthlyFee":
-        aValue = typeof a["Monthly Fee"] === "number" 
-          ? a["Monthly Fee"] 
-          : parseFloat(a["Monthly Fee"]) || 0;
-        bValue = typeof b["Monthly Fee"] === "number" 
-          ? b["Monthly Fee"] 
-          : parseFloat(b["Monthly Fee"]) || 0;
-        return order === "asc" ? aValue - bValue : bValue - aValue;
-
-      case "isRevisionProgramJEEMains2026Student":
-        aValue = a.isRevisionProgramJEEMains2026Student === true;
-        bValue = b.isRevisionProgramJEEMains2026Student === true;
-        return order === "asc"
-          ? (aValue === bValue ? 0 : aValue ? -1 : 1)
-          : (aValue === bValue ? 0 : aValue ? 1 : -1);
-
-      // Handle other string-based columns
-      case "gender":
-      case "subject":
-      case "year":
-      case "stream":
-      case "college":
-      case "group":
-      case "source":
-      case "contactNumber":
-      case "motherContact":
-      case "fatherContact":
-      case "startDate":
-      case "endDate":
-      case "nextClass":
-      case "status":
-        // For string-based columns
-        aValue = a[orderBy] || "";
-        bValue = b[orderBy] || "";
-        return order === "asc"
-          ? aValue.toString().localeCompare(bValue.toString())
-          : bValue.toString().localeCompare(aValue.toString());
-
-      default:
-        // Generic fallback
-        aValue = a[orderBy];
-        bValue = b[orderBy];
-        
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return order === "asc"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
-        
-        if (typeof aValue === "number" && typeof bValue === "number") {
-          return order === "asc" ? aValue - bValue : bValue - aValue;
-        }
-        
-        return 0;
-    }
-  });
-}, [
-  filteredStudents,
-  orderBy,
-  order,
-  sortEnabled,
-  displayedStudents,
-  isRevisionProgramJEEMains2026Student,
-]);
+  return studentsToSort;
+}, [filteredStudents, isRevisionProgramJEEMains2026Student, orderBy, order, sortEnabled]);
 
   // Handles changes in filter input fields
   const handleFilterChange = (e) => {
@@ -693,51 +685,119 @@ const sortedFilteredStudents = useMemo(() => {
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
-  const handleClassChange = async (studentId, increment) => {
-    if (updatingClasses) return;
+const handleClassChange = async (studentId, increment) => {
+  if (updatingClasses) return;
 
-    const student = students.find((s) => s.id === studentId);
-    if (!student) return;
+  const student = students.find((s) => s.id === studentId);
+  if (!student) return;
 
-    const currentClasses = student.classesCompleted || 0;
-    const delta = increment ? 1 : -1;
+  const currentClasses = student.classesCompleted || 0;
+  const delta = increment ? 1 : -1;
 
-    if (!increment && currentClasses === 0) {
-      console.log("Cannot decrease classes below zero.");
-      setSnackbarMessage("Cannot decrease classes below zero.");
-      setSnackbarSeverity("warning");
-      setSnackbarOpen(true);
-      return;
-    }
+  if (!increment && currentClasses === 0) {
+    console.log("Cannot decrease classes below zero.");
+    setSnackbarMessage("Cannot decrease classes below zero.");
+    setSnackbarSeverity("warning");
+    setSnackbarOpen(true);
+    return;
+  }
 
-    setUpdatingClasses(studentId);
+  setUpdatingClasses(studentId);
 
-    // ✅ Temporarily disable sorting so row doesn't jump
-    setSortEnabled(false);
+  try {
+    const updatedStudent = await dispatch(
+      updateClassesCompleted(studentId, delta, user.name)
+    );
 
-    try {
-      const updatedStudent = await dispatch(
-        updateClassesCompleted(studentId, delta, user.name)
-      );
+    // Force refresh of students data
+    dispatch(fetchStudentsIfNeeded());
 
-      // ✅ Update displayedStudents manually so UI reflects the change
-      setDisplayedStudents((prev) =>
-        prev.map((s) => (s.id === studentId ? { ...s, ...updatedStudent } : s))
-      );
-
+    // Check if the classes actually changed
+    if (updatedStudent.classesCompleted !== currentClasses) {
       setSnackbarMessage(
         `Classes completed updated to ${updatedStudent.classesCompleted} for ${updatedStudent.Name}!`
       );
       setSnackbarSeverity("success");
-      setSnackbarOpen(true);
-    } catch (err) {
-      setSnackbarMessage(`Failed to update classes: ${err.message}`);
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-    } finally {
-      setUpdatingClasses(null);
+    } else {
+      // Classes didn't change - this happens when automatic calculation prevents decrease
+      const automaticClasses = calculateAutomaticClasses(student);
+      setSnackbarMessage(
+        `Classes remain at ${currentClasses}. Automatic schedule shows ${automaticClasses} classes should be completed.`
+      );
+      setSnackbarSeverity("info");
     }
+    setSnackbarOpen(true);
+    
+  } catch (err) {
+    setSnackbarMessage(`Failed to update classes: ${err.message}`);
+    setSnackbarSeverity("error");
+    setSnackbarOpen(true);
+  } finally {
+    setUpdatingClasses(null);
+  }
+};
+
+// Add this helper function to calculate automatic classes on frontend
+const calculateAutomaticClasses = (student) => {
+  if (!student.paidDate || !student.classDateandTime || student.classDateandTime.length === 0) {
+    return student.classesCompleted || 0;
+  }
+
+  const paidDate = student.paidDate._seconds ? 
+    new Date(student.paidDate._seconds * 1000) : 
+    new Date(student.paidDate);
+  
+  const currentDate = new Date();
+  
+  // Parse class schedule
+  const dayMap = {
+    'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 
+    'Thursday': 4, 'Friday': 5, 'Saturday': 6
   };
+
+  const classSchedule = student.classDateandTime.map(dayTime => {
+    const [day, time] = dayTime.split('-');
+    const isPM = time.includes('pm');
+    let [hours, minutes] = time.replace('pm', '').replace('am', '').split(':').map(Number);
+    
+    // Convert to 24-hour format
+    if (isPM && hours !== 12) hours += 12;
+    if (!isPM && hours === 12) hours = 0;
+    
+    return {
+      day: dayMap[day],
+      hours: hours,
+      minutes: minutes
+    };
+  });
+
+  let classCount = 0;
+  let tempDate = new Date(paidDate);
+
+  // Count classes from paid date to current date
+  while (tempDate <= currentDate) {
+    const dayOfWeek = tempDate.getDay();
+    
+    // Check if this day has a class that has already occurred
+    classSchedule.forEach(schedule => {
+      if (schedule.day === dayOfWeek) {
+        // Create class datetime for comparison
+        const classDateTime = new Date(tempDate);
+        classDateTime.setHours(schedule.hours, schedule.minutes, 0, 0);
+        
+        // If class time has passed by current time, count it
+        if (classDateTime <= currentDate) {
+          classCount++;
+        }
+      }
+    });
+
+    // Move to next day
+    tempDate.setDate(tempDate.getDate() + 1);
+  }
+
+  return classCount;
+};
 
   const getPdfTitle = () => {
     if (sortedFilteredStudents.length === 0) {
