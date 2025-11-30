@@ -12,7 +12,7 @@ import {
   ADD_STUDENT_REQUEST,
   ADD_STUDENT_SUCCESS,
   ADD_STUDENT_FAILURE,
-  ADD_STUDENT_CLEAR_STATUS, // <--- ADD THIS IMPORT
+  ADD_STUDENT_CLEAR_STATUS,
   ADD_WEEKLY_MARKS_REQUEST,
   ADD_WEEKLY_MARKS_SUCCESS,
   ADD_WEEKLY_MARKS_FAILURE,
@@ -23,26 +23,31 @@ import {
   FETCH_WEEKLY_MARKS_SUCCESS,
   FETCH_WEEKLY_MARKS_FAILURE,
   UPDATE_STUDENT_CLASSES_SUCCESS,
-    FETCH_PAYMENTS_REQUEST,
+  FETCH_PAYMENTS_REQUEST,
   FETCH_PAYMENTS_SUCCESS,
   FETCH_PAYMENTS_FAILURE,
-   FETCH_DEMO_CLASSES_REQUEST,
+  FETCH_DEMO_CLASSES_REQUEST,
   FETCH_DEMO_CLASSES_SUCCESS,
   FETCH_DEMO_CLASSES_FAILURE,
   ADD_DEMO_CLASS_REQUEST,
   ADD_DEMO_CLASS_SUCCESS,
   ADD_DEMO_CLASS_FAILURE,
-    FETCH_CLASS_SCHEDULE_REQUEST,
+  FETCH_CLASS_SCHEDULE_REQUEST,
   FETCH_CLASS_SCHEDULE_SUCCESS,
   FETCH_CLASS_SCHEDULE_FAILURE,
   UPDATE_CLASS_SCHEDULE_REQUEST,
   UPDATE_CLASS_SCHEDULE_SUCCESS,
   UPDATE_CLASS_SCHEDULE_FAILURE,
+  // ADD THESE NEW TYPES
+  FETCH_MONTHLY_STUDENT_DETAILS_REQUEST,
+  FETCH_MONTHLY_STUDENT_DETAILS_SUCCESS,
+  FETCH_MONTHLY_STUDENT_DETAILS_FAILURE,
+  CLEAR_MONTHLY_STUDENT_DETAILS,
 } from "../types";
 
 const initialState = {
   students: [], // For the list of all students
-    needsRefresh: false, // Add this flag
+  needsRefresh: false, // Add this flag
 
   loading: false, // For the list of all students
   error: null, // For errors related to fetching all students
@@ -66,23 +71,30 @@ const initialState = {
   updatingStudent: null,
   updateError: null,
   updateSuccess: false,
-  payments:[],
-   demoClasses: [], // Array to hold the fetched demo class objects
+  payments: [],
+  demoClasses: [], // Array to hold the fetched demo class objects
   loading: false,  // Boolean to indicate if data is being fetched
   error: null,     // Null or a string to hold any error messages
-    classSchedule: {
+  classSchedule: {
     data: [], // Optimized schedule data
     loading: false,
     error: null, // Now stores string directly
     updating: false,
     updateError: null
   },
+  
+  // ADD THESE NEW STATES FOR MONTHLY STUDENT DETAILS
+  monthlyStudentDetails: null, // Array of students for selected month
+  selectedStudentMonth: null, // Currently selected month (e.g., "2025-11")
+  studentDetailsLoading: false, // Loading state for student details
+  studentDetailsError: null, // Error state for student details
+  studentDetailsOpen: false, // Whether the dialog is open
 };
 
 const studentReducer = (state = initialState, action) => {
   switch (action.type) {
     // --- Cases for fetching ALL students ---
-     case FETCH_CLASS_SCHEDULE_REQUEST:
+    case FETCH_CLASS_SCHEDULE_REQUEST:
       return {
         ...state,
         classSchedule: {
@@ -99,15 +111,14 @@ const studentReducer = (state = initialState, action) => {
           loading: false,
           data: action.payload,
           error: null,
-              needsRefresh: false, // Reset flag after successful fetch
-
+          needsRefresh: false, // Reset flag after successful fetch
         }
       };
-      case SET_STUDENTS_NEED_REFRESH:
-  return {
-    ...state,
-    needsRefresh: true
-  };
+    case SET_STUDENTS_NEED_REFRESH:
+      return {
+        ...state,
+        needsRefresh: true
+      };
     case FETCH_CLASS_SCHEDULE_FAILURE:
       return {
         ...state,
@@ -118,7 +129,7 @@ const studentReducer = (state = initialState, action) => {
           error: action.payload, // This is now a string
         }
       };
-      case UPDATE_CLASS_SCHEDULE_REQUEST:
+    case UPDATE_CLASS_SCHEDULE_REQUEST:
       return {
         ...state,
         classSchedule: {
@@ -164,8 +175,7 @@ const studentReducer = (state = initialState, action) => {
         loading: false,
         students: action.payload,
         error: null,
-                needsRefresh: false, // Reset after successful fetch
-
+        needsRefresh: false, // Reset after successful fetch
       };
     case FETCH_STUDENTS_FAILURE:
       return {
@@ -173,8 +183,7 @@ const studentReducer = (state = initialState, action) => {
         loading: false,
         students: [],
         error: action.payload, // Assuming payload is the error message directly here
-                needsRefresh: false,
-
+        needsRefresh: false,
       };
 
     // --- Cases for fetching a SINGLE student ---
@@ -225,7 +234,7 @@ const studentReducer = (state = initialState, action) => {
         addStudentSuccess: null,
         addStudentError: action.payload, // Assuming payload is the error message directly here
       };
-    case ADD_STUDENT_CLEAR_STATUS: // <--- ADD THIS NEW CASE
+    case ADD_STUDENT_CLEAR_STATUS:
       return {
         ...state,
         addStudentSuccess: null,
@@ -272,6 +281,7 @@ const studentReducer = (state = initialState, action) => {
         updateSuccess: false,
         updateError: action.payload, // Store the specific error message for the update
       };
+    
     // --- NEW: Cases for fetching weekly marks ---
     case FETCH_WEEKLY_MARKS_REQUEST:
       return {
@@ -294,6 +304,7 @@ const studentReducer = (state = initialState, action) => {
         weeklyMarks: [],
         weeklyMarksError: action.payload, // Assuming payload is the error message directly here
       };
+    
     case UPDATE_STUDENT_CLASSES_SUCCESS: {
       const updated = action.payload; // { id, classesCompleted, … }
       if (!updated || !updated.id) return state;
@@ -305,24 +316,8 @@ const studentReducer = (state = initialState, action) => {
         ),
       };
     }
-//  case FETCH_PAYMENTS_REQUEST:
-//       return {
-//         ...state,
-//                 payments: action.payload,  // already formatted by the action creator
-//       };
 
-    // case FETCH_PAYMENTS_SUCCESS:
-    //   return {
-    //     ...state,
-    //     payments: action.payload,  // already formatted by the action creator
-    //   };
-
-    // case FETCH_PAYMENTS_FAILURE:
-    //   return {
-    //     ...state,
-    //     payments: [],              // clear data so UI shows “no history”
-    //   };
-       case FETCH_DEMO_CLASSES_REQUEST:
+    case FETCH_DEMO_CLASSES_REQUEST:
     case ADD_DEMO_CLASS_REQUEST: // Assuming you want loading state for adding too
       return {
         ...state,
@@ -339,12 +334,12 @@ const studentReducer = (state = initialState, action) => {
       };
 
     case ADD_DEMO_CLASS_SUCCESS:
-         return {
-           ...state,
-           loading: false,
-           error: null,
-           demoClasses: [...state.demoClasses, action.payload],
-         };
+      return {
+        ...state,
+        loading: false,
+        error: null,
+        demoClasses: [...state.demoClasses, action.payload],
+      };
 
     case FETCH_DEMO_CLASSES_FAILURE:
     case ADD_DEMO_CLASS_FAILURE:
@@ -353,7 +348,8 @@ const studentReducer = (state = initialState, action) => {
         loading: false,
         error: action.payload.error, // Set the error message
       };
-      case UPDATE_STUDENT_FIELD_SUCCESS: {
+    
+    case UPDATE_STUDENT_FIELD_SUCCESS: {
       const { studentId, fieldName, newValue } = action.payload;
       
       return {
@@ -418,6 +414,44 @@ const studentReducer = (state = initialState, action) => {
           : state.selectedStudentData
       };
     }
+
+    // --- NEW: Cases for monthly student details ---
+    case FETCH_MONTHLY_STUDENT_DETAILS_REQUEST:
+      return {
+        ...state,
+        studentDetailsLoading: true,
+        studentDetailsError: null,
+        studentDetailsOpen: true, // Open the dialog when request starts
+      };
+    
+    case FETCH_MONTHLY_STUDENT_DETAILS_SUCCESS:
+      return {
+        ...state,
+        studentDetailsLoading: false,
+        monthlyStudentDetails: action.payload.students, // Store the student details array
+        selectedStudentMonth: action.payload.month, // Store the selected month
+        studentDetailsError: null,
+        studentDetailsOpen: true, // Keep dialog open
+      };
+    
+    case FETCH_MONTHLY_STUDENT_DETAILS_FAILURE:
+      return {
+        ...state,
+        studentDetailsLoading: false,
+        monthlyStudentDetails: null,
+        selectedStudentMonth: null,
+        studentDetailsError: action.payload,
+        studentDetailsOpen: false, // Close dialog on error
+      };
+    
+    case CLEAR_MONTHLY_STUDENT_DETAILS:
+      return {
+        ...state,
+        monthlyStudentDetails: null,
+        selectedStudentMonth: null,
+        studentDetailsOpen: false, // Close the dialog
+      };
+
     default:
       return state;
   }

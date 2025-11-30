@@ -1,15 +1,15 @@
 /* HistoricalTables.css */
 .data-note {
-  margin-top: 5px;
-  padding: 5px;
+  margin-top: 4px;
+  padding: 4px;
   background-color: #e3f2fd; /* Light Blue Background */
   border-left: 4px solid #1976d2; /* Darker Blue Accent Border */
   border-radius: 4px;
   color: #0d47a1;
-  font-size: 0.9rem;
+  font-size: 0.7rem;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
 }
 
 .note-icon {
@@ -17,7 +17,7 @@
   flex-shrink: 0;
 }
 .historical-tables-container {
-  padding: 25px;
+  padding: 15px 25px;
   max-width: 1200px;
 }
 
@@ -58,7 +58,7 @@
 .table-card-students {
   display: flex;
   flex-direction: column;
-  height: 200px;
+  height: 210px;
   padding: 5px;
   border-radius: 12px;
   position: relative;
@@ -68,13 +68,9 @@
   box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
 
-/* 2. Specific Differences (Min-Height) */
-.table-card {
-  min-height: 210px;
-}
 
 .table-card-students {
-  min-height: 235px;
+  min-height: 223px;
 }
 
 /* 3. Shared Hover Effect */
@@ -518,4 +514,36 @@
   .month-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+/* Table heading with toggle */
+.table-heading-with-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.table-heading-with-toggle .table-heading {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Hidden amount styling */
+.hidden-amount {
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+/* Clickable month styling */
+.clickable-month:hover {
+  background-color: rgba(178, 31, 98, 0.1) !important;
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+/* Month grid item adjustments */
+.month-grid-item {
+  transition: all 0.2s ease;
 }

@@ -1,4 +1,8 @@
 import {
+  FETCH_MONTHLY_STUDENT_DETAILS_FAILURE,
+  FETCH_MONTHLY_STUDENT_DETAILS_SUCCESS,
+  FETCH_MONTHLY_STUDENT_DETAILS_REQUEST,
+  CLEAR_MONTHLY_STUDENT_DETAILS,
   UPDATE_ACADEMY_EARNING_REQUEST,
   UPDATE_ACADEMY_EARNING_SUCCESS,
   UPDATE_ACADEMY_EARNING_FAILURE,
@@ -2535,6 +2539,31 @@ export const fetchMonthlyPaymentDetails = (monthYear) =>
     },
     authRequired: true,
   });
+  export const fetchMonthlyStudentDetails = (monthYear) =>
+  apiRequest({
+    url: `/api/data/students/monthly/${monthYear}`,
+    method: "GET",
+    onStart: FETCH_MONTHLY_STUDENT_DETAILS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_MONTHLY_STUDENT_DETAILS_SUCCESS,
+        payload: data,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_MONTHLY_STUDENT_DETAILS_FAILURE,
+        payload: error,
+      });
+      console.error("Error fetching monthly student details:", error);
+    },
+    authRequired: true,
+  });
+
+  
+export const clearMonthlyStudentDetails = () => ({
+  type: CLEAR_MONTHLY_STUDENT_DETAILS
+});
 export const fetchTutorIdeas = () => {
   return apiRequest({
     url: `/api/ideas`,

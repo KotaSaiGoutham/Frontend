@@ -1,14 +1,15 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaGraduationCap, FaRupeeSign, FaCalendarAlt,FaInfoCircle } from "react-icons/fa";
+import { FaGraduationCap, FaRupeeSign, FaCalendarAlt, FaInfoCircle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import {
   fetchMonthlyPayments,
   fetchAutoTimetablesForToday,
   fetchUpcomingClasses,
-  fetchMonthlyPaymentDetails
+  fetchMonthlyPaymentDetails,
+  fetchMonthlyStudentDetails
 } from "../../redux/actions";
-import { Box, Tooltip } from "@mui/material";
+import { Box, Tooltip, IconButton } from "@mui/material";
 import { BarChart } from "@mui/x-charts";
 import {
   format,
@@ -22,11 +23,12 @@ import {
 import "./HistoricalTables.css";
 import { calculateQuartiles,formatToLacs } from "../../mockdata/function";
 import MonthlyPaymentDetailsDialog from "../customcomponents/MonthlyPaymentDetailsDialog"
-
+import StudentDetailsDialog from "../customcomponents/StudentDetailsDialog";
 const HistoricalTables = ({ students }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const [showFeeAmounts, setShowFeeAmounts] = useState(false); // State to toggle fee visibility
 
   const today = new Date();
   const currentDayAbbr = today.toLocaleDateString("en-US", {
@@ -229,6 +231,9 @@ const HistoricalTables = ({ students }) => {
   }, [monthlyStudentData]);
   
   const handleMonthClick = async (monthKey) => {
+    // Only handle click if fee amounts are visible
+    if (!showFeeAmounts) return;
+    
     try {
       const currentYear = new Date().getFullYear();
       const monthMap = {
@@ -246,6 +251,27 @@ const HistoricalTables = ({ students }) => {
       console.error('Error fetching payment details:', error);
     }
   };
+const handleStudentMonthClick = async (monthKey) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const monthMap = {
+      'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+      'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+      'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+    };
+    
+    const monthNumber = monthMap[monthKey];
+    const yearMonth = `${currentYear}-${monthNumber}`;
+    
+    // Fetch student details for selected month
+    dispatch(fetchMonthlyStudentDetails(yearMonth));
+  } catch (error) {
+    console.error('Error fetching student details:', error);
+  }
+};
+  const toggleFeeVisibility = () => {
+    setShowFeeAmounts(!showFeeAmounts);
+  };
 
   const SkeletonCount = ({ width = "40px", height = "24px" }) => (
     <div 
@@ -260,6 +286,8 @@ const HistoricalTables = ({ students }) => {
     <div className="historical-tables-container">
       {/* Render the dialog component */}
       <MonthlyPaymentDetailsDialog />
+          <StudentDetailsDialog />
+
       
       {/* First Row: Classes per day */}
       <div className="table-section">
@@ -363,30 +391,151 @@ const HistoricalTables = ({ students }) => {
         </div>
       </div>
 
-      {/* Second Row: Fee payment per month */}
+      <div className="table-section">
+        <div className="row-container">
+          <div className="table-container">
+            <div className="table-card-students tertiary-card fixed-table-card">
+              <h3 className="table-heading">
+                <span className="heading-icon">
+                  <FaGraduationCap />
+                </span>
+                No of students per month
+              </h3>
+
+              {/* Scroll Wrapper */}
+              <div className="table-scroll-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      {Object.keys(monthlyStudentData).map((month) => (
+                        <th
+                          key={month}
+                          className={
+                            month === currentMonth ? "highlight-cell pulse" : ""
+                          }
+                        >
+                          <span className="th-content">{month}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      {Object.values(monthlyStudentData).map((count, index) => {
+                        const monthKey = Object.keys(monthlyStudentData)[index];
+                        return (
+                          <td
+                        key={index}
+  className={`clickable ${monthKey === currentMonth ? "highlight-cell" : ""}`}
+  onClick={() => handleStudentMonthClick(monthKey)}
+  style={{ cursor: 'pointer' }}
+                          >
+                            <span className="data-value">
+                              {isLoading ? (
+                                <SkeletonCount width="30px" height="20px" />
+                              ) : (
+                                count
+                              )}
+                            </span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Note Section */}
+              <div className="data-note">
+                <FaInfoCircle className="note-icon" />
+                <span>
+                  Real data is available from <strong>September 2025</strong> onwards.
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="chart-container-history">
+            <Box className="chart-card">
+              {/* Bar Chart for Students per month */}
+              <BarChart
+                xAxis={[{ scaleType: "band", data: allMonths }]}
+                yAxis={[
+                  {
+                    min: 0,
+                    max: q3Students + q3Students * 0.1,
+                    tickNumber: 3,
+                    tickValues: [0, medianStudents, q3Students],
+                  },
+                ]}
+                series={[
+                  {
+                    data: Object.values(monthlyStudentData).map((val) =>
+                      val === "-" ? 0 : val
+                    ),
+                    color: "#292551",
+                  },
+                ]}
+                height={180}
+                margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
+              />
+            </Box>
+          </div>
+        </div>
+      </div>
+
+      {/* Fee payment per month section with eye icon */}
       <div className="table-section">
         <div className="row-container">
           <div className="table-container">
             <div className="table-card secondary-card fixed-table-card">
-              <h3 className="table-heading">
-                <span className="heading-icon">
-                  <FaRupeeSign />
-                </span>
-                Fee payment per month
-              </h3>
+              <div className="table-heading-with-toggle">
+                <h3 className="table-heading">
+                  <span className="heading-icon">
+                    <FaRupeeSign />
+                  </span>
+                  Fee payment per month
+                </h3>
+                <Tooltip 
+                  title={showFeeAmounts ? "Hide amounts" : "Show amounts"} 
+                  placement="top"
+                >
+                  <IconButton
+                    onClick={toggleFeeVisibility}
+                    size="small"
+                sx={{
+  color: 'white',
+  backgroundColor:  'rgba(255, 255, 255, 0.2)',
+  '&:hover': {
+    backgroundColor: showFeeAmounts ? 'rgba(25, 118, 210, 0.9)' : 'rgba(255, 255, 255, 0.3)',
+  },
+  marginLeft: 'auto',
+  border: '1px solid rgba(255, 255, 255, 0.3)',
+  '&:hover': {
+    border: '1px solid rgba(255, 255, 255, 0.5)',
+  },
+}}
+                  >
+                    {showFeeAmounts ? <FaEyeSlash /> : <FaEye />}
+                  </IconButton>
+                </Tooltip>
+              </div>
               <div className="grid-table-wrapper">
                 <div className="month-grid">
                   {Object.keys(monthlyFeeData).map((monthKey, index) => {
                     const amount = monthlyFeeData[monthKey];
                     const isCurrentMonth = monthKey === currentMonth;
                     const isFuture = amount === "-";
+                    const isClickable = showFeeAmounts && !isFuture;
                     
                     return (
                       <div
                         key={monthKey}
-                        className={`month-grid-item ${isCurrentMonth ? 'highlight-cell' : ''}`}
-                        onClick={() => !isFuture && handleMonthClick(monthKey)}
-                        style={{ cursor: isFuture ? 'default' : 'pointer' }}
+                        className={`month-grid-item ${isCurrentMonth ? 'highlight-cell' : ''} ${isClickable ? 'clickable-month' : ''}`}
+                        onClick={() => isClickable && handleMonthClick(monthKey)}
+                        style={{ 
+                          cursor: isClickable ? 'pointer' : 'default',
+                          opacity: showFeeAmounts ? 1 : 0.8
+                        }}
                       >
                         <div className="month-header">{monthKey}</div>
                         <div 
@@ -397,8 +546,12 @@ const HistoricalTables = ({ students }) => {
                             <SkeletonCount width="60px" height="20px" />
                           ) : isFuture ? (
                             "-"
+                          ) : showFeeAmounts ? (
+                            formatToLacs(amount)
                           ) : (
-                           formatToLacs(amount)
+                            <Tooltip title="Click eye icon to view amount" placement="top">
+                              <span className="hidden-amount">••••</span>
+                            </Tooltip>
                           )}
                         </div>
                       </div>
@@ -435,102 +588,6 @@ const HistoricalTables = ({ students }) => {
           </div>
         </div>
       </div>
-
-      {/* Third Row: Students per month */}
-    <div className="table-section">
-  <div className="row-container">
-    <div className="table-container">
-      <div className="table-card-students tertiary-card fixed-table-card">
-        <h3 className="table-heading">
-          <span className="heading-icon">
-            <FaGraduationCap />
-          </span>
-          No of students per month
-        </h3>
-
-        {/* Scroll Wrapper */}
-        <div className="table-scroll-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr>
-                {Object.keys(monthlyStudentData).map((month) => (
-                  <th
-                    key={month}
-                    className={
-                      month === currentMonth ? "highlight-cell pulse" : ""
-                    }
-                  >
-                    <span className="th-content">{month}</span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                {Object.values(monthlyStudentData).map((count, index) => {
-                  const monthKey = Object.keys(monthlyStudentData)[index];
-                  return (
-                    <td
-                      key={index}
-                      className={
-                        monthKey === currentMonth ? "highlight-cell" : ""
-                      }
-                    >
-                      <span className="data-value">
-                        {isLoading ? (
-                          <SkeletonCount width="30px" height="20px" />
-                        ) : (
-                          count
-                        )}
-                      </span>
-                    </td>
-                  );
-                })}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* --- ADDED NOTE SECTION HERE --- */}
-        <div className="data-note">
-          <FaInfoCircle className="note-icon" />
-          <span>
-            Real data is available from <strong>September 2025</strong> onwards.
-          </span>
-        </div>
-        {/* ------------------------------- */}
-        
-      </div>
-    </div>
-
-    <div className="chart-container-history">
-      <Box className="chart-card">
-        {/* Bar Chart for Students per month */}
-        <BarChart
-          xAxis={[{ scaleType: "band", data: allMonths }]}
-          yAxis={[
-            {
-              min: 0,
-              max: q3Students + q3Students * 0.1,
-              tickNumber: 3,
-              tickValues: [0, medianStudents, q3Students],
-            },
-          ]}
-          series={[
-            {
-              data: Object.values(monthlyStudentData).map((val) =>
-                val === "-" ? 0 : val
-              ),
-              color: "#292551",
-            },
-          ]}
-          height={180}
-          margin={{ top: 15, right: 15, left: 35, bottom: 15 }}
-        />
-      </Box>
-    </div>
-  </div>
-</div>
     </div>
   );
 };
