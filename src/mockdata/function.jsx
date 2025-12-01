@@ -819,7 +819,16 @@ export const getTimeValue = (timeString) => {
 };
 export const formatToLacs = (value) => {
   if (!value) return "₹0";
-  const inLacs = value / 100000;
-  // parseFloat(toFixed(2)) ensures we get "1" instead of "1.00", but keeps "2.5"
+
+  const num = Number(value); // Ensure it treats string numbers correctly
+
+  // If amount is less than 1 Lakh (1,00,000), show in Thousands (K)
+  if (num < 100000) {
+    const inThousands = num / 1000;
+    return `₹${parseFloat(inThousands.toFixed(2))}K`;
+  }
+
+  // If amount is 1 Lakh or more, show in Lacs
+  const inLacs = num / 100000;
   return `₹${parseFloat(inLacs.toFixed(2))} Lac`;
 };
