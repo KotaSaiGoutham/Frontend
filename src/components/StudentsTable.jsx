@@ -1584,7 +1584,7 @@ const calculateAutomaticClasses = (student) => {
                               )}
 
                             {/* ✅ New Button to View Classes */}
-                            {student.startDate && (
+                            {/* {student.startDate && (
                               <Button
                                 variant="outlined"
                                 size="small"
@@ -1594,7 +1594,7 @@ const calculateAutomaticClasses = (student) => {
                               >
                                 View Classes
                               </Button>
-                            )}
+                            )} */}
                           </>
                         )}
                       </TableCell>

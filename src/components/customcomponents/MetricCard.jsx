@@ -1,108 +1,99 @@
-import React from "react";
+import React from 'react';
+import { Paper, Box, Typography, Tooltip, IconButton } from '@mui/material';
+import { FaRupeeSign, FaInfoCircle } from 'react-icons/fa';
 
-const MetricCard = ({
-  label,
-  value,
-  gradient,
-  textColor = "#1f2937",
-  percentage = null,
+const MetricCard = ({ 
+  label, 
+  value, 
+  gradient, 
+  icon, 
+  percentage, 
+  previousValue,
+  textColor,
+  compact = false 
 }) => {
-  const cardStyle = {
-    background: gradient,
-    borderRadius: "18px",
-    padding: "20px",
-    boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    height: "160px",
-    transition: "transform 0.25s ease, box-shadow 0.25s ease",
-    cursor: "pointer",
-    position: "relative",
+  const formatValue = (val) => {
+    if (typeof val !== 'number') return '0';
+    return val.toLocaleString('en-IN', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
   };
 
-  const labelStyle = {
-    fontSize: "15px",
-    fontWeight: "500",
-    color: "#374151",
-    marginBottom: "6px",
+  const getPercentageColor = (percentage) => {
+    if (percentage > 0) return '#2e7d32'; // Green for increase
+    if (percentage < 0) return '#d32f2f'; // Red for decrease
+    return '#757575'; // Gray for no change
   };
 
-  const valueWrapper = {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "4px",
+  const getPercentageIcon = (percentage) => {
+    if (percentage > 0) return '↗';
+    if (percentage < 0) return '↘';
+    return '→';
   };
 
-  const rupeeStyle = {
-    fontSize: "18px",
-    fontWeight: "600",
-    color: "#374151",
-    opacity: 0.9,
-    transform: "translateY(4px)", // lifts above baseline
-    background: "linear-gradient(45deg,#2563eb,#1e3a8a)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-  };
-
-  const valueStyle = {
-    fontSize: "34px",
-    fontWeight: "bold",
-    color: textColor,
-    lineHeight: 1.1,
-  };
-
-  const getPercentageColor = (p) => (p > 0 ? "#059669" : "#dc2626");
-  const getPercentageBg = (p) =>
-    p > 0 ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)";
-
-  const percentageStyle =
-    percentage !== null
-      ? {
-          fontSize: "13px",
-          fontWeight: "600",
-          color: getPercentageColor(percentage),
-          background: getPercentageBg(percentage),
-          padding: "4px 10px",
-          borderRadius: "10px",
-          alignSelf: "flex-end", // bottom-right alignment
-          marginTop: "8px",
-        }
-      : { display: "none" };
-
-  const handleMouseEnter = (e) => {
-    e.currentTarget.style.transform = "translateY(-5px) scale(1.02)";
-    e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.15)";
-  };
-
-  const handleMouseLeave = (e) => {
-    e.currentTarget.style.transform = "translateY(0) scale(1)";
-    e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.08)";
+  const formatPercentage = (percentage) => {
+    if (percentage === null || percentage === undefined) return null;
+    return `${Math.abs(percentage).toFixed(1)}%`;
   };
 
   return (
-    <div
-      style={cardStyle}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+    <Paper
+      elevation={2}
+      sx={{
+        p: compact ? 2 : 3,
+        borderRadius: 2,
+        background: gradient,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
     >
-      <p style={labelStyle}>{label}</p>
-
-      <div style={valueWrapper}>
-        <span style={rupeeStyle}>₹</span>
-        <span style={valueStyle}>
-          {value.toLocaleString("en-IN")}
-        </span>
-      </div>
-
-      {percentage !== null && (
-        <span style={percentageStyle}>
-          {percentage > 0
-            ? `+${percentage.toFixed(0)}% vs last month`
-            : `${percentage.toFixed(0)}% vs last month`}
-        </span>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+        <Box sx={{ mr: 1, color: textColor || 'inherit' }}>
+          {icon || <FaRupeeSign />}
+        </Box>
+        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary">
+          {label}
+        </Typography>
+      </Box>
+      
+      <Typography
+        variant={compact ? "h5" : "h4"}
+        fontWeight="bold"
+        color={textColor || 'text.primary'}
+        sx={{ mb: 0.5 }}
+      >
+        ₹{formatValue(value)}
+      </Typography>
+      
+      {percentage !== null && percentage !== undefined && (
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto' }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              backgroundColor: getPercentageColor(percentage) + '15',
+              color: getPercentageColor(percentage),
+              fontSize: compact ? '0.7rem' : '0.8rem',
+              fontWeight: 500,
+            }}
+          >
+            <span style={{ marginRight: 2 }}>{getPercentageIcon(percentage)}</span>
+            {formatPercentage(percentage)}
+            <Typography variant="caption" sx={{ ml: 0.5, opacity: 0.7 }}>
+              vs prev month
+            </Typography>
+          </Box>
+          
+        </Box>
       )}
-    </div>
+    </Paper>
   );
 };
 

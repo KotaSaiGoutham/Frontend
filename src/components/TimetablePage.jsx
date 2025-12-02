@@ -1008,8 +1008,8 @@ const handleTopicChange = useCallback(
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Sl No</TableCell>
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Student Name</TableCell>
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Name of the Lesson</TableCell>
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Time</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem",textAlign:"center" }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem",textAlign:"center" }}>Time</TableCell>
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Duration</TableCell>
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Fee/Hour</TableCell>
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Actions</TableCell>
@@ -1103,7 +1103,6 @@ const handleTopicChange = useCallback(
                             color: rowStatus.startsWith("past")
                               ? "#9e9e9e"
                               : "#424242",
-                            textAlign: "center",
                             transition: "color 0.3s ease-in-out",
                           },
                         }}
@@ -1114,6 +1113,7 @@ const handleTopicChange = useCallback(
                             handleNavigatetoStudentData(item.studentId)
                           }
                           sx={{
+                                textAlign: "left", // This is the key line
                             cursor: "pointer",
                             textDecoration: "underline", // This line is now active by default
                             color: "#1976d2", // A standard blue to signify a link

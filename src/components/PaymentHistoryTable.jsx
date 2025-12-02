@@ -161,6 +161,18 @@ const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
               }}
             >
               <TableCell
+      sx={{
+        fontWeight: 700,
+        color: "white",
+        fontSize: "16px",
+        textAlign: "center",
+        py: 3,
+        width: "180px", // Fixed width for better look
+      }}
+    >
+      Sl. No.
+    </TableCell>
+              <TableCell
                 sx={{
                   fontWeight: 700,
                   color: "white",
@@ -322,6 +334,20 @@ const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
                   transition: "all 0.2s ease",
                 }}
               >
+                       <TableCell
+                  sx={{
+                    textAlign: "center",
+                    py: 2.5,
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    sx={{ fontSize: "15px" }}
+                  >
+                    {index+1}
+                  </Typography>
+                </TableCell>
                 <TableCell
                   sx={{
                     textAlign: "center",
@@ -413,6 +439,7 @@ const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
                 borderTop: "2px solid #cbd5e1",
               }}
             >
+              <TableCell sx={{ py: 2.5, textAlign: "center" }} />
               <TableCell sx={{ py: 2.5, textAlign: "center" }}>
                 <Typography
                   variant="body2"

@@ -31,19 +31,24 @@ import {
   ADD_ACADEMY_EARNING_REQUEST,
   ADD_ACADEMY_EARNING_SUCCESS,
   ADD_ACADEMY_EARNING_FAILURE,
-
-
 } from '../types';
 
 const initialState = {
   expenditures: [],
+  manualexpenditures: [],  // Add this
+  salaryexpenditures: [],  // Add this
   payments: [],
+  previousPayments: [],    // Add this
+  previousSalaryExpenditures: [],  // Add this
+  previousManualExpenditures: [],  // Add this
   allPayments: [],
   monthlyPayments: {}, 
   monthlyPaymentDetails: null,
   selectedMonth: null,
   totalExpenditure: { current: 0, previous: 0 },
   totalStudentPayments: { current: 0, previous: 0 },
+  previousTotalPayments: 0,  // Add this
+  previousTotalExpenditure: 0,  // Add this
   loading: false,
   paymentDetailsLoading: false,
   error: null,
@@ -88,14 +93,43 @@ export const expenditureReducer = (state = initialState, action) => {
     // ✅ Academy Finance Loading States
     case FETCH_ACADEMY_FINANCE_REQUEST:
     case ADD_ACADEMY_EARNING_REQUEST:
-
-    case FETCH_EXPENDITURES_SUCCESS: {
-      const expendituresArray = Array.isArray(action.payload) ? action.payload : [];
       return {
         ...state,
-        loading: false,
-        expenditures: expendituresArray,
+        academyFinance: {
+          ...state.academyFinance,
+          loading: true,
+          error: null,
+        },
       };
+
+    case FETCH_EXPENDITURES_SUCCESS: {
+      const payload = action.payload;
+      
+      // Handle both array and object payload formats
+      if (Array.isArray(payload)) {
+        // Old format - just expenditures array
+        return {
+          ...state,
+          loading: false,
+          expenditures: payload,
+        };
+      } else {
+        // New format - object with multiple properties
+        return {
+          ...state,
+          loading: false,
+          expenditures: payload.expenditures || [],
+          manualexpenditures: payload.manualExpenditures || [],
+          salaryexpenditures: payload.salaryExpenditures || [],
+          payments: payload.payments || [],
+          previousPayments: payload.previousPayments || [],
+          previousSalaryExpenditures: payload.previousSalaryExpenditures || [],
+          previousManualExpenditures: payload.previousManualExpenditures || [],
+          // Keep the API totals as they are calculated correctly
+          previousTotalPayments: payload.previousTotalPayments || 0,
+          previousTotalExpenditure: payload.previousTotalExpenditure || 0,
+        };
+      }
     }
     
     case FETCH_TOTAL_PAYMENTS_SUCCESS: {
@@ -106,6 +140,20 @@ export const expenditureReducer = (state = initialState, action) => {
         payments: paymentArray,
       };
     }
+
+    case FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS:
+      return { 
+        ...state, 
+        totalStudentPayments: action.payload,
+        previousTotalPayments: action.payload.previous || 0
+      };
+
+    case FETCH_EXPENDITURES_SUM_SUCCESS:
+      return { 
+        ...state, 
+        totalExpenditure: action.payload,
+        previousTotalExpenditure: action.payload.previous || 0
+      };
 
     case FETCH_MONTHLY_PAYMENTS_SUCCESS:
       return {
@@ -185,15 +233,27 @@ export const expenditureReducer = (state = initialState, action) => {
       };
     }
 
-
-
-
-
-    case FETCH_EXPENDITURES_STUDENT_PAYMENTS_SUM_SUCCESS:
-      return { ...state, totalStudentPayments: action.payload };
-
-    case FETCH_EXPENDITURES_SUM_SUCCESS:
-      return { ...state, totalExpenditure: action.payload };
+    case DELETE_ACADEMY_EARNING_SUCCESS:
+      return {
+        ...state,
+        academyFinance: {
+          ...state.academyFinance,
+          loading: false,
+          earnings: state.academyFinance.earnings.filter(earning => earning.id !== action.payload),
+          totalEarnings: state.academyFinance.earnings.reduce((total, earning) => {
+            if (earning.id !== action.payload) {
+              return total + (earning.amount || 0);
+            }
+            return total;
+          }, 0),
+          netBalance: (state.academyFinance.earnings.reduce((total, earning) => {
+            if (earning.id !== action.payload) {
+              return total + (earning.amount || 0);
+            }
+            return total;
+          }, 0)) - state.academyFinance.totalExpenses,
+        },
+      };
 
     // Error Cases
     case FETCH_EXPENDITURES_FAILURE:
@@ -204,32 +264,28 @@ export const expenditureReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: false,
-        error: action.payload.error,
+        error: action.payload,
       };
 
     case FETCH_MONTHLY_PAYMENT_DETAILS_FAILURE:
       return {
         ...state,
         paymentDetailsLoading: false,
-        error: action.payload.error,
+        error: action.payload,
       };
 
     // ✅ Academy Finance Error Cases
     case FETCH_ACADEMY_FINANCE_FAILURE:
     case ADD_ACADEMY_EARNING_FAILURE:
+      return {
+        ...state,
+        academyFinance: {
+          ...state.academyFinance,
+          loading: false,
+          error: action.payload,
+        },
+      };
 
-case DELETE_ACADEMY_EARNING_SUCCESS:
-  return {
-    ...state,
-    loading: false,
-    earnings: state.earnings.filter(earning => earning.id !== action.payload),
-    totalEarnings: state.earnings.reduce((total, earning) => {
-      if (earning.id !== action.payload) {
-        return total + (earning.amount || 0);
-      }
-      return total;
-    }, 0),
-  };
     default:
       return state;
   }

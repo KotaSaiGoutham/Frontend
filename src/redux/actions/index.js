@@ -1420,6 +1420,7 @@ export const deleteAutoTimetable = (timetableId) =>
     },
     authRequired: true,
   });
+// Update the fetchExpenditures action
 export const fetchExpenditures = (year, month, compareType = null) =>
   apiRequest({
     url: `/api/expenditures?year=${year}&month=${month}${
@@ -1430,21 +1431,35 @@ export const fetchExpenditures = (year, month, compareType = null) =>
     onSuccess: (data, dispatch) => {
       const expendituresArray = data.expenditures || [];
       const paymentsArray = data.payments || [];
+      const manualExpenditures = data.manualExpenditures || [];
+      const salaryExpenditures = data.salaryExpenditures || [];
+      const lastThreeMonths = data.lastThreeMonths || [];
 
-      const totalStudentPayments = data.totalStudentPayments || 0;
-      const previousTotalStudentPayments =
-        data.previousPeriodTotalPayments || 0;
+      // Combine all expenditures for display
+      const allExpenditures = [...expendituresArray, ...salaryExpenditures];
+
+      const totalStudentPayments = data.totalPayments || 0;
+      const previousTotalStudentPayments = data.previousTotalPayments || 0;
 
       const totalExpenditure = data.totalExpenditure || 0;
       const previousTotalExpenditure = data.previousTotalExpenditure || 0;
 
       dispatch({
         type: FETCH_EXPENDITURES_SUCCESS,
-        payload: expendituresArray,
+        payload: {
+          expenditures: expendituresArray,
+          manualexpenditures: manualExpenditures,
+          salaryexpenditures: salaryExpenditures,
+          allexpenditures: allExpenditures,
+          lastThreeMonths: lastThreeMonths, // Add this
+          previousPayments: data.previousPayments || [],
+          previousSalaryExpenditures: data.previousSalaryExpenditures || [],
+          previousManualExpenditures: data.previousManualExpenditures || [],
+        },
       });
 
       dispatch({
-        type: FETCH_TOTAL_PAYMENTS_SUCCESS, // Use the new action type
+        type: FETCH_TOTAL_PAYMENTS_SUCCESS,
         payload: paymentsArray,
       });
 
@@ -1464,15 +1479,9 @@ export const fetchExpenditures = (year, month, compareType = null) =>
         },
       });
     },
-
-    // ... rest of the action remains the same
+    onFailure: FETCH_EXPENDITURES_FAILURE,
   });
 
-/**
- * Action to add a new expenditure.
- * @param {object} expenditureData - The data for the new expenditure.
- * @param {function} callback - A callback function to run on success (e.g., for navigation).
- */
 export const addExpenditure = (expenditureData, callback) =>
   apiRequest({
     url: "/api/expenditures",
