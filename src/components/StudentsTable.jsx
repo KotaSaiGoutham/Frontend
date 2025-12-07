@@ -272,7 +272,6 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
     // This is where you would trigger your main data fetching/filtering logic
     setFilters(tempFilters); // Apply the temporary filters to the main state
     setIsDrawerOpen(false); // Close the drawer
-    console.log("Applying filters:", tempFilters);
     // You would typically call a function here to fetch/update the student list
   };
 
@@ -280,7 +279,6 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
     setTempFilters(initialFilters); // Clear temporary state
     setFilters(initialFilters); // Clear applied state
     setIsDrawerOpen(false);
-    console.log("Filters cleared.");
   };
   const handleClick = (event, student) => {
     setAnchorEl(event.currentTarget);
@@ -695,7 +693,6 @@ const handleClassChange = async (studentId, increment) => {
   const delta = increment ? 1 : -1;
 
   if (!increment && currentClasses === 0) {
-    console.log("Cannot decrease classes below zero.");
     setSnackbarMessage("Cannot decrease classes below zero.");
     setSnackbarSeverity("warning");
     setSnackbarOpen(true);

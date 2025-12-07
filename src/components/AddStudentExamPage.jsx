@@ -11,12 +11,7 @@ import {
   MuiDatePicker,
   MuiMultiSelectChip,
 } from "./customcomponents/MuiCustomFormFields";
-import {
-  Box,
-  FormControlLabel,
-  Checkbox,
-  Radio 
-} from "@mui/material";
+import { Box, FormControlLabel, Checkbox, Radio } from "@mui/material";
 import {
   FaUser,
   FaGraduationCap,
@@ -190,10 +185,10 @@ const StudentExamFormPage = () => {
   };
 
   // Handle test type checkbox changes (for revision program students)
- const handleTestTypeChange = (testType) => {
-  // Since only one can be selected, we just set the value directly.
-  setFormData((prev) => ({ ...prev, testType: [testType] }));
-};
+  const handleTestTypeChange = (testType) => {
+    // Since only one can be selected, we just set the value directly.
+    setFormData((prev) => ({ ...prev, testType: [testType] }));
+  };
 
   const handleDatePickerChange = (date) => {
     setFormData((prev) => ({
@@ -323,23 +318,6 @@ const StudentExamFormPage = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <div className="ats-page-container">
-        <div className="ats-header-card">
-          <button
-            onClick={() => navigate("/student-exams")}
-            className="ats-back-button"
-          >
-            <FaArrowLeft /> Back to Exams
-          </button>
-          <h1 className="ats-form-title">
-            <FaBook className="ats-title-icon" />{" "}
-            {isEditMode ? "Edit Student Exam" : "Add Weekly Student Exam"}
-          </h1>
-          <p className="ats-form-subtitle">
-            {isEditMode
-              ? "Modify exam details and marks."
-              : "Enter exam details and marks."}
-          </p>
-        </div>
 
         <div className="ats-form-card">
           <form onSubmit={handleSubmit} className="ats-form">
@@ -352,7 +330,9 @@ const StudentExamFormPage = () => {
             {/* ---------------------------------------------------------------------- */}
             {/* ## STEP 1: Student & Exam Type Selection */}
             {/* ---------------------------------------------------------------------- */}
-            <div className="add-student-form-section-title">1. Student & Exam Type</div>
+            <div className="add-student-form-section-title">
+              1. Student & Exam Type
+            </div>
             <div className="ats-form-grid" style={{ marginBottom: 20 }}>
               <MuiSelect
                 label="Select Student"
@@ -374,7 +354,7 @@ const StudentExamFormPage = () => {
                 disabled
               />
             </div>
-            
+
             {/* Exam Type Checkboxes */}
             <div
               style={{
@@ -384,7 +364,7 @@ const StudentExamFormPage = () => {
                 borderRadius: "8px",
                 borderLeft: "4px solid #1976d2",
                 marginBottom: 20,
-                paddingBottom: 10
+                paddingBottom: 10,
               }}
             >
               <div
@@ -405,7 +385,9 @@ const StudentExamFormPage = () => {
                   control={
                     <Checkbox
                       checked={formData.examType === "E-EA"}
-                      onChange={() => handleExamTypeChange({ target: { value: "E-EA" } })}
+                      onChange={() =>
+                        handleExamTypeChange({ target: { value: "E-EA" } })
+                      }
                       name="examType"
                       value="E-EA"
                       sx={{
@@ -425,9 +407,13 @@ const StudentExamFormPage = () => {
                       color: "#4a4a4a",
                       fontWeight: "500",
                     },
-                    border: formData.examType === "E-EA" ? "2px solid #1976d2" : "1px solid #e0e0e0",
+                    border:
+                      formData.examType === "E-EA"
+                        ? "2px solid #1976d2"
+                        : "1px solid #e0e0e0",
                     borderRadius: "4px",
-                    backgroundColor: formData.examType === "E-EA" ? "#e3f2fd" : "white",
+                    backgroundColor:
+                      formData.examType === "E-EA" ? "#e3f2fd" : "white",
                     p: 0.5,
                     minWidth: "160px",
                     "&:hover": {
@@ -441,7 +427,9 @@ const StudentExamFormPage = () => {
                   control={
                     <Checkbox
                       checked={formData.examType === "CA"}
-                      onChange={() => handleExamTypeChange({ target: { value: "CA" } })}
+                      onChange={() =>
+                        handleExamTypeChange({ target: { value: "CA" } })
+                      }
                       name="examType"
                       value="CA"
                       sx={{
@@ -461,9 +449,13 @@ const StudentExamFormPage = () => {
                       color: "#4a4a4a",
                       fontWeight: "500",
                     },
-                    border: formData.examType === "CA" ? "2px solid #d32f2f" : "1px solid #e0e0e0",
+                    border:
+                      formData.examType === "CA"
+                        ? "2px solid #d32f2f"
+                        : "1px solid #e0e0e0",
                     borderRadius: "4px",
-                    backgroundColor: formData.examType === "CA" ? "#ffebee" : "white",
+                    backgroundColor:
+                      formData.examType === "CA" ? "#ffebee" : "white",
                     p: 0.5,
                     minWidth: "160px",
                     "&:hover": {
@@ -478,7 +470,12 @@ const StudentExamFormPage = () => {
             {/* ---------------------------------------------------------------------- */}
             {/* ## STEP 2: Exam Details */}
             {/* ---------------------------------------------------------------------- */}
-            <div className="add-student-form-section-title" style={{ marginTop: 20 }}>2. Exam Date & Topic</div>
+            <div
+              className="add-student-form-section-title"
+              style={{ marginTop: 20 }}
+            >
+              2. Exam Date & Topic
+            </div>
             <div className="ats-form-grid" style={{ marginBottom: 20 }}>
               <MuiDatePicker
                 label="Exam Date"
@@ -513,103 +510,188 @@ const StudentExamFormPage = () => {
             </div>
 
             {/* Test Type Checkboxes - Only for Revision Program Students */}
-           <div
-    style={{
-      marginTop: 0,
-      background: "#f8f9fa",
-      padding: "15px",
-      borderRadius: "8px",
-      borderLeft: "4px solid #7b1fa2",
-      marginBottom: 20
-    }}
-  >
-    <div
-      style={{
-        fontSize: "1.0rem",
-        fontWeight: "600",
-        color: "#292551",
-        marginBottom: "10px",
-        display: "flex",
-        alignItems: "center",
-      }}
-    >
-      <FaCheckSquare style={{ marginRight: 8 }} />
-      Revision Test Type
-    </div>
-    <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-      {/* Weekend Test Radio */}
-      <FormControlLabel
-        control={
-          <Radio
-            checked={formData.testType.includes("weekendTest")}
-            onChange={() => handleTestTypeChange("weekendTest")}
-            name="testType" // Important: All must share the same name
-            value="weekendTest"
-            sx={{ p: 0.5, color: "#1976d2", "&.Mui-checked": { color: "#1976d2", }, }}
-          />
-        }
-        label="Weekend Test"
-        sx={{
-          m: 0,
-          "& .MuiFormControlLabel-label": { fontSize: "0.85rem", color: "#4a4a4a", fontWeight: "500", },
-          border: formData.testType.includes("weekendTest") ? "2px solid #1976d2" : "1px solid #e0e0e0",
-          borderRadius: "4px",
-          backgroundColor: formData.testType.includes("weekendTest") ? "#e3f2fd" : "white",
-          p: 0.5,
-          minWidth: "140px",
-          "&:hover": { borderColor: "#1976d2", backgroundColor: "#f5f9ff", },
-        }}
-      />
+            <div
+              style={{
+                marginTop: 0,
+                background: "#f8f9fa",
+                padding: "15px",
+                borderRadius: "8px",
+                borderLeft: "4px solid #7b1fa2",
+                marginBottom: 20,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "1.0rem",
+                  fontWeight: "600",
+                  color: "#292551",
+                  marginBottom: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <FaCheckSquare style={{ marginRight: 8 }} />
+                Revision Test Type
+              </div>
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                {/* Weekend Test Radio */}
+                {/* General Exam Radio */}
+                <FormControlLabel
+                  control={
+                    <Radio
+                      checked={formData.testType.includes("generalExam")}
+                      onChange={() => handleTestTypeChange("generalExam")}
+                      name="testType"
+                      value="generalExam"
+                      sx={{
+                        p: 0.5,
+                        color: "#ed6c02", // Orange color
+                        "&.Mui-checked": { color: "#ed6c02" },
+                      }}
+                    />
+                  }
+                  label="General Exam"
+                  sx={{
+                    m: 0,
+                    "& .MuiFormControlLabel-label": {
+                      fontSize: "0.85rem",
+                      color: "#4a4a4a",
+                      fontWeight: "500",
+                    },
+                    border: formData.testType.includes("generalExam")
+                      ? "2px solid #ed6c02"
+                      : "1px solid #e0e0e0",
+                    borderRadius: "4px",
+                    backgroundColor: formData.testType.includes("generalExam")
+                      ? "#fff3e0" // Light orange background
+                      : "white",
+                    p: 0.5,
+                    minWidth: "140px",
+                    "&:hover": {
+                      borderColor: "#ed6c02",
+                      backgroundColor: "#fff8f0",
+                    },
+                  }}
+                />
+                <FormControlLabel
+                  control={
+                    <Radio
+                      checked={formData.testType.includes("weekendTest")}
+                      onChange={() => handleTestTypeChange("weekendTest")}
+                      name="testType" // Important: All must share the same name
+                      value="weekendTest"
+                      sx={{
+                        p: 0.5,
+                        color: "#1976d2",
+                        "&.Mui-checked": { color: "#1976d2" },
+                      }}
+                    />
+                  }
+                  label="Weekend Test"
+                  sx={{
+                    m: 0,
+                    "& .MuiFormControlLabel-label": {
+                      fontSize: "0.85rem",
+                      color: "#4a4a4a",
+                      fontWeight: "500",
+                    },
+                    border: formData.testType.includes("weekendTest")
+                      ? "2px solid #1976d2"
+                      : "1px solid #e0e0e0",
+                    borderRadius: "4px",
+                    backgroundColor: formData.testType.includes("weekendTest")
+                      ? "#e3f2fd"
+                      : "white",
+                    p: 0.5,
+                    minWidth: "140px",
+                    "&:hover": {
+                      borderColor: "#1976d2",
+                      backgroundColor: "#f5f9ff",
+                    },
+                  }}
+                />
 
-      {/* Cumulative Test Radio */}
-      <FormControlLabel
-        control={
-          <Radio
-            checked={formData.testType.includes("cumulativeTest")}
-            onChange={() => handleTestTypeChange("cumulativeTest")}
-            name="testType" // Important: All must share the same name
-            value="cumulativeTest"
-            sx={{ p: 0.5, color: "#7b1fa2", "&.Mui-checked": { color: "#7b1fa2", }, }}
-          />
-        }
-        label="Cumulative Test"
-        sx={{
-          m: 0,
-          "& .MuiFormControlLabel-label": { fontSize: "0.85rem", color: "#4a4a4a", fontWeight: "500", },
-          border: formData.testType.includes("cumulativeTest") ? "2px solid #7b1fa2" : "1px solid #e0e0e0",
-          borderRadius: "4px",
-          backgroundColor: formData.testType.includes("cumulativeTest") ? "#f3e5f5" : "white",
-          p: 0.5,
-          minWidth: "140px",
-          "&:hover": { borderColor: "#7b1fa2", backgroundColor: "#f9f5ff", },
-        }}
-      />
+                {/* Cumulative Test Radio */}
+                <FormControlLabel
+                  control={
+                    <Radio
+                      checked={formData.testType.includes("cumulativeTest")}
+                      onChange={() => handleTestTypeChange("cumulativeTest")}
+                      name="testType" // Important: All must share the same name
+                      value="cumulativeTest"
+                      sx={{
+                        p: 0.5,
+                        color: "#7b1fa2",
+                        "&.Mui-checked": { color: "#7b1fa2" },
+                      }}
+                    />
+                  }
+                  label="Cumulative Test"
+                  sx={{
+                    m: 0,
+                    "& .MuiFormControlLabel-label": {
+                      fontSize: "0.85rem",
+                      color: "#4a4a4a",
+                      fontWeight: "500",
+                    },
+                    border: formData.testType.includes("cumulativeTest")
+                      ? "2px solid #7b1fa2"
+                      : "1px solid #e0e0e0",
+                    borderRadius: "4px",
+                    backgroundColor: formData.testType.includes(
+                      "cumulativeTest"
+                    )
+                      ? "#f3e5f5"
+                      : "white",
+                    p: 0.5,
+                    minWidth: "140px",
+                    "&:hover": {
+                      borderColor: "#7b1fa2",
+                      backgroundColor: "#f9f5ff",
+                    },
+                  }}
+                />
 
-      {/* Grand Test Radio */}
-      <FormControlLabel
-        control={
-          <Radio
-            checked={formData.testType.includes("grandTest")}
-            onChange={() => handleTestTypeChange("grandTest")}
-            name="testType" // Important: All must share the same name
-            value="grandTest"
-            sx={{ p: 0.5, color: "#2e7d32", "&.Mui-checked": { color: "#2e7d32", }, }}
-          />
-        }
-        label="Grand Test"
-        sx={{
-          m: 0,
-          "& .MuiFormControlLabel-label": { fontSize: "0.85rem", color: "#4a4a4a", fontWeight: "500", },
-          border: formData.testType.includes("grandTest") ? "2px solid #2e7d32" : "1px solid #e0e0e0",
-          borderRadius: "4px",
-          backgroundColor: formData.testType.includes("grandTest") ? "#e8f5e9" : "white",
-          p: 0.5,
-          minWidth: "140px",
-          "&:hover": { borderColor: "#2e7d32", backgroundColor: "#f5fff5", },
-        }}
-      />
-    </Box>
-  </div>          
+                {/* Grand Test Radio */}
+                <FormControlLabel
+                  control={
+                    <Radio
+                      checked={formData.testType.includes("grandTest")}
+                      onChange={() => handleTestTypeChange("grandTest")}
+                      name="testType" // Important: All must share the same name
+                      value="grandTest"
+                      sx={{
+                        p: 0.5,
+                        color: "#2e7d32",
+                        "&.Mui-checked": { color: "#2e7d32" },
+                      }}
+                    />
+                  }
+                  label="Grand Test"
+                  sx={{
+                    m: 0,
+                    "& .MuiFormControlLabel-label": {
+                      fontSize: "0.85rem",
+                      color: "#4a4a4a",
+                      fontWeight: "500",
+                    },
+                    border: formData.testType.includes("grandTest")
+                      ? "2px solid #2e7d32"
+                      : "1px solid #e0e0e0",
+                    borderRadius: "4px",
+                    backgroundColor: formData.testType.includes("grandTest")
+                      ? "#e8f5e9"
+                      : "white",
+                    p: 0.5,
+                    minWidth: "140px",
+                    "&:hover": {
+                      borderColor: "#2e7d32",
+                      backgroundColor: "#f5fff5",
+                    },
+                  }}
+                />
+              </Box>
+            </div>
             {/* ---------------------------------------------------------------------- */}
             {/* ## STEP 3: Marks Entry */}
             {/* ---------------------------------------------------------------------- */}

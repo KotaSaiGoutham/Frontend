@@ -419,7 +419,6 @@ const RevisionClassesPage = () => {
   const handleEditExam = (classId, studentId, existingData = null) => {
     const examKey = `${classId}_${studentId}`;
 
-    console.log("Editing exam:", examKey, "Existing data:", existingData);
 
     setEditingExam((prev) => ({ ...prev, [examKey]: true }));
 
@@ -523,11 +522,9 @@ const RevisionClassesPage = () => {
       if (existingExam && existingExam.examRecordId) {
         // Update existing exam
         examDataToSave.id = existingExam.examRecordId;
-        console.log("Updating exam with ID:", existingExam.examRecordId);
         result = await dispatch(updateStudentExam(examDataToSave));
       } else {
         // Add new exam
-        console.log("Adding new exam");
         result = await dispatch(addStudentExam(examDataToSave));
       }
 
@@ -783,7 +780,6 @@ const RevisionClassesPage = () => {
         }
       });
 
-      console.log("Loaded exam data:", examDataMap);
       setExamData(examDataMap);
     };
 

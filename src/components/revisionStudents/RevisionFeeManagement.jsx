@@ -257,7 +257,6 @@ const RevisionFeeManagement = () => {
     };
 
     try {
-      console.log('Sending update data:', updateData);
       await dispatch(updateRevisionFee(studentId, updateData));
       
       // Refresh after a short delay to ensure update is processed

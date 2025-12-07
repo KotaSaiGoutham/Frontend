@@ -81,7 +81,6 @@ const StudentWeekend = () => {
   const currentStudent = useSelector((state) => state.auth?.currentStudent);
   const isRevisonStudent =
     !!currentStudent?.isRevisionProgramJEEMains2026Student;
-  console.log("currentStudent", currentStudent);
   useEffect(() => {
     dispatch(fetchStudentClasses());
     if (currentStudent?.id) {

@@ -24,16 +24,24 @@
     border-color: #f0f0f0;
     box-shadow: 0 1px 4px rgba(255, 255, 255, 0.2);
 }
-
 .logout-btn {
-    border-color: #DB1A66;
-    color: #f0f0f0 !important;
+  border-color: #DB1A66;
+  color: #f0f0f0 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  font-size: 15px;
 }
 
 .logout-btn:hover {
-    background-color: #DB1A66;
-    color: #fff !important;
-    border-color: #DB1A66;
+  background-color: #DB1A66;
+  color: #fff !important;
+  border-color: #DB1A66;
+}
+
+.logout-btn svg {
+  font-size: 18px;
 }
 
 .auth-btn.active-btn {

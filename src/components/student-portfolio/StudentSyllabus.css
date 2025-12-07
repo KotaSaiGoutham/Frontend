@@ -1,0 +1,99 @@
+/* StudentSyllabus.css */
+
+.syllabus-page-container {
+  padding: 24px;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.syllabus-header {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.syllabus-header-icon {
+  padding: 12px;
+  background-color: #e3f2fd;
+  border-radius: 50%;
+  color: #1976d2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Main Layout Grid */
+.syllabus-content-grid {
+  display: flex;
+  gap: 24px;
+  flex: 1; /* Grow to fill remaining vertical space */
+  min-height: 0; /* Important for nested scrolling */
+}
+
+/* Card Styling */
+.syllabus-card {
+  background-color: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 32px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Left Side (Form) */
+.syllabus-form-section {
+  flex: 1;
+  min-width: 300px; /* Prevent crushing on small screens */
+}
+
+/* Right Side (History) */
+.syllabus-history-section {
+  flex: 1;
+  min-width: 300px;
+  overflow: hidden; /* distinct scrolling context */
+}
+
+.history-header {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 0;
+}
+
+.history-list-container {
+  overflow-y: auto; /* Internal scroll */
+  height: 100%;
+  padding-right: 8px; /* Space for scrollbar */
+}
+
+/* Custom Scrollbar for history */
+.history-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+.history-list-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+.history-list-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* Responsive: Stack on mobile */
+@media (max-width: 900px) {
+  .syllabus-content-grid {
+    flex-direction: column;
+    height: auto;
+  }
+  .syllabus-history-section {
+    height: 500px; /* Fixed height on mobile */
+  }
+}

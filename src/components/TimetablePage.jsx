@@ -547,7 +547,6 @@ const handleTopicChange = useCallback(
   },
   [dispatch, combinedAndFilteredTimetables, user, filterDate]
 );
-  console.log("filterDate", filterDate);
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {

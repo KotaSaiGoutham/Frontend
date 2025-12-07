@@ -3,7 +3,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../redux/actions";
 import "./Navbar.css";
-import { FaDownload } from 'react-icons/fa';
+import { FaDownload,FaSignOutAlt } from 'react-icons/fa';
 import NotificationBell from "../components/NotificationBell";
 import { parse, isValid, isAfter } from "date-fns";
 import { persistor } from "../redux/store";
@@ -11,6 +11,7 @@ import { persistor } from "../redux/store";
 const PROTECTED_BASE_PATHS = [
   "/dashboard",
   "/students",
+  "/admissions",
   "/student/",
   "/week-timetable",
   "/timetable",
@@ -286,8 +287,11 @@ dispatch(logoutUser());
             <span>&#9776;</span>
           )}
         </div>
+        
         <nav className={`navbar-right ${menuOpen ? "active" : ""}`}>
-          <NavLink
+     {!isAuthenticated && (
+           <>
+           <NavLink
             to="/"
             onClick={handleLinkClick}
             exact
@@ -324,6 +328,8 @@ dispatch(logoutUser());
           >
             Contact Us
           </NavLink>
+         </>
+        )}
 
           {/* Download Brochure - Only show when NOT authenticated */}
           {!isAuthenticated && (
@@ -366,14 +372,15 @@ dispatch(logoutUser());
               <NavLink
                 to="/dashboard"
                 className="auth-btn"
-                onClick={handleLinkClick}
+                onClick={handleLinkClick} 
                 activeClassName="active-btn"
               >
                 Dashboard
               </NavLink>
-              <button onClick={handleLogoutClick} className="auth-btn logout-btn">
-                Logout
-              </button>
+<button onClick={handleLogoutClick} className="auth-btn logout-btn">
+  <FaSignOutAlt />
+  <span>Logout</span>
+</button>
             </div>
           ) : (
             // If not authenticated and no localStorage data, show Login and Book Demo

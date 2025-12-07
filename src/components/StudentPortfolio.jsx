@@ -83,7 +83,6 @@ const StudentPortfolio = () => {
   const [studentData, setStudentData] = useState(
     location.state?.studentData || null
   );
-  console.log("studentExams",studentExams)
   const [showAddMarksModal, setShowAddMarksModal] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(!location.state?.studentData);

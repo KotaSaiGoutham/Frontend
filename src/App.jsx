@@ -92,6 +92,8 @@ import AddAcademyEarning from "./components/AddAcademyEarning";
 import StudyMaterialUpload from "./components/StudyMaterialUpload";
 import QuestionPaperUpload from "./components/QuestionPaperUpload";
 import TutorIdeasPage from "./components/TutorIdeas/TutorIdeasPage";
+import AdmissionPage from "./components/AdmissionPage";
+import StudentSyllabusFormPage from "./components/student-portfolio/StudentSyllabusFormPage";
 
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -183,6 +185,8 @@ function App() {
 
                 <Route path="/timetable" element={<TimeTableManager />} />
                 <Route path="/employees" element={<Employees />} />
+                <Route path="/admissions" element={<AdmissionPage />} />
+
                 <Route
                   path="/upload-study-materials"
                   element={<StudyMaterialUpload />}
@@ -251,7 +255,10 @@ function App() {
                   path="/student/:studentId/study-materials"
                   element={<StudentStudyMaterials />}
                 />
-
+  <Route
+                  path="/student/:studentId/student-syallabus-entry"
+                  element={<StudentSyllabusFormPage />}
+                />
                 <Route
                   path="/student/:studentId"
                   element={

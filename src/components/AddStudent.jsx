@@ -283,6 +283,7 @@ const AddStudent = () => {
           isActive: true,
           isDemo: isDemo ? true : false,
           deactivated: false,
+          facultyid:user.id
         };
         await dispatch(addStudent(dataToSubmit));
         setSnackbarSeverity("success");

@@ -32,7 +32,6 @@ const LoginPage = () => {
   const [activeTab, setActiveTab] = useState("student"); 
   const [isFading, setIsFading] = useState(false);
 
-  // New state for deactivated student info
   const [deactivatedStudentInfo, setDeactivatedStudentInfo] = useState(null);
 
   const modalStatus = isAuthenticated ? "success" : "error";
@@ -50,39 +49,30 @@ const LoginPage = () => {
   } else if (isAuthenticated && !loading) {
     setModalOpen(true);
     
-    // Only auto-close for successful logins, NOT for deactivated students
     if (user?.deactivated !== true) {
       const timer = setTimeout(() => {
         setModalOpen(false);
       }, 1500);
       return () => clearTimeout(timer);
     }
-    // For deactivated students, don't set any timer - let user close manually
   }
 }, [error, isAuthenticated, loading, user]);
   useEffect(() => {
     if (user) {
-      if (user.role === "student") {
-        console.log("user", user);
-        
-        // Check if student is deactivated
+      if (user.role === "student") {        
         if (user.deactivated === true) {
-          // Set deactivated student info
           setDeactivatedStudentInfo({
             name: user.Name || user.name,
             deactivatedAt: user.deactivatedAt,
             studentId: user.id
           });
           
-          // Show deactivation modal instead of navigating
           setModalOpen(true);
           
-          // Clear the user from auth state since they're deactivated
           dispatch(clearCurrentStudent());
           return;
         }
         
-        // If not deactivated, proceed normally
         dispatch(setCurrentStudent(user));
         navigate(`/student/${user?.id}/profile`, {
           state: { studentData: user },
@@ -116,7 +106,6 @@ const LoginPage = () => {
     }
   };
 
-  // Function to get deactivation message
   const getDeactivationMessage = () => {
     if (!deactivatedStudentInfo) return "";
     

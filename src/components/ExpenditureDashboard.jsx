@@ -102,7 +102,6 @@ const ExpenditureDashboard = () => {
     previousTotalPayments,
     previousTotalExpenditure,
   } = useSelector((state) => state.expenditures);
-  console.log("expenditures", expenditures);
 
   // Combine and filter all expenditures for CURRENT month
   const combinedExpenditures = useMemo(() => {
@@ -301,7 +300,6 @@ const ExpenditureDashboard = () => {
     selectedDate.month,
     selectedDate.year,
   ]);
-  console.log("previousMonthData", previousMonthData);
 
   // Helper function to calculate percentage change
   const calculatePercentageChange = (current, previous) => {

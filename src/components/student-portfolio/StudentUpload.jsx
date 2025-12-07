@@ -9,7 +9,6 @@ const StudentUpload = () => {
   
   // Get student data from Redux store
   const currentStudent = useSelector((state) => state.auth?.currentStudent);
-console.log("currentStudent",currentStudent)
   return (
     <div className="student-portfolio-tab premium light-theme">
       <div className="tab-content premium">

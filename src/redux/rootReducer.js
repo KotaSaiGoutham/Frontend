@@ -14,6 +14,9 @@ import classScheduleReducer from "./reducers/classScheduleReducer";
 import revisionExamsReducer from "./reducers/revisionExamsReducer";
 import demoBookingsReducer from "./reducers/demoBookingsReducer";
 import tutorIdeasReducer from "./reducers/tutorIdeasReducer";
+import { admissionReducer } from "./reducers/admissionReducer";
+import studentSyllabusReducer from "./reducers/studentSyllabusReducer";
+import notificationReducer from "./reducers/notificationReducer";
 const rootReducer = combineReducers({
   auth: authReducer, 
   classes: classReducer,
@@ -29,7 +32,10 @@ const rootReducer = combineReducers({
   classSchedule: classScheduleReducer, 
  demoBookings: demoBookingsReducer,
    revisionExams: revisionExamsReducer, 
-   tutorIdeas:tutorIdeasReducer
+   tutorIdeas:tutorIdeasReducer,
+   admission:admissionReducer,
+   studentSyllabus:studentSyllabusReducer,
+   notifications:notificationReducer
 });
 
 export default rootReducer;

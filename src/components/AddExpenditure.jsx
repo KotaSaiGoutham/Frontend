@@ -38,7 +38,6 @@ const AddExpenditure = () => {
 
   // --- Check if it's a company expense ---
   const isCompanyExpense = location.state?.isCompanyExpense || false;
-  console.log("isCompanyExpense", isCompanyExpense);
   // --- Component State ---
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({

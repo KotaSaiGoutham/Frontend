@@ -63,7 +63,6 @@ const StudentPapers = () => {
 
 const handleDownload = async (fileUrl, fileName) => {
   try {
-    console.log('Downloading:', fileName);
     
     const response = await fetch(fileUrl);
     const blob = await response.blob();

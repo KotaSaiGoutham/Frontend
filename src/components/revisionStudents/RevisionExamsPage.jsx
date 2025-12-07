@@ -801,7 +801,6 @@ const handleExamMarkChange = (examId, student, subject, value) => {
 };
 
 const handleSaveExam = async (examItem, student, subject) => {
-  console.log("student", student);
   const examKey = getExamKey(examItem.id, student);
   const subjectKey = getSubjectKey(examItem.id, student, subject);
   const cellKey = getSubjectKey(examItem.id, student, subject);
@@ -852,7 +851,6 @@ const handleSaveExam = async (examItem, student, subject) => {
     isCommonStudent: student.isCommonStudent,
     stream: student.Stream,
   };
-  console.log("examDataToSave", examDataToSave);
 
   try {
     setSavingState((prev) => ({ ...prev, [cellKey]: true }));
@@ -1531,7 +1529,6 @@ const renderTableFooter = (examsList, examType) => {
     if (!exams || exams.length === 0) return;
 
     const examDataMap = {};
-    console.log("Loading exam data from exams:", exams);
 
     exams.forEach((examItem) => {
       if (examItem.examData && Array.isArray(examItem.examData)) {
@@ -1569,7 +1566,6 @@ const renderTableFooter = (examsList, examType) => {
       }
     });
 
-    console.log("Final loaded exam data map:", examDataMap);
     setExamData(examDataMap);
   };
 

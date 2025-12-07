@@ -1,0 +1,111 @@
+/* AdmissionPage.css */
+
+.admission-page {
+  padding: 20px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Section */
+.header-section {
+  margin-bottom: 20px;
+}
+
+/* Main Layout Wrapper: Flexbox replaces Grid */
+.content-wrapper {
+  display: flex;
+  gap: 20px; /* Space between Table and Sidebar */
+  align-items: flex-start; /* Align both columns to the top */
+  height: calc(100vh - 140px); /* Fill remaining height */
+}
+
+/* Left Side: Table Section - Grows to fill space */
+.table-section {
+  flex: 1; /* This forces the table to take ALL remaining width */
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100%; 
+  overflow: hidden; 
+  min-width: 0; /* Prevents flex item from overflowing */
+  padding-left: 10px;
+}
+
+.table-toolbar {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-container-scroll {
+  flex: 1;
+  overflow: auto; /* Internal scroll for table only */
+}
+
+/* Right Side: Actions Sidebar - Fixed Width */
+.actions-section {
+  width: 260px; /* Fixed width for sidebar */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+}
+
+.action-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-box {
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  background-color: #fafafa;
+  transition: all 0.2s;
+  
+  /* ADDED PROPERTIES FOR HEIGHT AND CENTERING */
+  min-height: 150px; /* Adjust this value to make it as tall as you want */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-box:hover {
+  background-color: #f0f9ff;
+  border-color: #2196f3;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .content-wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+  .actions-section {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .table-section {
+    height: 600px; /* Fixed height on mobile */
+  }
+  .action-card {
+    flex: 1;
+  }
+}

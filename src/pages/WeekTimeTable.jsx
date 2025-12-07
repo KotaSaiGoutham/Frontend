@@ -211,7 +211,6 @@ const ClassSchedule = () => {
     loading,
     error,
   } = useSelector((state) => state.students);
-  console.log("classSchedule",classSchedule)
 
   // Provide safe defaults for classSchedule properties
   const safeClassSchedule = {
@@ -352,12 +351,7 @@ const ClassSchedule = () => {
 
       const updatedSchedules = [...existingSchedules, ...newClassDateandTime];
 
-      console.log(
-        "Updating student:",
-        studentId,
-        "with schedules:",
-        updatedSchedules
-      );
+
 
       // Use the new update action
       await dispatch(
@@ -472,7 +466,6 @@ const ClassSchedule = () => {
       ),
     [scheduleData, searchTerm, selectedDay]
   );
-  console.log("filteredScheduleData",filteredScheduleData)
 
 const sortedData = useMemo(() => {
   if (!filteredScheduleData.length) return [];
@@ -536,13 +529,10 @@ const sortedData = useMemo(() => {
       return aSecondEarliest - bSecondEarliest;
     }
 
-    // If still same, sort by name
     return a.name.localeCompare(b.name);
   });
 }, [filteredScheduleData, days]);
-  console.log("sortedData",sortedData)
 
-  // Calculate statistics - update to use scheduleData
   const stats = useMemo(() => {
     const totalStudents = scheduleData.length;
     const revisionStudents = scheduleData.filter(

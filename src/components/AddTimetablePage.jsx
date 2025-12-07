@@ -443,7 +443,6 @@ const AddTimetablePage = () => {
   const validateForm = () => {
     const { date, facultyId, fromTime, toTime, subject, topic, student } =
       formData;
-      console.log(",formData",formData)
 
     if (
       !date ||

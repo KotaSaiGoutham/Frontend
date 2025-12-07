@@ -1,4 +1,34 @@
 import {
+   FETCH_NOTIFICATIONS_REQUEST,
+  FETCH_NOTIFICATIONS_SUCCESS,
+  FETCH_NOTIFICATIONS_FAILURE,
+  MARK_NOTIFICATION_READ_SUCCESS,
+  MARK_NOTIFICATION_READ_FAILURE,
+  MARK_NOTIFICATION_READ_REQUEST,
+  FETCH_STUDENT_SYLLABUS_FAILURE,
+  FETCH_STUDENT_SYLLABUS_SUCCESS,
+  FETCH_STUDENT_SYLLABUS_REQUEST,
+  ADD_STUDENT_SYLLABUS_FAILURE,
+  ADD_STUDENT_SYLLABUS_SUCCESS,
+  ADD_STUDENT_SYLLABUS_REQUEST,
+   UPLOAD_STUDENT_DATA_REQUEST,
+  UPLOAD_STUDENT_DATA_SUCCESS,
+  UPLOAD_STUDENT_DATA_FAILURE,
+  FETCH_UPLOAD_HISTORY_REQUEST,
+  FETCH_UPLOAD_HISTORY_SUCCESS,
+  FETCH_UPLOAD_HISTORY_FAILURE,
+  DELETE_UPLOAD_REQUEST,
+  DELETE_UPLOAD_SUCCESS,
+  DELETE_UPLOAD_FAILURE,
+  CREATE_LEAD_REQUEST,
+  CREATE_LEAD_SUCCESS,
+  CREATE_LEAD_FAILURE,
+  FETCH_LEADS_REQUEST,
+  FETCH_LEADS_SUCCESS,
+  FETCH_LEADS_FAILURE,
+  UPDATE_LEAD_STATUS_REQUEST,
+  UPDATE_LEAD_STATUS_SUCCESS,
+  UPDATE_LEAD_STATUS_FAILURE,
   FETCH_MONTHLY_STUDENT_DETAILS_FAILURE,
   FETCH_MONTHLY_STUDENT_DETAILS_SUCCESS,
   FETCH_MONTHLY_STUDENT_DETAILS_REQUEST,
@@ -1097,8 +1127,7 @@ export const fetchPaymentHistory = (studentId) =>
 
     authRequired: true,
   });
-// A conceptual correction to your apiRequest utility or action
-// This ensures the promise is rejected when a failure occurs.
+
 
 export const addDemoClass = (demoClassData) =>
   apiRequest({
@@ -1128,16 +1157,15 @@ export const addDemoClass = (demoClassData) =>
     authRequired: true,
   });
 
-// Action to Fetch Demo Classes
 export const fetchDemoClasses = () =>
   apiRequest({
-    url: "/api/data/democlasses", // This URL now hits your Firebase-backed Express route
+    url: "/api/data/democlasses", 
     method: "GET",
     onStart: FETCH_DEMO_CLASSES_REQUEST,
     onSuccess: (data, dispatch) => {
       dispatch({
         type: FETCH_DEMO_CLASSES_SUCCESS,
-        payload: data, // Array of demo classes from Firestore
+        payload: data,
       });
     },
     onFailure: (error, dispatch) => {
@@ -1577,7 +1605,6 @@ export const addStudentExam = (examData) =>
     data: examData,
     onStart: ADD_STUDENT_EXAM_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("Add exam response:", data);
 
       dispatch({
         type: ADD_STUDENT_EXAM_SUCCESS,
@@ -1639,7 +1666,6 @@ export const updateStudentExam = (examData) =>
     data: examData,
     onStart: UPDATE_STUDENT_EXAM_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("Update exam response:", data);
 
       dispatch({
         type: UPDATE_STUDENT_EXAM_SUCCESS,
@@ -1728,23 +1754,19 @@ export const fetchClassUpdates = () =>
     },
     authRequired: true,
   });
-
-export const fetchMonthlyPayments = () =>
+export const fetchMonthlyPayments = (year = new Date().getFullYear()) =>
   apiRequest({
-    url: "/api/data/payments/monthly",
+    url: `/api/data/payments/monthly?year=${year}`,
     method: "GET",
     onStart: "FETCH_MONTHLY_PAYMENTS_REQUEST",
     onSuccess: (data, dispatch) => {
-      // The `data` object should contain the monthly totals from the server
       const monthlyPayments = data.totals || {};
-
       dispatch({
         type: FETCH_MONTHLY_PAYMENTS_SUCCESS,
-        payload: monthlyPayments,
+        payload: { monthlyPayments, year },
       });
     },
     onFailure: (error, dispatch) => {
-      // Dispatch an error action if the API call fails
       dispatch({
         type: "FETCH_MONTHLY_PAYMENTS_FAILURE",
         payload: error,
@@ -1754,7 +1776,6 @@ export const fetchMonthlyPayments = () =>
     authRequired: true,
   });
 
-// The new fetch monthly payments action in the requested format
 export const fetchAllPayments = () =>
   apiRequest({
     url: "/api/data/payments/all",
@@ -1856,7 +1877,6 @@ export const fetchRevisionStudents = () =>
     method: "GET",
     onStart: FETCH_REVISION_STUDENTS_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("✅ fetched revision students", data);
       const studentsFromApi = data || [];
       dispatch({
         type: FETCH_REVISION_STUDENTS_SUCCESS,
@@ -1994,7 +2014,6 @@ export const deleteLectureMaterial = (fileId, googleDriveId) =>
   });
 export const fetchRevisionClasses = (requestParams = {}) => {
   // Rename to avoid conflict
-  console.log("🔍 fetchRevisionClasses called with:", requestParams);
 
   return apiRequest({
     url: `/api/data/revisionClasses`,
@@ -2006,7 +2025,6 @@ export const fetchRevisionClasses = (requestParams = {}) => {
     },
     onStart: FETCH_REVISION_CLASSES_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("✅ API Response:", data);
       dispatch({
         type: FETCH_REVISION_CLASSES_SUCCESS,
         payload: {
@@ -2062,7 +2080,6 @@ export const fetchRevisionClasses = (requestParams = {}) => {
 
 // Search classes by topic/lesson
 export const searchStudentClasses = (requestParams = {}) => {
-  console.log("🔍 searchStudentClasses called with:", requestParams);
 
   return apiRequest({
     url: `/api/data/studentClassesSearch`,
@@ -2073,7 +2090,6 @@ export const searchStudentClasses = (requestParams = {}) => {
     },
     onStart: SEARCH_STUDENT_CLASSES_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("✅ Search Results:", data);
       dispatch({
         type: SEARCH_STUDENT_CLASSES_SUCCESS,
         payload: {
@@ -2125,7 +2141,6 @@ export const updateStudentAttendance = (classId, studentId, status) =>
   });
 
 export const fetchRevisionExams = (requestParams = {}) => {
-  console.log("🔍 fetchRevisionExams called");
 
   return apiRequest({
     url: `/api/data/revisionExams`,
@@ -2133,7 +2148,6 @@ export const fetchRevisionExams = (requestParams = {}) => {
     params: {},
     onStart: FETCH_REVISION_EXAMS_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("✅ API Response:", data);
       dispatch({
         type: FETCH_REVISION_EXAMS_SUCCESS,
         payload: {
@@ -2192,7 +2206,6 @@ export const fetchStudentClasses = () => {
     method: "GET",
     onStart: FETCH_STUDENT_CLASSES_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("✅ Student Classes Response:", data);
       dispatch({
         type: FETCH_STUDENT_CLASSES_SUCCESS,
         payload: {
@@ -2222,7 +2235,6 @@ export const fetchYearStatistics = (requestParams = {}) => {
     },
     onStart: FETCH_YEAR_STATISTICS_REQUEST,
     onSuccess: (data, dispatch) => {
-      console.log("✅ Year Statistics Response:", data);
       dispatch({
         type: FETCH_YEAR_STATISTICS_SUCCESS,
         payload: {
@@ -2647,7 +2659,6 @@ export const fetchRevisionExamConsolidation = () => {
     method: "GET",
     onStart: FETCH_EXAM_CONSOLIDATION_REQUEST, // Define this constant
     onSuccess: (data, dispatch) => {
-      console.log("✅ Exam Consolidation API Response:", data);
       dispatch({
         type: FETCH_EXAM_CONSOLIDATION_SUCCESS,
         payload: {
@@ -2690,6 +2701,208 @@ export const updateAcademyEarning = (earningId, earningData, callback) =>
         payload: { error: error.message || "Failed to update academy earning" },
       });
       throw new Error(error.message || "Failed to update academy earning");
+    },
+    authRequired: true,
+  });
+
+  // admissionActions.js
+export const uploadStudentData = (formData) =>
+  apiRequest({
+    url: "/api/admission/upload-student-data",
+    method: "POST",
+    data: formData,
+    onStart: UPLOAD_STUDENT_DATA_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: UPLOAD_STUDENT_DATA_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPLOAD_STUDENT_DATA_FAILURE,
+        payload: { error: error.message || "Failed to upload student data" },
+      });
+    },
+    authRequired: true,
+  });
+
+export const fetchUploadHistory = () =>
+  apiRequest({
+    url: "/api/admission/upload-history",
+    method: "GET",
+    onStart: FETCH_UPLOAD_HISTORY_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: FETCH_UPLOAD_HISTORY_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_UPLOAD_HISTORY_FAILURE,
+        payload: { error: error.message || "Failed to fetch upload history" },
+      });
+    },
+    authRequired: true,
+  });
+
+export const deleteUploadedFile = (fileId) =>
+  apiRequest({
+    url: `/api/admission/delete-upload/${fileId}`,
+    method: "DELETE",
+    onStart: DELETE_UPLOAD_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: DELETE_UPLOAD_SUCCESS, payload: fileId });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: DELETE_UPLOAD_FAILURE,
+        payload: { error: error.message || "Failed to delete upload" },
+      });
+    },
+    authRequired: true,
+  });
+
+// leadActions.js
+export const createLead = (leadData) =>
+  apiRequest({
+    url: "/api/admission/leads/create",
+    method: "POST",
+    data: leadData,
+    onStart: CREATE_LEAD_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: CREATE_LEAD_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: CREATE_LEAD_FAILURE,
+        payload: { error: error.message || "Failed to create lead" },
+      });
+    },
+    authRequired: true,
+  });
+
+export const fetchLeads = () =>
+  apiRequest({
+    url: "/api/admission/leads",
+    method: "GET",
+    onStart: FETCH_LEADS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: FETCH_LEADS_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_LEADS_FAILURE,
+        payload: { error: error.message || "Failed to fetch leads" },
+      });
+    },
+    authRequired: true,
+  });
+
+// Updated action to accept 'updates' object
+export const updateLeadStatus = (leadId, updates) =>
+  apiRequest({
+    url: `/api/admission/leads/${leadId}/status`,
+    method: "PUT",
+    data: updates, // Pass the object directly (e.g., { status: 'new' } or { notes: 'abc' })
+    onStart: "UPDATE_LEAD_STATUS_REQUEST", // You can keep existing types
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: "UPDATE_LEAD_STATUS_SUCCESS", payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: "UPDATE_LEAD_STATUS_FAILURE",
+        payload: { error: error.message || "Failed to update lead" },
+      });
+    },
+    authRequired: true,
+  });
+  export const addStudentSyllabus = (syllabusData) =>
+  apiRequest({
+    url: "/api/data/student/syllabus/add",
+    method: "POST",
+    data: syllabusData,
+    onStart: ADD_STUDENT_SYLLABUS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: ADD_STUDENT_SYLLABUS_SUCCESS,
+        payload: data, // Assuming backend returns the created object or success message
+      });
+      
+      // Optional: If you have a list of syllabus updates in Redux, you might want to fetch it again
+      // dispatch(fetchSyllabusUpdates()); 
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error adding student syllabus:", error);
+      const errorMessage =
+        error.error || error.message || "Failed to add student syllabus";
+      
+      dispatch({
+        type: ADD_STUDENT_SYLLABUS_FAILURE,
+        payload: { error: errorMessage },
+      });
+      
+      // Crucial: Re-throw error so component can catch it and show snackbar/stop loading
+      throw new Error(errorMessage);
+    },
+    authRequired: true,
+  });
+  export const fetchStudentSyllabus = (studentId) =>
+  apiRequest({
+    url: `/api/data/student/syllabus/${studentId}`,
+    method: "GET",
+    onStart: FETCH_STUDENT_SYLLABUS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_STUDENT_SYLLABUS_SUCCESS,
+        payload: data,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching syllabus history:", error);
+      dispatch({
+        type: FETCH_STUDENT_SYLLABUS_FAILURE,
+        payload: { error: error.message },
+      });
+    },
+    authRequired: true,
+  });
+
+// Fetch Notifications Action
+export const fetchNotifications = (userId) =>
+  apiRequest({
+    url: `/api/notifications/unmarked/${userId}`,
+    method: "GET",
+    onStart: FETCH_NOTIFICATIONS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_NOTIFICATIONS_SUCCESS,
+        payload: data,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching notifications:", error);
+      dispatch({
+        type: FETCH_NOTIFICATIONS_FAILURE,
+        payload: { error: error.message },
+      });
+    },
+    authRequired: true,
+  });
+
+// Mark Read Action
+export const markNotificationRead = (notificationId) =>
+  apiRequest({
+    url: `/api/notifications/mark-read/${notificationId}`,
+    method: "PUT",
+    onStart: MARK_NOTIFICATION_READ_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: MARK_NOTIFICATION_READ_SUCCESS,
+        payload: { id: notificationId }, // Pass ID to reducer to update state locally
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error marking notification read:", error);
+      dispatch({
+        type: MARK_NOTIFICATION_READ_FAILURE,
+        payload: { error: error.message },
+      });
     },
     authRequired: true,
   });

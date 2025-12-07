@@ -73,7 +73,6 @@ const AddAcademyEarning = () => {
 
   useEffect(() => {
     if (isUpdating && earningToEdit) {
-      console.log("Setting form data from earningToEdit:", earningToEdit);
       setFormData({
         tutorName: earningToEdit.tutorName || "",
         studentNames: earningToEdit.studentNames || "",
@@ -114,8 +113,7 @@ const AddAcademyEarning = () => {
   };
 
   const handleConfirmSubmit = async () => {
-    console.log("Form Data:", formData);
-    console.log("isUpdating:", isUpdating);
+
 
     if (isUpdating) {
       // Compare formData with existing data
@@ -128,7 +126,6 @@ const AddAcademyEarning = () => {
         new Date(formData.date).toISOString().slice(0, 10) !==
           new Date(earningToEdit.date).toISOString().slice(0, 10);
 
-      console.log("Has changes:", hasChanged);
 
       if (!hasChanged) {
         setSnackbar({
@@ -156,11 +153,9 @@ const AddAcademyEarning = () => {
       lastModifiedBy: user.subject,
     };
 
-    console.log("Final payload:", earningPayload);
 
     try {
       if (isUpdating) {
-        console.log("Dispatching updateAcademyEarning with ID:", earningToEdit.id);
         await dispatch(
           updateAcademyEarning(earningToEdit.id, earningPayload)
         );
@@ -174,7 +169,6 @@ const AddAcademyEarning = () => {
           ...earningPayload, 
           createdBy: user.subject 
         };
-        console.log("Dispatching addAcademyEarning");
         await dispatch(addAcademyEarning(finalPayload));
         setSnackbar({
           open: true,
