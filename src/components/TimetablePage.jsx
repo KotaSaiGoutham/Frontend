@@ -98,13 +98,72 @@ import { useSelector, useDispatch } from "react-redux";
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
 import { getDateFromTimetableItem } from "../mockdata/function";
 import ExcelDownloadButton from "./customcomponents/ExcelDownloadButton";
+
+// --- UPDATED SORTING FUNCTION ---
+const sortTimetableList = (timetableList) => {
+  return timetableList.sort((a, b) => {
+    // 1. Get the Date objects
+    const dateA = getDateFromTimetableItem(a);
+    const dateB = getDateFromTimetableItem(b);
+
+    // FIX: Normalize to Midnight (Start of Day). 
+    // We only want to compare the Calendar Date, not the time inside the ISO string.
+    const dayA = startOfDay(dateA).getTime();
+    const dayB = startOfDay(dateB).getTime();
+
+    // Only return here if they are truly different DAYS
+    if (dayA !== dayB) {
+      return dayA - dayB;
+    }
+
+    // 2. Sort by Time String (Chronological: 01:00 AM -> 11:00 PM)
+    const getStartTimeValue = (timeStr) => {
+      // Handle empty/null times by pushing them to the end
+      if (!timeStr || typeof timeStr !== 'string') return 9999999999999;
+
+      try {
+        // Extract start time part (e.g., "05:00 AM" from "05:00 AM to 06:00 AM")
+        const [startTimePart] = timeStr.split(" to ");
+        if (!startTimePart) return 9999999999999;
+
+        // Parse time against a fixed reference date (Jan 1, 2000)
+        // This ensures 05:00 AM is always earlier than 05:00 PM regardless of the actual date
+        const referenceDate = new Date(2000, 0, 1); 
+        
+        // Try parsing "hh:mm a" (12-hour format with AM/PM)
+        let parsedTime = parse(startTimePart.trim(), "hh:mm a", referenceDate);
+        
+        // Fallback for missing space "05:00AM"
+        if (!isValid(parsedTime)) {
+           parsedTime = parse(startTimePart.trim(), "hh:mma", referenceDate);
+        }
+
+        // Fallback for 24hr format "17:00"
+        if (!isValid(parsedTime)) {
+          parsedTime = parse(startTimePart.trim(), "HH:mm", referenceDate);
+        }
+
+        if (isValid(parsedTime)) {
+          return parsedTime.getTime();
+        }
+
+        return 9999999999999;
+      } catch (error) {
+        return 9999999999999;
+      }
+    };
+
+    return getStartTimeValue(a.Time) - getStartTimeValue(b.Time);
+  });
+};
+
 const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const location = useLocation(); // ✅ Add useLocation hook
+  const location = useLocation();
 
   const {
-    timetables: manualTimetables, // Renamed from 'timetables' for clarity with autoTimetables
+    timetables: manualTimetables,
     loading: classesLoading,
     error: classesError,
   } = useSelector((state) => state.classes);
@@ -114,14 +173,12 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     error: studentsError,
   } = useSelector((state) => state.students);
   const {
-    timetables: autoTimetables, // NEW: This will hold auto-generated timetables
+    timetables: autoTimetables,
     loading: autoTimetablesLoading,
-    error: autoTimetablesError,
-    hasSavedToday: autoTimetablesHasSavedToday, // NEW: Track if auto-timetables were saved for today
-  } = useSelector((state) => state.autoTimetables); // This is your NEW autoTimetables reducer
+  } = useSelector((state) => state.autoTimetables);
   const { user } = useSelector((state) => state.auth);
-  const [generatedTimetables, setGeneratedTimetables] = useState([]);
 
+  const [generatedTimetables, setGeneratedTimetables] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDurationType, setFilterDurationType] = useState("Daily");
   const [filterDate, setFilterDate] = useState(new Date());
@@ -166,20 +223,13 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
   useEffect(() => {
     if (!user || !user.id || !students || students.length === 0) {
-      console.warn(
-        "User, students, or data is not ready for initial timetable generation."
-      );
       return;
     }
 
-    // Determine the date to use
     let selectedDate;
     if (location.state?.date) {
       selectedDate = parse(location.state.date, "dd/MM/yyyy", new Date());
       if (!isValid(selectedDate)) {
-        console.error(
-          "Invalid date from location.state. Falling back to today."
-        );
         selectedDate = new Date();
       }
     } else {
@@ -188,8 +238,10 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
     const dateStrForBackend = format(selectedDate, "yyyy-MM-dd");
     setFilterDate(selectedDate);
-    handleDateChange(dateStrForBackend);
+    // Avoid double calling logic inside handleDateChange immediately if not needed
+    // handleDateChange(dateStrForBackend); 
   }, [dispatch, user, students, location.state]);
+
   const calculateDuration = useCallback((timeString) => {
     try {
       const [startTimeStr, endTimeStr] = timeString.split(" to ");
@@ -254,13 +306,11 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
       permissionFilteredTimetables = [];
     }
 
-    // --- REVISED: Filter by Revision Program Students ---
     if (
       isRevisionProgramJEEMains2026Student &&
       students &&
       students.length > 0
     ) {
-      // Create a Set of revision program student IDs for faster lookup
       const revisionStudentIds = new Set(
         students
           .filter(
@@ -269,15 +319,11 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
           .map((student) => student.id)
       );
 
-      // Filter timetables to only include revision prograapstudents
       permissionFilteredTimetables = permissionFilteredTimetables.filter(
         (item) => {
-          // Check if the timetable item has a studentId that matches a revision program student
           if (item.studentId && revisionStudentIds.has(item.studentId)) {
             return true;
           }
-
-          // Fallback: Check by student name if studentId is not available
           if (item.Student && students) {
             const matchingStudent = students.find(
               (student) =>
@@ -286,14 +332,10 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
             );
             return matchingStudent !== undefined;
           }
-
           return false;
         }
       );
     }
-    // REMOVED the else if condition - when isRevisionProgramJEEMains2026Student is false,
-    // we don't filter anything (show all timetables including revision and regular students)
-    // --- END of Revision Program Filter ---
 
     let currentTimetables = [...permissionFilteredTimetables];
     const now = new Date();
@@ -413,61 +455,10 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
       };
     });
 
-    // FIXED SORTING LOGIC - Use the existing getDateFromTimetableItem function
-    currentTimetables.sort((a, b) => {
-  // First, sort by date
-  const dateA = getDateFromTimetableItem(a);
-  const dateB = getDateFromTimetableItem(b);
+    // --- APPLY SORTING HERE ---
+    // This ensures the data is sorted by time just before being returned to the component
+    return sortTimetableList(currentTimetables);
 
-  if (dateA.getTime() !== dateB.getTime()) {
-    return dateA.getTime() - dateB.getTime();
-  }
-
-  // Then sort by time - IMPROVED VERSION
-  const getTimeValue = (item) => {
-    if (!item.Time) return 0;
-
-    try {
-      // Extract start time from "HH:MM AM/PM to HH:MM AM/PM" format
-      const [startTimeStr] = item.Time.split(" to ");
-      if (!startTimeStr) return 0;
-
-      // Use a fixed base date for consistent time comparison
-      const baseDate = new Date(2020, 0, 1, 0, 0, 0, 0);
-      
-      // Try 12-hour format first (most common in your data)
-      const timeDate = parse(startTimeStr.trim(), "hh:mm a", baseDate);
-      
-      if (isValid(timeDate)) {
-        return timeDate.getTime();
-      }
-
-      // Try 24-hour format as fallback
-      const time24Date = parse(startTimeStr.trim(), "HH:mm", baseDate);
-      if (isValid(time24Date)) {
-        return time24Date.getTime();
-      }
-
-      // Try without leading zero (e.g., "9:00 AM")
-      const timeNoLeadingZero = parse(startTimeStr.trim(), "h:mm a", baseDate);
-      if (isValid(timeNoLeadingZero)) {
-        return timeNoLeadingZero.getTime();
-      }
-
-    } catch (error) {
-      console.warn("Invalid Time format for sorting:", item.Time, error);
-    }
-
-    return 0; // Return 0 for invalid times (they'll sort to the beginning)
-  };
-
-  const timeA = getTimeValue(a);
-  const timeB = getTimeValue(b);
-
-  return timeA - timeB;
-});
-
-    return currentTimetables;
   }, [
     manualTimetables,
     autoTimetables,
@@ -479,7 +470,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     currentUserSubject,
     canAccessAll,
     calculateDuration,
-    isRevisionProgramJEEMains2026Student, // Add this to dependencies
+    isRevisionProgramJEEMains2026Student,
   ]);
 
   const handleSearchChange = (e) => {
@@ -497,7 +488,6 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
   const handleEditTimetable = (timetableItem) => {
     const isFromAutoTimetables = timetableItem.isAutoGenerated === true;
-
     navigate("/add-timetable", {
       state: {
         timetableToEdit: {
@@ -517,45 +507,42 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     setOpenDeleteConfirm(true);
   };
 
-const handleTopicChange = useCallback(
-  (timetableId, newTopicName, newTopicId) => {
-    const timetableToUpdate = combinedAndFilteredTimetables.find(
-      (item) => item.id === timetableId
-    );
+  const handleTopicChange = useCallback(
+    (timetableId, newTopicName, newTopicId) => {
+      const timetableToUpdate = combinedAndFilteredTimetables.find(
+        (item) => item.id === timetableId
+      );
 
-    if (timetableToUpdate) {
-      const payload = {
-        id: timetableToUpdate.id,
-        Day: timetableToUpdate.Day,
-        Faculty: timetableToUpdate.Faculty || user.name,
-        Subject: timetableToUpdate.Subject,
-        Time: timetableToUpdate.Time,
-        Student: timetableToUpdate.Student,
-        isAutoGenerated: timetableToUpdate.isAutoGenerated,
-        Topic: newTopicName,
-        topicId: newTopicId,
-      };
-      
-      // Dispatch the update
-      dispatch(updateAutoTimetableEntry(payload)).then(() => {
-        // Force re-sort by updating filterDate (triggers useMemo)
-        setFilterDate(new Date(filterDate));
-      });
-    } else {
-      console.warn(`Timetable with ID ${timetableId} not found for update.`);
-    }
-  },
-  [dispatch, combinedAndFilteredTimetables, user, filterDate]
-);
+      if (timetableToUpdate) {
+        const payload = {
+          id: timetableToUpdate.id,
+          Day: timetableToUpdate.Day,
+          Faculty: timetableToUpdate.Faculty || user.name,
+          Subject: timetableToUpdate.Subject,
+          Time: timetableToUpdate.Time,
+          Student: timetableToUpdate.Student,
+          isAutoGenerated: timetableToUpdate.isAutoGenerated,
+          Topic: newTopicName,
+          topicId: newTopicId,
+        };
+        
+        dispatch(updateAutoTimetableEntry(payload)).then(() => {
+          setFilterDate(new Date(filterDate));
+        });
+      }
+    },
+    [dispatch, combinedAndFilteredTimetables, user, filterDate]
+  );
+
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
       if (timetableToDelete.isAutoGeneratedInDb) {
-        await dispatch(deleteAutoTimetable(timetableToDelete.id)); // Use new action
+        await dispatch(deleteAutoTimetable(timetableToDelete.id)); 
         setSnackbarSeverity("success");
         setSnackbarMessage("Auto-generated timetable deleted successfully!");
       } else {
-        await dispatch(deleteTimetable(timetableToDelete.id)); // Use existing action
+        await dispatch(deleteTimetable(timetableToDelete.id));
         await dispatch(
           fetchUpcomingClasses({
             date: filterDate.toLocaleDateString("en-GB"),
@@ -584,6 +571,7 @@ const handleTopicChange = useCallback(
     }
     setSnackbarOpen(false);
   };
+
   if (classesLoading || studentsLoading || isGeneratingAuto) {
     return (
       <Fade in={true} timeout={1000}>
@@ -669,7 +657,6 @@ const handleTopicChange = useCallback(
   };
 
   const getPdfTableRows = () => {
-    // Only include non-auto-generated timetables for PDF, as proposed ones aren't saved yet
     return combinedAndFilteredTimetables.map((item) => {
       const row = [item.Student, item.Topic, item.Day];
       if (showSubjectColumn) {
@@ -686,6 +673,7 @@ const handleTopicChange = useCallback(
       return row;
     });
   };
+
   const getPdfTitle = () => {
     const pdfTimetables = combinedAndFilteredTimetables.filter(
       (item) => !item.isAutoGenerated
@@ -708,32 +696,32 @@ const handleTopicChange = useCallback(
     }
     return "General Timetable Report";
   };
+
   const isLoading =
     classesLoading ||
     studentsLoading ||
     autoTimetablesLoading ||
     isGeneratingAuto ||
     isDeleting;
+
   const { sumHours, sumFee } = combinedAndFilteredTimetables.reduce(
     (acc, item) => {
-      // Calculate duration safely
       const duration = parseFloat(calculateDuration(item.Time));
       if (!isNaN(duration)) {
         acc.sumHours += duration;
       }
 
-      // Extract fee, remove '₹', and convert to number
       if (item.monthlyFeePerClass && item.monthlyFeePerClass !== "N/A") {
         const feeValue = parseFloat(item.monthlyFeePerClass.replace("₹", ""));
-        // Multiply the fee by the duration and add to the sum
         if (!isNaN(feeValue) && !isNaN(duration)) {
           acc.sumFee += feeValue * duration;
         }
       }
       return acc;
     },
-    { sumHours: 0, sumFee: 0 } // Initial accumulator values
+    { sumHours: 0, sumFee: 0 }
   );
+
   const missingTopicItems = combinedAndFilteredTimetables.filter(
     (item) => !item.Topic
   );
@@ -749,8 +737,8 @@ const handleTopicChange = useCallback(
   const subject = user?.isPhysics ? "Physics" : "Chemistry";
   const now = new Date();
   const current = {
-    month: now.toLocaleString("default", { month: "long" }), // e.g., "July"
-    year: now.getFullYear(), // e.g., 2025
+    month: now.toLocaleString("default", { month: "long" }),
+    year: now.getFullYear(),
   };
   const Exceltitle = `Electron Academy ${subject} class details ${current?.month} ${current?.year}`;
 
@@ -773,11 +761,9 @@ const handleTopicChange = useCallback(
 
     if (generated.length > 0) {
       try {
-        // Use the same backend format for both calls
         const dateStrForBackend = format(selectedDate, "yyyy-MM-dd");
         await dispatch(saveOrFetchAutoTimetables(dateStrForBackend, generated));
 
-        // Convert backend format to en-GB format for fetchUpcomingClasses
         const [year, month, day] = dateStrForBackend.split("-");
         const formattedDate = `${day}/${month}/${year}`;
         await dispatch(fetchUpcomingClasses({ date: formattedDate }));
@@ -786,6 +772,7 @@ const handleTopicChange = useCallback(
       }
     }
   };
+
   const handleNavigatetoStudentData = (studentId) => {
     const student = students.find((item) => item.id === studentId);
     if (student) {
@@ -794,6 +781,7 @@ const handleTopicChange = useCallback(
       });
     }
   };
+
   return (
     <Box
       sx={{
@@ -809,191 +797,181 @@ const handleTopicChange = useCallback(
           <Typography sx={{ ml: 2 }}>Loading timetables...</Typography>
         </Box>
       )}
-   {/* Consolidated Header Card with Filters and Downloads */}
-{!isRevisionProgramJEEMains2026Student && (
-  <Slide
-    direction="down"
-    in={true}
-    mountOnEnter
-    unmountOnExit
-    timeout={500}
-  >
-    <Paper
-      elevation={6}
-      sx={{
-        p: 1,
-        borderRadius: "12px",
-        mb: 1
-      }}
-    >
-      {/* Main Content Row */}
-      <Box sx={{ 
-        display: "flex", 
-        alignItems: "flex-start", 
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        gap: 3,
-        mb: 3
-      }}>
-        {/* Left Side - Icon and Basic Info */}
-        <Box sx={{ display: "flex", alignItems: "flex-start", flex: 1, minWidth: 250 }}>
-          <FaCalendarAlt
-            style={{
-              marginRight: "15px",
-              fontSize: "2rem",
-              color: "#1976d2",
-              marginTop: "4px"
-            }}
-          />
-          <Box>
-            <Typography
-              variant="h6"
-              component="h1"
-              sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
-            >
-              Timetable Management
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Today is{" "}
-              <span className="current-date">
-                {format(new Date(), "EEEE, MMMM dd, yyyy")}
-              </span>
-            </Typography>
-          </Box>
-        </Box>
 
-        {/* Right Side - Action Buttons */}
-        <Box sx={{ 
-          display: "flex", 
-          flexDirection: { xs: "column", sm: "row" },
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: 2,
-          flex: 1,
-          justifyContent: "flex-end"
-        }}>
-          {combinedAndFilteredTimetables.length > 0 && (
-            <Tooltip
-              title={tooltipMessage}
-              placement="top"
-              slotProps={{
-                popper: {
-                  sx: {
-                    "& .MuiTooltip-tooltip": {
-                      backgroundColor: hasMissingTopics
-                        ? "#d32f2f"
-                        : "#333",
-                      color: "white",
-                      fontSize: "0.9rem",
-                      padding: "10px 15px",
-                      borderRadius: "6px",
-                      boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-                      maxWidth: "350px",
-                      textAlign: "left",
-                      lineHeight: "1.4",
-                      fontWeight: hasMissingTopics ? "bold" : "normal",
-                    },
-                    "& .MuiTooltip-arrow": {
-                      color: hasMissingTopics ? "#d32f2f" : "#333",
-                    },
-                  },
-                },
-              }}
-              arrow
-            >
-              <PdfDownloadButton
-                title={getPdfTitle()}
-                headers={getPdfTableHeaders()}
-                rows={getPdfTableRows()}
-                buttonLabel="Download PDF"
-                filename={`Timetable_Report_${getTodayDateForFilename()}.pdf`}
-                reportDate={new Date()}
-                // disabled={hasMissingTopics}
-                totalHours={sumHours}
-                totalFee={sumFee}
-                size="small"
-              />
-            </Tooltip>
-          )}
-
-          <ExcelDownloadButton
-            data={students}
-            filename="Electron_Academy_Student_Report.xlsx"
-            buttonLabel="Download Excel"
-            buttonProps={{ 
-              variant: "outlined", 
-              color: "success",
-              size: "small"
-            }}
-            excelReportTitle={Exceltitle}
-          />
-
-          <MuiButton
-            variant="contained"
-            startIcon={<FaPlusCircle />}
-            onClick={handleAddTimetableClick}
-            sx={{
-              bgcolor: "#1976d2",
-              "&:hover": { bgcolor: "#1565c0" },
-              borderRadius: "8px",
-              px: 2,
-              py: 1,
-              minWidth: "auto",
-              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-            }}
-            size="small"
-          >
-            Add Timetable
-          </MuiButton>
-        </Box>
-      </Box>
-
-      {/* Filters Row */}
-      <Box sx={{ 
-        display: "flex", 
-        gap: 2, 
-        flexWrap: "wrap",
-        alignItems: "center",
-        pt: 2,
-        borderTop: "1px solid rgba(0, 0, 0, 0.08)"
-      }}>
-        {/* Search Input */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            minWidth: { xs: "100%", sm: "200px" },
-            maxWidth: { xs: "100%", sm: "300px" },
-          }}
+      {!isRevisionProgramJEEMains2026Student && (
+        <Slide
+          direction="down"
+          in={true}
+          mountOnEnter
+          unmountOnExit
+          timeout={500}
         >
-          <MuiInput
-            label="Search"
-            icon={FaSearch}
-            name="searchTerm"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            placeholder="Search by faculty, subject, topic, student..."
-            size="small"
-          />
-        </Box>
+          <Paper
+            elevation={6}
+            sx={{
+              p: 1,
+              borderRadius: "12px",
+              mb: 1
+            }}
+          >
+            <Box sx={{ 
+              display: "flex", 
+              alignItems: "flex-start", 
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 3,
+              mb: 3
+            }}>
+              <Box sx={{ display: "flex", alignItems: "flex-start", flex: 1, minWidth: 250 }}>
+                <FaCalendarAlt
+                  style={{
+                    marginRight: "15px",
+                    fontSize: "2rem",
+                    color: "#1976d2",
+                    marginTop: "4px"
+                  }}
+                />
+                <Box>
+                  <Typography
+                    variant="h6"
+                    component="h1"
+                    sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
+                  >
+                    Timetable Management
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Today is{" "}
+                    <span className="current-date">
+                      {format(new Date(), "EEEE, MMMM dd, yyyy")}
+                    </span>
+                  </Typography>
+                </Box>
+              </Box>
 
-        {/* Date Picker */}
-        <Box sx={{ minWidth: { xs: "100%", sm: "180px" } }}>
-          <MuiDatePicker
-            label="Filter by Date"
-            icon={FaCalendarAlt}
-            name="filterDate"
-            value={format(filterDate, "yyyy-MM-dd")}
-            onChange={handleDateChange}
-            size="small"
-          />
-        </Box>
+              <Box sx={{ 
+                display: "flex", 
+                flexDirection: { xs: "column", sm: "row" },
+                alignItems: { xs: "flex-start", sm: "center" },
+                gap: 2,
+                flex: 1,
+                justifyContent: "flex-end"
+              }}>
+                {combinedAndFilteredTimetables.length > 0 && (
+                  <Tooltip
+                    title={tooltipMessage}
+                    placement="top"
+                    slotProps={{
+                      popper: {
+                        sx: {
+                          "& .MuiTooltip-tooltip": {
+                            backgroundColor: hasMissingTopics
+                              ? "#d32f2f"
+                              : "#333",
+                            color: "white",
+                            fontSize: "0.9rem",
+                            padding: "10px 15px",
+                            borderRadius: "6px",
+                            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+                            maxWidth: "350px",
+                            textAlign: "left",
+                            lineHeight: "1.4",
+                            fontWeight: hasMissingTopics ? "bold" : "normal",
+                          },
+                          "& .MuiTooltip-arrow": {
+                            color: hasMissingTopics ? "#d32f2f" : "#333",
+                          },
+                        },
+                      },
+                    }}
+                    arrow
+                  >
+                    <PdfDownloadButton
+                      title={getPdfTitle()}
+                      headers={getPdfTableHeaders()}
+                      rows={getPdfTableRows()}
+                      buttonLabel="Download PDF"
+                      filename={`Timetable_Report_${getTodayDateForFilename()}.pdf`}
+                      reportDate={new Date()}
+                      totalHours={sumHours}
+                      totalFee={sumFee}
+                      size="small"
+                    />
+                  </Tooltip>
+                )}
 
-        {/* Optional: Add more compact filters here if needed */}
-      </Box>
-    </Paper>
-  </Slide>
-)}
+                <ExcelDownloadButton
+                  data={students}
+                  filename="Electron_Academy_Student_Report.xlsx"
+                  buttonLabel="Download Excel"
+                  buttonProps={{ 
+                    variant: "outlined", 
+                    color: "success",
+                    size: "small"
+                  }}
+                  excelReportTitle={Exceltitle}
+                />
 
-      {/* Timetable Table with Slide animation */}
+                <MuiButton
+                  variant="contained"
+                  startIcon={<FaPlusCircle />}
+                  onClick={handleAddTimetableClick}
+                  sx={{
+                    bgcolor: "#1976d2",
+                    "&:hover": { bgcolor: "#1565c0" },
+                    borderRadius: "8px",
+                    px: 2,
+                    py: 1,
+                    minWidth: "auto",
+                    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+                  }}
+                  size="small"
+                >
+                  Add Timetable
+                </MuiButton>
+              </Box>
+            </Box>
+
+            <Box sx={{ 
+              display: "flex", 
+              gap: 2, 
+              flexWrap: "wrap",
+              alignItems: "center",
+              pt: 2,
+              borderTop: "1px solid rgba(0, 0, 0, 0.08)"
+            }}>
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  minWidth: { xs: "100%", sm: "200px" },
+                  maxWidth: { xs: "100%", sm: "300px" },
+                }}
+              >
+                <MuiInput
+                  label="Search"
+                  icon={FaSearch}
+                  name="searchTerm"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder="Search by faculty, subject, topic, student..."
+                  size="small"
+                />
+              </Box>
+
+              <Box sx={{ minWidth: { xs: "100%", sm: "180px" } }}>
+                <MuiDatePicker
+                  label="Filter by Date"
+                  icon={FaCalendarAlt}
+                  name="filterDate"
+                  value={format(filterDate, "yyyy-MM-dd")}
+                  onChange={handleDateChange}
+                  size="small"
+                />
+              </Box>
+            </Box>
+          </Paper>
+        </Slide>
+      )}
+
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
         <Paper
           elevation={6}
@@ -1112,15 +1090,13 @@ const handleTopicChange = useCallback(
                             handleNavigatetoStudentData(item.studentId)
                           }
                           sx={{
-                                textAlign: "left", // This is the key line
+                            textAlign: "left",
                             cursor: "pointer",
-                            textDecoration: "underline", // This line is now active by default
-                            color: "#1976d2", // A standard blue to signify a link
+                            textDecoration: "underline",
+                            color: "#1976d2",
                             fontWeight: 500,
                             "&:hover": {
-                              // You can add a different effect on hover, like a color change
                               color: "#0d47a1",
-                              // or no change to the underline, since it's already there
                             },
                           }}
                         >
@@ -1226,7 +1202,7 @@ const handleTopicChange = useCallback(
                                   variant="caption"
                                   sx={{
                                     background:
-                                      "linear-gradient(to right, #bbdefb, #64b5f6)", // Blue
+                                      "linear-gradient(to right, #bbdefb, #64b5f6)",
 
                                     color: "#6d4c41",
                                     px: 1,
@@ -1342,8 +1318,8 @@ const handleTopicChange = useCallback(
                 <TableFooter>
                   <TableRow
                     sx={{
-                      background: "rgba(240, 248, 255, 0.75)", // soft blue with transparency
-                      backdropFilter: "blur(4px)", // glass effect
+                      background: "rgba(240, 248, 255, 0.75)",
+                      backdropFilter: "blur(4px)",
                       borderTop: "2px solid #90caf9",
                       "& > td": {
                         fontWeight: 600,
@@ -1354,11 +1330,10 @@ const handleTopicChange = useCallback(
                         transition: "all 0.3s ease",
                       },
                       "&:hover > td": {
-                        backgroundColor: "rgba(227, 242, 253, 0.4)", // subtle hover glow
+                        backgroundColor: "rgba(227, 242, 253, 0.4)",
                       },
                     }}
                   >
-                    {/* Total Label Cell */}
                     <TableCell
                       colSpan={showSubjectColumn ? 7 : 5}
                       align="right"
@@ -1393,7 +1368,6 @@ const handleTopicChange = useCallback(
                       </Typography>
                     </TableCell>
 
-                    {/* Total Hours */}
                     <TableCell align="center">
                       <Typography
                         variant="h6"
@@ -1411,13 +1385,12 @@ const handleTopicChange = useCallback(
                           style={{
                             fontSize: "1.4rem",
                             color: "#388e3c",
-                            marginLeft: "4px", // Ensures space between number and icon
+                            marginLeft: "4px",
                           }}
                         />
                       </Typography>
                     </TableCell>
 
-                    {/* Total Fee */}
                     <TableCell align="center">
                       <Typography
                         variant="h6"
@@ -1440,12 +1413,10 @@ const handleTopicChange = useCallback(
                       </Typography>
                     </TableCell>
 
-                    {/* Placeholder for summary or actions */}
                     <TableCell
                       align="center"
                       sx={{ color: "#546e7a", fontStyle: "italic" }}
                     >
-                      {/* Optionally: `Classes: X` or leave empty */}
                     </TableCell>
                   </TableRow>
                 </TableFooter>
@@ -1547,7 +1518,6 @@ const handleTopicChange = useCallback(
         </DialogActions>
       </Dialog>
 
-      {/* General Snackbar for messages */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}

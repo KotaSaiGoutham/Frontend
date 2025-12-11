@@ -77,7 +77,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
   const facultyNavItems = [
     { name: "Dashboard", path: "/dashboard", icon: <FaHome /> },
     {
-      name: "JEE Mains(2026) students",
+      name: "JEE (2026)",
       path: "/revision-students",
       icon: <FaGraduationCap />,
     },
@@ -109,12 +109,12 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
     { name: "Reports", path: "/reports", icon: <FaFileAlt /> },
     { name: "Analytics", path: "/analytics", icon: <FaChartBar /> },
     {
-      name: "Upload Study Materials",
+      name: "Study Materials",
       path: "/upload-study-materials",
       icon: <FaFileUpload />,
     },
     {
-      name: "Upload Question Papers",
+      name: "Question Papers",
       path: "/upload-question-papers",
       icon: <FaFileAlt />,
     },
