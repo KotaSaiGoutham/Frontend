@@ -82,7 +82,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   },
 }));
 
-const HeaderCell = styled(TableCell)(({ theme }) => ({
+export const HeaderCell = styled(TableCell)(({ theme }) => ({
   background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
   color: "white",
   fontWeight: 700,
@@ -116,7 +116,7 @@ const FooterCell = styled(TableCell)(({ theme }) => ({
   color: "#1e293b",
 }));
 
-const StudentHeaderGroup = styled(TableRow)(({ theme }) => ({
+export const StudentHeaderGroup = styled(TableRow)(({ theme }) => ({
   "& > th": {
     background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
     borderRight: "1px solid #475569",

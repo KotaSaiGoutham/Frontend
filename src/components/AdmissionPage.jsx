@@ -26,8 +26,8 @@ import {
   Stack,
   TablePagination,
   Avatar,
-  ListItemIcon,
-  ListItemText
+  Checkbox,
+  FormControlLabel
 } from "@mui/material";
 import {
   FaUserPlus,
@@ -36,13 +36,10 @@ import {
   FaFilter,
   FaSearch,
   FaDatabase,
-  FaFileCsv,
   FaFileExcel,
-  FaFile,
   FaEdit,
   FaCheck,
   FaTimes,
-  FaStar,
   FaPhoneAlt,
   FaThumbsUp,
   FaGraduationCap,
@@ -50,7 +47,8 @@ import {
   FaDownload,
   FaGlobe,
   FaWhatsapp,
-  FaQuestionCircle
+  FaQuestionCircle,
+  FaBell // Added for Reminder Icon
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
@@ -63,27 +61,23 @@ import {
   updateLeadStatus,
 } from "../redux/actions";
 
+// Import Custom Date Picker
+import { MuiDateTimePicker } from "./customcomponents/MuiCustomFormFields";
+
 import "./AdmissionPage.css"; 
 
 // --- STATUS CONFIGURATION ---
 const getStatusConfig = (status) => {
   switch (status) {
-    case "new":
-      return { icon: <FaStar />, color: "#2196f3", bg: "#e3f2fd", label: "New Lead" };
-    case "contacted":
-      return { icon: <FaPhoneAlt />, color: "#00bcd4", bg: "#e0f7fa", label: "Contacted" };
-    case "interested":
-      return { icon: <FaThumbsUp />, color: "#ff9800", bg: "#fff3e0", label: "Interested" };
-    case "enrolled":
-      return { icon: <FaGraduationCap />, color: "#4caf50", bg: "#e8f5e9", label: "Enrolled" };
-    case "rejected":
-      return { icon: <FaBan />, color: "#f44336", bg: "#ffebee", label: "Rejected" };
-    default:
-      return { icon: <FaUsers />, color: "#757575", bg: "#f5f5f5", label: status };
+    case "new": return { icon: <FaUsers />, color: "#2196f3", bg: "#e3f2fd", label: "New Lead" };
+    case "contacted": return { icon: <FaPhoneAlt />, color: "#00bcd4", bg: "#e0f7fa", label: "Contacted" };
+    case "interested": return { icon: <FaThumbsUp />, color: "#ff9800", bg: "#fff3e0", label: "Interested" };
+    case "enrolled": return { icon: <FaGraduationCap />, color: "#4caf50", bg: "#e8f5e9", label: "Enrolled" };
+    case "rejected": return { icon: <FaBan />, color: "#f44336", bg: "#ffebee", label: "Rejected" };
+    default: return { icon: <FaUsers />, color: "#757575", bg: "#f5f5f5", label: status };
   }
 };
 
-// --- SOURCE CONFIGURATION (Helper for Source Icons) ---
 const getSourceIcon = (source) => {
   if (!source) return <FaQuestionCircle size={14} />;
   const s = source.toLowerCase();
@@ -100,22 +94,30 @@ const AdmissionPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   
-  // Updated State with 'source'
+  // NEW: Added reminder fields to newLead state
   const [newLead, setNewLead] = useState({ 
     studentName: "", 
     phoneNumber: "", 
     status: "new", 
     source: "Urban Pro", 
-    notes: "" 
+    notes: "",
+    isReminder: false,
+    reminderTime: null 
   });
   
+  // NEW: Replaced simple editing state with object to hold reminder info
+  const [editState, setEditState] = useState({
+    id: null,
+    text: "",
+    isReminder: false,
+    reminderTime: null
+  });
+
   const [leadDialogOpen, setLeadDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [editingNoteId, setEditingNoteId] = useState(null);
-  const [tempNote, setTempNote] = useState("");
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const [viewDataOpen, setViewDataOpen] = useState(false);
 
@@ -134,20 +136,40 @@ const AdmissionPage = () => {
   };
 
   const startEditingNote = (lead) => {
-    setEditingNoteId(lead.id);
-    setTempNote(lead.notes || "");
+    setEditState({
+      id: lead.id,
+      text: lead.notes || "",
+      isReminder: false,
+      reminderTime: null
+    });
   };
 
   const cancelEditingNote = () => {
-    setEditingNoteId(null);
-    setTempNote("");
+    setEditState({
+      id: null,
+      text: "",
+      isReminder: false,
+      reminderTime: null
+    });
   };
 
   const saveNote = async (leadId) => {
+    // Validation: If reminder is checked, time must be selected
+    if (editState.isReminder && !editState.reminderTime) {
+      showSnackbar("Please select a date & time for the reminder", "error");
+      return;
+    }
+
     try {
-      await dispatch(updateLeadStatus(leadId, { notes: tempNote }));
-      showSnackbar("Note updated successfully", "success");
-      setEditingNoteId(null);
+      const updates = { 
+        notes: editState.text,
+        // Only send reminder data if checkbox is checked
+        ...(editState.isReminder && { reminderTime: editState.reminderTime })
+      };
+
+      await dispatch(updateLeadStatus(leadId, updates));
+      showSnackbar(editState.isReminder ? "Note & Reminder updated!" : "Note updated successfully", "success");
+      cancelEditingNote();
       dispatch(fetchLeads());
     } catch (error) {
       showSnackbar("Failed to update note", "error");
@@ -155,11 +177,8 @@ const AdmissionPage = () => {
   };
 
   const handleDownloadFile = (fileUrl) => {
-    if (fileUrl) {
-      window.open(fileUrl, "_blank");
-    } else {
-      showSnackbar("File URL not found", "error");
-    }
+    if (fileUrl) window.open(fileUrl, "_blank");
+    else showSnackbar("File URL not found", "error");
   };
 
   const leadStats = {
@@ -203,10 +222,27 @@ const AdmissionPage = () => {
 
   const handleCreateLead = async () => {
     if (!newLead.studentName || !newLead.phoneNumber) return showSnackbar("Name/Phone required", "error");
+    
+    // Check reminder validation
+    if (newLead.isReminder && !newLead.reminderTime) {
+      return showSnackbar("Please select a date & time for the reminder", "error");
+    }
+
     try {
-      await dispatch(createLead({ ...newLead, createdBy: user?.subject, createdAt: new Date().toISOString() }));
+      const payload = { 
+        ...newLead, 
+        createdBy: user?.subject, 
+        createdAt: new Date().toISOString() 
+      };
+      // Clean up payload
+      if(!newLead.isReminder) delete payload.reminderTime;
+
+      await dispatch(createLead(payload));
       showSnackbar("Lead created!", "success");
-      setNewLead({ studentName: "", phoneNumber: "", status: "new", source: "Urban Pro", notes: "" });
+      setNewLead({ 
+        studentName: "", phoneNumber: "", status: "new", source: "Urban Pro", notes: "", 
+        isReminder: false, reminderTime: null 
+      });
       setLeadDialogOpen(false);
       dispatch(fetchLeads());
     } catch (error) { showSnackbar("Failed", "error"); }
@@ -228,7 +264,7 @@ const AdmissionPage = () => {
       
       {/* 1. Header Section */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="header-section">
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #1a237e 0%, #283593 100%)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Paper elevation={0} sx={{ p: 2,m:1, borderRadius: 3, background: 'linear-gradient(135deg, #1a237e 0%, #283593 100%)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
             <Typography variant="h5" fontWeight="800" sx={{ letterSpacing: 1 }}>Admission Hub</Typography>
             <Typography variant="body2" sx={{ opacity: 0.8 }}>Manage leads & Upload data</Typography>
@@ -279,127 +315,165 @@ const AdmissionPage = () => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#475569' }}>Student Name</TableCell>
                   <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#475569' }}>Contact</TableCell>
-                  {/* ADDED SOURCE COLUMN */}
                   <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#475569' }}>Source</TableCell>
                   <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#475569' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#475569' }}>Remarks</TableCell>
+                  <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#475569', minWidth: 150 }}>Remarks</TableCell>
                   <TableCell sx={{ fontWeight: 700, bgcolor: '#f1f5f9', color: '#475569' }}>Action</TableCell>
                 </TableRow>
               </TableHead>
-              <TableBody>
+           <TableBody>
                 {paginatedLeads.map((lead) => (
                   <TableRow key={lead.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     
                     <TableCell>
                       <Stack direction="row" alignItems="center" spacing={2}>
-                        <Avatar sx={{ bgcolor: getStatusConfig(lead.status).color, width: 32, height: 32, fontSize: '0.9rem' }}>
+                        {/* Increased Avatar Size */}
+                        <Avatar sx={{ bgcolor: getStatusConfig(lead.status).color, width: 40, height: 40, fontSize: '1.1rem' }}>
                            {lead.studentName?.charAt(0).toUpperCase()}
                         </Avatar>
                         <Box>
-                          <Typography variant="subtitle2" fontWeight="600" color="#1e293b">{lead.studentName}</Typography>
-                          <Typography variant="caption" color="text.secondary">{formatDate(lead.createdAt)}</Typography>
+                          {/* Increased Name Font Size */}
+                          <Typography variant="body1" fontWeight="600" color="#1e293b" sx={{ fontSize: '1rem' }}>
+                            {lead.studentName}
+                          </Typography>
+                          {/* Increased Date Font Size */}
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                            {formatDate(lead.createdAt)}
+                          </Typography>
                         </Box>
                       </Stack>
                     </TableCell>
 
                     <TableCell>
-                      <Typography variant="body2" fontFamily="monospace" fontWeight="500">{lead.phoneNumber}</Typography>
+                      {/* Increased Phone Font Size */}
+                      <Typography variant="body1" fontFamily="monospace" fontWeight="500" sx={{ fontSize: '1rem' }}>
+                        {lead.phoneNumber}
+                      </Typography>
                     </TableCell>
 
-                    {/* DISPLAY SOURCE */}
                     <TableCell>
-                       <Chip 
+                        <Chip 
                           icon={getSourceIcon(lead.source)}
                           label={lead.source || "Other"} 
-                          size="small" 
+                          size="medium" // Changed to medium
                           variant="outlined"
-                          sx={{ 
-                            fontSize: '0.75rem', 
-                            height: 24, 
-                            borderColor: '#e2e8f0',
-                            color: '#475569',
-                            '& .MuiChip-icon': { color: '#64748b' }
-                          }} 
+                          // Increased Chip font and height
+                          sx={{ fontSize: '0.85rem', height: 30, borderColor: '#e2e8f0', color: '#475569', '& .MuiChip-icon': { color: '#64748b' } }} 
                         />
                     </TableCell>
 
                     <TableCell>
-                       <Chip 
+                        <Chip 
                           icon={getStatusConfig(lead.status).icon}
                           label={getStatusConfig(lead.status).label}
-                          size="small"
-                          sx={{ 
-                            bgcolor: getStatusConfig(lead.status).bg, 
-                            color: getStatusConfig(lead.status).color,
-                            fontWeight: 700,
-                            border: `1px solid ${getStatusConfig(lead.status).bg}`,
-                            '& .MuiChip-icon': { color: 'inherit' }
-                          }} 
+                          size="medium" // Changed to medium
+                          // Increased Chip font and height
+                          sx={{ bgcolor: getStatusConfig(lead.status).bg, color: getStatusConfig(lead.status).color, fontWeight: 700, border: `1px solid ${getStatusConfig(lead.status).bg}`, '& .MuiChip-icon': { color: 'inherit' }, fontSize: '0.85rem', height: 30 }} 
                         />
                     </TableCell>
                     
-                    <TableCell sx={{ maxWidth: 280 }}>
-                      {editingNoteId === lead.id ? (
-                        <Paper elevation={3} sx={{ p: '2px 4px', display: 'flex', alignItems: 'center' }}>
+                    {/* --- REMARKS CELL --- */}
+                    <TableCell>
+                      {editState.id === lead.id ? (
+                        <Paper elevation={3} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5, zIndex: 10, position: 'relative' }}>
                           <TextField
-                            value={tempNote}
-                            onChange={(e) => setTempNote(e.target.value)}
-                            size="small"
-                            fullWidth
-                            variant="standard"
-                            autoFocus
-                            placeholder="Type note..."
-                            InputProps={{ disableUnderline: true, sx: { px: 1, fontSize: '0.85rem' } }}
+                            value={editState.text}
+                            onChange={(e) => setEditState(prev => ({...prev, text: e.target.value}))}
+                            size="small" fullWidth variant="standard" autoFocus placeholder="Type note..."
+                            // Ensured input font is large
+                            InputProps={{ disableUnderline: true, sx: { fontSize: '1rem', lineHeight: 1.5 } }}
+                            multiline maxRows={3}
                           />
-                          <IconButton size="small" color="primary" onClick={() => saveNote(lead.id)}><FaCheck /></IconButton>
-                          <IconButton size="small" color="error" onClick={cancelEditingNote}><FaTimes /></IconButton>
+                          
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#fafafa', p: 1, borderRadius: 1 }}>
+                             <FormControlLabel
+                                control={
+                                  <Checkbox 
+                                    checked={editState.isReminder} 
+                                    onChange={(e) => setEditState(prev => ({...prev, isReminder: e.target.checked}))}
+                                    size="small" color="warning"
+                                  />
+                                }
+                                label={<Typography variant="body2" sx={{ display:'flex', alignItems:'center', gap:0.5, fontSize: '0.9rem' }}><FaBell color="#ed6c02"/> Remind Me</Typography>}
+                                sx={{ mr: 0 }}
+                             />
+                             {editState.isReminder && (
+                                <Box sx={{ flex: 1 }}>
+                                  <MuiDateTimePicker
+                                     value={editState.reminderTime}
+                                     onChange={(val) => setEditState(prev => ({...prev, reminderTime: val}))}
+                                     size="small"
+                                  />
+                                </Box>
+                             )}
+                          </Box>
+
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                            <IconButton size="small" color="error" onClick={cancelEditingNote}><FaTimes /></IconButton>
+                            <IconButton size="small" color="primary" onClick={() => saveNote(lead.id)}><FaCheck /></IconButton>
+                          </Box>
                         </Paper>
                       ) : (
-                        <Box 
-                          onClick={() => startEditingNote(lead)}
-                          sx={{ 
-                            display: 'flex', alignItems: 'center', gap: 1, 
-                            cursor: 'pointer', p: 0.5, borderRadius: 1,
-                            '&:hover': { bgcolor: '#f1f5f9' }
-                          }}
-                        >
-                          <Typography variant="body2" sx={{ 
-                              color: lead.notes ? '#334155' : '#94a3b8', 
-                              fontStyle: lead.notes ? 'normal' : 'italic',
-                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220
-                            }}>
+                        <Box onClick={() => startEditingNote(lead)} sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', p: 0.5, borderRadius: 1, '&:hover': { bgcolor: '#f1f5f9' } }}>
+                          {/* Increased Note Text Size */}
+                          <Typography variant="body1" sx={{ color: lead.notes ? '#334155' : '#94a3b8', fontStyle: lead.notes ? 'normal' : 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 250, fontSize: '1rem' }}>
                             {lead.notes || "Click to add notes..."}
                           </Typography>
-                          <FaEdit size={12} color="#cbd5e1" />
+                          <FaEdit size={16} color="#cbd5e1" />
                         </Box>
                       )}
                     </TableCell>
 
-                    <TableCell>
+                <TableCell>
                       <Select
                         value={lead.status}
                         onChange={(e) => handleUpdateLeadStatus(lead.id, e.target.value)}
-                        size="small"
-                        variant="outlined"
+                        size="small" 
+                        variant="outlined" 
                         sx={{ 
-                          height: 32, 
-                          fontSize: '0.8rem',
-                          bgcolor: 'white',
-                          '& .MuiSelect-select': { display: 'flex', alignItems: 'center', gap: 1 }
+                          height: 40, 
+                          fontSize: '0.95rem', 
+                          minWidth: 140,
+                          // Dynamic background for the selected value
+                          bgcolor: getStatusConfig(lead.status).bg, 
+                          color: getStatusConfig(lead.status).color,
+                          fontWeight: 700,
+                          borderRadius: 1,
+                          // subtle border adjustment
+                          '& .MuiOutlinedInput-notchedOutline': { borderColor: 'transparent' },
+                          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(0,0,0,0.2)' }
                         }}
                       >
                          {["new", "contacted", "interested", "enrolled", "rejected"].map(s => {
                            const config = getStatusConfig(s);
                            return (
-                             <MenuItem key={s} value={s}>
-                               <ListItemIcon sx={{ minWidth: 28, color: config.color, fontSize: 16 }}>
+                             <MenuItem 
+                               key={s} 
+                               value={s} 
+                               sx={{
+                                 fontSize: '0.9rem',
+                                 fontWeight: 600,
+                                 // Add background color for every label in the list
+                                 bgcolor: config.bg,
+                                 color: config.color,
+                                 m: 0.5, // Add small margin between items
+                                 borderRadius: 1,
+                                 display: 'flex',
+                                 alignItems: 'center',
+                                 gap: 1,
+                                 // Ensure hover/selected states keep the color
+                                 '&:hover': { bgcolor: config.bg, filter: 'brightness(0.95)' },
+                                 '&.Mui-selected': { bgcolor: config.bg, filter: 'brightness(0.9)' },
+                                 '&.Mui-selected:hover': { bgcolor: config.bg, filter: 'brightness(0.85)' }
+                               }}
+                             >
+                               {/* Show Icon and Label */}
+                               <Box component="span" sx={{ display: 'flex', alignItems: 'center', fontSize: '0.9rem' }}>
                                  {config.icon}
-                               </ListItemIcon>
-                               <ListItemText primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }}>
-                                 {config.label}
-                               </ListItemText>
+                               </Box>
+                               {config.label}
                              </MenuItem>
-                           );
+                           )
                          })}
                       </Select>
                     </TableCell>
@@ -408,50 +482,23 @@ const AdmissionPage = () => {
               </TableBody>
             </Table>
           </div>
-          <TablePagination
-            component="div"
-            count={filteredLeads.length}
-            page={page}
-            onPageChange={(e, p) => setPage(p)}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-          />
+          <TablePagination component="div" count={filteredLeads.length} page={page} onPageChange={(e, p) => setPage(p)} rowsPerPage={rowsPerPage} onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
         </motion.div>
 
-        {/* RIGHT: Sidebar Section */}
+        {/* RIGHT: Actions Section */}
         <div className="actions-section">
-          
-          <Button
-            variant="contained"
-            fullWidth
-            startIcon={<FaUserPlus />}
-            onClick={() => setLeadDialogOpen(true)}
-            sx={{ 
-              background: 'linear-gradient(45deg, #00b09b, #96c93d)', 
-              py: 1.5, fontWeight: 700, borderRadius: 3, 
-              boxShadow: '0 4px 14px 0 rgba(0,176,155,0.39)',
-              '&:hover': { boxShadow: '0 6px 20px rgba(0,176,155,0.23)' }
-            }}
-          >
+          <Button variant="contained" fullWidth startIcon={<FaUserPlus />} onClick={() => setLeadDialogOpen(true)} sx={{ background: 'linear-gradient(45deg, #00b09b, #96c93d)', py: 1.5, fontWeight: 700, borderRadius: 3, boxShadow: '0 4px 14px 0 rgba(0,176,155,0.39)', '&:hover': { boxShadow: '0 6px 20px rgba(0,176,155,0.23)' } }}>
             ADD NEW LEAD
           </Button>
 
           <div className="action-card">
-             <Typography variant="caption" fontWeight="700" color="#64748b" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1, letterSpacing: 0.5 }}>
-               <FaFilter /> FILTER BY STATUS
-             </Typography>
-             <Select 
-                fullWidth 
-                value={statusFilter} 
-                onChange={(e) => setStatusFilter(e.target.value)} 
-                size="small"
-                sx={{ bgcolor: '#f8fafc' }}
-             >
-                <MenuItem value="all">Show All</MenuItem>
-                {["new", "contacted", "interested", "enrolled", "rejected"].map(s => (
-                  <MenuItem key={s} value={s} sx={{ textTransform: 'capitalize' }}>{s}</MenuItem>
-                ))}
-             </Select>
+              <Typography variant="caption" fontWeight="700" color="#64748b" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1, letterSpacing: 0.5 }}>
+                <FaFilter /> FILTER BY STATUS
+              </Typography>
+              <Select fullWidth value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} size="small" sx={{ bgcolor: '#f8fafc' }}>
+                 <MenuItem value="all">Show All</MenuItem>
+                 {["new", "contacted", "interested", "enrolled", "rejected"].map(s => <MenuItem key={s} value={s} sx={{ textTransform: 'capitalize' }}>{s}</MenuItem>)}
+              </Select>
           </div>
 
           <div className="action-card">
@@ -459,16 +506,13 @@ const AdmissionPage = () => {
               <FaCloudUploadAlt color="#0288d1" size={18} />
               <Typography variant="subtitle2" fontWeight="700" color="#333">Bulk Import</Typography>
             </Box>
-
             <div className="upload-box" onClick={() => document.getElementById('file-input').click()}>
               <input type="file" id="file-input" onChange={handleFileSelect} style={{ display: 'none' }} />
               {selectedFile ? (
                 <Box>
                   <FaFileExcel size={30} color="#2e7d32" style={{marginBottom: 8}} />
                   <Typography variant="caption" display="block" fontWeight="600" noWrap sx={{ maxWidth: 180 }}>{selectedFile.name}</Typography>
-                  <Button size="small" variant="contained" onClick={(e) => { e.stopPropagation(); handleUpload(); }} sx={{ mt: 1, borderRadius: 5 }}>
-                    Start Upload
-                  </Button>
+                  <Button size="small" variant="contained" onClick={(e) => { e.stopPropagation(); handleUpload(); }} sx={{ mt: 1, borderRadius: 5 }}>Start Upload</Button>
                 </Box>
               ) : (
                 <Box>
@@ -478,70 +522,28 @@ const AdmissionPage = () => {
                 </Box>
               )}
             </div>
-            
             {uploading && <LinearProgress sx={{ borderRadius: 1, mt: 1 }} value={uploadProgress} variant="determinate" />}
-
-            <Button fullWidth size="small" variant="outlined" startIcon={<FaDatabase />} onClick={handleOpenViewData} sx={{ mt: 1, borderRadius: 2 }}>
-              View History
-            </Button>
+            <Button fullWidth size="small" variant="outlined" startIcon={<FaDatabase />} onClick={handleOpenViewData} sx={{ mt: 1, borderRadius: 2 }}>View History</Button>
           </div>
-
         </div>
       </div>
 
       {/* --- View Data Dialog --- */}
       <Dialog open={viewDataOpen} onClose={() => setViewDataOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-           <FaDatabase color="#1a237e" /> Uploaded Files History
-        </DialogTitle>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><FaDatabase color="#1a237e" /> Uploaded Files History</DialogTitle>
         <DialogContent sx={{ p: 0 }}>
            <TableContainer sx={{ maxHeight: '60vh' }}>
               <Table size="small" stickyHeader>
-                <TableHead>
-                   <TableRow>
-                     <TableCell sx={{fontWeight: 700}}>File Name</TableCell>
-                     <TableCell sx={{fontWeight: 700}}>Upload Date</TableCell>
-                     <TableCell sx={{fontWeight: 700}}>Status</TableCell>
-                     <TableCell align="right" sx={{fontWeight: 700}}>Action</TableCell>
-                   </TableRow>
-                </TableHead>
+                <TableHead><TableRow><TableCell sx={{fontWeight: 700}}>File Name</TableCell><TableCell sx={{fontWeight: 700}}>Upload Date</TableCell><TableCell sx={{fontWeight: 700}}>Status</TableCell><TableCell align="right" sx={{fontWeight: 700}}>Action</TableCell></TableRow></TableHead>
                 <TableBody>
-                  {uploadHistory && uploadHistory.map((file) => {
-                    if (!file) return null;
-                    return (
+                  {uploadHistory && uploadHistory.map((file) => (
                       <TableRow key={file.id || Math.random()}>
-                        <TableCell>
-                           <Stack direction="row" alignItems="center" spacing={1}>
-                              <FaFileExcel color="#2e7d32" />
-                              <Box>
-                                 <Typography variant="body2" fontWeight="500">{file?.fileName || "Unknown"}</Typography>
-                                 <Typography variant="caption" color="text.secondary">{file?.fileType}</Typography>
-                              </Box>
-                           </Stack>
-                        </TableCell>
+                        <TableCell><Stack direction="row" alignItems="center" spacing={1}><FaFileExcel color="#2e7d32" /><Box><Typography variant="body2" fontWeight="500">{file?.fileName || "Unknown"}</Typography><Typography variant="caption" color="text.secondary">{file?.fileType}</Typography></Box></Stack></TableCell>
                         <TableCell>{file?.uploadDate ? formatDate(file.uploadDate) : "-"}</TableCell>
-                        <TableCell>
-                           <Chip 
-                             label={file?.studentCount ? `${file.studentCount} Records` : 'File Stored'} 
-                             size="small" 
-                             color={file?.studentCount ? "success" : "default"} 
-                             variant="outlined"
-                           />
-                        </TableCell>
-                        <TableCell align="right">
-                           {file?.fileUrl ? (
-                             <Tooltip title="Download File">
-                               <IconButton color="primary" onClick={() => handleDownloadFile(file.fileUrl)}>
-                                 <FaDownload size={14} />
-                               </IconButton>
-                             </Tooltip>
-                           ) : (
-                             <Typography variant="caption" color="text.disabled">No Link</Typography>
-                           )}
-                        </TableCell>
+                        <TableCell><Chip label={file?.studentCount ? `${file.studentCount} Records` : 'File Stored'} size="small" color={file?.studentCount ? "success" : "default"} variant="outlined"/></TableCell>
+                        <TableCell align="right">{file?.fileUrl ? <Tooltip title="Download File"><IconButton color="primary" onClick={() => handleDownloadFile(file.fileUrl)}><FaDownload size={14} /></IconButton></Tooltip> : <Typography variant="caption" color="text.disabled">No Link</Typography>}</TableCell>
                       </TableRow>
-                    );
-                  })}
+                  ))}
                 </TableBody>
               </Table>
            </TableContainer>
@@ -549,40 +551,26 @@ const AdmissionPage = () => {
         <DialogActions><Button onClick={() => setViewDataOpen(false)}>Close</Button></DialogActions>
       </Dialog>
 
-      {/* --- Add Lead Dialog (UPDATED) --- */}
+      {/* --- Add Lead Dialog (UPDATED WITH REMINDER) --- */}
       <Dialog open={leadDialogOpen} onClose={() => setLeadDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Add New Lead</DialogTitle>
         <DialogContent sx={{ mt: 1 }}>
           <Stack spacing={2}>
-            {/* Name */}
             <TextField 
               label="Student Name" 
               value={newLead.studentName} 
               onChange={(e) => setNewLead({...newLead, studentName: e.target.value})} 
-              size="small" 
-              fullWidth 
-              required
+              size="small" fullWidth required
             />
-            
-            {/* Phone */}
             <TextField 
               label="Phone Number" 
               value={newLead.phoneNumber} 
               onChange={(e) => setNewLead({...newLead, phoneNumber: e.target.value})} 
-              size="small" 
-              fullWidth 
-              required
+              size="small" fullWidth required
             />
-
-            {/* Status Dropdown */}
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Lead Status</Typography>
-              <Select
-                value={newLead.status}
-                onChange={(e) => setNewLead({...newLead, status: e.target.value})}
-                size="small"
-                fullWidth
-              >
+              <Select value={newLead.status} onChange={(e) => setNewLead({...newLead, status: e.target.value})} size="small" fullWidth>
                 <MenuItem value="new">New Lead</MenuItem>
                 <MenuItem value="contacted">Contacted</MenuItem>
                 <MenuItem value="interested">Interested</MenuItem>
@@ -590,32 +578,46 @@ const AdmissionPage = () => {
                 <MenuItem value="rejected">Rejected</MenuItem>
               </Select>
             </Box>
-
-            {/* Source Dropdown */}
             <Box>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>Lead Source</Typography>
-              <Select
-                value={newLead.source}
-                onChange={(e) => setNewLead({...newLead, source: e.target.value})}
-                size="small"
-                fullWidth
-              >
+              <Select value={newLead.source} onChange={(e) => setNewLead({...newLead, source: e.target.value})} size="small" fullWidth>
                 <MenuItem value="Bulk WhatsApp">Bulk WhatsApp</MenuItem>
                 <MenuItem value="Urban Pro">Urban Pro</MenuItem>
                 <MenuItem value="Other">Other</MenuItem>
               </Select>
             </Box>
-
-            {/* Notes */}
             <TextField 
               label="Initial Notes" 
               value={newLead.notes} 
               onChange={(e) => setNewLead({...newLead, notes: e.target.value})} 
-              size="small" 
-              fullWidth 
-              multiline 
-              rows={3} 
+              size="small" fullWidth multiline rows={3} 
             />
+
+            {/* NEW: Reminder Section in Add Dialog */}
+            <Box sx={{ border: '1px dashed #e0e0e0', p: 1.5, borderRadius: 1, bgcolor: '#fafafa' }}>
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={newLead.isReminder} 
+                    onChange={(e) => setNewLead(prev => ({...prev, isReminder: e.target.checked}))}
+                    color="primary"
+                    size="small"
+                  />
+                }
+                label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.9rem', color: '#1976d2' }}><FaBell /> Set Follow-up Reminder</Box>}
+              />
+              {newLead.isReminder && (
+                <Box sx={{ mt: 1 }}>
+                  <MuiDateTimePicker
+                    label="Remind At"
+                    value={newLead.reminderTime}
+                    onChange={(val) => setNewLead(prev => ({...prev, reminderTime: val}))}
+                    required={newLead.isReminder}
+                  />
+                </Box>
+              )}
+            </Box>
+
           </Stack>
         </DialogContent>
         <DialogActions>

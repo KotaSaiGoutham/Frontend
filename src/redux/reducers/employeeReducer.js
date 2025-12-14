@@ -9,7 +9,14 @@ import {
   UPDATE_EMPLOYEE_REQUEST,
   UPDATE_EMPLOYEE_SUCCESS,
   UPDATE_EMPLOYEE_FAILURE,
-  RESET_EMPlOYEE_LOADING_STATE
+  FETCH_EMPLOYEE_REQUEST,
+  FETCH_EMPLOYEE_SUCCESS,
+  FETCH_EMPLOYEE_FAILURE,
+  SET_CURRENT_EMPLOYEE,
+  FETCH_EMPLOYEE_PAYMENTS_REQUEST,
+  FETCH_EMPLOYEE_PAYMENTS_SUCCESS,
+  FETCH_EMPLOYEE_PAYMENTS_FAILURE,
+  RESET_EMPLOYEE_LOADING_STATE, // Add this import
 } from "../types";
 
 const initialState = {
@@ -19,8 +26,16 @@ const initialState = {
   addingEmployee: false,
   addEmployeeSuccess: null,
   addEmployeeError: null,
-  // Note: No specific 'updatingEmployee' state is needed if using local state 
-  // or relying on a direct check within the component using `employees` data.
+  
+  // Single employee data
+  currentEmployee: null,
+  employeeLoading: false,
+  employeeError: null,
+  
+  // Employee payments (from employeesalarydetails)
+  employeePayments: [],
+  paymentsLoading: false,
+  paymentsError: null,
 };
 
 const employeeReducer = (state = initialState, action) => {
@@ -61,11 +76,6 @@ const employeeReducer = (state = initialState, action) => {
         addingEmployee: false,
         addEmployeeSuccess: action.payload,
         addEmployeeError: null,
-        // Assuming the employee list should be updated immediately with the new employee:
-        // Note: Your current action already calls fetchEmployees on success, 
-        // but adding the new employee directly is good practice for a fast UI update.
-        // This line is speculative based on how your ADD_EMPLOYEE_SUCCESS payload is structured:
-        // employees: [...state.employees, action.payload.employee], 
       };
     case ADD_EMPLOYEE_FAILURE:
       return {
@@ -75,9 +85,9 @@ const employeeReducer = (state = initialState, action) => {
         addEmployeeError: action.payload.error,
       };
 
-    // --- Cases for updating an employee (e.g., payment status) ---
+    // --- Cases for updating an employee ---
     case UPDATE_EMPLOYEE_REQUEST:
-      return state; // No global state change needed
+      return state;
 
     case UPDATE_EMPLOYEE_SUCCESS:
       const updatedEmployee = action.payload;
@@ -86,6 +96,11 @@ const employeeReducer = (state = initialState, action) => {
         employees: state.employees.map((employee) =>
           employee.id === updatedEmployee.id ? updatedEmployee : employee
         ),
+        // Also update currentEmployee if it's the same employee
+        currentEmployee: 
+          state.currentEmployee?.id === updatedEmployee.id 
+            ? updatedEmployee 
+            : state.currentEmployee,
         error: null,
       };
 
@@ -94,15 +109,71 @@ const employeeReducer = (state = initialState, action) => {
         ...state,
         error: action.payload.error,
       };
-case RESET_EMPlOYEE_LOADING_STATE: // <--- ADD THIS CASE
+
+    // --- Cases for fetching single employee ---
+    case FETCH_EMPLOYEE_REQUEST:
       return {
         ...state,
-        loading: false,          // Reset global loading
-        addingEmployee: false,   // ✅ Reset the flag causing the issue
+        employeeLoading: true,
+        employeeError: null,
+      };
+    case FETCH_EMPLOYEE_SUCCESS:
+      return {
+        ...state,
+        employeeLoading: false,
+        currentEmployee: action.payload,
+        employeeError: null,
+      };
+    case FETCH_EMPLOYEE_FAILURE:
+      return {
+        ...state,
+        employeeLoading: false,
+        currentEmployee: null,
+        employeeError: action.payload.error,
+      };
+
+    // --- Set current employee ---
+    case SET_CURRENT_EMPLOYEE:
+      return {
+        ...state,
+        currentEmployee: action.payload,
+      };
+
+    // --- Cases for fetching employee payments ---
+    case FETCH_EMPLOYEE_PAYMENTS_REQUEST:
+      return {
+        ...state,
+        paymentsLoading: true,
+        paymentsError: null,
+      };
+    case FETCH_EMPLOYEE_PAYMENTS_SUCCESS:
+      return {
+        ...state,
+        paymentsLoading: false,
+        employeePayments: action.payload || [], // Ensure it's always an array
+        paymentsError: null,
+      };
+    case FETCH_EMPLOYEE_PAYMENTS_FAILURE:
+      return {
+        ...state,
+        paymentsLoading: false,
+        employeePayments: [],
+        paymentsError: action.payload.error,
+      };
+
+    // --- Reset loading state ---
+    case RESET_EMPLOYEE_LOADING_STATE:
+      return {
+        ...state,
+        loading: false,
+        addingEmployee: false,
         addEmployeeSuccess: null,
         addEmployeeError: null,
         error: null,
+        employeeLoading: false,
+        paymentsLoading: false,
       };
+
     default:
       return state;
   }

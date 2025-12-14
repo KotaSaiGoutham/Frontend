@@ -1,5 +1,13 @@
 import {
-   FETCH_NOTIFICATIONS_REQUEST,
+  RESET_EMPLOYEE_LOADING_STATE,
+  SET_CURRENT_EMPLOYEE,
+  FETCH_EMPLOYEE_FAILURE,
+  FETCH_EMPLOYEE_REQUEST,
+  FETCH_EMPLOYEE_SUCCESS,
+  FETCH_EMPLOYEE_PAYMENTS_FAILURE,
+  FETCH_EMPLOYEE_PAYMENTS_REQUEST,
+  FETCH_EMPLOYEE_PAYMENTS_SUCCESS,
+  FETCH_NOTIFICATIONS_REQUEST,
   FETCH_NOTIFICATIONS_SUCCESS,
   FETCH_NOTIFICATIONS_FAILURE,
   MARK_NOTIFICATION_READ_SUCCESS,
@@ -11,7 +19,7 @@ import {
   ADD_STUDENT_SYLLABUS_FAILURE,
   ADD_STUDENT_SYLLABUS_SUCCESS,
   ADD_STUDENT_SYLLABUS_REQUEST,
-   UPLOAD_STUDENT_DATA_REQUEST,
+  UPLOAD_STUDENT_DATA_REQUEST,
   UPLOAD_STUDENT_DATA_SUCCESS,
   UPLOAD_STUDENT_DATA_FAILURE,
   FETCH_UPLOAD_HISTORY_REQUEST,
@@ -402,7 +410,7 @@ export const updateStudentField = (studentId, fieldName, newValue) => {
 
 export const handlePaymentStatusToggle = (studentId, currentStatus, studentName) => {
   const newStatus = currentStatus === "Paid" ? "Unpaid" : "Paid";
-  
+
   return updateStudentField(studentId, "Payment Status", newStatus);
 };
 
@@ -446,7 +454,7 @@ export const resetLoadingState = () => ({
   type: RESET_LOADING_STATE,
 });
 export const resetEmployeeLoadingState = () => ({
-  type: "RESET_EMPlOYEE_LOADING_STATE",
+  type: RESET_EMPLOYEE_LOADING_STATE,
 });
 export const loginUser = ({ username, password }) =>
   apiRequest({
@@ -744,7 +752,7 @@ export const updateStudent = (studentId, studentData) =>
 // src/redux/actions/studentActions.js
 export const fetchStudentsIfNeeded = () => (dispatch, getState) => {
   const { needsRefresh, students, loading } = getState().students;
-  
+
   // Only fetch if we need refresh AND we're not already loading
   if (needsRefresh && !loading) {
     dispatch(fetchStudents());
@@ -1159,7 +1167,7 @@ export const addDemoClass = (demoClassData) =>
 
 export const fetchDemoClasses = () =>
   apiRequest({
-    url: "/api/data/democlasses", 
+    url: "/api/data/democlasses",
     method: "GET",
     onStart: FETCH_DEMO_CLASSES_REQUEST,
     onSuccess: (data, dispatch) => {
@@ -1451,9 +1459,8 @@ export const deleteAutoTimetable = (timetableId) =>
 // Update the fetchExpenditures action
 export const fetchExpenditures = (year, month, compareType = null) =>
   apiRequest({
-    url: `/api/expenditures?year=${year}&month=${month}${
-      compareType ? `&compare=${compareType}` : ""
-    }`,
+    url: `/api/expenditures?year=${year}&month=${month}${compareType ? `&compare=${compareType}` : ""
+      }`,
     method: "GET",
     onStart: FETCH_EXPENDITURES_REQUEST,
     onSuccess: (data, dispatch) => {
@@ -1620,29 +1627,29 @@ export const addStudentExam = (examData) =>
             examData:
               examData.status === "Absent"
                 ? {
-                    studentId: examData.studentId,
-                    studentName: examData.studentName,
-                    examRecordId: data.exam.id,
-                    status: "Absent",
-                    absentReason: examData.absentReason,
-                    isAbsent: true,
-                    physics: 0,
-                    chemistry: 0,
-                    maths: 0,
-                    total: 0,
-                  }
+                  studentId: examData.studentId,
+                  studentName: examData.studentName,
+                  examRecordId: data.exam.id,
+                  status: "Absent",
+                  absentReason: examData.absentReason,
+                  isAbsent: true,
+                  physics: 0,
+                  chemistry: 0,
+                  maths: 0,
+                  total: 0,
+                }
                 : {
-                    studentId: examData.studentId,
-                    studentName: examData.studentName,
-                    examRecordId: data.exam.id,
-                    physics: examData.physics || 0,
-                    chemistry: examData.chemistry || 0,
-                    maths: examData.maths || 0,
-                    total: examData.total || 0,
-                    subject: examData.Subject,
-                    stream: examData.stream,
-                    status: "Present",
-                  },
+                  studentId: examData.studentId,
+                  studentName: examData.studentName,
+                  examRecordId: data.exam.id,
+                  physics: examData.physics || 0,
+                  chemistry: examData.chemistry || 0,
+                  maths: examData.maths || 0,
+                  total: examData.total || 0,
+                  subject: examData.Subject,
+                  stream: examData.stream,
+                  status: "Present",
+                },
           },
         });
       }
@@ -1682,23 +1689,23 @@ export const updateStudentExam = (examData) =>
             examData:
               examData.status === "Absent"
                 ? {
-                    status: "Absent",
-                    absentReason: examData.absentReason,
-                    isAbsent: true,
-                    physics: 0,
-                    chemistry: 0,
-                    maths: 0,
-                    total: 0,
-                  }
+                  status: "Absent",
+                  absentReason: examData.absentReason,
+                  isAbsent: true,
+                  physics: 0,
+                  chemistry: 0,
+                  maths: 0,
+                  total: 0,
+                }
                 : {
-                    physics: examData.physics,
-                    chemistry: examData.chemistry,
-                    maths: examData.maths,
-                    total: examData.total,
-                    subject: examData.Subject,
-                    status: "Present",
-                    isAbsent: false,
-                  },
+                  physics: examData.physics,
+                  chemistry: examData.chemistry,
+                  maths: examData.maths,
+                  total: examData.total,
+                  subject: examData.Subject,
+                  status: "Present",
+                  isAbsent: false,
+                },
           },
         });
       }
@@ -2397,9 +2404,8 @@ export const fetchStudentWorksheets = (studentId) =>
 
 export const fetchAcademyFinance = (year, month, compareType = null) =>
   apiRequest({
-    url: `/api/expenditures/academy-finance?year=${year}&month=${month}${
-      compareType ? `&compare=${compareType}` : ""
-    }`,
+    url: `/api/expenditures/academy-finance?year=${year}&month=${month}${compareType ? `&compare=${compareType}` : ""
+      }`,
     method: "GET",
     onStart: FETCH_ACADEMY_FINANCE_REQUEST,
     onSuccess: (data, dispatch) => {
@@ -2444,7 +2450,7 @@ export const addAcademyEarning = (earningData, callback) =>
     },
     authRequired: true,
   });
-  // Delete Academy Earning Action
+// Delete Academy Earning Action
 export const deleteAcademyEarning = (earningId, callback) =>
   apiRequest({
     url: `/api/expenditures/delete-academy-earning/${earningId}`,
@@ -2560,7 +2566,7 @@ export const fetchMonthlyPaymentDetails = (monthYear) =>
     },
     authRequired: true,
   });
-  export const fetchMonthlyStudentDetails = (monthYear) =>
+export const fetchMonthlyStudentDetails = (monthYear) =>
   apiRequest({
     url: `/api/data/students/monthly/${monthYear}`,
     method: "GET",
@@ -2581,7 +2587,7 @@ export const fetchMonthlyPaymentDetails = (monthYear) =>
     authRequired: true,
   });
 
-  
+
 export const clearMonthlyStudentDetails = () => ({
   type: CLEAR_MONTHLY_STUDENT_DETAILS
 });
@@ -2705,7 +2711,7 @@ export const updateAcademyEarning = (earningId, earningData, callback) =>
     authRequired: true,
   });
 
-  // admissionActions.js
+// admissionActions.js
 export const uploadStudentData = (formData) =>
   apiRequest({
     url: "/api/admission/upload-student-data",
@@ -2812,7 +2818,7 @@ export const updateLeadStatus = (leadId, updates) =>
     },
     authRequired: true,
   });
-  export const addStudentSyllabus = (syllabusData) =>
+export const addStudentSyllabus = (syllabusData) =>
   apiRequest({
     url: "/api/data/student/syllabus/add",
     method: "POST",
@@ -2823,7 +2829,7 @@ export const updateLeadStatus = (leadId, updates) =>
         type: ADD_STUDENT_SYLLABUS_SUCCESS,
         payload: data, // Assuming backend returns the created object or success message
       });
-      
+
       // Optional: If you have a list of syllabus updates in Redux, you might want to fetch it again
       // dispatch(fetchSyllabusUpdates()); 
     },
@@ -2831,18 +2837,18 @@ export const updateLeadStatus = (leadId, updates) =>
       console.error("Error adding student syllabus:", error);
       const errorMessage =
         error.error || error.message || "Failed to add student syllabus";
-      
+
       dispatch({
         type: ADD_STUDENT_SYLLABUS_FAILURE,
         payload: { error: errorMessage },
       });
-      
+
       // Crucial: Re-throw error so component can catch it and show snackbar/stop loading
       throw new Error(errorMessage);
     },
     authRequired: true,
   });
-  export const fetchStudentSyllabus = (studentId) =>
+export const fetchStudentSyllabus = (studentId) =>
   apiRequest({
     url: `/api/data/student/syllabus/${studentId}`,
     method: "GET",
@@ -2906,3 +2912,53 @@ export const markNotificationRead = (notificationId) =>
     },
     authRequired: true,
   });
+// src/redux/actions.js
+export const fetchEmployeePayments = (employeeId) =>
+  apiRequest({
+    url: `/api/data/employees/${employeeId}/payment-history`,
+    method: "GET",
+    onStart: FETCH_EMPLOYEE_PAYMENTS_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_EMPLOYEE_PAYMENTS_SUCCESS,
+        payload: data?.payments || [],
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching employee payments:", error);
+      dispatch({
+        type: FETCH_EMPLOYEE_PAYMENTS_FAILURE,
+        payload: {
+          error: error?.error || error.message || "Failed to fetch payments",
+        },
+      });
+    },
+    authRequired: false,
+  });
+
+export const fetchEmployeeById = (employeeId) =>
+  apiRequest({
+    url: `/api/data/employees/${employeeId}`,
+    method: "GET",
+    onStart: FETCH_EMPLOYEE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: FETCH_EMPLOYEE_SUCCESS,
+        payload: data?.employee,
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error fetching employee:", error);
+      dispatch({
+        type: FETCH_EMPLOYEE_FAILURE,
+        payload: {
+          error: error?.error || error.message || "Failed to fetch employee",
+        },
+      });
+    },
+    authRequired: false,
+  });
+  export const setCurrentEmployee = (employeeData) => ({
+  type: SET_CURRENT_EMPLOYEE,
+  payload: employeeData,
+});

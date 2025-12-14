@@ -1,62 +1,101 @@
 import React, { useState, useRef, useEffect } from "react";
-import { 
-  TextField, 
+import {
+  TextField,
   Box,
   Typography,
   Paper,
   Button,
   CircularProgress,
   Snackbar,
-  Alert
+  Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Chip,
+  OutlinedInput
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { uploadStudyMaterial } from "../redux/actions";
 import CustomDragDropUpload from "./customcomponents/CustomDragDropUpload";
-import { FaCloudUploadAlt, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage, FaTimes, FaUpload, FaCheck } from "react-icons/fa";
+import {
+  FaCloudUploadAlt,
+  FaFilePdf,
+  FaFileWord,
+  FaFileExcel,
+  FaFileImage,
+  FaTimes,
+  FaUpload,
+  FaCheck,
+  FaLink,
+  FaAlignLeft
+} from "react-icons/fa";
 
-const StudyMaterialUpload = ({ studentId, studentName }) => {
+// ITEM HEIGHT & PADDING FOR MULTI-SELECT
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
+const StudyMaterialUpload = () => {
   const dispatch = useDispatch();
-  const { uploadingStudyMaterial, error } = useSelector((state) => state.lectureMaterials);
-  const { user } = useSelector((state) => state.auth);
   
+  // Safely access state
+  const { uploadingStudyMaterial, error } = useSelector((state) => state.lectureMaterials || {});
+  const { user } = useSelector((state) => state.auth || {});
+  
+  // Safety check for students list
+  const studentState = useSelector((state) => state.students);
+  const students = studentState?.students || [];
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    materialType: "file", // 'file', 'link', 'message'
+    linkUrl: "",
+    messageContent: ""
   });
+  
+  const [selectedStudents, setSelectedStudents] = useState([]); // Array of student IDs
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [uploadAttempted, setUploadAttempted] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Effect to handle successful upload
   useEffect(() => {
-    // If upload finished successfully and we had attempted an upload
     if (uploadAttempted && !uploadingStudyMaterial && !error) {
       setShowSuccess(true);
       setUploadAttempted(false);
       
-      // Clear form state
+      // Clear form
       setFormData({
         title: "",
         description: "",
+        materialType: "file",
+        linkUrl: "",
+        messageContent: ""
       });
       setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      
-      // Auto-hide success message after 3 seconds
-      const timer = setTimeout(() => {
-        setShowSuccess(false);
-      }, 3000);
-      
+      setSelectedStudents([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      const timer = setTimeout(() => setShowSuccess(false), 3000);
       return () => clearTimeout(timer);
     }
   }, [uploadingStudyMaterial, error, uploadAttempted]);
 
-  // Determine subject based on boolean values
   const getSubject = () => {
+    if (!user) return "General";
     if (user.isPhysics && user.isChemistry) return "Physics & Chemistry";
     if (user.isPhysics) return "Physics";
     if (user.isChemistry) return "Chemistry";
@@ -68,307 +107,275 @@ const StudyMaterialUpload = ({ studentId, studentName }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleStudentChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+    setSelectedStudents(
+      // On autofill we get a stringified value.
+      typeof value === 'string' ? value.split(',') : value,
+    );
+  };
+
   const handleFileSelect = (file) => {
     if (file) {
-      // Validate file type
       const validTypes = [
-        'application/pdf',
-        'application/msword',
+        'application/pdf', 'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'image/jpeg',
-        'image/png',
-        'image/jpg'
+        'image/jpeg', 'image/png', 'image/jpg'
       ];
       
       if (!validTypes.includes(file.type)) {
-        alert("Please select a valid file type (PDF, Word, Excel, or Image)");
+        alert("Invalid file type.");
         return;
       }
-
       if (file.size > 10 * 1024 * 1024) {
-        alert("File size should be less than 10MB");
+        alert("File size > 10MB");
         return;
       }
-
       setSelectedFile(file);
     }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
+  // ... Drag & Drop Handlers ...
+  const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = (e) => { e.preventDefault(); setIsDragOver(false); };
+  const handleDrop = (e) => { 
+    e.preventDefault(); 
+    setIsDragOver(false); 
+    if(e.dataTransfer.files.length > 0) handleFileSelect(e.dataTransfer.files[0]); 
   };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  };
-
-  const handleBoxClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileInputChange = (e) => {
-    if (e.target.files.length > 0) {
-      handleFileSelect(e.target.files[0]);
-    }
-  };
-
-  const removeFile = () => {
-    setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
+  const handleBoxClick = () => fileInputRef.current?.click();
+  const handleFileInputChange = (e) => { if (e.target.files.length > 0) handleFileSelect(e.target.files[0]); };
+  const removeFile = () => { setSelectedFile(null); if(fileInputRef.current) fileInputRef.current.value = ""; };
 
   const getFileIcon = (file) => {
-    if (!file) return <FaCloudUploadAlt size={48} />;
-    
-    const fileType = file.type;
-    if (fileType.includes('pdf')) return <FaFilePdf size={48} color="#f40f02" />;
-    if (fileType.includes('word') || fileType.includes('document')) return <FaFileWord size={48} color="#2b579a" />;
-    if (fileType.includes('excel') || fileType.includes('sheet')) return <FaFileExcel size={48} color="#217346" />;
-    if (fileType.includes('image')) return <FaFileImage size={48} color="#ff6b35" />;
-    return <FaCloudUploadAlt size={48} />;
-  };
-
-  const getFileTypeText = (file) => {
-    if (!file) return "PDF, Word, Excel, or Image files";
-    
-    const fileType = file.type;
-    if (fileType.includes('pdf')) return "PDF Document";
-    if (fileType.includes('word') || fileType.includes('document')) return "Word Document";
-    if (fileType.includes('excel') || fileType.includes('sheet')) return "Excel Spreadsheet";
-    if (fileType.includes('image')) return "Image File";
-    return "Document";
-  };
-
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+     if (!file) return <FaCloudUploadAlt size={48} />;
+     const t = file.type;
+     if (t.includes('pdf')) return <FaFilePdf size={48} color="#f40f02" />;
+     if (t.includes('word') || t.includes('doc')) return <FaFileWord size={48} color="#2b579a" />;
+     if (t.includes('excel') || t.includes('sheet')) return <FaFileExcel size={48} color="#217346" />;
+     if (t.includes('image')) return <FaFileImage size={48} color="#ff6b35" />;
+     return <FaCloudUploadAlt size={48} />;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedFile) {
-      alert("Please select a file to upload");
-      return;
+
+    if (selectedStudents.length === 0) {
+        alert("Please select at least one student.");
+        return;
     }
 
-    // Generate a better title if not provided
-    const title = formData.title || 
-      `${getSubject()} Study Material ${new Date().toLocaleDateString()}`;
+    if (formData.materialType === 'file' && !selectedFile) {
+      alert("Please select a file.");
+      return;
+    }
+    if (formData.materialType === 'link' && !formData.linkUrl) {
+        alert("Please enter a URL.");
+        return;
+    }
+    if (formData.materialType === 'message' && !formData.messageContent) {
+        alert("Please enter a message.");
+        return;
+    }
 
-    // Ensure studentName is defined
-    const studentNameToUse = studentName || user.name || "Unknown Student";
+    const title = formData.title || `${getSubject()} Material ${new Date().toLocaleDateString()}`;
+    // Create map for efficient lookup
+    const studentNameMap = students.reduce((acc, s) => ({...acc, [s.id]: s.Name}), {});
 
-    const uploadFormData = new FormData();
-    uploadFormData.append("file", selectedFile);
-    uploadFormData.append("studentName", studentNameToUse);
-    uploadFormData.append("title", title);
-    uploadFormData.append("description", formData.description || "Study material for student");
-    uploadFormData.append("subject", getSubject());
+    for (const studentId of selectedStudents) {
+        const uploadFormData = new FormData();
+        
+        uploadFormData.append("studentName", studentNameMap[studentId] || "Student");
+        uploadFormData.append("title", title);
+        uploadFormData.append("description", formData.description || "");
+        uploadFormData.append("subject", getSubject());
+        
+        // Custom field to tell backend logic what type this is
+        // Note: Backend might need update to store 'type', 'contentUrl', 'contentMessage'
+        uploadFormData.append("materialType", formData.materialType); 
 
-    // Reset success state and mark upload as attempted
+        if (formData.materialType === 'file') {
+            uploadFormData.append("file", selectedFile);
+        } else if (formData.materialType === 'link') {
+            uploadFormData.append("contentUrl", formData.linkUrl);
+        } else if (formData.materialType === 'message') {
+            uploadFormData.append("contentMessage", formData.messageContent);
+        }
+
+        dispatch(uploadStudyMaterial(studentId, uploadFormData));
+    }
+
     setShowSuccess(false);
     setUploadAttempted(true);
-    
-    // Dispatch the upload action
-    dispatch(uploadStudyMaterial(studentId, uploadFormData));
   };
 
-  const handleCloseSuccess = () => {
-    setShowSuccess(false);
-  };
-
-  // Only show if user is tutor
-  const userRole = "tutor";
-
-  if (userRole !== "tutor") {
-    return null;
-  }
+  // REMOVED STRICT ROLE CHECK that was likely hiding the UI
+  // if (user?.role !== "tutor") return null; 
 
   return (
     <>
-      <CustomDragDropUpload
-        title="Upload Study Material"
-        error={error}
-      >
+      <CustomDragDropUpload title="Share Study Material" error={error}>
+        
+        {/* 1. Student Selection (Multi-Select) */}
+        <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="student-select-label">Select Students</InputLabel>
+            <Select
+            labelId="student-select-label"
+            multiple
+            value={selectedStudents}
+            onChange={handleStudentChange}
+            input={<OutlinedInput label="Select Students" />}
+            renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {selected.map((value) => {
+                    const student = students.find(s => s.id === value);
+                    return <Chip key={value} label={student?.Name} size="small" />;
+                })}
+                </Box>
+            )}
+            MenuProps={MenuProps}
+            disabled={uploadingStudyMaterial}
+            >
+            {students && students.map((student) => (
+                <MenuItem key={student.id} value={student.id}>
+                {student.Name}
+                </MenuItem>
+            ))}
+            </Select>
+        </FormControl>
+
+        {/* 2. Material Type Selection */}
+        <FormControl component="fieldset" sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary">Content Type:</Typography>
+            <RadioGroup
+                row
+                name="materialType"
+                value={formData.materialType}
+                onChange={handleInputChange}
+            >
+                <FormControlLabel value="file" control={<Radio size="small" />} label="File/Document" disabled={uploadingStudyMaterial} />
+                <FormControlLabel value="link" control={<Radio size="small" />} label="Web Link" disabled={uploadingStudyMaterial} />
+                <FormControlLabel value="message" control={<Radio size="small" />} label="Message/Note" disabled={uploadingStudyMaterial} />
+            </RadioGroup>
+        </FormControl>
+
+        {/* 3. Common Info */}
         <TextField
           label="Title (Optional)"
           name="title"
           value={formData.title}
           onChange={handleInputChange}
-          placeholder="Leave empty to auto-generate title"
           fullWidth
-          helperText="If left empty, a title will be generated automatically"
           disabled={uploadingStudyMaterial}
+          sx={{ mb: 2 }}
         />
-
         <TextField
           label="Description (Optional)"
           name="description"
           value={formData.description}
           onChange={handleInputChange}
-          placeholder="Enter description for the study material"
-          multiline
-          rows={2}
+          multiline rows={2}
           fullWidth
-          helperText="Brief description of the study material"
           disabled={uploadingStudyMaterial}
+          sx={{ mb: 2 }}
         />
 
-        {/* Subject Display */}
-        <Paper 
-          elevation={1} 
-          sx={{ 
-            p: 2, 
-            backgroundColor: 'background.default',
-            border: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-            Subject (Auto-detected from your profile)
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {getSubject()}
-          </Typography>
+        {/* 4. Conditional Content Input */}
+        
+        {/* A. FILE UPLOAD */}
+        {formData.materialType === 'file' && (
+            <Box sx={{ mb: 2 }}>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileInputChange}
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                    style={{ display: 'none' }}
+                    disabled={uploadingStudyMaterial}
+                />
+                <Paper
+                    elevation={isDragOver ? 8 : 2}
+                    onClick={uploadingStudyMaterial ? undefined : handleBoxClick}
+                    onDragOver={uploadingStudyMaterial ? undefined : handleDragOver}
+                    onDragLeave={uploadingStudyMaterial ? undefined : handleDragLeave}
+                    onDrop={uploadingStudyMaterial ? undefined : handleDrop}
+                    sx={{
+                    border: isDragOver ? '2px dashed #1976d2' : '2px dashed #e0e0e0',
+                    borderRadius: 2, p: 4, textAlign: 'center', cursor: uploadingStudyMaterial ? 'not-allowed' : 'pointer',
+                    backgroundColor: uploadingStudyMaterial ? 'rgba(0,0,0,0.04)' : (isDragOver ? 'rgba(25,118,210,0.04)' : 'transparent'),
+                    }}
+                >
+                    {!selectedFile ? (
+                        <Box>
+                            <Box sx={{ color: isDragOver ? '#1976d2' : '#9e9e9e', mb: 2 }}>{getFileIcon(null)}</Box>
+                            <Typography variant="body2" color="text.secondary">Click or Drag File Here</Typography>
+                        </Box>
+                    ) : (
+                        <Box>
+                            <Box sx={{ color: '#1976d2', mb: 2 }}>{getFileIcon(selectedFile)}</Box>
+                            <Typography variant="subtitle1">{selectedFile.name}</Typography>
+                            <Button size="small" color="error" onClick={(e) => { e.stopPropagation(); removeFile(); }}>Remove</Button>
+                        </Box>
+                    )}
+                </Paper>
+            </Box>
+        )}
+
+        {/* B. LINK INPUT */}
+        {formData.materialType === 'link' && (
+            <TextField
+                label="Paste URL Here"
+                name="linkUrl"
+                value={formData.linkUrl}
+                onChange={handleInputChange}
+                fullWidth
+                placeholder="https://example.com"
+                disabled={uploadingStudyMaterial}
+                InputProps={{ startAdornment: <FaLink style={{marginRight: 8, color: '#666'}}/> }}
+                sx={{ mb: 2 }}
+            />
+        )}
+
+        {/* C. MESSAGE INPUT */}
+        {formData.materialType === 'message' && (
+            <TextField
+                label="Message Content"
+                name="messageContent"
+                value={formData.messageContent}
+                onChange={handleInputChange}
+                fullWidth
+                multiline
+                rows={4}
+                placeholder="Type your important note or instruction here..."
+                disabled={uploadingStudyMaterial}
+                InputProps={{ startAdornment: <FaAlignLeft style={{marginRight: 8, marginTop: 4, color: '#666', alignSelf: 'flex-start'}}/> }}
+                sx={{ mb: 2 }}
+            />
+        )}
+
+        {/* 5. Subject Info & Submit */}
+        <Paper elevation={0} sx={{ p: 1.5, mb: 2, bgcolor: '#f5f5f5', border: '1px solid #e0e0e0' }}>
+           <Typography variant="caption" color="text.secondary">Subject: <b>{getSubject()}</b></Typography>
         </Paper>
 
-        {/* Drag and Drop Area with Upload Button */}
-        <Box sx={{ mt: 2 }}>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileInputChange}
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-            style={{ display: 'none' }}
+        <Button
+            variant="contained"
+            fullWidth
+            onClick={handleSubmit}
             disabled={uploadingStudyMaterial}
-          />
-          
-          <Paper
-            elevation={isDragOver ? 8 : 2}
-            onClick={uploadingStudyMaterial ? undefined : handleBoxClick}
-            onDragOver={uploadingStudyMaterial ? undefined : handleDragOver}
-            onDragLeave={uploadingStudyMaterial ? undefined : handleDragLeave}
-            onDrop={uploadingStudyMaterial ? undefined : handleDrop}
-            sx={{
-              border: isDragOver ? '2px dashed #1976d2' : '2px dashed #e0e0e0',
-              borderRadius: 2,
-              p: 4,
-              textAlign: 'center',
-              cursor: uploadingStudyMaterial ? 'not-allowed' : 'pointer',
-              backgroundColor: uploadingStudyMaterial ? 'rgba(0, 0, 0, 0.04)' : (isDragOver ? 'rgba(25, 118, 210, 0.04)' : 'transparent'),
-              transition: 'all 0.3s ease',
-              '&:hover': uploadingStudyMaterial ? {} : {
-                backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                borderColor: '#1976d2',
-              }
-            }}
-          >
-            {uploadingStudyMaterial ? (
-              <Box>
-                <CircularProgress size={48} sx={{ mb: 2, color: '#1976d2' }} />
-                <Typography variant="h6" gutterBottom color="primary">
-                  Uploading Study Material...
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Please wait while we upload your file
-                </Typography>
-              </Box>
-            ) : !selectedFile ? (
-              <Box>
-                <Box sx={{ color: isDragOver ? '#1976d2' : '#9e9e9e', mb: 2 }}>
-                  {getFileIcon(null)}
-                </Box>
-                <Typography variant="h6" gutterBottom color={isDragOver ? 'primary' : 'text.secondary'}>
-                  {isDragOver ? 'Drop your file here' : 'Click to select a file'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  {getFileTypeText(null)} (Max 10MB)
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  or drag and drop your files here
-                </Typography>
-              </Box>
-            ) : (
-              <Box sx={{ position: 'relative' }}>
-                <Box sx={{ color: '#1976d2', mb: 2 }}>
-                  {getFileIcon(selectedFile)}
-                </Box>
-                <Typography variant="h6" gutterBottom>
-                  {selectedFile.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  {getFileTypeText(selectedFile)} • {formatFileSize(selectedFile.size)}
-                </Typography>
-                
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    startIcon={<FaTimes />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFile();
-                    }}
-                    disabled={uploadingStudyMaterial}
-                  >
-                    Remove
-                  </Button>
-                  
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={uploadingStudyMaterial ? <CircularProgress size={16} /> : <FaUpload />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSubmit(e);
-                    }}
-                    disabled={uploadingStudyMaterial}
-                  >
-                    {uploadingStudyMaterial ? "Uploading..." : "Upload Now"}
-                  </Button>
-                </Box>
-              </Box>
-            )}
-          </Paper>
-        </Box>
+            startIcon={uploadingStudyMaterial ? <CircularProgress size={20} color="inherit"/> : <FaUpload/>}
+        >
+            {uploadingStudyMaterial ? "Sending..." : "Share Material"}
+        </Button>
+
       </CustomDragDropUpload>
 
-      {/* Success Message Snackbar */}
-      <Snackbar
-        open={showSuccess}
-        autoHideDuration={3000}
-        onClose={handleCloseSuccess}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseSuccess}
-          severity="success"
-          variant="filled"
-          icon={<FaCheck />}
-          sx={{ width: '100%' }}
-        >
-          Study material uploaded successfully!
-        </Alert>
+      <Snackbar open={showSuccess} autoHideDuration={3000} onClose={() => setShowSuccess(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity="success" variant="filled" icon={<FaCheck />}>Shared successfully!</Alert>
       </Snackbar>
     </>
   );

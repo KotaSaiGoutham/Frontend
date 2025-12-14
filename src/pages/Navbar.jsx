@@ -16,6 +16,7 @@ const PROTECTED_BASE_PATHS = [
   "/week-timetable",
   "/timetable",
   "/employees",
+  "/employee/",
   "/add-student",
   "/add-employee",
   "/add-timetable",

@@ -94,7 +94,7 @@ import QuestionPaperUpload from "./components/QuestionPaperUpload";
 import TutorIdeasPage from "./components/TutorIdeas/TutorIdeasPage";
 import AdmissionPage from "./components/AdmissionPage";
 import StudentSyllabusFormPage from "./components/student-portfolio/StudentSyllabusFormPage";
-
+import EmployeeDashboard from "./components/dashboard/EmployeeDashboard";
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const token = localStorage.getItem("token");
@@ -197,6 +197,8 @@ function App() {
                 />
 
                 <Route path="/employees" element={<Employees />} />
+                <Route path="/employee/:id" element={<EmployeeDashboard />} />
+
                 <Route path="/add-student" element={<AddStudent />} />
                 <Route path="/add-employee" element={<AddEmployeePage />} />
                 <Route path="/add-timetable" element={<AddTimetablePage />} />

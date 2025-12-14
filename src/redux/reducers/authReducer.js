@@ -159,11 +159,11 @@ const authReducer = (state = initialState, action) => {
         },
         isAuthenticated: !!action.payload && !!state.token,
       };
-    case SET_CURRENT_STUDENT:
-      return {
-        ...state,
-        currentStudent: action.payload
-      };
+  case SET_CURRENT_STUDENT:
+    return {
+      ...state,
+      currentStudent: action.payload
+    };
     case CLEAR_CURRENT_STUDENT:
       return {
         ...state,

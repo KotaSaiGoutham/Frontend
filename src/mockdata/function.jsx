@@ -832,3 +832,69 @@ export const formatToLacs = (value) => {
   const inLacs = num / 100000;
   return `₹${parseFloat(inLacs.toFixed(2))} Lac`;
 };
+// Add this helper function at the top of your component
+export const formatEmployeeDate = (dateValue) => {
+  if (!dateValue) return 'Not available';
+  
+  try {
+    // Handle Firebase Timestamp objects
+    if (dateValue._seconds) {
+      const date = new Date(dateValue._seconds * 1000);
+      return date.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+    
+    // Handle ISO string dates
+    if (typeof dateValue === 'string') {
+      // Check if it's a valid date string
+      const date = new Date(dateValue);
+      
+      if (isNaN(date.getTime())) {
+        // If it's not a valid date, try to parse it as a simple date string
+        if (dateValue.includes('-')) {
+          const parts = dateValue.split('-');
+          if (parts.length === 3) {
+            // Try to parse as YYYY-MM-DD
+            const [year, month, day] = parts;
+            const parsedDate = new Date(year, month - 1, day);
+            if (!isNaN(parsedDate.getTime())) {
+              return parsedDate.toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              });
+            }
+          }
+        }
+        return dateValue; // Return original string if can't parse
+      }
+      
+      return date.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+    
+    // Handle Date objects
+    if (dateValue instanceof Date) {
+      return dateValue.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+    
+    // If all else fails, return as string
+    return String(dateValue);
+    
+  } catch (error) {
+    console.error('Error formatting employee date:', error);
+    return String(dateValue);
+  }
+};
+
+// Then use it like this:

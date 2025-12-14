@@ -28,6 +28,7 @@ import { topicOptions, MARK_SCHEMES } from "../../mockdata/Options";
 
 const AddExamDialog = ({ open, onClose, currentStudent }) => {
   const dispatch = useDispatch();
+  console.log("currentStudent",currentStudent)
   
   const [formData, setFormData] = useState({
     subject: currentStudent?.Subject || "Physics",
@@ -101,6 +102,7 @@ const AddExamDialog = ({ open, onClose, currentStudent }) => {
       const examDateISO = new Date(formData.examDate).toISOString();
       
       const studentExamData = {
+        facultyId:currentStudent?.facultyId,
         userId: currentStudent.id,
         studentId: currentStudent.id,
         studentName: currentStudent.Name,

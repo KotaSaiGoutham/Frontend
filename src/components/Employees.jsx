@@ -16,6 +16,7 @@ import {
   FaPhone,
   FaEdit,
   FaCheck,
+  FaEye,
 } from "react-icons/fa";
 import { format, parseISO } from "date-fns";
 
@@ -36,6 +37,7 @@ import {
   TextField,
   TableSortLabel, 
   Tooltip,
+  Chip,
 } from "@mui/material";
 
 import {
@@ -221,6 +223,12 @@ const Employees = () => {
     }
     setEditingRow(employee.id);
     setNewSalary(employee.salary.toString());
+  };
+
+  // NEW: Handle employee name click to navigate to dashboard
+  const handleEmployeeNameClick = (employee) => {
+    console.log("employee",employee)
+    navigate(`/employee/${employee.id}`);
   };
 
   // --- Conditional Rendering for Loading and Error States ---
@@ -573,6 +581,7 @@ const Employees = () => {
                       Status
                     </Box>
                   </TableCell>
+  
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -597,9 +606,26 @@ const Employees = () => {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "flex-start",
+                          cursor: "pointer",
+                          "&:hover": {
+                            textDecoration: "underline",
+                            color: "#1976d2",
+                          },
                         }}
+                        onClick={() => handleEmployeeNameClick(employee)}
                       >
-                        <Typography variant="body1">{employee.name}</Typography>
+                        <Typography 
+                          variant="body1" 
+                          sx={{ 
+                            fontWeight: 500,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                          }}
+                        >
+                          <FaUserTie style={{ fontSize: "0.9rem", color: "#666" }} />
+                          {employee.name}
+                        </Typography>
                       </Box>
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
@@ -608,7 +634,16 @@ const Employees = () => {
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
-                      <Typography variant="body2">{employee.role}</Typography>
+                      <Chip
+                        label={employee.role}
+                        size="small"
+                        sx={{
+                          backgroundColor: "#e3f2fd",
+                          color: "#1976d2",
+                          fontWeight: 500,
+                          borderRadius: "4px",
+                        }}
+                      />
                     </TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
                       <Box
@@ -638,7 +673,7 @@ const Employees = () => {
                           </>
                         ) : (
                           <>
-                            <Typography variant="body2">
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
                               {currencyFormatter.format(employee.salary)}
                             </Typography>
                             <IconButton
@@ -646,7 +681,7 @@ const Employees = () => {
                               onClick={() => handleEditClick(employee)}
                               sx={{ ml: 1 }}
                             >
-                              <FaEdit style={{ color: "grey" }} />
+                              <FaEdit style={{ color: "#666" }} />
                             </IconButton>
                           </>
                         )}
@@ -687,6 +722,9 @@ const Employees = () => {
                             opacity: employee.paid ? 0.6 : 1,
                             "&:hover": {
                               opacity: employee.paid ? 0.6 : 0.8,
+                              backgroundColor: employee.paid
+                                ? "#d4edda"
+                                : "#f8d7da",
                             },
                           }}
                           onClick={() =>
@@ -718,7 +756,7 @@ const Employees = () => {
                         fontWeight: 'bold', 
                         fontSize: '1.1rem', 
                         color: '#1a237e',
-                        textAlign: 'right', // Align the "Total Payroll" label to the right
+                        textAlign: 'right',
                         p: '16px 12px'
                     }}>
                         Total Monthly Payment
@@ -732,7 +770,8 @@ const Employees = () => {
                     }}>
                         {currencyFormatter.format(totalPayroll)}
                     </TableCell>
-                    {/* These cells are empty to complete the row columns (Last Paid Date, Payment Status) */}
+                    {/* These cells are empty to complete the row columns */}
+                    <TableCell></TableCell>
                     <TableCell></TableCell>
                     <TableCell></TableCell>
                 </TableRow>

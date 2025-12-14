@@ -28,7 +28,6 @@
 .row-container {
   display: flex;
   gap: 15px;
-  width: 105%;
   align-items: stretch;
 }
 

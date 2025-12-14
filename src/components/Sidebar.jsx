@@ -158,7 +158,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       icon: <FaRupeeSign />,
     },
     // { name: "Upload Files", path: `/student/${extractedStudentId}/upload`, icon: <FaFileUpload /> },
-    // { name: "Study Materials", path: `/student/${extractedStudentId}/study-materials`, icon: <FaBook /> },
+    { name: "Study Materials", path: `/student/${extractedStudentId}/study-materials`, icon: <FaBook /> },
     {
       name: "Question Papers",
       path: `/student/${extractedStudentId}/papers`,
