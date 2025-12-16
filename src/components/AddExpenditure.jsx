@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Paper,
+Paper,
   Button as MuiButton,
   CircularProgress,
   Snackbar,
@@ -9,9 +9,13 @@ import {
   Typography,
   Chip,
   Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
-  FaPlusCircle,
+FaPlusCircle,
   FaSave,
   FaTimesCircle,
   FaMoneyBillWave,
@@ -19,6 +23,7 @@ import {
   FaCalendarAlt,
   FaEdit,
   FaBuilding,
+  FaUser,
 } from "react-icons/fa";
 import {
   MuiInput,
@@ -51,10 +56,12 @@ const AddExpenditure = () => {
     amount: "",
     date: new Date(),
   });
-
+const [selectedPayee, setSelectedPayee] = useState(
+    isCompanyExpense ? "OTHER" : ""
+  );
   const { user } = useSelector((state) => state.auth);
-
-  useEffect(() => {
+const { employees } = useSelector((state) => state.employees);
+useEffect(() => {
     if (isUpdating && expenditureToEdit) {
       setFormData({
         purpose: expenditureToEdit.purpose || "",
@@ -63,9 +70,19 @@ const AddExpenditure = () => {
         date: expenditureToEdit.date
           ? new Date(expenditureToEdit.date)
           : new Date(),
+        employeeId: expenditureToEdit.employeeId || null,
       });
+
+      // If updating a company expense, set the dropdown correctly
+      if (isCompanyExpense) {
+        if (expenditureToEdit.employeeId) {
+          setSelectedPayee(expenditureToEdit.employeeId);
+        } else {
+          setSelectedPayee("OTHER");
+        }
+      }
     }
-  }, [isUpdating, expenditureToEdit]);
+  }, [isUpdating, expenditureToEdit, isCompanyExpense]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -75,8 +92,31 @@ const AddExpenditure = () => {
   const handleDateChange = (dateValue) => {
     setFormData((prev) => ({ ...prev, date: dateValue }));
   };
+  const handlePayeeChange = (e) => {
+    const value = e.target.value;
+    setSelectedPayee(value);
 
-  const handleSubmit = async (e) => {
+    if (value === "OTHER") {
+      // Reset purpose to allow manual entry, remove employeeId
+      setFormData((prev) => ({
+        ...prev,
+        purpose: "",
+        employeeId: null,
+      }));
+    } else {
+      // Find the employee to get the name
+      const selectedEmp = employees.find((emp) => emp.id === value);
+      if (selectedEmp) {
+        setFormData((prev) => ({
+          ...prev,
+          purpose: selectedEmp.name, // Set Name as Purpose
+          employeeId: selectedEmp.id, // Store ID
+        }));
+      }
+    }
+  };
+
+ const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (isUpdating) {
@@ -86,7 +126,8 @@ const AddExpenditure = () => {
         formData.work !== expenditureToEdit.work ||
         Number(formData.amount) !== Number(expenditureToEdit.amount) ||
         new Date(formData.date).toISOString().slice(0, 10) !==
-          new Date(expenditureToEdit.date).toISOString().slice(0, 10);
+          new Date(expenditureToEdit.date).toISOString().slice(0, 10) ||
+        formData.employeeId !== expenditureToEdit.employeeId;
 
       if (!hasChanged) {
         setSnackbar({
@@ -104,7 +145,6 @@ const AddExpenditure = () => {
       ...formData,
       amount: Number(formData.amount),
       lastModifiedBy: user.subject,
-      // Add company expense flag to the payload
       isCompanyExpense: isCompanyExpense,
     };
 
@@ -192,15 +232,54 @@ const AddExpenditure = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="add-student-form-grid">
-            <MuiInput
-              label="Purpose"
-              name="purpose"
-              icon={FaMoneyBillWave}
-              value={formData.purpose}
-              onChange={handleChange}
-              placeholder="e.g., Office Rent, Software, Staff Salary"
-              required
-            />
+            {isCompanyExpense && (
+              <FormControl fullWidth required>
+                <InputLabel id="payee-select-label">Payee / Type</InputLabel>
+                <Select
+                  labelId="payee-select-label"
+                  value={selectedPayee}
+                  label="Payee / Type"
+                  onChange={handlePayeeChange}
+                  startAdornment={
+                    <Box sx={{ mr: 1, display: "flex", alignItems: "center" }}>
+                      <FaUser color="#666" />
+                    </Box>
+                  }
+                >
+                  <MenuItem value="OTHER">
+                    <em>Other (Enter Purpose Manually)</em>
+                  </MenuItem>
+                  {employees &&
+                    employees.map((emp) => (
+                      <MenuItem key={emp.id} value={emp.id}>
+                        {emp.name} ({emp.role})
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            )}
+      {(!isCompanyExpense || selectedPayee === "OTHER") && (
+              <MuiInput
+                label="Purpose"
+                name="purpose"
+                icon={FaMoneyBillWave}
+                value={formData.purpose}
+                onChange={handleChange}
+                placeholder="e.g., Office Rent, Software, Staff Salary"
+                required
+              />
+            )}
+
+            {/* Read-only field to show selected employee name if an employee is selected */}
+            {isCompanyExpense && selectedPayee !== "OTHER" && (
+              <MuiInput
+                label="Purpose (Auto-filled)"
+                name="purpose"
+                icon={FaUser}
+                value={formData.purpose}
+                disabled={true} // Read only
+              />
+            )}
             <MuiInput
               label="Work/Details"
               name="work"

@@ -77,9 +77,12 @@ const LoginPage = () => {
         navigate(`/student/${user?.id}/profile`, {
           state: { studentData: user },
         });
-      } else if (user.role === "admin" || user.role === "faculty") {
+      } else if (user.role === "developer" || user.role === "faculty") {
         dispatch(clearCurrentStudent());
         navigate("/dashboard");
+      } else if (user.role === "typist") {
+        dispatch(clearCurrentStudent());
+        navigate("/students");
       }
     }
   }, [user, navigate, dispatch]);

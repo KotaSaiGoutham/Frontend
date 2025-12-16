@@ -120,7 +120,7 @@ const EmployeePaymentsTab = ({
                         <Chip label={payment.paymentDate} size="small" variant="outlined" sx={{ borderColor: '#e2e8f0', color: '#64748b', fontWeight: 500 }} />
                       </TableCell>
                       <TableCell align="right"><Typography variant="body2" color="#64748b">₹{payment.salary?.toLocaleString()}</Typography></TableCell>
-                      <TableCell align="right"><Typography variant="body2" fontWeight="700" color="#059669">₹{payment.paidAmount?.toLocaleString()}</Typography></TableCell>
+                      <TableCell align="center"><Typography variant="body2" fontWeight="700" color="#059669">₹{payment.paidAmount?.toLocaleString()}</Typography></TableCell>
                       <TableCell align="center">
                         <Chip label={isFullPayment ? "Full Payment" : "Partial"} size="small" sx={{ backgroundColor: isFullPayment ? '#dcfce7' : '#ffedd5', color: isFullPayment ? '#15803d' : '#c2410c', fontWeight: 700, borderRadius: '6px' }} />
                       </TableCell>

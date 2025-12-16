@@ -1031,7 +1031,10 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem", textAlign: "center" }}>Date</TableCell>
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem", textAlign: "center" }}>Time</TableCell>
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Duration</TableCell>
+                    {user.role === "faculty" && (
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Fee/Hour</TableCell>
+
+                    )}
                     <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -1285,6 +1288,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                         <TableCell>{item.Time}</TableCell>
 
                         <TableCell>{calculateDuration(item.Time)}</TableCell>
+                    {user.role === "faculty" && (
 
                         <TableCell>
                           {item.monthlyFeePerClass !== "N/A"
@@ -1293,6 +1297,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                             }`
                             : "N/A"}
                         </TableCell>
+                    )}
 
                         <TableCell>
                           <Box
@@ -1357,6 +1362,8 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                     );
                   })}
                 </TableBody>
+                                    {user.role === "faculty" && (
+
                 <TableFooter>
                   <TableRow
                     sx={{
@@ -1462,6 +1469,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                     </TableCell>
                   </TableRow>
                 </TableFooter>
+                                    )}
               </Table>
             </TableContainer>
           ) : (

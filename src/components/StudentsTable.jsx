@@ -262,6 +262,11 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const [dialogAction, setDialogAction] = useState(null);
   const [displayedStudents, setDisplayedStudents] = useState(filteredStudents);
   useEffect(() => {
+    if (user.role === "typist") {
+      dispatch(fetchStudents());
+    }
+  }, [dispatch, user.role]);
+  useEffect(() => {
     if (sortEnabled) {
       setDisplayedStudents(filteredStudents);
     }

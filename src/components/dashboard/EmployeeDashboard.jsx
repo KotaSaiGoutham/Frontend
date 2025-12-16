@@ -218,9 +218,9 @@ const EmployeeDashboard = () => {
         startY: 160, margin: { top: 160, left: margin, right: margin },
         showFoot: 'lastPage', theme: 'striped',
         headStyles: { fillColor: [26, 35, 126], textColor: 255, fontStyle: 'bold', halign: 'center' },
-        footStyles: { fillColor: [26, 35, 126], textColor: 255, fontStyle: 'bold', halign: 'right' },
+        footStyles: { fillColor: [26, 35, 126], textColor: 255, fontStyle: 'bold', halign: 'center' },
         bodyStyles: { textColor: 80, halign: 'center' },
-        columnStyles: { 0: { halign: 'left' }, 2: { halign: 'right' }, 4: { halign: 'right', fontStyle: 'bold' } },
+        columnStyles: { 0: { halign: 'left' }, 2: { halign: 'center' }, 4: { halign: 'center', fontStyle: 'bold' } },
         didDrawPage: (data) => {
             if(data.pageNumber === 1) data.settings.margin.top = 40;
             drawHeader(data);

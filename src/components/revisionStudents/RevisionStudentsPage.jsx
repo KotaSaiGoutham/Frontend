@@ -107,17 +107,22 @@ const NavButton = styled(MuiButton)(({ theme, isActive }) => ({
   }
 }));
 
-const navItems = [
+
+
+const RevisionStudentsPage = () => {
+    const { user } = useSelector((state) => state.auth);
+  const navItems = [
 { id: "students", label: "Students", icon: <School /> },
 { id: "timetables", label: "Timetables", icon: <CalendarMonth /> },
 { id: "classes", label: "Classes", icon: <Class /> },
 { id: "marks", label: "Marks", icon: <Grade /> }, // Best option
-{ id: "fee_details", label: "Fee Details", icon: <CurrencyRupee /> },
+          ...(user.role === "faculty" 
+      ? [{ id: "fee_details", label: "Fee Details", icon: <CurrencyRupee /> }] 
+      : []
+      ),
   // { id: "registered_students", label: "Registered Students", icon: <HowToReg  /> },
 
 ];
-
-const RevisionStudentsPage = () => {
   const [activeTab, setActiveTab] = useState("marks");
   const dispatch = useDispatch();
   const { students, loading, error } = useSelector(

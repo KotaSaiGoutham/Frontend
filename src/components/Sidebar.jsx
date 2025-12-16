@@ -1,7 +1,7 @@
 // src/components/Sidebar.jsx
 import React, { useState, useEffect } from "react";
 import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   FaLightbulb,
   FaChalkboardTeacher,
@@ -34,7 +34,6 @@ import {
   FaSearch,
 } from "react-icons/fa";
 import "./Sidebar.css";
-import { useSelector } from "react-redux";
 import { setCurrentStudent } from "../redux/actions";
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
@@ -46,7 +45,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
   const students = useSelector((state) => state.students?.students || []);
   const isRevisonStudent =
     !!currentStudent?.isRevisionProgramJEEMains2026Student || false;
-
 
   // Check if we're on any student portfolio page
   const isStudentPortfolioPage =
@@ -65,13 +63,18 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       isStudentPortfolioPage
   );
 
-  // NEW: Toggle state for navigation mode on student portfolio pages
+  // Toggle state for navigation mode on student portfolio pages
   const [navigationMode, setNavigationMode] = useState("faculty");
 
-  // NEW: Student search state
+  // Student search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // --- ROLE CHECKS ---
+  const isFaculty = userRole === "faculty";
+  const isStudent = userRole === "student";
+  const isTypist = userRole === "typist";
 
   // Faculty navigation items
   const facultyNavItems = [
@@ -81,11 +84,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: "/revision-students",
       icon: <FaGraduationCap />,
     },
-
     { name: "Students", path: "/students", icon: <FaUsers />, isParent: true },
     { name: "Timetable", path: "/timetable", icon: <FaCalendarAlt /> },
     { name: "Admissions", path: "/admissions", icon: <FaUserGraduate /> },
-
     {
       name: "Earning & Expenditure",
       path: "/expenditure",
@@ -96,16 +97,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: "/academy-finance-dashboard",
       icon: <FaMoneyBillAlt />,
     },
-
     {
       name: "Demo Class",
       path: "/demo-classes",
       icon: <FaChalkboardTeacher />,
     },
     { name: "Demo Booked", path: "/demo-bookings", icon: <FaCalendarCheck /> },
-
     { name: "Employees", path: "/employees", icon: <FaUsers /> },
-
     { name: "Reports", path: "/reports", icon: <FaFileAlt /> },
     { name: "Analytics", path: "/analytics", icon: <FaChartBar /> },
     {
@@ -121,13 +119,35 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
     { name: "Ideas", path: "/Ideas", icon: <FaLightbulb /> },
   ];
 
-  // Student management sub-items
+  // Typist navigation items
+  const typistNavItems = [
+    { name: "Students", path: "/students", icon: <FaUsers />, isParent: true },
+     {
+      name: "JEE (2026)",
+      path: "/revision-students",
+      icon: <FaGraduationCap />,
+    },
+        { name: "Timetable", path: "/timetable", icon: <FaCalendarAlt /> },
+
+    {
+      name: "Study Materials",
+      path: "/upload-study-materials",
+      icon: <FaFileUpload />,
+    },
+    {
+      name: "Question Papers",
+      path: "/upload-question-papers",
+      icon: <FaFileAlt />,
+    },
+  ];
+
+  // Student management sub-items (Visible when expanded)
   const studentManagementSubItems = [
     { name: "Marks", path: "/student-exams", icon: <FaBookOpen /> },
     { name: "Syllabus", path: "/week-syllabus", icon: <FaListAlt /> },
   ];
 
-  // Student portfolio sub-items
+  // Student portfolio sub-items (When viewing a specific student)
   const studentPortfolioSubItems = [
     {
       name: "Profile",
@@ -139,7 +159,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: `/student/${extractedStudentId}/weekend`,
       icon: <FaCalendarAlt />,
     },
-        {
+    {
       name: "Question Papers",
       path: `/student/${extractedStudentId}/papers`,
       icon: <FaFileAlt />,
@@ -149,26 +169,24 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: `/student/${extractedStudentId}/results`,
       icon: <FaClipboardCheck />,
     },
-       {
+    {
       name: "Add Syllabus",
       path: `/student/${extractedStudentId}/student-syallabus-entry`,
       icon: <FaBookOpen />,
     },
-    // ...(isRevisonStudent ? [
-    //   { name: "Classes Info", path: `/student/${extractedStudentId}/classes`, icon: <FaChalkboardTeacher /> }
-    // ] : []),
-        { name: "Study Materials", path: `/student/${extractedStudentId}/study-materials`, icon: <FaBook /> },
-
+    {
+      name: "Study Materials",
+      path: `/student/${extractedStudentId}/study-materials`,
+      icon: <FaBook />,
+    },
     {
       name: "Payments",
       path: `/student/${extractedStudentId}/payments`,
       icon: <FaRupeeSign />,
     },
-    // { name: "Upload Files", path: `/student/${extractedStudentId}/upload`, icon: <FaFileUpload /> },
-
   ];
 
-  // Student role navigation
+  // Student role navigation (For actual students logged in)
   const studentRoleNavItems = [
     {
       name: "Profile",
@@ -185,7 +203,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: `/student/${extractedStudentId}/results`,
       icon: <FaClipboardCheck />,
     },
-          {
+    {
       name: "Add Syllabus",
       path: `/student/${extractedStudentId}/student-syallabus-entry`,
       icon: <FaClipboardCheck />,
@@ -209,14 +227,14 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: `/student/${extractedStudentId}/papers`,
       icon: <FaFileAlt />,
     },
-       {
+    {
       name: "Payments",
       path: `/student/${extractedStudentId}/payments`,
       icon: <FaRupeeSign />,
     },
   ];
 
-  // NEW: Improved Student search functionality
+  // Search functionality
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -239,14 +257,13 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
     setSearchResults([]);
 
     dispatch(setCurrentStudent(student));
-
     navigate(`/student/${student.id}/profile`);
 
     if (navigationMode === "faculty") {
       setNavigationMode("student");
     }
-
   };
+
   const handleSearchBlur = () => {
     setTimeout(() => {
       setShowSearchResults(false);
@@ -269,16 +286,20 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
     location.pathname.startsWith("/week-syllabus") ||
     isStudentPortfolioPage;
 
-  const isFaculty = userRole === "faculty";
-  const isStudent = userRole === "student";
-
+  // Effects
   useEffect(() => {
-    if (isStudentPortfolioPage && isFaculty && !isStudentsExpanded) {
+    // If faculty or typist on a portfolio page, ensure students section is expanded
+    if (
+      isStudentPortfolioPage &&
+      (isFaculty || isTypist) &&
+      !isStudentsExpanded
+    ) {
       setIsStudentsExpanded(true);
     }
   }, [
     isStudentPortfolioPage,
     isFaculty,
+    isTypist,
     isStudentsExpanded,
     extractedStudentId,
   ]);
@@ -291,23 +312,34 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
     }
   }, [isStudentPortfolioPage]);
 
+  // --- NAVIGATION ITEM SELECTION LOGIC ---
   const getNavItems = () => {
+    // 1. Check Student Role first
     if (isStudent) {
       return studentRoleNavItems;
     }
 
-    if (isStudentPortfolioPage && isFaculty) {
-      return navigationMode === "student"
-        ? studentPortfolioSubItems
-        : facultyNavItems;
+    // 2. Check if on Portfolio Page (Apply to both Faculty AND Typist)
+    if (isStudentPortfolioPage && (isFaculty || isTypist)) {
+      // If in "Student View" mode, show portfolio items
+      if (navigationMode === "student") {
+        return studentPortfolioSubItems;
+      }
+      // If in "Staff View" mode, return role-specific main items
+      return isTypist ? typistNavItems : facultyNavItems;
+    }
+
+    // 3. Default Views (Not on portfolio page)
+    if (isTypist) {
+      return typistNavItems;
     }
 
     return facultyNavItems;
   };
 
-  // Get student sub-items for faculty
+  // Get student sub-items for faculty AND typist
   const getStudentSubItems = () => {
-    if (!isFaculty) return [];
+    if (!isFaculty && !isTypist) return [];
     return studentManagementSubItems;
   };
 
@@ -325,8 +357,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
           isStudent ? "student-role" : "faculty-role"
         }`}
       >
-        {/* Student Search for Faculty on Student Portfolio Pages */}
-        {isFaculty &&
+        {/* Student Search for Faculty/Typist on Student Portfolio Pages */}
+        {(isFaculty || isTypist) &&
           isStudentPortfolioPage &&
           navigationMode === "student" && (
             <div className="student-search-container">
@@ -372,8 +404,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
             </div>
           )}
 
-        {/* Navigation Toggle for Faculty on Student Portfolio Pages */}
-        {isFaculty && isStudentPortfolioPage && (
+        {/* Navigation Toggle for Faculty/Typist on Student Portfolio Pages */}
+        {(isFaculty || isTypist) && isStudentPortfolioPage && (
           <div className="navigation-toggle-container">
             <div className="navigation-toggle">
               <button
@@ -383,7 +415,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
                 onClick={() => setNavigationMode("faculty")}
               >
                 <FaUserTie className="toggle-icon" />
-                <span className="toggle-text">Faculty</span>
+                <span className="toggle-text">
+                  {isTypist ? "Typist" : "Faculty"}
+                </span>
               </button>
               <button
                 className={`toggle-btn ${
@@ -405,7 +439,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
                 <React.Fragment key={item.name}>
                   <li>
                     {item.isParent &&
-                    isFaculty &&
+                    (isFaculty || isTypist) &&
                     navigationMode === "faculty" ? (
                       <NavLink
                         to={item.path}
@@ -417,22 +451,23 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
                       >
                         {item.icon}
                         <span>{item.name}</span>
-                        {isFaculty && navigationMode === "faculty" && (
-                          <span
-                            className="expand-icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              toggleStudentsDropdown();
-                            }}
-                          >
-                            {isStudentsExpanded ? (
-                              <FaChevronUp size={12} />
-                            ) : (
-                              <FaChevronDown size={12} />
-                            )}
-                          </span>
-                        )}
+                        {(isFaculty || isTypist) &&
+                          navigationMode === "faculty" && (
+                            <span
+                              className="expand-icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                toggleStudentsDropdown();
+                              }}
+                            >
+                              {isStudentsExpanded ? (
+                                <FaChevronUp size={12} />
+                              ) : (
+                                <FaChevronDown size={12} />
+                              )}
+                            </span>
+                          )}
                       </NavLink>
                     ) : (
                       <NavLink
@@ -448,8 +483,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
                     )}
                   </li>
 
+                  {/* Show Students Sub-Menu for Faculty AND Typist */}
                   {item.name === "Students" &&
-                    isFaculty &&
+                    (isFaculty || isTypist) &&
                     navigationMode === "faculty" &&
                     isStudentsExpanded &&
                     studentSubItemsToShow.length > 0 && (
