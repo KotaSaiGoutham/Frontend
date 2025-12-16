@@ -62,7 +62,7 @@ const TimeTableManager = () => {
   return (
     <Box style={containerStyle}>
       <Box style={mainContainerStyle}>
-   <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+   <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
   <Tabs
     value={activeTab}
     onChange={handleTabChange}

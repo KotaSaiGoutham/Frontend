@@ -1,4 +1,10 @@
 import {
+  EVALUATE_PAPER_SUCCESS,
+  EVALUATE_PAPER_FAILURE,
+  EVALUATE_PAPER_REQUEST,
+  UPLOAD_RESULT_REQUEST,
+  UPLOAD_RESULT_SUCCESS,
+  UPLOAD_RESULT_FAILURE,
   RESET_EMPLOYEE_LOADING_STATE,
   SET_CURRENT_EMPLOYEE,
   FETCH_EMPLOYEE_FAILURE,
@@ -2962,3 +2968,56 @@ export const fetchEmployeeById = (employeeId) =>
   type: SET_CURRENT_EMPLOYEE,
   payload: employeeData,
 });
+
+// 1. Student Upload Action
+export const uploadStudentResult = (questionPaperId, formData) =>
+  apiRequest({
+    url: `/api/materials/upload-result/${questionPaperId}`,
+    method: "POST",
+    data: formData,
+    onStart: UPLOAD_RESULT_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: UPLOAD_RESULT_SUCCESS, payload: data });
+      console.log("data",data)
+      
+      // --- CRITICAL FIX: Refresh the list immediately ---
+      // The backend response (data) must contain 'studentId'
+      if (data.studentId) {
+        dispatch(fetchQuestionPapers(data.studentId));
+      }
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPLOAD_RESULT_FAILURE,
+        payload: { error: error.message || "Failed to upload result" },
+      });
+    },
+    authRequired: true,
+  });
+
+// 2. Tutor Evaluation Action
+export const evaluateStudentPaper = (questionPaperId, formData) =>
+  apiRequest({
+    url: `/api/materials/evaluate-paper/${questionPaperId}`,
+    method: "POST",
+    data: formData,
+    onStart: EVALUATE_PAPER_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: EVALUATE_PAPER_SUCCESS, payload: data });
+      
+      // --- CRITICAL FIX: Refresh the list immediately ---
+      // Ensure backend returns 'studentId' or gets it from the request logic
+      // If data.studentId is missing, the UI won't update!
+      if (data.studentId || formData.get('studentId')) {
+         const sId = data.studentId || formData.get('studentId');
+         dispatch(fetchQuestionPapers(sId));
+      }
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: EVALUATE_PAPER_FAILURE,
+        payload: { error: error.message || "Failed to submit evaluation" },
+      });
+    },
+    authRequired: true,
+  });

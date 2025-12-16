@@ -22,15 +22,8 @@ import {
   FaRocket,
   FaChartBar,
   FaPercentage,
-  FaCalendarPlus,
   FaShieldAlt,
-  FaStar,
-  FaAward,
-  FaChartLine,
-  FaEdit,
-  FaDownload,
-  FaFileAlt,
-  FaClipboardList
+  FaEdit
 } from "react-icons/fa";
 import { setCurrentStudent } from "../../redux/actions";
 import { formatFirebaseDate, formatPhone } from "../../mockdata/function";
@@ -172,9 +165,9 @@ const StudentProfile = () => {
   // Premium StatCard with gradient option
   const StatCard = ({ icon: Icon, value, label, color = colors.primary, trend, subtitle, gradient }) => (
     <div style={{
-      display:"flex",
-      justifyContent:"center",
-      alignItems:"center",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
       background: gradient ? `linear-gradient(135deg, ${color}15, ${color}08)` : "white",
       padding: "24px",
       borderRadius: "20px",
@@ -190,7 +183,6 @@ const StudentProfile = () => {
         boxShadow: "0 12px 40px rgba(0,0,0,0.15)"
       }
     }}>
-      {/* Background pattern */}
       <div style={{
         position: "absolute",
         top: 0,
@@ -380,65 +372,6 @@ const StudentProfile = () => {
           {value || "N/A"}
         </div>
       </div>
-    </div>
-  );
-
-  // Quick Action Card Component
-  const QuickActionCard = ({ icon: Icon, title, description, color = colors.primary, onClick }) => (
-    <div 
-      onClick={onClick}
-      style={{
-        background: `linear-gradient(135deg, ${color}15, ${color}08)`,
-        padding: "24px",
-        borderRadius: "20px",
-        border: `2px solid ${color}20`,
-        boxShadow: "0 8px 25px rgba(0,0,0,0.08)",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        cursor: "pointer",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        textAlign: "center",
-        minHeight: "140px",
-        ':hover': {
-          transform: "translateY(-5px)",
-          boxShadow: `0 15px 35px ${color}25`
-        }
-      }}
-    >
-      <div style={{
-        width: "60px",
-        height: "60px",
-        borderRadius: "16px",
-        background: `linear-gradient(135deg, ${color}, ${color}dd)`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "white",
-        fontSize: "1.5rem",
-        marginBottom: "16px",
-        boxShadow: `0 6px 20px ${color}40`
-      }}>
-        <Icon />
-      </div>
-      <h4 style={{
-        fontSize: "1.1rem",
-        fontWeight: "700",
-        color: "#1a1a1a",
-        margin: "0 0 8px 0"
-      }}>
-        {title}
-      </h4>
-      <p style={{
-        fontSize: "0.85rem",
-        color: "#666",
-        margin: 0,
-        lineHeight: "1.4"
-      }}>
-        {description}
-      </p>
     </div>
   );
 
@@ -757,8 +690,122 @@ const StudentProfile = () => {
               </div>
             </div>
 
+            {/* Revision Program Details (MOVED HERE - LEFT SIDE) */}
+            {studentData.isRevisionProgramJEEMains2026Student && studentData.revisionProgramFee && (
+              <div style={{
+                background: "rgba(255,255,255,0.8)",
+                borderRadius: "24px",
+                padding: "35px",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+                border: "1px solid rgba(255,255,255,0.5)",
+                backdropFilter: "blur(10px)"
+              }}>
+                <SectionHeader
+                  icon={FaRocket}
+                  title="Revision Program"
+                  subtitle="JEE Mains 2026 preparation details"
+                  color={colors.purple}
+                />
+                
+                <div style={{ marginBottom: "28px" }}>
+                  <div style={{
+                    fontWeight: "800",
+                    color: "#1a1a1a",
+                    marginBottom: "10px",
+                    fontSize: "1.3rem"
+                  }}>
+                    {studentData.revisionProgramFee.programName}
+                  </div>
+                  <div style={{
+                    color: "#666",
+                    fontSize: "1rem",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "15px",
+                    background: "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05))",
+                    borderRadius: "12px",
+                    border: "2px solid rgba(139,92,246,0.2)"
+                  }}>
+                    <span style={{ fontWeight: "600" }}>Total Program Fee:</span>
+                    <span style={{ fontWeight: "800", color: "#1a1a1a", fontSize: "1.1rem" }}>
+                      {formatCurrency(studentData.revisionProgramFee.totalFee)}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Class Schedule */}
+                <div>
+                  <h4 style={{
+                    margin: "0 0 22px 0",
+                    color: "#1a1a1a",
+                    fontSize: "1.2rem",
+                    fontWeight: "700",
+                    paddingBottom: "12px",
+                    borderBottom: "2px solid rgba(0,0,0,0.06)"
+                  }}>
+                    Installment Plan
+                  </h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                    {Object.entries(studentData.revisionProgramFee.installments).map(([key, installment]) => (
+                      <div key={key} style={{
+                        background: "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))",
+                        padding: "22px",
+                        borderRadius: "16px",
+                        border: "2px solid rgba(0,0,0,0.05)",
+                        transition: "all 0.3s ease",
+                        backdropFilter: "blur(10px)"
+                      }}>
+                        <div style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "15px"
+                        }}>
+                          <div style={{
+                            fontWeight: "800",
+                            color: "#1a1a1a",
+                            fontSize: "1.1rem"
+                          }}>
+                            {key.replace('installment', 'Installment ')}
+                          </div>
+                          <StatusBadge 
+                            status={installment.status} 
+                            type="payment"
+                            icon={installment.status === "paid" ? FaCheckCircle : FaClock}
+                          />
+                        </div>
+                        <div style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "15px",
+                          fontSize: "0.9rem"
+                        }}>
+                          <div>
+                            <strong style={{ color: "#666" }}>Amount:</strong> {formatCurrency(installment.amount)}
+                          </div>
+                          <div>
+                            <strong style={{ color: "#666" }}>Due Date:</strong> {installment.dueDate}
+                          </div>
+                          <div>
+                            <strong style={{ color: "#666" }}>Paid Amount:</strong> {formatCurrency(installment.paidAmount)}
+                          </div>
+                          <div>
+                            <strong style={{ color: "#666" }}>Paid Date:</strong> {installment.paidDate ? 
+                              new Date(installment.paidDate).toLocaleDateString() : "Not Paid"}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "35px" }}>
+
+            {/* Class Schedule (Moved to Right Side & Row Wise) */}
             {studentData.classDateandTime && studentData.classDateandTime.length > 0 && (
               <div style={{
                 background: "rgba(255,255,255,0.8)",
@@ -775,37 +822,80 @@ const StudentProfile = () => {
                   color={colors.warning}
                 />
                 
+                {/* Updated Row-wise Enhanced UI */}
                 <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                  gap: "15px"
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "15px",
+                  alignItems: "center"
                 }}>
                   {studentData.classDateandTime.map((schedule, index) => {
                     const [day, time] = schedule.split('-');
                     return (
                       <div key={index} style={{
-                        background: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.05))",
-                        padding: "20px",
-                        borderRadius: "16px",
-                        border: "2px solid rgba(245,158,11,0.2)",
-                        textAlign: "center",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        background: "linear-gradient(135deg, #ffffff 0%, #fffbf2 100%)",
+                        padding: "12px 24px",
+                        borderRadius: "14px",
+                        border: "1px solid rgba(245,158,11,0.15)",
+                        boxShadow: "0 4px 15px rgba(245,158,11,0.08)",
                         transition: "all 0.3s ease",
                         cursor: "pointer",
-                        backdropFilter: "blur(10px)"
-                      }}>
+                        flex: "1 1 auto",
+                        minWidth: "220px",
+                        position: "relative",
+                        overflow: "hidden"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-3px)";
+                        e.currentTarget.style.boxShadow = "0 8px 25px rgba(245,158,11,0.15)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 15px rgba(245,158,11,0.08)";
+                      }}
+                      >
+                        {/* Day Section */}
                         <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
                           fontWeight: "700",
-                          color: colors.warning,
-                          fontSize: "1rem",
-                          marginBottom: "8px"
+                          color: "#1a1a1a",
+                          fontSize: "1rem"
                         }}>
+                          <div style={{
+                            padding: "6px",
+                            borderRadius: "8px",
+                            background: "rgba(245,158,11,0.1)",
+                            color: colors.warning,
+                            display: "flex"
+                          }}>
+                            <FaCalendarDay size={14} />
+                          </div>
                           {day}
                         </div>
+
+                        {/* Vertical Separator */}
                         <div style={{
+                          width: "1px",
+                          height: "24px",
+                          background: "rgba(0,0,0,0.1)",
+                          margin: "0 4px"
+                        }} />
+
+                        {/* Time Section */}
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
                           fontWeight: "600",
-                          color: "#92400e",
-                          fontSize: "0.9rem"
+                          color: "#666",
+                          fontSize: "0.95rem"
                         }}>
+                          <FaClock size={14} color="#92400e" />
                           {time}
                         </div>
                       </div>
@@ -814,10 +904,6 @@ const StudentProfile = () => {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Right Column */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "35px" }}>
             
             {/* Academic Information */}
             <div style={{
@@ -1002,117 +1088,7 @@ const StudentProfile = () => {
                 </div>
               </div>
             </div>
-
-            {/* Revision Program Details */}
-            {studentData.isRevisionProgramJEEMains2026Student && studentData.revisionProgramFee && (
-              <div style={{
-                background: "rgba(255,255,255,0.8)",
-                borderRadius: "24px",
-                padding: "35px",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-                border: "1px solid rgba(255,255,255,0.5)",
-                backdropFilter: "blur(10px)"
-              }}>
-                <SectionHeader
-                  icon={FaRocket}
-                  title="Revision Program"
-                  subtitle="JEE Mains 2026 preparation details"
-                  color={colors.purple}
-                />
-                
-                <div style={{ marginBottom: "28px" }}>
-                  <div style={{
-                    fontWeight: "800",
-                    color: "#1a1a1a",
-                    marginBottom: "10px",
-                    fontSize: "1.3rem"
-                  }}>
-                    {studentData.revisionProgramFee.programName}
-                  </div>
-                  <div style={{
-                    color: "#666",
-                    fontSize: "1rem",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "15px",
-                    background: "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05))",
-                    borderRadius: "12px",
-                    border: "2px solid rgba(139,92,246,0.2)"
-                  }}>
-                    <span style={{ fontWeight: "600" }}>Total Program Fee:</span>
-                    <span style={{ fontWeight: "800", color: "#1a1a1a", fontSize: "1.1rem" }}>
-                      {formatCurrency(studentData.revisionProgramFee.totalFee)}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 style={{
-                    margin: "0 0 22px 0",
-                    color: "#1a1a1a",
-                    fontSize: "1.2rem",
-                    fontWeight: "700",
-                    paddingBottom: "12px",
-                    borderBottom: "2px solid rgba(0,0,0,0.06)"
-                  }}>
-                    Installment Plan
-                  </h4>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-                    {Object.entries(studentData.revisionProgramFee.installments).map(([key, installment]) => (
-                      <div key={key} style={{
-                        background: "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))",
-                        padding: "22px",
-                        borderRadius: "16px",
-                        border: "2px solid rgba(0,0,0,0.05)",
-                        transition: "all 0.3s ease",
-                        backdropFilter: "blur(10px)"
-                      }}>
-                        <div style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: "15px"
-                        }}>
-                          <div style={{
-                            fontWeight: "800",
-                            color: "#1a1a1a",
-                            fontSize: "1.1rem"
-                          }}>
-                            {key.replace('installment', 'Installment ')}
-                          </div>
-                          <StatusBadge 
-                            status={installment.status} 
-                            type="payment"
-                            icon={installment.status === "paid" ? FaCheckCircle : FaClock}
-                          />
-                        </div>
-                        <div style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "15px",
-                          fontSize: "0.9rem"
-                        }}>
-                          <div>
-                            <strong style={{ color: "#666" }}>Amount:</strong> {formatCurrency(installment.amount)}
-                          </div>
-                          <div>
-                            <strong style={{ color: "#666" }}>Due Date:</strong> {installment.dueDate}
-                          </div>
-                          <div>
-                            <strong style={{ color: "#666" }}>Paid Amount:</strong> {formatCurrency(installment.paidAmount)}
-                          </div>
-                          <div>
-                            <strong style={{ color: "#666" }}>Paid Date:</strong> {installment.paidDate ? 
-                              new Date(installment.paidDate).toLocaleDateString() : "Not Paid"}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+            
           </div>
         </div>
       </div>

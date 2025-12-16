@@ -322,6 +322,10 @@ export const topicOptions = [
     subject: "Chemistry",
     year: "2nd Year",
   },
+    { id: 60, topic: "Miscellaneous", subject: "Physics", year: "2nd Year" },
+        { id: 61, topic: "Miscellaneous", subject: "Chemistry", year: "2nd Year" },
+
+
 ];
 export const yearOptions = [
   { value: "12th Class", label: "12th Class" },

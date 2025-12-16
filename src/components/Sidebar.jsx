@@ -139,6 +139,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: `/student/${extractedStudentId}/weekend`,
       icon: <FaCalendarAlt />,
     },
+        {
+      name: "Question Papers",
+      path: `/student/${extractedStudentId}/papers`,
+      icon: <FaFileAlt />,
+    },
     {
       name: "Results & Marks",
       path: `/student/${extractedStudentId}/results`,
@@ -147,23 +152,20 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
        {
       name: "Add Syllabus",
       path: `/student/${extractedStudentId}/student-syallabus-entry`,
-      icon: <FaClipboardCheck />,
+      icon: <FaBookOpen />,
     },
     // ...(isRevisonStudent ? [
     //   { name: "Classes Info", path: `/student/${extractedStudentId}/classes`, icon: <FaChalkboardTeacher /> }
     // ] : []),
+        { name: "Study Materials", path: `/student/${extractedStudentId}/study-materials`, icon: <FaBook /> },
+
     {
       name: "Payments",
       path: `/student/${extractedStudentId}/payments`,
       icon: <FaRupeeSign />,
     },
     // { name: "Upload Files", path: `/student/${extractedStudentId}/upload`, icon: <FaFileUpload /> },
-    { name: "Study Materials", path: `/student/${extractedStudentId}/study-materials`, icon: <FaBook /> },
-    {
-      name: "Question Papers",
-      path: `/student/${extractedStudentId}/papers`,
-      icon: <FaFileAlt />,
-    },
+
   ];
 
   // Student role navigation
@@ -206,6 +208,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       name: "Question Papers",
       path: `/student/${extractedStudentId}/papers`,
       icon: <FaFileAlt />,
+    },
+       {
+      name: "Payments",
+      path: `/student/${extractedStudentId}/payments`,
+      icon: <FaRupeeSign />,
     },
   ];
 

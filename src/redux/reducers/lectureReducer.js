@@ -27,19 +27,33 @@ import {
   FETCH_QUESTION_PAPERS_REQUEST,
   FETCH_QUESTION_PAPERS_SUCCESS,
   FETCH_QUESTION_PAPERS_FAILURE,
+  // --- NEW IMPORTS FOR RESULT & EVALUATION ---
+  UPLOAD_RESULT_REQUEST,
+  UPLOAD_RESULT_SUCCESS,
+  UPLOAD_RESULT_FAILURE,
+  EVALUATE_PAPER_REQUEST,
+  EVALUATE_PAPER_SUCCESS,
+  EVALUATE_PAPER_FAILURE,
 } from "../types";
 
 const initialLectureMaterialsState = {
   materials: [],
-  ppts: [], // Student-specific PPTs
-  worksheets: [], // Student-specific worksheets
-  studyMaterials: [], // Study materials for students
-  questionPapers: [], // Question papers for students
+  ppts: [], 
+  worksheets: [], 
+  studyMaterials: [], 
+  questionPapers: [], 
+  
   loading: false,
   uploading: false,
   deleting: false,
+  
   uploadingStudyMaterial: false,
   uploadingQuestionPaper: false,
+  
+  // --- NEW STATE VARIABLES ---
+  uploadingResult: false, // For Student uploading answer sheet
+  evaluatingPaper: false, // For Tutor uploading marks
+  
   fetchingStudyMaterials: false,
   fetchingQuestionPapers: false,
   error: null,
@@ -139,8 +153,6 @@ export const lectureMaterialsReducer = (
         ...state,
         uploadingStudyMaterial: false,
         error: null,
-        // Note: We don't add to studyMaterials array here because we'll refetch
-        // This prevents duplicate data if the upload succeeds but fetch fails
       };
 
     case UPLOAD_STUDY_MATERIAL_FAILURE:
@@ -185,7 +197,6 @@ export const lectureMaterialsReducer = (
         ...state,
         uploadingQuestionPaper: false,
         error: null,
-        // Note: We don't add to questionPapers array here because we'll refetch
       };
 
     case UPLOAD_QUESTION_PAPER_FAILURE:
@@ -215,6 +226,53 @@ export const lectureMaterialsReducer = (
         ...state, 
         fetchingQuestionPapers: false, 
         error: action.payload.error 
+      };
+
+    // --- NEW: STUDENT RESULT UPLOAD CASES ---
+    case UPLOAD_RESULT_REQUEST:
+      return {
+        ...state,
+        uploadingResult: true,
+        error: null
+      };
+
+    case UPLOAD_RESULT_SUCCESS:
+      return {
+        ...state,
+        uploadingResult: false,
+        error: null,
+        // The list will be updated by the subsequent fetchQuestionPapers dispatch
+        // from the action creator, so we just reset the loading state here.
+      };
+
+    case UPLOAD_RESULT_FAILURE:
+      return {
+        ...state,
+        uploadingResult: false,
+        error: action.payload.error
+      };
+
+    // --- NEW: TUTOR EVALUATION CASES ---
+    case EVALUATE_PAPER_REQUEST:
+      return {
+        ...state,
+        evaluatingPaper: true,
+        error: null
+      };
+
+    case EVALUATE_PAPER_SUCCESS:
+      return {
+        ...state,
+        evaluatingPaper: false,
+        error: null,
+        // Similarly, the UI updates because the action creator fetches the fresh list immediately after.
+      };
+
+    case EVALUATE_PAPER_FAILURE:
+      return {
+        ...state,
+        evaluatingPaper: false,
+        error: action.payload.error
       };
 
     default:

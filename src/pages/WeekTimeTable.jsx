@@ -1257,26 +1257,6 @@ const renderGridView = () => (
           </Alert>
         )}
 
-        {/* Edit Mode Banner - Show update status */}
-        {isEditMode && !swapMode && (
-          <Alert
-            severity="warning"
-            sx={{
-              mb: 3,
-              borderRadius: 3,
-              "& .MuiAlert-message": {
-                fontSize: "15px",
-                fontWeight: 500,
-              },
-            }}
-            icon={<EditIcon />}
-          >
-            <strong>Edit Mode Active</strong> - Click on any time slot to add or
-            modify class times. Use comma-separated values for multiple classes
-            (e.g., "9am, 2pm").
-          </Alert>
-        )}
-
         {/* Show update loading state */}
         {safeClassSchedule.updating && (
           <Alert

@@ -23,6 +23,8 @@ import {
   CalendarToday,
   TrendingUp,
   Schedule,
+  Done,
+  Close
 } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 
@@ -392,26 +394,46 @@ const PaymentHistoryTable = ({ payments = [], monthlyFee = 0 }) => {
                   </Box>
                 </TableCell>
 
-                <TableCell
-                  sx={{
-                    textAlign: "center",
-                    py: 2.5,
-                  }}
-                >
-                  <Chip
-                    icon={row.paid ? <CheckCircle /> : <Cancel />}
-                    label={row.paid ? "Paid" : "Unpaid"}
-                    color={row.paid ? "success" : "error"}
-                    size="medium"
-                    variant="filled"
-                    sx={{
-                      fontWeight: 600,
-                      fontSize: "14px",
-                      px: 1,
-                      minWidth: 100,
-                    }}
-                  />
-                </TableCell>
+<TableCell sx={{ textAlign: "center", py: 2.5 }}>
+  <Chip
+    // 1. CLEANER ICON: Use <Done /> for a crisp tick, <Close /> for a crisp X
+    icon={
+      row.paid ? (
+        <Done sx={{ animation: "popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)" }} />
+      ) : (
+        <Close sx={{ animation: "fadeIn 0.5s ease-in" }} />
+      )
+    }
+    label={row.paid ? "Paid" : "Unpaid"}
+    // 2. SOFTER COLORS: Use standard logic or custom hex for better visuals
+    color={row.paid ? "success" : "error"}
+    variant="filled"
+    size="medium"
+    sx={{
+      fontWeight: 700,
+      fontSize: "13px", // Slightly smaller text looks more premium
+      minWidth: 90,
+      borderRadius: "8px", // Less rounded (optional) or keep default '16px'
+      
+      // 3. ANIMATION DEFINITIONS
+      "@keyframes popIn": {
+        "0%": { transform: "scale(0)", opacity: 0 },
+        "100%": { transform: "scale(1)", opacity: 1 },
+      },
+      "@keyframes fadeIn": {
+        "0%": { opacity: 0 },
+        "100%": { opacity: 1 },
+      },
+      
+      // 4. INTERACTIVE HOVER
+      "&:hover": {
+         boxShadow: row.paid 
+            ? "0 0 10px rgba(76, 175, 80, 0.5)" 
+            : "0 0 10px rgba(244, 67, 54, 0.5)",
+      }
+    }}
+  />
+</TableCell>
 
                 <TableCell
                   sx={{
