@@ -17,6 +17,7 @@ import tutorIdeasReducer from "./reducers/tutorIdeasReducer";
 import { admissionReducer } from "./reducers/admissionReducer";
 import studentSyllabusReducer from "./reducers/studentSyllabusReducer";
 import notificationReducer from "./reducers/notificationReducer";
+import profileReducer from "./reducers/profileReducer";
 const rootReducer = combineReducers({
   auth: authReducer, 
   classes: classReducer,
@@ -35,7 +36,8 @@ const rootReducer = combineReducers({
    tutorIdeas:tutorIdeasReducer,
    admission:admissionReducer,
    studentSyllabus:studentSyllabusReducer,
-   notifications:notificationReducer
+   notifications:notificationReducer,
+   profile: profileReducer, // <--- Add it here
 });
 
 export default rootReducer;

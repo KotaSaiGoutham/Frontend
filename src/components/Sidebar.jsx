@@ -41,6 +41,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { studentId } = useParams();
+  const user = useSelector((state) => state.auth.user);
+  console.log("user",user)
   const currentStudent = useSelector((state) => state.auth?.currentStudent);
   const students = useSelector((state) => state.students?.students || []);
   const isRevisonStudent =
@@ -117,6 +119,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       icon: <FaFileAlt />,
     },
     { name: "Ideas", path: "/Ideas", icon: <FaLightbulb /> },
+     { name: "My Profile", path:"/profile", icon:<FaUserCircle/>}
+
+
   ];
 
   // Typist navigation items
@@ -139,6 +144,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: "/upload-question-papers",
       icon: <FaFileAlt />,
     },
+    { name: "My Profile", path:`/employee/${user?.employeeId}`, icon:<FaUserCircle/>}
   ];
 
   // Student management sub-items (Visible when expanded)

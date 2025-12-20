@@ -1,4 +1,16 @@
 import {
+    UPLOAD_ICON_REQUEST,
+  UPLOAD_ICON_SUCCESS,
+  UPLOAD_ICON_FAILURE,
+  UPDATE_PROFILE_FAILURE,
+  UPDATE_PROFILE_SUCCESS,
+  UPDATE_PROFILE_REQUEST,
+ UPDATE_PROFILE_PIC_REQUEST,
+  UPDATE_PROFILE_PIC_SUCCESS,
+  UPDATE_PROFILE_PIC_FAILURE,
+  GET_PROFILE_ICON_REQUEST,
+  GET_PROFILE_ICON_SUCCESS,
+  GET_PROFILE_ICON_FAILURE,
   EVALUATE_PAPER_SUCCESS,
   EVALUATE_PAPER_FAILURE,
   EVALUATE_PAPER_REQUEST,
@@ -3017,6 +3029,73 @@ export const evaluateStudentPaper = (questionPaperId, formData) =>
       dispatch({
         type: EVALUATE_PAPER_FAILURE,
         payload: { error: error.message || "Failed to submit evaluation" },
+      });
+    },
+    authRequired: true,
+  });
+
+
+export const updateProfilePicture = (formData) =>
+  apiRequest({
+    url: "/api/data/update-profile-picture", // Make sure this matches backend route
+    method: "POST",
+    data: formData,
+    onStart: UPLOAD_ICON_REQUEST, // Changed to match profileReducer
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPLOAD_ICON_SUCCESS, // Changed to match profileReducer
+        payload: data, // Expecting { photoUrl: "..." }
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Error updating profile picture:", error);
+      dispatch({
+        type: UPLOAD_ICON_FAILURE, // Changed to match profileReducer
+        payload: { error: error.message || "Failed to update profile picture" },
+      });
+    },
+    authRequired: true,
+  });
+
+// 2. Update Profile Details (Email/Mobile) - Stays in Auth Reducer usually
+export const updateUserProfile = ({ userId, email, mobile }) =>
+  apiRequest({
+    url: "/api/data/updateUserProfile", // Check route
+    method: "PUT",
+    data: { userId, email, mobile },
+    onStart: UPDATE_PROFILE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: UPDATE_PROFILE_SUCCESS,
+        payload: { email, mobile },
+      });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPDATE_PROFILE_FAILURE,
+        payload: { error: error.message },
+      });
+    },
+    authRequired: true,
+  });
+
+// 3. Get Profile Icon - Fixed to use GET_PROFILE_ICON types
+export const getUserProfileIcon = (id) =>
+  apiRequest({
+    url: `/api/data/get-user-profile-icon/${id}`,
+    method: "GET",
+    onStart: GET_PROFILE_ICON_REQUEST, // Add this for loading state
+    onSuccess: (data, dispatch) => {
+      dispatch({
+        type: GET_PROFILE_ICON_SUCCESS, // Correct type for profileReducer
+        payload: data, 
+      });
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Background fetch failed", error);
+      dispatch({
+        type: GET_PROFILE_ICON_FAILURE,
+        payload: error.message
       });
     },
     authRequired: true,

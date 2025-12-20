@@ -9,6 +9,7 @@ import { parse, isValid, isAfter } from "date-fns";
 import { persistor } from "../redux/store";
 
 const PROTECTED_BASE_PATHS = [
+  "/profile",
   "/dashboard",
   "/students",
   "/admissions",

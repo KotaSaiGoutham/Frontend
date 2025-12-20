@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -13,7 +13,8 @@ import {
   FaTimesCircle,
   FaPhoneAlt,
   FaEnvelope,
-  FaFilter
+  FaFilter,
+  FaCamera // Camera Icon
 } from "react-icons/fa";
 import { format, parseISO } from "date-fns";
 
@@ -39,14 +40,18 @@ import {
   FormControl,
   Select,
   MenuItem,
-  Tooltip
+  Tooltip,
+  Badge, // Badge Component
+  Snackbar
 } from "@mui/material";
 
 // Import actions
 import { 
   fetchEmployeeById, 
   fetchEmployeePayments,
-  setCurrentEmployee 
+  setCurrentEmployee,
+  updateProfilePicture,
+  getUserProfileIcon // Import the specific ID fetcher
 } from "../../redux/actions";
 
 import EmployeePaymentsTab from "./EmployeePaymentsTab";
@@ -71,14 +76,22 @@ const EmployeeDashboard = () => {
     employeePayments,
     paymentsLoading
   } = useSelector((state) => state.employees);
-  
+    const { photoUrl: profilePhoto, isUploading } = useSelector((state) => state.profile);
+    const currentPhoto = profilePhoto
+
   const [activeTab, setActiveTab] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // --- Upload State ---
+  const [uploading, setUploading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     if (id) {
+      dispatch(getUserProfileIcon(id)); 
       dispatch(fetchEmployeeById(id));
       dispatch(fetchEmployeePayments(id));
     }
@@ -86,6 +99,26 @@ const EmployeeDashboard = () => {
       dispatch(setCurrentEmployee(null));
     };
   }, [id, dispatch]);
+
+  // --- File Upload Handler ---
+ const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setSnackbar({ open: true, message: "File too large (Max 5MB)", severity: "error" });
+      return;
+    }
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    // CRITICAL: Send the Employee ID from URL params
+    formData.append("userId", id); 
+    
+   await dispatch(updateProfilePicture(formData)); 
+    setUploading(false);
+  };
 
   // Statistics Calculation
   const stats = useMemo(() => {
@@ -131,12 +164,10 @@ const EmployeeDashboard = () => {
     };
   }, [employeePayments]);
 
-  // FIX: Ensure Filtering Works Correctly
   const filteredPayments = useMemo(() => {
     if (!employeePayments || !Array.isArray(employeePayments)) return [];
     if (selectedMonth === "all") return employeePayments;
     
-    // Parse selectedMonth which is in "YYYY-MM" format (e.g. "2025-12")
     const [yearStr, monthStr] = selectedMonth.split("-");
     const year = parseInt(yearStr, 10);
     const month = parseInt(monthStr, 10);
@@ -148,14 +179,11 @@ const EmployeeDashboard = () => {
     if (!employeePayments || !Array.isArray(employeePayments)) return [];
     const monthsSet = new Set();
     employeePayments.forEach(p => {
-      // Create standardized YYYY-MM format
       monthsSet.add(`${p.year}-${String(p.month).padStart(2, '0')}`);
     });
-    // Sort descending
     return Array.from(monthsSet).sort().reverse();
   }, [employeePayments]);
 
-  // Helper for dropdown display
   const formatMonthLabel = (monthStr) => {
       if(!monthStr) return "";
       const [year, month] = monthStr.split("-");
@@ -186,7 +214,6 @@ const EmployeeDashboard = () => {
     };
 
     const headers = ["Month", "Payment Date", "Salary", "Status", "Paid Amount"];
-    // Use filteredPayments to export only what is seen
     const rows = filteredPayments.map(p => {
         const monthStr = new Date(p.year, p.month - 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
         const status = p.salary === p.paidAmount ? "Full Payment" : "Partial";
@@ -239,10 +266,23 @@ const EmployeeDashboard = () => {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', bgcolor: '#f5f7fa' }}><CircularProgress size={60} /></Box>;
   }
 
-  if (employeeError || !currentEmployee) {
-    return <Box sx={{ p: 3 }}><Alert severity="error">{employeeError || "Employee not found"}</Alert><Button startIcon={<FaArrowLeft />} onClick={handleBack} sx={{ mt: 2 }}>Back</Button></Box>;
-  }
+if (employeeError || !currentEmployee) {
+    // Extract the string if employeeError is an object containing 'message'
+    const errorMsg = typeof employeeError === 'object' && employeeError !== null 
+      ? employeeError.message 
+      : employeeError;
 
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          {errorMsg || "Employee not found"}
+        </Alert>
+        <Button startIcon={<FaArrowLeft />} onClick={handleBack} sx={{ mt: 2 }}>
+          Back
+        </Button>
+      </Box>
+    );
+  }
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc', pb: 4 }}>
       {/* Top Navigation Bar */}
@@ -258,7 +298,6 @@ const EmployeeDashboard = () => {
       {/* Main Content */}
       <Box sx={{ px: { xs: 2, md: 3 }, width: '100%', boxSizing: 'border-box' }}>
         
-        {/* FIX 1: alignItems="flex-start" prevents layout shifts between tabs */}
         <Grid container spacing={3} alignItems="flex-start">
             
           {/* LEFT COLUMN: Profile */}
@@ -266,25 +305,72 @@ const EmployeeDashboard = () => {
             <Grow in={true} timeout={500}>
               <Card sx={{ borderRadius: 4, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', position: 'sticky', top: 20 }}>
                 <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: 5, pb: 4 }}>
-                  <Avatar sx={{ width: 120, height: 120, mb: 2, fontSize: '3rem', bgcolor: '#fff', color: '#334155', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: '4px solid #f8fafc' }}>
-                    {currentEmployee.name?.charAt(0).toUpperCase()}
-                  </Avatar>
+                  
+                  {/* --- AVATAR WITH UPLOAD BADGE --- */}
+                  <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      hidden
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                    />
+                    <Badge
+                      overlap="circular"
+                      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                      badgeContent={
+                        <Tooltip title="Update Photo">
+                          <IconButton
+                            onClick={() => fileInputRef.current.click()}
+                            sx={{
+                              bgcolor: 'white',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                              '&:hover': { bgcolor: '#f5f5f5', transform: 'scale(1.1)' },
+                              transition: 'all 0.2s',
+                              width: 42, height: 42
+                            }}
+                            disabled={uploading}
+                          >
+                            {uploading ? <CircularProgress size={20} /> : <FaCamera color="#1565C0" size={18} />}
+                          </IconButton>
+                        </Tooltip>
+                      }
+                    >
+                      <Avatar
+                        src={currentPhoto}
+                        alt={currentEmployee?.name}
+                        sx={{
+                          width: 120,
+                          height: 120,
+                          fontSize: '3rem',
+                          bgcolor: '#fff',
+                          color: '#334155',
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                          border: '4px solid #f8fafc'
+                        }}
+                      >
+                        {currentEmployee.name?.charAt(0).toUpperCase()}
+                      </Avatar>
+                    </Badge>
+                  </Box>
+                  {/* ------------------------------- */}
+
                   <Typography variant="h5" fontWeight="800" gutterBottom color="#1e293b" textAlign="center">{currentEmployee.name}</Typography>
                   <Chip label={currentEmployee.role || 'Employee'} size="small" sx={{ mb: 4, fontWeight: 600, bgcolor: '#f1f5f9', color: '#475569' }} />
                   
                   {/* Stats Box */}
                   <Box sx={{ width: '100%', mb: 3 }}>
-                     <Box sx={{ p:2, mb: 2, bgcolor: currentEmployee.paid ? '#ecfdf5' : '#fef2f2', borderRadius: 3, border: '1px solid', borderColor: currentEmployee.paid ? '#d1fae5' : '#fee2e2' }}>
+                      <Box sx={{ p:2, mb: 2, bgcolor: currentEmployee.paid ? '#ecfdf5' : '#fef2f2', borderRadius: 3, border: '1px solid', borderColor: currentEmployee.paid ? '#d1fae5' : '#fee2e2' }}>
                         <Box display="flex" justifyContent="center" alignItems="center" gap={1}>
                             {currentEmployee.paid ? <FaCheckCircle color="#10b981"/> : <FaTimesCircle color="#ef4444"/>}
                             <Typography fontWeight="700" color={currentEmployee.paid ? "#047857" : "#b91c1c"}>{currentEmployee.paid ? "Paid" : "Unpaid"}</Typography>
                         </Box>
                         <Typography variant="caption" display="block" textAlign="center" color="textSecondary" mt={0.5}>Current Month</Typography>
-                     </Box>
-                     <Box sx={{ p:2, bgcolor: '#f8fafc', borderRadius: 3, textAlign: 'center', border: '1px solid #e2e8f0' }}>
+                      </Box>
+                      <Box sx={{ p:2, bgcolor: '#f8fafc', borderRadius: 3, textAlign: 'center', border: '1px solid #e2e8f0' }}>
                         <Typography variant="h6" fontWeight="800" color="#0f172a">₹{currentEmployee.salary?.toLocaleString()}</Typography>
                         <Typography variant="caption" color="textSecondary">Base Salary</Typography>
-                     </Box>
+                      </Box>
                   </Box>
                   
                   <Divider sx={{ width: '100%', mb: 3 }} />
@@ -388,7 +474,7 @@ const EmployeeDashboard = () => {
                         {activeTab === 0 && (
                             <EmployeePaymentsTab 
                                 payments={employeePayments || []}
-                                filteredPayments={filteredPayments} // Passing correctly processed filtered data
+                                filteredPayments={filteredPayments} 
                                 employee={currentEmployee}
                                 page={page}
                                 setPage={setPage}
@@ -405,6 +491,18 @@ const EmployeeDashboard = () => {
           </Grid>
         </Grid>
       </Box>
+
+      {/* Snackbar for Notifications */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={4000} 
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled">
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -227,7 +227,6 @@ const Employees = () => {
 
   // NEW: Handle employee name click to navigate to dashboard
   const handleEmployeeNameClick = (employee) => {
-    console.log("employee",employee)
     navigate(`/employee/${employee.id}`);
   };
 

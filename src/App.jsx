@@ -95,6 +95,7 @@ import TutorIdeasPage from "./components/TutorIdeas/TutorIdeasPage";
 import AdmissionPage from "./components/AdmissionPage";
 import StudentSyllabusFormPage from "./components/student-portfolio/StudentSyllabusFormPage";
 import EmployeeDashboard from "./components/dashboard/EmployeeDashboard";
+import ProfilePage from "./components/ProfilePage";
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const token = localStorage.getItem("token");
@@ -157,6 +158,8 @@ function App() {
                 }
               >
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<ProfilePage/>}/>
+
                 <Route path="/students" element={<StudentsTable />} />
                 <Route path="/demo-classes" element={<DemoClassesPage />} />
                 <Route path="/reports" element={<Reports />} />
