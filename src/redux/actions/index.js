@@ -1,4 +1,13 @@
 import {
+  UPLOAD_IMPORTANT_FILE_REQUEST,
+  UPLOAD_IMPORTANT_FILE_SUCCESS,
+  UPLOAD_IMPORTANT_FILE_FAILURE,
+  FETCH_IMPORTANT_FILES_REQUEST,
+  FETCH_IMPORTANT_FILES_SUCCESS,
+  FETCH_IMPORTANT_FILES_FAILURE,
+  DELETE_IMPORTANT_FILE_REQUEST,
+  DELETE_IMPORTANT_FILE_SUCCESS,
+  DELETE_IMPORTANT_FILE_FAILURE,
     UPLOAD_ICON_REQUEST,
   UPLOAD_ICON_SUCCESS,
   UPLOAD_ICON_FAILURE,
@@ -1983,70 +1992,13 @@ export const updateStudentStatus = (studentId, newStatus) =>
     },
     authRequired: false,
   });
-export const fetchStudentLectureMaterials = (studentId) =>
-  apiRequest({
-    url: `/api/materials/getstudentmaterials/${studentId}`,
-    method: "GET",
-    onStart: FETCH_LECTURE_MATERIALS_REQUEST,
-    onSuccess: (data, dispatch) => {
-      dispatch({ type: FETCH_LECTURE_MATERIALS_SUCCESS, payload: data });
-    },
-    onFailure: (error, dispatch) => {
-      dispatch({
-        type: FETCH_LECTURE_MATERIALS_FAILURE,
-        payload: {
-          error: error.message || "Failed to fetch lecture materials",
-        },
-      });
-    },
-    authRequired: true,
-  });
-
-// New action creator to upload a lecture material file
-export const uploadLectureMaterial = (studentId, classId, fileType, file) =>
-  apiRequest({
-    url: `/api/materials/upload/${studentId}/${classId}/${fileType}`,
-    method: "POST",
-    data: file, // The API request helper needs to handle formData
-    onStart: UPLOAD_LECTURE_MATERIAL_REQUEST,
-    onSuccess: (data, dispatch) => {
-      dispatch({ type: UPLOAD_LECTURE_MATERIAL_SUCCESS, payload: data });
-      dispatch(fetchStudentLectureMaterials(studentId)); // Refresh the data after a successful upload
-    },
-    onFailure: (error, dispatch) => {
-      dispatch({
-        type: UPLOAD_LECTURE_MATERIAL_FAILURE,
-        payload: { error: error.message || "Failed to upload file" },
-      });
-    },
-    authRequired: true,
-  });
-export const deleteLectureMaterial = (fileId, googleDriveId) =>
-  apiRequest({
-    url: `/api/materials/delete/${fileId}/${googleDriveId}`,
-    method: "DELETE",
-    onStart: DELETE_LECTURE_MATERIAL_REQUEST, // Optional: Add a request type if you want to show a loading state on deletion
-    onSuccess: (data, dispatch) => {
-      dispatch({ type: DELETE_LECTURE_MATERIAL_SUCCESS, payload: fileId });
-    },
-    onFailure: (error, dispatch) => {
-      dispatch({
-        type: DELETE_LECTURE_MATERIAL_FAILURE,
-        payload: { error: error.message || "Failed to delete file" },
-      });
-    },
-    authRequired: true,
-  });
 export const fetchRevisionClasses = (requestParams = {}) => {
-  // Rename to avoid conflict
-
   return apiRequest({
     url: `/api/data/revisionClasses`,
     method: "GET",
     params: {
-      // Use requestParams instead of params
-      cursorDate: requestParams.cursorDate, // FIX: Use requestParams
-      direction: requestParams.direction, // FIX: Use requestParams
+      cursorDate: requestParams.cursorDate, 
+      direction: requestParams.direction,
     },
     onStart: FETCH_REVISION_CLASSES_REQUEST,
     onSuccess: (data, dispatch) => {
@@ -3096,6 +3048,106 @@ export const getUserProfileIcon = (id) =>
       dispatch({
         type: GET_PROFILE_ICON_FAILURE,
         payload: error.message
+      });
+    },
+    authRequired: true,
+  });
+
+export const fetchStudentLectureMaterials = (studentId) =>
+  apiRequest({
+    url: `/api/materials/getstudentmaterials/${studentId}`,
+    method: "GET",
+    onStart: "FETCH_LECTURE_MATERIALS_REQUEST",
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: "FETCH_LECTURE_MATERIALS_SUCCESS", payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({ type: "FETCH_LECTURE_MATERIALS_FAILURE", payload: error });
+    },
+    authRequired: true,
+  });
+
+export const uploadLectureMaterial = (studentId, classId, fileType, formData) =>
+  apiRequest({
+    url: `/api/materials/upload/${studentId}/${classId}/${fileType}`,
+    method: "POST",
+    data: formData, // FormData contains file + studentName
+    onStart: "UPLOAD_LECTURE_MATERIAL_REQUEST",
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: "UPLOAD_LECTURE_MATERIAL_SUCCESS", payload: data });
+      dispatch(fetchStudentLectureMaterials(studentId)); // Refresh UI
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({ type: "UPLOAD_LECTURE_MATERIAL_FAILURE", payload: error });
+    },
+    authRequired: true,
+  });
+
+export const deleteLectureMaterial = (fileId) =>
+  apiRequest({
+    url: `/api/materials/delete/${fileId}`,
+    method: "DELETE",
+    onStart: "DELETE_LECTURE_MATERIAL_REQUEST",
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: "DELETE_LECTURE_MATERIAL_SUCCESS", payload: fileId });
+      // Reducer should filter out this ID from state.materials
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({ type: "DELETE_LECTURE_MATERIAL_FAILURE", payload: error });
+    },
+    authRequired: true,
+  });
+  // Upload Important File
+export const uploadImportantFile = (formData) =>
+  apiRequest({
+    url: "/api/materials/important-files/upload",
+    method: "POST",
+    data: formData,
+    onStart: UPLOAD_IMPORTANT_FILE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: UPLOAD_IMPORTANT_FILE_SUCCESS, payload: data });
+      dispatch(fetchImportantFiles()); // Automatically refresh the list
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: UPLOAD_IMPORTANT_FILE_FAILURE,
+        payload: { error: error.message || "Failed to upload file" },
+      });
+    },
+    authRequired: true,
+  });
+
+// Fetch All Important Files
+export const fetchImportantFiles = () =>
+  apiRequest({
+    url: "/api/materials/important-files/all",
+    method: "GET",
+    onStart: FETCH_IMPORTANT_FILES_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: FETCH_IMPORTANT_FILES_SUCCESS, payload: data });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: FETCH_IMPORTANT_FILES_FAILURE,
+        payload: { error: error.message || "Failed to fetch important files" },
+      });
+    },
+    authRequired: true,
+  });
+
+// Delete Important File
+export const deleteImportantFile = (fileId) =>
+  apiRequest({
+    url: `/api/materials/important-files/${fileId}`,
+    method: "DELETE",
+    onStart: DELETE_IMPORTANT_FILE_REQUEST,
+    onSuccess: (data, dispatch) => {
+      dispatch({ type: DELETE_IMPORTANT_FILE_SUCCESS, payload: fileId });
+    },
+    onFailure: (error, dispatch) => {
+      dispatch({
+        type: DELETE_IMPORTANT_FILE_FAILURE,
+        payload: { error: error.message || "Failed to delete file" },
       });
     },
     authRequired: true,

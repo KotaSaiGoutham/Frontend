@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  FaStar,
   FaLightbulb,
   FaChalkboardTeacher,
   FaBars,
@@ -106,9 +107,12 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
     },
     { name: "Demo Booked", path: "/demo-bookings", icon: <FaCalendarCheck /> },
     { name: "Employees", path: "/employees", icon: <FaUsers /> },
-    { name: "Reports", path: "/reports", icon: <FaFileAlt /> },
-    { name: "Analytics", path: "/analytics", icon: <FaChartBar /> },
-    {
+      {
+      name: "Important Files",
+      path: "/important-files",
+      icon: <FaStar />,
+    },
+      {
       name: "Study Materials",
       path: "/upload-study-materials",
       icon: <FaFileUpload />,
@@ -118,8 +122,12 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       path: "/upload-question-papers",
       icon: <FaFileAlt />,
     },
+         { name: "My Profile", path:"/profile", icon:<FaUserCircle/>},
+
+    { name: "Reports", path: "/reports", icon: <FaFileAlt /> },
+    { name: "Analytics", path: "/analytics", icon: <FaChartBar /> },
+  
     { name: "Ideas", path: "/Ideas", icon: <FaLightbulb /> },
-     { name: "My Profile", path:"/profile", icon:<FaUserCircle/>}
 
 
   ];
@@ -159,6 +167,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, userRole = "faculty" }) => {
       name: "Profile",
       path: `/student/${extractedStudentId}/profile`,
       icon: <FaUserCircle />,
+    },
+      {
+      name: "Uploads",
+      path: `/student/${extractedStudentId}/upload`,
+      icon: <FaRupeeSign />,
     },
     {
       name: "Syllabus",

@@ -96,6 +96,7 @@ import AdmissionPage from "./components/AdmissionPage";
 import StudentSyllabusFormPage from "./components/student-portfolio/StudentSyllabusFormPage";
 import EmployeeDashboard from "./components/dashboard/EmployeeDashboard";
 import ProfilePage from "./components/ProfilePage";
+import ImportantFiles from "./components/ImportantFiles";
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const token = localStorage.getItem("token");
@@ -197,6 +198,10 @@ function App() {
                 <Route
                   path="/upload-question-papers"
                   element={<QuestionPaperUpload />}
+                />
+                <Route
+                  path="/important-files"
+                  element={<ImportantFiles />}
                 />
 
                 <Route path="/employees" element={<Employees />} />

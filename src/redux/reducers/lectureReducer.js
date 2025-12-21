@@ -1,4 +1,11 @@
 import {
+  FETCH_IMPORTANT_FILES_REQUEST,
+  FETCH_IMPORTANT_FILES_SUCCESS,
+  FETCH_IMPORTANT_FILES_FAILURE,
+  UPLOAD_IMPORTANT_FILE_REQUEST,
+  UPLOAD_IMPORTANT_FILE_SUCCESS,
+  UPLOAD_IMPORTANT_FILE_FAILURE,
+  DELETE_IMPORTANT_FILE_SUCCESS,
   FETCH_LECTURE_MATERIALS_REQUEST,
   FETCH_LECTURE_MATERIALS_SUCCESS,
   FETCH_LECTURE_MATERIALS_FAILURE,
@@ -42,7 +49,7 @@ const initialLectureMaterialsState = {
   worksheets: [], 
   studyMaterials: [], 
   questionPapers: [], 
-  
+  importantFiles: [],
   loading: false,
   uploading: false,
   deleting: false,
@@ -274,7 +281,43 @@ export const lectureMaterialsReducer = (
         evaluatingPaper: false,
         error: action.payload.error
       };
+case FETCH_IMPORTANT_FILES_REQUEST:
+      return { ...state, fetchingImportantFiles: true, error: null };
+    
+    case FETCH_IMPORTANT_FILES_SUCCESS:
+      return { 
+        ...state, 
+        fetchingImportantFiles: false, 
+        importantFiles: action.payload, // Updates the list
+        error: null 
+      };
 
+    case FETCH_IMPORTANT_FILES_FAILURE:
+      return { ...state, fetchingImportantFiles: false, error: action.payload };
+
+    // 2. Uploading
+    case UPLOAD_IMPORTANT_FILE_REQUEST:
+      return { ...state, uploadingImportantFile: true, error: null };
+
+    case UPLOAD_IMPORTANT_FILE_SUCCESS:
+      return {
+        ...state,
+        uploadingImportantFile: false,
+        // IMMEDIATE UI UPDATE: Add new file to top of list
+        importantFiles: [action.payload, ...state.importantFiles], 
+        error: null
+      };
+
+    case UPLOAD_IMPORTANT_FILE_FAILURE:
+      return { ...state, uploadingImportantFile: false, error: action.payload };
+
+    // 3. Deleting
+    case DELETE_IMPORTANT_FILE_SUCCESS:
+      return {
+        ...state,
+        // IMMEDIATE UI UPDATE: Filter out deleted file
+        importantFiles: state.importantFiles.filter(file => file.id !== action.payload)
+      };
     default:
       return state;
   }
