@@ -62,10 +62,12 @@ import { Link } from "react-router-dom";
 import ClassesOverview from "./dashboard/ClassesOverview";
 import HistoricalTables from "./dashboard/HistoricalTables";
 import NotificationBell from "./NotificationBell"; // Import the new component
+import FeatureAnnouncement from "./FeatureAnnouncement";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  console.log("user",user)
 
   const dayNameToDayNum = useMemo(
     () => ({
@@ -410,6 +412,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      <FeatureAnnouncement role={user.role}/>
       {/* Snackbar for alerts */}
       <Snackbar
         open={snackbarOpen}

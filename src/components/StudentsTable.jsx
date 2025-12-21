@@ -96,6 +96,7 @@ import { ClassCounterDisplay } from "../mockdata/function";
 import TableHeaders from "./students/TableHeaders";
 import { studentColumns } from "../mockdata/Options";
 import ClassesCompletedTable from "./students/ClassesCompletedTable";
+import FeatureAnnouncement from "./FeatureAnnouncement";
 
 // 🚀 NEW: Table Skeleton Component
 const TableSkeleton = ({ rows = 10, columnVisibility }) => {
@@ -910,6 +911,7 @@ const calculateAutomaticClasses = (student) => {
         gap: 2,
       }}
     >
+      <FeatureAnnouncement user={user.role} Allowforotherthenfaculty={true}/>
       {!isRevisionProgramJEEMains2026Student && (
         <Box
           sx={{
