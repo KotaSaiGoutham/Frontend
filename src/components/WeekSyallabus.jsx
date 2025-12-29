@@ -19,6 +19,11 @@ import {
   useTheme,
   Tooltip,
   Slide,
+  useMediaQuery, // 👈 Added for responsive check
+  Grid,          // 👈 Added for Mobile Grid
+  Card,          // 👈 Added for Mobile Card
+  CardContent,   // 👈 Added for Mobile Card
+  Avatar         // 👈 Added for Avatar
 } from "@mui/material";
 import { FaListAlt } from "react-icons/fa";
 import SchoolIcon from "@mui/icons-material/School";
@@ -37,9 +42,68 @@ const fadeIn = `@keyframes fadeIn {
   to { opacity: 1; }
 }`;
 
+// 📱 NEW: Mobile Card Component
+const MobileSyllabusCard = ({ student, index, selectedLessons, handleLessonChange, formattedTopicOptions }) => {
+  return (
+    <Grid item xs={12} md={6}>
+      <Card 
+        elevation={2} 
+        sx={{ 
+          borderRadius: "16px",
+          borderLeft: "6px solid #1976d2", // Accent color
+          transition: "transform 0.2s",
+          "&:active": { transform: "scale(0.98)" } 
+        }}
+      >
+        <CardContent sx={{ p: 2 }}>
+          {/* Header: Name and Stream */}
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box display="flex" alignItems="center" gap={1.5}>
+              <Avatar sx={{ bgcolor: "#e3f2fd", color: "#1976d2", fontWeight: "bold" }}>
+                {index + 1}
+              </Avatar>
+              <Box>
+                <Link
+                  to={`/student/${student.id}`}
+                  state={{ studentData: student }}
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  <Typography variant="h6" sx={{ fontWeight: 700, fontSize: "1rem", color: "#2d3748" }}>
+                    {student.Name}
+                  </Typography>
+                </Link>
+                <Typography variant="caption" color="text.secondary">
+                  Stream: {student.Stream}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
+          {/* Syllabus Selector */}
+          <Box>
+            <Typography variant="caption" sx={{ fontWeight: "bold", color: "#1976d2", mb: 0.5, display: "block" }}>
+              ASSIGN WEEKLY SYLLABUS
+            </Typography>
+            <MuiMultiSelectChip
+              label="Select Lessons"
+              name={`lesson-${student.id}`}
+              value={selectedLessons[student.id] || []}
+              onChange={(e) => handleLessonChange(e, student.id)}
+              options={formattedTopicOptions}
+            />
+          </Box>
+        </CardContent>
+      </Card>
+    </Grid>
+  );
+};
+
 const WeekSyllabusPage = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // 👈 Detect Mobile View
 
   const {
     students,
@@ -164,13 +228,14 @@ const WeekSyllabusPage = () => {
     (student) => !studentsTakingExamsIds.has(student.id)
   );
 
-  const renderStudentTable = (studentList, title, badgeCount) => (
+  // 🔄 Render Function: Handles both Table (Desktop) and Grid (Mobile)
+  const renderStudentSection = (studentList, title, badgeCount) => (
     <>
       <Box sx={{ display: "flex", alignItems: "center", mb: 2, gap: 1 }}>
         <Typography
           variant="h5"
           component="h2"
-          sx={{ color: theme.palette.primary.dark, fontWeight: "bold" }}
+          sx={{ color: theme.palette.primary.dark, fontWeight: "bold", fontSize: isMobile ? "1.2rem" : "1.5rem" }}
         >
           {title}
         </Typography>
@@ -183,139 +248,156 @@ const WeekSyllabusPage = () => {
       </Box>
       
       {studentList.length > 0 ? (
-        <TableContainer
-          component={Paper}
-          elevation={3}
-          sx={{
-            borderRadius: 2,
-            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.08)",
-            overflow: "hidden",
-            mb: 3,
-          }}
-        >
-          <Table sx={{ minWidth: 750 }} aria-label="week syllabus table">
-            <TableHead>
-              <TableRow sx={{ backgroundColor: "#eef7ff" }}>
-                <TableCell
-                  align="left"
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "1rem",
-                    color: theme.palette.primary.main,
-                    py: 1.5,
-                    borderBottom: "2px solid #ddd",
-                    width: "60px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  <SchoolIcon fontSize="small" sx={{ verticalAlign: "bottom", mr: 0.5 }} /> Sl No
-                </TableCell>
-                <TableCell
-                  align="left"
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "1rem",
-                    color: theme.palette.primary.main,
-                    py: 1.5,
-                    borderBottom: "2px solid #ddd",
-                    width: "180px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  <PersonIcon fontSize="small" sx={{ verticalAlign: "bottom", mr: 0.5 }} /> Student Name
-                </TableCell>
-                <TableCell
-                  align="left"
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "1rem",
-                    color: theme.palette.primary.main,
-                    py: 1.5,
-                    borderBottom: "2px solid #ddd",
-                    width: "120px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  <ScienceIcon fontSize="small" sx={{ verticalAlign: "bottom", mr: 0.5 }} /> Stream
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "1rem",
-                    color: theme.palette.primary.main,
-                    py: 1.5,
-                    borderBottom: "2px solid #ddd",
-                    width: "100%",
-                  }}
-                >
-                  <ClassIcon fontSize="small" sx={{ verticalAlign: "bottom", mr: 0.5 }} /> Name of the Lesson
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {studentList.map((student, index) => (
-                <TableRow
-                  key={student.id}
-                  sx={{
-                    "&:nth-of-type(odd)": { backgroundColor: "#fbfcfd" },
-                    "&:hover": {
-                      backgroundColor: "#eef7ff",
-                      transform: "scale(1.01)",
-                      transition: "all 0.3s ease-in-out",
-                      boxShadow: theme.shadows[4],
-                    },
-                    "&:not(:hover)": {
-                      transform: "scale(1)",
-                      transition: "all 0.3s ease-in-out",
-                    },
-                    borderBottom: "1px solid #e0e0e0",
-                  }}
-                >
-                  <TableCell align="center" sx={{ p: 1.5, width: "60px", whiteSpace: "nowrap" }}>
-                    {index + 1}
+        isMobile ? (
+          // 📱 Mobile View: Grid of Cards
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            {studentList.map((student, index) => (
+              <MobileSyllabusCard
+                key={student.id}
+                index={index}
+                student={student}
+                selectedLessons={selectedLessons}
+                handleLessonChange={handleLessonChange}
+                formattedTopicOptions={formattedTopicOptions}
+              />
+            ))}
+          </Grid>
+        ) : (
+          // 💻 Desktop View: Table
+          <TableContainer
+            component={Paper}
+            elevation={3}
+            sx={{
+              borderRadius: 2,
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.08)",
+              overflow: "hidden",
+              mb: 3,
+            }}
+          >
+            <Table sx={{ minWidth: 750 }} aria-label="week syllabus table">
+              <TableHead>
+                <TableRow sx={{ backgroundColor: "#eef7ff" }}>
+                  <TableCell
+                    align="left"
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "1rem",
+                      color: theme.palette.primary.main,
+                      py: 1.5,
+                      borderBottom: "2px solid #ddd",
+                      width: "60px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <SchoolIcon fontSize="small" sx={{ verticalAlign: "bottom", mr: 0.5 }} /> Sl No
                   </TableCell>
-                  <TableCell align="center" sx={{ p: 1.5, width: "180px", whiteSpace: "nowrap" }}>
-                    <Tooltip title={`Click to view details for ${student.Name}`}>
-                      <Link
-                        to={`/student/${student.id}`}
-                        state={{ studentData: student }}
-                        style={{
-                          fontWeight: 500,
-                          color: "#34495e",
-                          textDecoration: "none",
-                          transition: "color 0.2s ease, text-decoration 0.2s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.color = "#2980b9";
-                          e.currentTarget.style.textDecoration = "underline";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.color = "#34495e";
-                          e.currentTarget.style.textDecoration = "none";
-                        }}
-                      >
-                        {student.Name}
-                      </Link>
-                    </Tooltip>
+                  <TableCell
+                    align="left"
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "1rem",
+                      color: theme.palette.primary.main,
+                      py: 1.5,
+                      borderBottom: "2px solid #ddd",
+                      width: "180px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <PersonIcon fontSize="small" sx={{ verticalAlign: "bottom", mr: 0.5 }} /> Student Name
                   </TableCell>
-                  <TableCell align="center" sx={{ p: 1.5, width: "120px", whiteSpace: "nowrap" }}>
-                    {student.Stream}
+                  <TableCell
+                    align="left"
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "1rem",
+                      color: theme.palette.primary.main,
+                      py: 1.5,
+                      borderBottom: "2px solid #ddd",
+                      width: "120px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <ScienceIcon fontSize="small" sx={{ verticalAlign: "bottom", mr: 0.5 }} /> Stream
                   </TableCell>
-                  <TableCell align="center" sx={{ p: 1.5, width: "100%" }}>
-                    <MuiMultiSelectChip
-                      label="Lesson"
-                      name={`lesson-${student.id}`}
-                      value={selectedLessons[student.id] || []}
-                      onChange={(e) => handleLessonChange(e, student.id)}
-                      options={formattedTopicOptions}
-                    />
+                  <TableCell
+                    align="center"
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "1rem",
+                      color: theme.palette.primary.main,
+                      py: 1.5,
+                      borderBottom: "2px solid #ddd",
+                      width: "100%",
+                    }}
+                  >
+                    <ClassIcon fontSize="small" sx={{ verticalAlign: "bottom", mr: 0.5 }} /> Name of the Lesson
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {studentList.map((student, index) => (
+                  <TableRow
+                    key={student.id}
+                    sx={{
+                      "&:nth-of-type(odd)": { backgroundColor: "#fbfcfd" },
+                      "&:hover": {
+                        backgroundColor: "#eef7ff",
+                        transform: "scale(1.01)",
+                        transition: "all 0.3s ease-in-out",
+                        boxShadow: theme.shadows[4],
+                      },
+                      "&:not(:hover)": {
+                        transform: "scale(1)",
+                        transition: "all 0.3s ease-in-out",
+                      },
+                      borderBottom: "1px solid #e0e0e0",
+                    }}
+                  >
+                    <TableCell align="center" sx={{ p: 1.5, width: "60px", whiteSpace: "nowrap" }}>
+                      {index + 1}
+                    </TableCell>
+                    <TableCell align="center" sx={{ p: 1.5, width: "180px", whiteSpace: "nowrap" }}>
+                      <Tooltip title={`Click to view details for ${student.Name}`}>
+                        <Link
+                          to={`/student/${student.id}`}
+                          state={{ studentData: student }}
+                          style={{
+                            fontWeight: 500,
+                            color: "#34495e",
+                            textDecoration: "none",
+                            transition: "color 0.2s ease, text-decoration 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = "#2980b9";
+                            e.currentTarget.style.textDecoration = "underline";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = "#34495e";
+                            e.currentTarget.style.textDecoration = "none";
+                          }}
+                        >
+                          {student.Name}
+                        </Link>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell align="center" sx={{ p: 1.5, width: "120px", whiteSpace: "nowrap" }}>
+                      {student.Stream}
+                    </TableCell>
+                    <TableCell align="center" sx={{ p: 1.5, width: "100%" }}>
+                      <MuiMultiSelectChip
+                        label="Lesson"
+                        name={`lesson-${student.id}`}
+                        value={selectedLessons[student.id] || []}
+                        onChange={(e) => handleLessonChange(e, student.id)}
+                        options={formattedTopicOptions}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )
       ) : (
         <Alert severity="info" sx={{ mt: 2, mb: 3 }}>
           No student records found in this category.
@@ -329,22 +411,14 @@ const WeekSyllabusPage = () => {
       sx={{
         minHeight: "100vh",
         backgroundColor: "#f7f8fc",
-        p: 3,
+        p: isMobile ? 1.5 : 3, // Responsive Padding
         display: "flex",
         flexDirection: "column",
         gap: 3,
-        ...{
-          animation: `${fadeIn} 0.8s ease-in-out`,
-        },
+        animation: `${fadeIn} 0.8s ease-in-out`,
       }}
     >
-      <Slide
-        direction="down"
-        in={true}
-        mountOnEnter
-        unmountOnExit
-        timeout={500}
-      >
+      <Slide direction="down" in={true} mountOnEnter unmountOnExit timeout={500}>
         <Paper
           elevation={12}
           sx={{
@@ -362,7 +436,7 @@ const WeekSyllabusPage = () => {
             <FaListAlt
               style={{
                 marginRight: "15px",
-                fontSize: "3rem",
+                fontSize: isMobile ? "2rem" : "3rem", // Responsive Icon
                 color: "#1976d2",
               }}
             />
@@ -370,7 +444,7 @@ const WeekSyllabusPage = () => {
               <Typography
                 variant="h4"
                 component="h1"
-                sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
+                sx={{ color: "#292551", fontWeight: 700, mb: 0.5, fontSize: isMobile ? "1.5rem" : "2.125rem" }}
               >
                 Week Syllabus 📚
               </Typography>
@@ -383,23 +457,15 @@ const WeekSyllabusPage = () => {
       </Slide>
 
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
-        <Paper
-          elevation={12}
-          sx={{
-            p: 3,
-            overflowX: "auto",
-            borderRadius: "16px",
-            boxShadow: theme.shadows[12],
-          }}
-        >
+        <Box>
           {/* Students with Exams Section */}
-          {renderStudentTable(studentsWithExams, "Students with Upcoming Exams", studentsWithExams.length)}
+          {renderStudentSection(studentsWithExams, "Students with Upcoming Exams", studentsWithExams.length)}
           
           <Divider sx={{ my: 4 }} />
           
           {/* Students Without Exams Section */}
-          {renderStudentTable(studentsWithoutExams, "Students Without Exams", studentsWithoutExams.length)}
-        </Paper>
+          {renderStudentSection(studentsWithoutExams, "Students Without Exams", studentsWithoutExams.length)}
+        </Box>
       </Slide>
     </Box>
   );

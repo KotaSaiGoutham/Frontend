@@ -65,21 +65,18 @@ const IdeasTable = ({ ideas, loading, onUpdateIdea }) => {
         label: 'Pending Review', 
         icon: <Pending />,
         bgColor: '#FFF3E0',
-        color: '#E65100'
       },
       in_progress: { 
         color: 'info', 
         label: 'In Progress', 
         icon: <Build />,
         bgColor: '#E3F2FD',
-        color: '#01579B'
       },
       completed: { 
         color: 'success', 
         label: 'Implemented', 
         icon: <CheckCircle />,
         bgColor: '#E8F5E8',
-        color: '#1B5E20'
       },
     };
     return configs[status] || configs.pending;

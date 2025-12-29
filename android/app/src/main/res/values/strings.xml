@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Electron Academy</string>
+    <string name="title_activity_main">Electron Academy</string>
+    <string name="package_name">com.electronacademy.app</string>
+    <string name="custom_url_scheme">com.electronacademy.app</string>
+</resources>

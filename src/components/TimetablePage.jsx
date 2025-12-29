@@ -37,14 +37,18 @@ import {
   getDay,
   isSameDay,
   addHours,
-  isAfter, // New: More explicit time comparison
+  isAfter,
   addMinutes,
-  constructNow, // To calculate end time for "running" check
+  constructNow,
   parseISO,
 } from "date-fns";
 import { generateTimetables } from "../mockdata/function";
 import { getTimetableRowStatus } from "../mockdata/function";
 import {
+  CardActions,
+  Card,
+  CardContent,
+  Divider,
   Menu,
   Typography,
   Box,
@@ -73,6 +77,8 @@ import {
   TableFooter,
   Stack,
   Chip,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -104,43 +110,29 @@ import ExcelDownloadButton from "./customcomponents/ExcelDownloadButton";
 // --- UPDATED SORTING FUNCTION ---
 const sortTimetableList = (timetableList) => {
   return timetableList.sort((a, b) => {
-    // 1. Get the Date objects
     const dateA = getDateFromTimetableItem(a);
     const dateB = getDateFromTimetableItem(b);
 
-    // FIX: Normalize to Midnight (Start of Day). 
-    // We only want to compare the Calendar Date, not the time inside the ISO string.
     const dayA = startOfDay(dateA).getTime();
     const dayB = startOfDay(dateB).getTime();
 
-    // Only return here if they are truly different DAYS
     if (dayA !== dayB) {
       return dayA - dayB;
     }
 
-    // 2. Sort by Time String (Chronological: 01:00 AM -> 11:00 PM)
     const getStartTimeValue = (timeStr) => {
-      // Handle empty/null times by pushing them to the end
       if (!timeStr || typeof timeStr !== 'string') return 9999999999999;
 
       try {
-        // Extract start time part (e.g., "05:00 AM" from "05:00 AM to 06:00 AM")
         const [startTimePart] = timeStr.split(" to ");
         if (!startTimePart) return 9999999999999;
 
-        // Parse time against a fixed reference date (Jan 1, 2000)
-        // This ensures 05:00 AM is always earlier than 05:00 PM regardless of the actual date
         const referenceDate = new Date(2000, 0, 1);
-
-        // Try parsing "hh:mm a" (12-hour format with AM/PM)
         let parsedTime = parse(startTimePart.trim(), "hh:mm a", referenceDate);
 
-        // Fallback for missing space "05:00AM"
         if (!isValid(parsedTime)) {
           parsedTime = parse(startTimePart.trim(), "hh:mma", referenceDate);
         }
-
-        // Fallback for 24hr format "17:00"
         if (!isValid(parsedTime)) {
           parsedTime = parse(startTimePart.trim(), "HH:mm", referenceDate);
         }
@@ -148,7 +140,6 @@ const sortTimetableList = (timetableList) => {
         if (isValid(parsedTime)) {
           return parsedTime.getTime();
         }
-
         return 9999999999999;
       } catch (error) {
         return 9999999999999;
@@ -163,7 +154,8 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
-
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const {
     timetables: manualTimetables,
     loading: classesLoading,
@@ -179,7 +171,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     loading: autoTimetablesLoading,
   } = useSelector((state) => state.autoTimetables);
   const { user } = useSelector((state) => state.auth);
-  // State for the "More Options" menu
+  
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
 
@@ -250,8 +242,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
 
     const dateStrForBackend = format(selectedDate, "yyyy-MM-dd");
     setFilterDate(selectedDate);
-    // Avoid double calling logic inside handleDateChange immediately if not needed
-    // handleDateChange(dateStrForBackend); 
+    handleDateChange(dateStrForBackend);
   }, [dispatch, user, students, location.state]);
 
   const calculateDuration = useCallback((timeString) => {
@@ -467,8 +458,6 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
       };
     });
 
-    // --- APPLY SORTING HERE ---
-    // This ensures the data is sorted by time just before being returned to the component
     return sortTimetableList(currentTimetables);
 
   }, [
@@ -1018,461 +1007,515 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
         <Paper
           elevation={6}
-          sx={{ p: 2, overflowX: "auto", borderRadius: "12px" }}
+          sx={{
+            p: 2,
+            overflowX: "hidden", // Prevent horizontal scroll on mobile
+            borderRadius: "12px",
+            backgroundColor: isMobile ? "transparent" : "#fff", // Transparent bg for grid on mobile
+            boxShadow: isMobile ? "none" : undefined
+          }}
         >
           {combinedAndFilteredTimetables.length > 0 ? (
-            <TableContainer>
-              <Table sx={{ minWidth: 800 }} aria-label="timetable">
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Sl No</TableCell>
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Student Name</TableCell>
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Name of the Lesson</TableCell>
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem", textAlign: "center" }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem", textAlign: "center" }}>Time</TableCell>
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Duration</TableCell>
-                    {user.role === "faculty" && (
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Fee/Hour</TableCell>
-
-                    )}
-                    <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
+            <>
+              {/* 📱 MOBILE VIEW: GRID CARDS */}
+              {isMobile ? (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   {combinedAndFilteredTimetables.map((item, index) => {
                     const now = new Date();
                     const rowStatus = getTimetableRowStatus(item, now);
-
-                    let rowSx = {};
+                    let cardSx = {};
                     let disableActions = false;
-                    let tooltipEditTitle = "Edit";
-                    let tooltipDeleteTitle = "Delete";
 
+                    // Reuse the exact same styling logic as the table
                     switch (rowStatus) {
                       case "pastToday":
                       case "pastDay":
-                        rowSx = {
-                          background:
-                            "linear-gradient(90deg, #ffebee, #ffcdd2)",
+                        cardSx = {
+                          background: "linear-gradient(135deg, #ffebee, #ffcdd2)",
                           borderLeft: "6px solid #d32f2f",
-                          "& > td": {
-                            color: "#b71c1c",
-                            fontWeight: 600,
-                          },
                         };
-                        disableActions = false;
                         break;
-
                       case "running":
-                        rowSx = {
+                        cardSx = {
                           animation: "runningPulseBackground 2s infinite",
                           borderLeft: "6px solid #1976d2",
                           backgroundColor: "#e3f2fd",
-                          "& > td": {
-                            color: "#0d47a1",
-                            fontWeight: 600,
-                          },
                         };
                         break;
-
                       case "futureToday":
-                        rowSx = {
-                          background:
-                            "linear-gradient(90deg, #e8f5e9, #a5d6a7)",
+                        cardSx = {
+                          background: "linear-gradient(135deg, #e8f5e9, #a5d6a7)",
                           borderLeft: "6px solid #388e3c",
-                          "& > td": {
-                            color: "#1b5e20",
-                            fontWeight: 600,
-                          },
                         };
                         break;
-
-                      case "future":
-                      default:
-                        rowSx = {
-                          background:
-                            "linear-gradient(to right, #e3fcef, #c8e6c9)",
-                          borderLeft: "4px solid #43a047",
-                          "& > td": {
-                            color: "#1b5e20",
-                            fontWeight: 600,
-                          },
+                      default: // future
+                        cardSx = {
+                          background: "linear-gradient(135deg, #ffffff, #f5f5f5)",
+                          borderLeft: "6px solid #43a047",
                         };
                         break;
                     }
 
                     return (
-                      <TableRow
+                      <Card
                         key={item.id || index}
                         sx={{
-                          ...rowSx,
-                          borderRadius: "8px",
-                          transition: "all 0.3s ease",
-                          "&:hover": {
-                            backgroundColor: rowStatus.startsWith("past")
-                              ? "#f0f0f0"
-                              : "#e0f7fa !important",
-                            transform: rowStatus.startsWith("past")
-                              ? "none"
-                              : "scale(1.01)",
-                            boxShadow: rowStatus.startsWith("past")
-                              ? "none"
-                              : "0 4px 16px rgba(0,0,0,0.08)",
-                          },
-                          "& > td": {
-                            borderBottom:
-                              "1px solid rgba(0, 0, 0, 0.05) !important",
-                            fontSize: "0.95rem",
-                            color: rowStatus.startsWith("past")
-                              ? "#9e9e9e"
-                              : "#424242",
-                            transition: "color 0.3s ease-in-out",
-                          },
+                          ...cardSx,
+                          borderRadius: "12px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                          position: "relative"
                         }}
                       >
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell
-                          onClick={() =>
-                            handleNavigatetoStudentData(item.studentId)
-                          }
-                          sx={{
-                            textAlign: "left",
-                            cursor: "pointer",
-                            textDecoration: "underline",
-                            color: "#1976d2",
-                            fontWeight: 500,
-                            "&:hover": {
-                              color: "#0d47a1",
-                            },
-                          }}
-                        >
-                          {item.Student}
-                          {item.isRevisionStudent &&
-                            !isRevisionProgramJEEMains2026Student && (
-                              <Chip
-                                size="small"
-                                label="Revision"
-                                color="warning"
-                                sx={{ marginLeft: 1, height: "20px" }}
-                              />
-                            )}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: 1,
-                            }}
-                          >
-                            {rowStatus === "running" && (
-                              <Box
-                                component="span"
-                                sx={{
-                                  width: 10,
-                                  height: 10,
-                                  borderRadius: "50%",
-                                  backgroundColor: "#4caf50",
-                                  animation:
-                                    "dotPulse 1.5s infinite ease-in-out",
-                                  boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
-                                }}
-                              />
-                            )}
+                        <CardContent sx={{ pb: 1 }}>
+                          {/* Header: Name, Status Dot, Duration */}
+                          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                            <Box onClick={() => handleNavigatetoStudentData(item.studentId)}>
+                              <Typography variant="h6" sx={{ fontWeight: 700, color: "#292551", lineHeight: 1.2, textDecoration: "underline" }}>
+                                {item.Student}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {item.Faculty} • {item.Subject}
+                              </Typography>
+                            </Box>
+
+                            <Box textAlign="right">
+                              {rowStatus === "running" && (
+                                <Chip label="Live" color="success" size="small" sx={{ height: 20, fontSize: '0.65rem', mb: 0.5 }} />
+                              )}
+                              <Typography variant="body2" fontWeight={700} color="#1b5e20">
+                                {item.Time}
+                              </Typography>
+                              <Typography variant="caption" display="flex" alignItems="center" justifyContent="flex-end" gap={0.5}>
+                                <FaHourglassHalf size={10} /> {calculateDuration(item.Time)}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Divider sx={{ my: 1, borderColor: "rgba(0,0,0,0.05)" }} />
+
+                          {/* Middle: Lesson/Topic Selector */}
+                          <Box sx={{ mt: 1.5, mb: 1.5 }}>
+                            <Typography variant="caption" fontWeight={600} color="text.secondary" gutterBottom>
+                              LESSON / TOPIC
+                            </Typography>
+
                             {item.isAutoGenerated ? (
-                              <>
+                              <Box display="flex" alignItems="center" gap={1} mt={0.5}>
                                 <TextField
                                   select
+                                  fullWidth
                                   value={item.Topic || ""}
                                   onChange={(e) => {
                                     const selectedTopicName = e.target.value;
-                                    const selectedTopicObj =
-                                      availableTopicOptions.find(
-                                        (opt) => opt.topic === selectedTopicName
-                                      );
+                                    const selectedTopicObj = availableTopicOptions.find(
+                                      (opt) => opt.topic === selectedTopicName
+                                    );
                                     handleTopicChange(
                                       item.id,
                                       selectedTopicName,
-                                      selectedTopicObj
-                                        ? selectedTopicObj.id
-                                        : null
+                                      selectedTopicObj ? selectedTopicObj.id : null
                                     );
                                   }}
                                   variant="outlined"
                                   size="small"
-                                  sx={{ minWidth: 150 }}
                                   label={item.Topic ? "" : "Select Lesson"}
                                   disabled={disableActions}
+                                  sx={{
+                                    "& .MuiOutlinedInput-root": { backgroundColor: "rgba(255,255,255,0.6)" }
+                                  }}
                                 >
-                                  <MenuItem value="" disabled>
-                                    Select Lesson
-                                  </MenuItem>
+                                  <MenuItem value="" disabled>Select Lesson</MenuItem>
                                   {availableTopicOptions
-                                    .filter(
-                                      (opt) => opt.subject === item.Subject
-                                    )
+                                    .filter((opt) => opt.subject === item.Subject)
                                     .map((option) => (
-                                      <MenuItem
-                                        key={option.id}
-                                        value={option.topic}
-                                      >
+                                      <MenuItem key={option.id} value={option.topic}>
                                         {option.topic}
                                       </MenuItem>
                                     ))}
                                 </TextField>
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    background:
-                                      "linear-gradient(to right, #c5cae9, #9fa8da)",
-                                    color: "#283593",
-                                    px: 1,
-                                    py: 0.4,
-                                    borderRadius: "6px",
-                                    fontWeight: 600,
-                                    fontSize: "0.72rem",
-                                    animation: "fadeInScale 0.4s ease-out",
-                                    boxShadow: "0 0 6px rgba(63,81,181,0.3)",
-                                  }}
-                                >
-                                  Auto
-                                </Typography>
-                              </>
+                                <Chip label="Auto" size="small" color="primary" variant="outlined" sx={{ height: 24, fontSize: '0.7rem' }} />
+                              </Box>
                             ) : (
-                              <>
-                                <Typography sx={{ fontWeight: 500 }}>
+                              <Box display="flex" alignItems="center" gap={1} mt={0.5} bgcolor="rgba(255,255,255,0.5)" p={1} borderRadius={1}>
+                                <FaBook color="#555" />
+                                <Typography variant="body2" fontWeight={600}>
                                   {item.Topic}
                                 </Typography>
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    background:
-                                      "linear-gradient(to right, #bbdefb, #64b5f6)",
-
-                                    color: "#6d4c41",
-                                    px: 1,
-                                    py: 0.4,
-                                    borderRadius: "6px",
-                                    fontWeight: 600,
-                                    fontSize: "0.72rem",
-                                    animation: "fadeInScale 0.4s ease-out",
-                                    boxShadow: "0 0 6px rgba(255,213,79,0.4)",
-                                    ml: 1,
-                                  }}
-                                >
-                                  Manual
-                                </Typography>
-                              </>
+                                <Chip label="Manual" size="small" color="default" variant="outlined" sx={{ ml: "auto", height: 20, fontSize: '0.65rem' }} />
+                              </Box>
                             )}
                           </Box>
-                        </TableCell>
 
-                        <TableCell>{item.Day}</TableCell>
-
-                        {showSubjectColumn && (
-                          <>
-                            <TableCell>{item.Faculty}</TableCell>
-                            <TableCell
-                              sx={{
-                                textDecoration: rowStatus.startsWith("past")
-                                  ? "line-through"
-                                  : "none",
-                              }}
-                            >
-                              {item.Subject}
-                            </TableCell>
-                          </>
-                        )}
-
-                        <TableCell>{item.Time}</TableCell>
-
-                        <TableCell>{calculateDuration(item.Time)}</TableCell>
-                    {user.role === "faculty" && (
-
-                        <TableCell>
-                          {item.monthlyFeePerClass !== "N/A"
-                            ? `₹${parseFloat(item.monthlyFeePerClass) *
-                            parseInt(calculateDuration(item.Time))
-                            }`
-                            : "N/A"}
-                        </TableCell>
-                    )}
-
-                        <TableCell>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              gap: 1,
-                              justifyContent: "center",
-                              alignItems: "center",
-                            }}
-                          >
-                            <Tooltip title={tooltipEditTitle}>
-                              <span>
-                                <IconButton
-                                  aria-label="edit"
-                                  size="small"
-                                  onClick={() => handleEditTimetable(item)}
-                                  sx={{
-                                    color: "#1976d2",
-                                    transition: "all 0.2s ease-in-out",
-                                    "&:hover": {
-                                      backgroundColor:
-                                        "rgba(25, 118, 210, 0.1)",
-                                      transform: "scale(1.1)",
-                                    },
-                                    "&.Mui-disabled": {
-                                      color: "#bdbdbd",
-                                    },
-                                  }}
-                                  disabled={disableActions}
-                                >
-                                  <MdEdit />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-
-                            <Tooltip title={tooltipDeleteTitle}>
-                              <span>
-                                <IconButton
-                                  aria-label="delete"
-                                  size="small"
-                                  color="error"
-                                  onClick={() => handleDeleteClick(item)}
-                                  sx={{
-                                    transition: "all 0.2s ease-in-out",
-                                    "&:hover": {
-                                      backgroundColor: "rgba(211, 47, 47, 0.1)",
-                                      transform: "scale(1.1)",
-                                    },
-                                    "&.Mui-disabled": {
-                                      color: "#bdbdbd",
-                                    },
-                                  }}
-                                  disabled={disableActions}
-                                >
-                                  <MdDelete />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
+                          {/* Footer Info: Date & Fee */}
+                          <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Typography variant="body2" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
+                              <FaCalendarAlt /> {item.Day}
+                            </Typography>
+                            {user.role === "faculty" && item.monthlyFeePerClass !== "N/A" && (
+                              <Typography variant="body2" fontWeight={700} color="#b71c1c" display="flex" alignItems="center">
+                                <MdCurrencyRupee /> {parseFloat(item.monthlyFeePerClass) * parseInt(calculateDuration(item.Time))}
+                              </Typography>
+                            )}
                           </Box>
-                        </TableCell>
-                      </TableRow>
+                        </CardContent>
+
+                        {/* Actions Footer */}
+                        <CardActions sx={{ backgroundColor: "rgba(0,0,0,0.03)", justifyContent: "flex-end", p: 1 }}>
+                          <Button
+                            size="small"
+                            startIcon={<EditIcon />}
+                            onClick={() => handleEditTimetable(item)}
+                            disabled={disableActions}
+                            sx={{ minWidth: 0 }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="small"
+                            color="error"
+                            startIcon={<DeleteIcon />}
+                            onClick={() => handleDeleteClick(item)}
+                            disabled={disableActions}
+                            sx={{ minWidth: 0 }}
+                          >
+                            Delete
+                          </Button>
+                        </CardActions>
+                      </Card>
                     );
                   })}
-                </TableBody>
-                                    {user.role === "faculty" && (
+                </Box>
+              ) : (
 
-                <TableFooter>
-                  <TableRow
-                    sx={{
-                      background: "rgba(240, 248, 255, 0.75)",
-                      backdropFilter: "blur(4px)",
-                      borderTop: "2px solid #90caf9",
-                      "& > td": {
-                        fontWeight: 600,
-                        fontSize: "1.1rem",
-                        color: "#0d47a1",
-                        padding: "14px 18px",
-                        borderBottom: "none",
-                        transition: "all 0.3s ease",
-                      },
-                      "&:hover > td": {
-                        backgroundColor: "rgba(227, 242, 253, 0.4)",
-                      },
-                    }}
-                  >
-                    <TableCell
-                      colSpan={showSubjectColumn ? 7 : 5}
-                      align="right"
-                      sx={{
-                        background:
-                          "linear-gradient(to right, #e3f2fd, #bbdefb)",
-                        borderRight: "1px solid rgba(0, 0, 0, 0.05)",
-                      }}
-                    >
-                      <Typography
-                        variant="h6"
-                        component="span"
-                        sx={{
-                          fontWeight: 800,
-                          color: "#0d47a1",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "flex-end",
-                          gap: 1.2,
-                          letterSpacing: "0.04em",
-                          textShadow: "0 1px 1px rgba(0,0,0,0.08)",
-                        }}
-                      >
-                        <MdCurrencyRupee
-                          style={{
-                            color: "#1976d2",
-                            fontSize: "1.6rem",
-                            transform: "translateY(-1px)",
+                /* 💻 DESKTOP VIEW: ORIGINAL TABLE */
+                <TableContainer>
+                  <Table sx={{ minWidth: 800 }} aria-label="timetable">
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
+                        <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Sl No</TableCell>
+                        <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Student Name</TableCell>
+                        <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Name of the Lesson</TableCell>
+                        <TableCell sx={{ fontWeight: "bold", fontSize: "1rem", textAlign: "center" }}>Date</TableCell>
+                        <TableCell sx={{ fontWeight: "bold", fontSize: "1rem", textAlign: "center" }}>Time</TableCell>
+                        <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Duration</TableCell>
+                        {user.role === "faculty" && (
+                          <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Fee/Hour</TableCell>
+                        )}
+                        <TableCell sx={{ fontWeight: "bold", fontSize: "1rem" }}>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {combinedAndFilteredTimetables.map((item, index) => {
+                        const now = new Date();
+                        const rowStatus = getTimetableRowStatus(item, now);
+
+                        let rowSx = {};
+                        let disableActions = false;
+                        let tooltipEditTitle = "Edit";
+                        let tooltipDeleteTitle = "Delete";
+
+                        switch (rowStatus) {
+                          case "pastToday":
+                          case "pastDay":
+                            rowSx = {
+                              background: "linear-gradient(90deg, #ffebee, #ffcdd2)",
+                              borderLeft: "6px solid #d32f2f",
+                              "& > td": { color: "#b71c1c", fontWeight: 600 },
+                            };
+                            break;
+                          case "running":
+                            rowSx = {
+                              animation: "runningPulseBackground 2s infinite",
+                              borderLeft: "6px solid #1976d2",
+                              backgroundColor: "#e3f2fd",
+                              "& > td": { color: "#0d47a1", fontWeight: 600 },
+                            };
+                            break;
+                          case "futureToday":
+                            rowSx = {
+                              background: "linear-gradient(90deg, #e8f5e9, #a5d6a7)",
+                              borderLeft: "6px solid #388e3c",
+                              "& > td": { color: "#1b5e20", fontWeight: 600 },
+                            };
+                            break;
+                          case "future":
+                          default:
+                            rowSx = {
+                              background: "linear-gradient(to right, #e3fcef, #c8e6c9)",
+                              borderLeft: "4px solid #43a047",
+                              "& > td": { color: "#1b5e20", fontWeight: 600 },
+                            };
+                            break;
+                        }
+
+                        return (
+                          <TableRow
+                            key={item.id || index}
+                            sx={{
+                              ...rowSx,
+                              borderRadius: "8px",
+                              transition: "all 0.3s ease",
+                              "&:hover": {
+                                backgroundColor: rowStatus.startsWith("past") ? "#f0f0f0" : "#e0f7fa !important",
+                                transform: rowStatus.startsWith("past") ? "none" : "scale(1.01)",
+                                boxShadow: rowStatus.startsWith("past") ? "none" : "0 4px 16px rgba(0,0,0,0.08)",
+                              },
+                              "& > td": {
+                                borderBottom: "1px solid rgba(0, 0, 0, 0.05) !important",
+                                fontSize: "0.95rem",
+                                color: rowStatus.startsWith("past") ? "#9e9e9e" : "#424242",
+                                transition: "color 0.3s ease-in-out",
+                              },
+                            }}
+                          >
+                            <TableCell>{index + 1}</TableCell>
+                            <TableCell
+                              onClick={() => handleNavigatetoStudentData(item.studentId)}
+                              sx={{
+                                textAlign: "left",
+                                cursor: "pointer",
+                                textDecoration: "underline",
+                                color: "#1976d2",
+                                fontWeight: 500,
+                                "&:hover": { color: "#0d47a1" },
+                              }}
+                            >
+                              {item.Student}
+                              {item.isRevisionStudent && !isRevisionProgramJEEMains2026Student && (
+                                <Chip size="small" label="Revision" color="warning" sx={{ marginLeft: 1, height: "20px" }} />
+                              )}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+                                {rowStatus === "running" && (
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      width: 10,
+                                      height: 10,
+                                      borderRadius: "50%",
+                                      backgroundColor: "#4caf50",
+                                      animation: "dotPulse 1.5s infinite ease-in-out",
+                                      boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
+                                    }}
+                                  />
+                                )}
+                                {item.isAutoGenerated ? (
+                                  <>
+                                    <TextField
+                                      select
+                                      value={item.Topic || ""}
+                                      onChange={(e) => {
+                                        const selectedTopicName = e.target.value;
+                                        const selectedTopicObj = availableTopicOptions.find(
+                                          (opt) => opt.topic === selectedTopicName
+                                        );
+                                        handleTopicChange(
+                                          item.id,
+                                          selectedTopicName,
+                                          selectedTopicObj ? selectedTopicObj.id : null
+                                        );
+                                      }}
+                                      variant="outlined"
+                                      size="small"
+                                      sx={{ minWidth: 150 }}
+                                      label={item.Topic ? "" : "Select Lesson"}
+                                      disabled={disableActions}
+                                    >
+                                      <MenuItem value="" disabled>Select Lesson</MenuItem>
+                                      {availableTopicOptions
+                                        .filter((opt) => opt.subject === item.Subject)
+                                        .map((option) => (
+                                          <MenuItem key={option.id} value={option.topic}>
+                                            {option.topic}
+                                          </MenuItem>
+                                        ))}
+                                    </TextField>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        background: "linear-gradient(to right, #c5cae9, #9fa8da)",
+                                        color: "#283593",
+                                        px: 1,
+                                        py: 0.4,
+                                        borderRadius: "6px",
+                                        fontWeight: 600,
+                                        fontSize: "0.72rem",
+                                        animation: "fadeInScale 0.4s ease-out",
+                                        boxShadow: "0 0 6px rgba(63,81,181,0.3)",
+                                      }}
+                                    >
+                                      Auto
+                                    </Typography>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Typography sx={{ fontWeight: 500 }}>{item.Topic}</Typography>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        background: "linear-gradient(to right, #bbdefb, #64b5f6)",
+                                        color: "#6d4c41",
+                                        px: 1,
+                                        py: 0.4,
+                                        borderRadius: "6px",
+                                        fontWeight: 600,
+                                        fontSize: "0.72rem",
+                                        animation: "fadeInScale 0.4s ease-out",
+                                        boxShadow: "0 0 6px rgba(255,213,79,0.4)",
+                                        ml: 1,
+                                      }}
+                                    >
+                                      Manual
+                                    </Typography>
+                                  </>
+                                )}
+                              </Box>
+                            </TableCell>
+
+                            <TableCell>{item.Day}</TableCell>
+
+                            {showSubjectColumn && (
+                              <>
+                                <TableCell>{item.Faculty}</TableCell>
+                                <TableCell sx={{ textDecoration: rowStatus.startsWith("past") ? "line-through" : "none" }}>
+                                  {item.Subject}
+                                </TableCell>
+                              </>
+                            )}
+
+                            <TableCell>{item.Time}</TableCell>
+                            <TableCell>{calculateDuration(item.Time)}</TableCell>
+                            
+                            {user.role === "faculty" && (
+                              <TableCell>
+                                {item.monthlyFeePerClass !== "N/A"
+                                  ? `₹${parseFloat(item.monthlyFeePerClass) * parseInt(calculateDuration(item.Time))}`
+                                  : "N/A"}
+                              </TableCell>
+                            )}
+
+                            <TableCell>
+                              <Box sx={{ display: "flex", gap: 1, justifyContent: "center", alignItems: "center" }}>
+                                <Tooltip title={tooltipEditTitle}>
+                                  <span>
+                                    <IconButton
+                                      aria-label="edit"
+                                      size="small"
+                                      onClick={() => handleEditTimetable(item)}
+                                      sx={{
+                                        color: "#1976d2",
+                                        transition: "all 0.2s ease-in-out",
+                                        "&:hover": { backgroundColor: "rgba(25, 118, 210, 0.1)", transform: "scale(1.1)" },
+                                        "&.Mui-disabled": { color: "#bdbdbd" },
+                                      }}
+                                      disabled={disableActions}
+                                    >
+                                      <MdEdit />
+                                    </IconButton>
+                                  </span>
+                                </Tooltip>
+
+                                <Tooltip title={tooltipDeleteTitle}>
+                                  <span>
+                                    <IconButton
+                                      aria-label="delete"
+                                      size="small"
+                                      color="error"
+                                      onClick={() => handleDeleteClick(item)}
+                                      sx={{
+                                        transition: "all 0.2s ease-in-out",
+                                        "&:hover": { backgroundColor: "rgba(211, 47, 47, 0.1)", transform: "scale(1.1)" },
+                                        "&.Mui-disabled": { color: "#bdbdbd" },
+                                      }}
+                                      disabled={disableActions}
+                                    >
+                                      <MdDelete />
+                                    </IconButton>
+                                  </span>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                    
+                    {user.role === "faculty" && (
+                      <TableFooter>
+                        <TableRow
+                          sx={{
+                            background: "rgba(240, 248, 255, 0.75)",
+                            backdropFilter: "blur(4px)",
+                            borderTop: "2px solid #90caf9",
+                            "& > td": {
+                              fontWeight: 600,
+                              fontSize: "1.1rem",
+                              color: "#0d47a1",
+                              padding: "14px 18px",
+                              borderBottom: "none",
+                              transition: "all 0.3s ease",
+                            },
+                            "&:hover > td": { backgroundColor: "rgba(227, 242, 253, 0.4)" },
                           }}
-                        />
-                        GRAND TOTAL:
-                      </Typography>
-                    </TableCell>
+                        >
+                          <TableCell
+                            colSpan={showSubjectColumn ? 7 : 5}
+                            align="right"
+                            sx={{
+                              background: "linear-gradient(to right, #e3f2fd, #bbdefb)",
+                              borderRight: "1px solid rgba(0, 0, 0, 0.05)",
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              component="span"
+                              sx={{
+                                fontWeight: 800,
+                                color: "#0d47a1",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "flex-end",
+                                gap: 1.2,
+                                letterSpacing: "0.04em",
+                                textShadow: "0 1px 1px rgba(0,0,0,0.08)",
+                              }}
+                            >
+                              <MdCurrencyRupee style={{ color: "#1976d2", fontSize: "1.6rem", transform: "translateY(-1px)" }} />
+                              GRAND TOTAL:
+                            </Typography>
+                          </TableCell>
 
-                    <TableCell align="center">
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 700,
-                          color: "#1b5e20",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 0.5,
-                        }}
-                      >
-                        {sumHours.toFixed(2)}
-                        <FaHourglassHalf
-                          style={{
-                            fontSize: "1.4rem",
-                            color: "#388e3c",
-                            marginLeft: "4px",
-                          }}
-                        />
-                      </Typography>
-                    </TableCell>
+                          <TableCell align="center">
+                            <Typography
+                              variant="h6"
+                              sx={{ fontWeight: 700, color: "#1b5e20", display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}
+                            >
+                              {sumHours.toFixed(2)}
+                              <FaHourglassHalf style={{ fontSize: "1.4rem", color: "#388e3c", marginLeft: "4px" }} />
+                            </Typography>
+                          </TableCell>
 
-                    <TableCell align="center">
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 700,
-                          color: "#b71c1c",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 1,
-                        }}
-                      >
-                        <MdCurrencyRupee
-                          style={{
-                            fontSize: "1.6rem",
-                            color: "#b71c1c",
-                          }}
-                        />
-                        {sumFee.toFixed(2)}
-                      </Typography>
-                    </TableCell>
+                          <TableCell align="center">
+                            <Typography
+                              variant="h6"
+                              sx={{ fontWeight: 700, color: "#b71c1c", display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}
+                            >
+                              <MdCurrencyRupee style={{ fontSize: "1.6rem", color: "#b71c1c" }} />
+                              {sumFee.toFixed(2)}
+                            </Typography>
+                          </TableCell>
 
-                    <TableCell
-                      align="center"
-                      sx={{ color: "#546e7a", fontStyle: "italic" }}
-                    >
-                    </TableCell>
-                  </TableRow>
-                </TableFooter>
-                                    )}
-              </Table>
-            </TableContainer>
+                          <TableCell align="center" sx={{ color: "#546e7a", fontStyle: "italic" }}></TableCell>
+                        </TableRow>
+                      </TableFooter>
+                    )}
+                  </Table>
+                </TableContainer>
+              )}
+            </>
           ) : (
+            /* EMPTY STATE */
             <Box
               sx={{
                 textAlign: "center",
@@ -1485,9 +1528,7 @@ const TimetablePage = ({ isRevisionProgramJEEMains2026Student = false }) => {
                 justifyContent: "center",
               }}
             >
-              <FaInfoCircle
-                style={{ fontSize: "3rem", marginBottom: "15px" }}
-              />
+              <FaInfoCircle style={{ fontSize: "3rem", marginBottom: "15px" }} />
               <Typography variant="h6">No Timetables Found</Typography>
               <Typography variant="body2">
                 Adjust your filters or add a new timetable.

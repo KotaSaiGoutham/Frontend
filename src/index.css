@@ -6,7 +6,7 @@ html, body {
     width: 100%; /* Ensure they take full width */
     font-family: 'Poppins', sans-serif;
      height: 100%; /* Ensure html, body, and the root div (where your React app mounts) take full height */
-  width: 100%; /* Ensure full width */
+     background-color: #292551 !important; /* Forces purple background immediately */
 }
 
 /* Universal box-sizing for predictable layouts */

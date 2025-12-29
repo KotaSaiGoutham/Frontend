@@ -483,6 +483,45 @@ export const resetLoadingState = () => ({
 export const resetEmployeeLoadingState = () => ({
   type: RESET_EMPLOYEE_LOADING_STATE,
 });
+// Middleware to verify token (likely you already have this)
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) return res.status(403).json({ message: "No token" });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(401).json({ message: "Unauthorized" });
+    req.user = decoded; // Contains id, role, etc.
+    next();
+  });
+};
+
+// ✅ CORRECT: Add 'token' inside the parentheses here
+export const loadUserFromToken = (token) =>
+  apiRequest({
+    url: "/api/auth/biometric-login", // ⚡ CHANGED: Use a specific POST route
+    method: "POST",                   // ⚡ CHANGED: GET -> POST
+    data: { token: token },           // ⚡ CHANGED: Send token in Body
+    onStart: "LOGIN_REQUEST",
+    authRequired: false,              // We are sending token in body, not header
+    onSuccess: (data, dispatch) => {
+      // (Your existing success logic...)
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        // ... rest of your mapping logic ...
+        dispatch({
+          type: "LOGIN_SUCCESS",
+          payload: { token: data.token, user: { ...data.data, role: data.role } },
+        });
+      }
+    },
+    onFailure: (error, dispatch) => {
+      console.error("Biometric Login error:", error);
+      if (error && (error.status === 401 || error.status === 403)) {
+          localStorage.removeItem("token");
+          dispatch({ type: "LOGIN_FAILURE", payload: "Session expired." });
+      }
+    },
+  });
 export const loginUser = ({ username, password }) =>
   apiRequest({
     url: "/api/auth/login",

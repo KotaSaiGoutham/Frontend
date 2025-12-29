@@ -406,9 +406,6 @@ const monthlyFeeData = useMemo(() => {
     },
     marginLeft: "auto",
     border: "1px solid rgba(255, 255, 255, 0.3)",
-    "&:hover": {
-      border: "1px solid rgba(255, 255, 255, 0.5)",
-    },
     padding: isMobile ? '6px' : '8px',
     fontSize: isMobile ? '16px' : '18px'
   };
@@ -696,9 +693,7 @@ const monthlyFeeData = useMemo(() => {
                       : "rgba(255, 255, 255, 0.3)",
                   },
                   border: "1px solid rgba(255, 255, 255, 0.3)",
-                  "&:hover": {
-                    border: "1px solid rgba(255, 255, 255, 0.5)",
-                  },
+
                   padding: isMobile ? '6px' : '8px',
                   fontSize: isMobile ? '16px' : '18px'
                 }}

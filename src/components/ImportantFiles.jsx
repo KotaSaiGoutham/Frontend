@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { 
   FaCloudUploadAlt, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage, 
   FaSearch, FaTrashAlt, FaDownload, FaSpinner, FaFile, FaExclamationTriangle 
 } from "react-icons/fa";
 import { 
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton 
-} from "@mui/material"; // Using MUI for Dialog (Assuming you have it, based on previous context)
+  Dialog, Button, Typography 
+} from "@mui/material"; 
 import { uploadImportantFile, fetchImportantFiles, deleteImportantFile } from "../redux/actions";
+// 👇 IMPORT ADDED FOR DATE FORMATTING
+import { format } from "date-fns"; 
 
 // --- THEME CONFIGURATION ---
 const theme = {
@@ -25,176 +27,19 @@ const theme = {
   glass: "rgba(255, 255, 255, 0.95)"
 };
 
-const styles = {
-  wrapper: {
-    padding: "30px",
-    background: theme.bg,
-    minHeight: "calc(100vh - 64px)",
-    fontFamily: "'Inter', sans-serif",
-    display: "flex",
-    flexDirection: "column",
-    gap: "24px"
-  },
-  header: {
-    marginBottom: "10px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  title: { fontSize: "1.75rem", fontWeight: "800", color: theme.textMain, margin: 0 },
-  subTitle: { color: theme.textSub, fontSize: "0.95rem" },
-
-  // --- MAIN LAYOUT (Reversed) ---
-  container: {
-    display: "flex",
-    gap: "24px",
-    height: "calc(100vh - 180px)",
-    alignItems: "flex-start"
-  },
-
-  // 1. LEFT COLUMN (Files List)
-  leftCol: {
-    flex: "1",
-    background: theme.white,
-    borderRadius: "16px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-    border: `1px solid ${theme.border}`,
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden"
-  },
-  toolbar: {
-    padding: "20px",
-    borderBottom: `1px solid ${theme.border}`,
-    background: "#ffffff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
-  searchWrapper: {
-    display: "flex",
-    alignItems: "center",
-    background: theme.bg,
-    padding: "10px 16px",
-    borderRadius: "12px",
-    width: "100%",
-    maxWidth: "400px",
-    border: "1px solid transparent",
-    transition: "all 0.2s"
-  },
-  searchInput: {
-    border: "none",
-    background: "transparent",
-    outline: "none",
-    marginLeft: "12px",
-    width: "100%",
-    fontSize: "0.95rem",
-    color: theme.textMain
-  },
-  
-  listContent: {
-    flex: "1",
-    overflowY: "auto",
-    padding: "10px",
-  },
-  fileItem: {
-    display: "flex",
-    alignItems: "center",
-    padding: "16px",
-    borderRadius: "12px",
-    marginBottom: "8px",
-    background: theme.white,
-    border: `1px solid ${theme.border}`,
-    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-    cursor: "default"
-  },
-  iconBox: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: "16px",
-    fontSize: "1.5rem",
-    flexShrink: 0
-  },
-  fileInfo: { flex: "1", minWidth: 0 },
-  fileName: { fontWeight: "600", fontSize: "0.95rem", color: theme.textMain, marginBottom: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  fileMeta: { fontSize: "0.8rem", color: theme.textSub, display: "flex", alignItems: "center", gap: "10px" },
-  badge: { padding: "2px 8px", borderRadius: "4px", background: theme.bg, fontSize: "0.7rem", fontWeight: "600", textTransform: "uppercase" },
-  
-  actions: { display: "flex", gap: "8px" },
-  actionBtn: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "10px",
-    border: `1px solid ${theme.border}`,
-    background: "white",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    transition: "all 0.2s",
-    color: theme.textSub
-  },
-
-  // 2. RIGHT COLUMN (Upload)
-  rightCol: {
-    width: "350px",
-    flexShrink: 0,
-    background: theme.white,
-    borderRadius: "16px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
-    border: `1px solid ${theme.border}`,
-    padding: "24px",
-    height: "400px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "sticky",
-    top: "24px"
-  },
-  dropZone: {
-    width: "100%",
-    height: "100%",
-    border: `2px dashed ${theme.primary}`,
-    borderRadius: "12px",
-    background: "linear-gradient(145deg, #ffffff, #f9fafb)",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    textAlign: "center",
-    padding: "20px",
-    transition: "all 0.3s ease"
-  },
-  dropZoneActive: {
-    background: theme.primaryBg,
-    borderColor: theme.accent,
-    transform: "scale(0.98)"
-  },
-  uploadTitle: { fontSize: "1.1rem", fontWeight: "700", color: theme.textMain, marginTop: "16px", marginBottom: "8px" },
-  uploadSub: { fontSize: "0.85rem", color: theme.textSub, padding: "0 20px", lineHeight: "1.4" },
-  
-  emptyState: {
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    color: theme.textSub,
-    opacity: 0.7
-  }
-};
-
 const ImportantFiles = () => {
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
   
+  // --- RESPONSIVE STATE ---
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 900);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const { importantFiles = [], fetchingImportantFiles, uploadingImportantFile } = useSelector(
     (state) => state.lectureMaterials || {}
   );
@@ -205,6 +50,231 @@ const ImportantFiles = () => {
   // --- DELETE DIALOG STATE ---
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState(null);
+
+  // --- DYNAMIC STYLES ---
+  const styles = useMemo(() => ({
+    wrapper: {
+      padding: isMobile ? "16px" : "30px",
+      background: theme.bg,
+      minHeight: "calc(100vh - 64px)",
+      fontFamily: "'Inter', sans-serif",
+      display: "flex",
+      flexDirection: "column",
+      gap: isMobile ? "16px" : "24px"
+    },
+    header: {
+      marginBottom: "10px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: isMobile ? "flex-start" : "center",
+      flexDirection: isMobile ? "column" : "row",
+      gap: isMobile ? "10px" : "0"
+    },
+    title: { fontSize: isMobile ? "1.5rem" : "1.75rem", fontWeight: "800", color: theme.textMain, margin: 0 },
+    subTitle: { color: theme.textSub, fontSize: "0.95rem" },
+
+    // --- MAIN LAYOUT ---
+    container: {
+      display: "flex",
+      flexDirection: isMobile ? "column" : "row",
+      gap: "24px",
+      height: isMobile ? "auto" : "calc(100vh - 180px)",
+      alignItems: "flex-start"
+    },
+
+    // 1. LEFT COLUMN (Files List)
+    leftCol: {
+      flex: "1",
+      width: "100%",
+      background: theme.white,
+      borderRadius: "16px",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+      border: `1px solid ${theme.border}`,
+      height: isMobile ? "auto" : "100%", 
+      minHeight: isMobile ? "400px" : "auto",
+      maxHeight: isMobile ? "600px" : "none",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+      order: isMobile ? 2 : 1
+    },
+    toolbar: {
+      padding: isMobile ? "15px" : "20px",
+      borderBottom: `1px solid ${theme.border}`,
+      background: "#ffffff",
+      display: "flex",
+      flexDirection: isMobile ? "column" : "row",
+      gap: isMobile ? "10px" : "0",
+      alignItems: isMobile ? "flex-start" : "center",
+      justifyContent: "space-between"
+    },
+    searchWrapper: {
+      display: "flex",
+      alignItems: "center",
+      background: theme.bg,
+      padding: "10px 16px",
+      borderRadius: "12px",
+      width: "100%",
+      maxWidth: isMobile ? "100%" : "400px",
+      border: "1px solid transparent",
+      transition: "all 0.2s"
+    },
+    searchInput: {
+      border: "none",
+      background: "transparent",
+      outline: "none",
+      marginLeft: "12px",
+      width: "100%",
+      fontSize: "0.95rem",
+      color: theme.textMain
+    },
+    
+    listContent: {
+      flex: "1",
+      overflowY: "auto",
+      padding: "10px",
+    },
+    
+    // --- FILE ITEM STYLING ---
+    fileItem: {
+      display: "flex",
+      alignItems: "center",
+      padding: "16px",
+      borderRadius: "12px",
+      marginBottom: "8px",
+      background: theme.white,
+      border: `1px solid ${theme.border}`,
+      transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+      cursor: "default",
+      flexWrap: isMobile ? "wrap" : "nowrap"
+    },
+    iconBox: {
+      width: "48px",
+      height: "48px",
+      borderRadius: "12px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: "16px",
+      fontSize: "1.5rem",
+      flexShrink: 0
+    },
+    fileInfo: { 
+      flex: "1", 
+      minWidth: "100px", // Changed to prevent overflow issues
+      marginRight: isMobile ? "0" : "16px",
+      overflow: "hidden" // Ensure text truncation works
+    },
+    fileName: { 
+      fontWeight: "600", 
+      fontSize: "0.95rem", 
+      color: theme.textMain, 
+      marginBottom: "6px", 
+      whiteSpace: "nowrap", 
+      overflow: "hidden", 
+      textOverflow: "ellipsis", 
+      display: "block",
+      maxWidth: "100%" // Force truncation within container
+    },
+    fileMeta: { 
+      fontSize: "0.8rem", 
+      color: theme.textSub, 
+      display: "flex", 
+      alignItems: "center", 
+      gap: "10px",
+      flexWrap: "wrap" 
+    },
+    badge: { 
+      padding: "2px 8px", 
+      borderRadius: "4px", 
+      background: theme.bg, 
+      fontSize: "0.7rem", 
+      fontWeight: "600", 
+      textTransform: "uppercase",
+      // 👇 Added to truncate long MIME types
+      maxWidth: "120px",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      display: "inline-block",
+      verticalAlign: "middle"
+    },
+    
+    // --- ACTIONS ---
+    actions: { 
+      display: "flex", 
+      gap: "8px",
+      width: isMobile ? "100%" : "auto",
+      marginTop: isMobile ? "12px" : "0",
+      paddingTop: isMobile ? "12px" : "0",
+      borderTop: isMobile ? `1px solid ${theme.bg}` : "none",
+      justifyContent: isMobile ? "flex-end" : "flex-start"
+    },
+    actionBtn: {
+      width: "36px",
+      height: "36px",
+      borderRadius: "10px",
+      border: `1px solid ${theme.border}`,
+      background: "white",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+      transition: "all 0.2s",
+      color: theme.textSub
+    },
+
+    // 2. RIGHT COLUMN (Upload)
+    rightCol: {
+      width: isMobile ? "100%" : "350px", 
+      flexShrink: 0,
+      background: theme.white,
+      borderRadius: "16px",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
+      border: `1px solid ${theme.border}`,
+      padding: "24px",
+      height: isMobile ? "250px" : "400px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      position: isMobile ? "static" : "sticky",
+      top: "24px",
+      order: isMobile ? 1 : 2 
+    },
+    dropZone: {
+      width: "100%",
+      height: "100%",
+      border: `2px dashed ${theme.primary}`,
+      borderRadius: "12px",
+      background: "linear-gradient(145deg, #ffffff, #f9fafb)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+      textAlign: "center",
+      padding: "20px",
+      transition: "all 0.3s ease"
+    },
+    dropZoneActive: {
+      background: theme.primaryBg,
+      borderColor: theme.accent,
+      transform: "scale(0.98)"
+    },
+    uploadTitle: { fontSize: "1.1rem", fontWeight: "700", color: theme.textMain, marginTop: "16px", marginBottom: "8px" },
+    uploadSub: { fontSize: "0.85rem", color: theme.textSub, padding: "0 20px", lineHeight: "1.4" },
+    
+    emptyState: {
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      color: theme.textSub,
+      opacity: 0.7
+    }
+  }), [isMobile]);
 
   useEffect(() => {
     dispatch(fetchImportantFiles());
@@ -274,7 +344,7 @@ const ImportantFiles = () => {
 
       <div style={styles.container}>
         
-        {/* 1. LEFT: File List (70%) */}
+        {/* 1. LEFT: File List (Changes order on mobile) */}
         <div style={styles.leftCol}>
           {/* Toolbar */}
           <div style={styles.toolbar}>
@@ -287,7 +357,7 @@ const ImportantFiles = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div style={{fontSize: '0.85rem', fontWeight: 600, color: theme.textSub}}>
+            <div style={{fontSize: '0.85rem', fontWeight: 600, color: theme.textSub, marginTop: isMobile ? '5px' : '0'}}>
               {filteredFiles.length} Documents
             </div>
           </div>
@@ -310,8 +380,11 @@ const ImportantFiles = () => {
                     <div style={styles.fileInfo}>
                       <span style={styles.fileName} title={file.fileName}>{file.fileName}</span>
                       <div style={styles.fileMeta}>
-                        <span style={styles.badge}>{file.fileType?.split('/')[1] || 'FILE'}</span>
-                        <span>• {new Date(file.uploadedAt).toLocaleDateString()}</span>
+                        <span style={styles.badge} title={file.fileType}>
+                          {file.fileType?.split('/')[1] || 'FILE'}
+                        </span>
+                        {/* 👇 UPDATED DATE FORMAT */}
+                        <span>• {format(new Date(file.uploadedAt), "dd/MM/yyyy")}</span>
                       </div>
                     </div>
                     <div style={styles.actions}>
@@ -340,7 +413,7 @@ const ImportantFiles = () => {
           </div>
         </div>
 
-        {/* 2. RIGHT: Upload Zone (30% / 350px) */}
+        {/* 2. RIGHT: Upload Zone (Changes order on mobile) */}
         <div style={styles.rightCol}>
           <div 
             style={{ ...styles.dropZone, ...(dragActive ? styles.dropZoneActive : {}) }}

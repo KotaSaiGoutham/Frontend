@@ -445,10 +445,10 @@ const Dashboard = () => {
         <StudentPayments students={processedStudentActivity} />
         <RecentActivity activities={combinedActivity} />
         <UpcomingClassesCard timetables={filteredTimetables} />
-        <DemoClassInsightsCard
+        {/* <DemoClassInsightsCard
           demoMetrics={demoMetrics}
           filteredDemoClasses={filteredDemoClasses}
-        />
+        /> */}
       </div>
     </div>
   );

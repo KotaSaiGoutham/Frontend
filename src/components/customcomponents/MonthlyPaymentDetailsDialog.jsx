@@ -15,6 +15,8 @@ import {
   Typography,
   Box,
   TableSortLabel,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { useSelector, useDispatch } from "react-redux";
@@ -22,6 +24,10 @@ import { clearMonthlyPaymentDetails } from "../../redux/actions";
 
 const MonthlyPaymentDetailsDialog = () => {
   const dispatch = useDispatch();
+  const theme = useTheme();
+  // Check if screen size is mobile (sm or down)
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const { monthlyPaymentDetails, selectedMonth } = useSelector(
     (state) => state.expenditures
   );
@@ -118,16 +124,53 @@ const MonthlyPaymentDetailsDialog = () => {
     0
   );
 
+  // Common Header Style Helper
+  const getHeaderStyle = (
+    width = "auto",
+    align = "center",
+    isStickyLeft = false
+  ) => ({
+    fontWeight: "bold",
+    fontSize: isMobile ? "0.9rem" : "1.1rem",
+    textAlign: align,
+    px: isMobile ? 1 : 0.5,
+    py: 1.5,
+    width: width,
+    whiteSpace: "nowrap",
+    bgcolor: "grey.50",
+    zIndex: isStickyLeft ? 3 : 1,
+    ...(isStickyLeft && {
+      position: "sticky",
+      left: 0,
+      borderRight: "1px solid rgba(224, 224, 224, 1)",
+    }),
+  });
+
+  // Common Cell Style Helper
+  const getCellStyle = (align = "center", isStickyLeft = false) => ({
+    textAlign: align,
+    px: isMobile ? 1 : 0.5,
+    py: 1.25,
+    fontSize: isMobile ? "0.85rem" : "1rem",
+    bgcolor: isStickyLeft ? "white" : "inherit",
+    zIndex: isStickyLeft ? 2 : "auto",
+    ...(isStickyLeft && {
+      position: "sticky",
+      left: 0,
+      borderRight: "1px solid rgba(224, 224, 224, 1)",
+    }),
+  });
+
   return (
     <Dialog
       open={!!monthlyPaymentDetails}
       onClose={handleClose}
-      // 1. CHANGED: maxWidth="md" reduces the overall width, bringing columns closer
       maxWidth="md"
       fullWidth
+      fullScreen={isMobile} // Full screen on mobile
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: isMobile ? 0 : 3,
           background: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
         },
       }}
@@ -139,56 +182,63 @@ const MonthlyPaymentDetailsDialog = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          py: 2,
+          py: isMobile ? 1.5 : 2,
+          px: isMobile ? 2 : 3,
         }}
       >
         <Box>
-          <Typography variant="h6" component="div" fontSize="1.25rem">
-            Payment Details - {formatMonthYear(selectedMonth)}
+          <Typography
+            variant="h6"
+            component="div"
+            fontSize={isMobile ? "1rem" : "1.25rem"}
+          >
+            Payment Details
+            {!isMobile && ` - ${formatMonthYear(selectedMonth)}`}
           </Typography>
+          {isMobile && (
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, display: "block" }}
+            >
+              {formatMonthYear(selectedMonth)}
+            </Typography>
+          )}
           <Typography
             variant="subtitle2"
             sx={{ opacity: 0.9, mt: 0.5 }}
-            fontSize="0.9rem"
+            fontSize={isMobile ? "0.8rem" : "0.9rem"}
           >
             Total: {formatAmount(totalAmount)} • {monthlyPaymentDetails.length}{" "}
             payments
           </Typography>
         </Box>
-        <IconButton onClick={handleClose} sx={{ color: "white" }} size="medium">
+        <IconButton
+          onClick={handleClose}
+          sx={{ color: "white" }}
+          size={isMobile ? "small" : "medium"}
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
       <DialogContent sx={{ p: 0 }}>
-        <TableContainer component={Paper} elevation={0}>
-          <Table sx={{ minWidth: 600 }}>
-            <TableHead sx={{ bgcolor: "grey.50" }}>
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{
+            // Dynamic height: Viewport - Header/Footer estimate
+            height: isMobile ? "calc(100vh - 130px)" : "auto",
+            maxHeight: isMobile ? "none" : "60vh",
+            overflow: "auto",
+          }}
+        >
+          <Table sx={{ minWidth: isMobile ? 650 : 600 }} stickyHeader>
+            <TableHead>
               <TableRow>
-                <TableCell
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "1.2rem", // Slightly reduced font size
-                    textAlign: "center",
-                    px: 0.5, // 2. CHANGED: Reduced padding
-                    py: 1.5,
-                    width: "8%", // 3. CHANGED: Fixed width
-                  }}
-                >
-                  Sl No
-                </TableCell>
+                <TableCell sx={getHeaderStyle("50px")}>Sl</TableCell>
 
                 <TableCell
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "1.2rem",
-                    textAlign: "left", // Name looks better left aligned usually
-                    paddingLeft: 2,
-                    px: 0.5,
-                    py: 1.5,
-                    cursor: "pointer",
-                    width: "15%", // 3. CHANGED: Fixed width
-                  }}
+                  sx={getHeaderStyle("auto", "left", true)} // Stick Name to Left
                   onClick={() => handleSort("studentName")}
                 >
                   <TableSortLabel
@@ -198,78 +248,41 @@ const MonthlyPaymentDetailsDialog = () => {
                         ? sortConfig.direction
                         : "asc"
                     }
-                    onClick={() => handleSort("studentName")}
                   >
                     Student Name
                   </TableSortLabel>
                 </TableCell>
 
-                <TableCell
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "1.2rem",
-                    textAlign: "center",
-                    px: 0.5,
-                    py: 1.5,
-                    width: "12%", // 3. CHANGED: Fixed width
-                  }}
-                >
-                  Stream
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "1.2rem",
-                    textAlign: "center",
-                    px: 0.5,
-                    py: 1.5,
-                    width: "15%", // 3. CHANGED: Fixed width
-                  }}
-                >
-                  Year
-                </TableCell>
+                <TableCell sx={getHeaderStyle("100px")}>Stream</TableCell>
+                <TableCell sx={getHeaderStyle("100px")}>Year</TableCell>
 
                 <TableCell
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "1.2rem",
-                    textAlign: "center",
-                    px: 0.5,
-                    py: 1.5,
-                    cursor: "pointer",
-                    width: "20%", // 3. CHANGED: Fixed width
-                  }}
+                  sx={getHeaderStyle("120px")}
                   onClick={() => handleSort("paidOn")}
                 >
                   <TableSortLabel
                     active={sortConfig.key === "paidOn"}
                     direction={
-                      sortConfig.key === "paidOn" ? sortConfig.direction : "asc"
+                      sortConfig.key === "paidOn"
+                        ? sortConfig.direction
+                        : "asc"
                     }
-                    onClick={() => handleSort("paidOn")}
                   >
                     Paid On
                   </TableSortLabel>
                 </TableCell>
 
                 <TableCell
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "1.2rem",
-                    textAlign: "center",
-                    px: 0.5,
-                    py: 1.5,
-                    cursor: "pointer",
-                    width: "15%", // 3. CHANGED: Fixed width
-                  }}
+                  sx={getHeaderStyle("120px")}
                   onClick={() => handleSort("amount")}
                 >
                   <TableSortLabel
                     active={sortConfig.key === "amount"}
                     direction={
-                      sortConfig.key === "amount" ? sortConfig.direction : "asc"
+                      sortConfig.key === "amount"
+                        ? sortConfig.direction
+                        : "asc"
                     }
-                    onClick={() => handleSort("amount")}
                   >
                     Amount
                   </TableSortLabel>
@@ -285,82 +298,45 @@ const MonthlyPaymentDetailsDialog = () => {
                     "&:hover": { bgcolor: "action.hover" },
                   }}
                 >
-                  <TableCell
-                    sx={{
-                      textAlign: "center",
-                      px: 0.5, // Reduced padding
-                      py: 1.25,
-                    }}
-                  >
-                    <Typography variant="body1" fontSize="1.1rem">
-                      {index + 1}
-                    </Typography>
+                  <TableCell sx={getCellStyle()}>
+                    {index + 1}
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: "left", // Align names left
-                      paddingLeft: 2,
-                      px: 0.5,
-                      py: 1.25,
-                    }}
-                  >
+
+                  <TableCell sx={getCellStyle("left", true)}> {/* Stick Name to Left */}
                     <Typography
                       variant="body1"
                       fontWeight="medium"
-                      fontSize="1.1rem"
+                      fontSize={isMobile ? "0.9rem" : "1rem"}
+                      noWrap
                     >
                       {payment.studentName}
                     </Typography>
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: "center",
-                      px: 0.5,
-                      py: 1.25,
-                    }}
-                  >
-                    <Typography variant="body1" fontSize="1.1rem">
-                      {payment.stream}
-                    </Typography>
+
+                  <TableCell sx={getCellStyle()}>
+                    {payment.stream}
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: "center",
-                      px: 0.5,
-                      py: 1.25,
-                    }}
-                  >
-                    <Typography variant="body1" fontSize="1.1rem">
-                      {formatClassYear(payment.year)}
-                    </Typography>
+
+                  <TableCell sx={getCellStyle()}>
+                    {formatClassYear(payment.year)}
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: "center",
-                      px: 0.5,
-                      py: 1.25,
-                    }}
-                  >
+
+                  <TableCell sx={getCellStyle()}>
                     <Typography
-                      variant="body1"
+                      variant="body2"
                       color="text.secondary"
-                      fontSize="1.1rem"
+                      fontSize="inherit"
                     >
                       {formatDate(payment.paidOn)}
                     </Typography>
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: "center",
-                      px: 0.5,
-                      py: 1.25,
-                    }}
-                  >
+
+                  <TableCell sx={getCellStyle()}>
                     <Typography
                       variant="body1"
                       fontWeight="bold"
                       color="success.main"
-                      fontSize="1.1rem"
+                      fontSize="inherit"
                     >
                       {formatAmount(payment.amount)}
                     </Typography>
@@ -383,25 +359,37 @@ const MonthlyPaymentDetailsDialog = () => {
         <Box
           sx={{
             display: "flex",
-            justifyContent: "flex-end",
+            justifyContent: isMobile ? "center" : "flex-end", // Center on mobile
             width: "100%",
             alignItems: "center",
-            gap: 2,
-            pr: 4.5,
+            pr: isMobile ? 0 : 2,
           }}
         >
-          <Typography variant="h6" color="primary.main" fontSize="1.1rem">
-            Total Collection :
-          </Typography>
-          <Typography
-            variant="h5"
-            fontWeight="bold"
-            color="success.main"
-            fontSize="1.3rem"
-            sx={{ minWidth: "120px", textAlign: "center" }}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: isMobile ? "column" : "row", // Stack vertical on mobile
+              alignItems: "center",
+              gap: isMobile ? 0.5 : 2,
+            }}
           >
-            {formatAmount(totalAmount)}
-          </Typography>
+            <Typography
+              variant="h6"
+              color="primary.main"
+              fontSize={isMobile ? "1rem" : "1.1rem"}
+            >
+              Total Collection:
+            </Typography>
+            <Typography
+              variant="h5"
+              fontWeight="bold"
+              color="success.main"
+              fontSize={isMobile ? "1.2rem" : "1.3rem"}
+              sx={{ minWidth: "120px", textAlign: "center" }}
+            >
+              {formatAmount(totalAmount)}
+            </Typography>
+          </Box>
         </Box>
       </DialogActions>
     </Dialog>

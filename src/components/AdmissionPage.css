@@ -34,7 +34,6 @@
   height: 100%; 
   overflow: hidden; 
   min-width: 0; /* Prevents flex item from overflowing */
-  padding-left: 10px;
 }
 
 .table-toolbar {
@@ -102,9 +101,7 @@
     flex-direction: row;
     flex-wrap: wrap;
   }
-  .table-section {
-    height: 600px; /* Fixed height on mobile */
-  }
+
   .action-card {
     flex: 1;
   }

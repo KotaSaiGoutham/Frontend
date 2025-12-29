@@ -14,7 +14,8 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
     url,
     method,
     data,
-    params, // ADD THIS LINE - GET PARAMS FROM PAYLOAD
+    params,
+    headers, // <--- 1. ADD THIS: Get custom headers from action
     onSuccess,
     onFailure,
     onStart,
@@ -33,7 +34,7 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
     // BUILD URL WITH QUERY PARAMETERS
     let fullUrl = `${BASE_API_URL}${url}`;
     
-    // ADD PARAMS HANDLING HERE
+    // ADD PARAMS HANDLING
     if (params && Object.keys(params).length > 0) {
       const urlParams = new URLSearchParams();
       
@@ -47,40 +48,50 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
       if (queryString) {
         fullUrl += `?${queryString}`;
       }
-      
-      console.log("🔗 Built URL with params:", fullUrl); // Debug log
     }
 
     const config = {
       method: method,
+      headers: {} // Initialize headers object
     };
 
+    // 2. AUTHENTICATION HEADERS
     if (authRequired && token) {
-      config.headers = {
-        'Authorization': `Bearer ${token}`,
-      };
+      config.headers['Authorization'] = `Bearer ${token}`;
     } else if (authRequired && !token) {
-      const error = { message: "Authentication required, but no token found.", status: 401 };
-      dispatch(setAuthError(error.message));
-      dispatch({
-        type: onFailure || 'API_REQUEST_FAILURE',
-        payload: { error: error.message },
-      });
-      deferred.reject(error);
-      return;
+      // NOTE: If we have custom headers (like we do for biometrics), 
+      // we might still want to proceed even if state.auth.token is missing,
+      // because the token might be inside the custom 'headers' object.
+      if (!headers || (!headers['Authorization'] && !headers['x-auth-token'])) {
+          const error = { message: "Authentication required, but no token found.", status: 401 };
+          dispatch(setAuthError(error.message));
+          dispatch({
+            type: onFailure || 'API_REQUEST_FAILURE',
+            payload: { error: error.message },
+          });
+          deferred.reject(error);
+          return;
+      }
     }
 
-    // Handle FormData vs. JSON
+    // 3. CONTENT TYPE HEADERS
     if (data) {
       if (data instanceof FormData) {
         config.body = data;
+        // Fetch auto-sets Content-Type for FormData (multipart/form-data)
       } else {
         config.body = JSON.stringify(data);
-        if (!config.headers) {
-          config.headers = {};
-        }
         config.headers['Content-Type'] = 'application/json';
       }
+    }
+
+    // 4. MERGE CUSTOM HEADERS (The Fix)
+    // This allows us to overwrite or add headers passed from the action
+    if (headers) {
+      config.headers = {
+        ...config.headers,
+        ...headers
+      };
     }
 
     // USE THE FULL URL WITH PARAMS
@@ -97,9 +108,13 @@ const apiMiddleware = ({ dispatch, getState }) => next => async action => {
       console.error(`API Error (${response.status}) on ${method} ${url}:`, errorData);
 
       if (response.status === 401 || response.status === 403) {
-        dispatch(setAuthError(errorData.message || "Session expired please login again"));
-        dispatch({ type: LOGOUT });
-        localStorage.removeItem("token");
+        // Only logout if we are not explicitly passing a token manually
+        // (Prevents logout loops during biometric checks)
+        if (!headers || !headers['Authorization']) {
+            dispatch(setAuthError(errorData.message || "Session expired please login again"));
+            dispatch({ type: LOGOUT });
+            localStorage.removeItem("token");
+        }
       }
 
       if (onFailure) {

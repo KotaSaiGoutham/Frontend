@@ -1,0 +1,26 @@
+{
+  "appId": "com.electronacademy.app",
+  "appName": "Electron Academy",
+  "webDir": "dist",
+  "server": {
+    "url": "http://192.168.1.6:5173",
+    "cleartext": true
+  },
+  "plugins": {
+ "StatusBar": {
+  "overlaysWebView": false,
+  "backgroundColor": "#292551", 
+  "style": "DARK"
+},
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#3b1d5a",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
+  }
+}

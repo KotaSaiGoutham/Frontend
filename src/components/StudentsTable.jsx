@@ -8,63 +8,26 @@ import {
   isFuture,
   constructNow,
 } from "date-fns";
-import "./StudentsTable.css"; // Ensure this CSS file exists for styling
+import "./StudentsTable.css";
 // Material-UI Imports
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore"; // 👈 New Icon
 import { ConfirmationDialog } from "./customcomponents/Dialogs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-  Paper,
-  Box,
-  CircularProgress,
-  Snackbar,
-  Alert, // Original Alert from Material-UI
-  Slide,
-  Fade,
-  Typography,
-  IconButton,
-  FormControlLabel, // <-- Import this
-  Checkbox, // <-- Import this
-  FormGroup, // <-- Import this
-  Tooltip,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  Button,
-  Collapse,
-  Drawer, // 👈 New: Import Drawer
-  Divider, // 👈 New: Import Divider for separation
-  Skeleton, // 👈 NEW: Import Skeleton
-  TableHead, // 👈 NEW: Import TableHead for skeleton structure
+  Table, TableBody, TableCell, TableContainer, TableRow, Paper, Box,
+  CircularProgress, Snackbar, Alert, Slide, Fade, Typography, IconButton,
+  FormControlLabel, Checkbox, Tooltip, Chip, Dialog, DialogTitle,
+  DialogActions, DialogContent, DialogContentText, Button, Collapse,
+  Drawer, Divider, Skeleton, TableHead, useTheme, useMediaQuery,
+  Card, CardContent, Grid, Avatar, Grow
 } from "@mui/material";
 import { ActionButtons } from "./customcomponents/TableStatusSelect";
-// Import ALL necessary icons from react-icons/fa
 import { isRecentPayment, formatFirestoreDate } from "../mockdata/function";
 import {
-  FaSearch,
-  FaEye,
-  FaUserGraduate,
-  FaColumns,
-  FaCheckCircle,
-  FaExclamationCircle,
-  FaUsers,
-  FaIdCard,
-  FaUserCircle,
-  FaPlus,
-  FaGraduationCap,
-  FaMinusCircle,
-  FaPlusCircle,
-  FaUserCheck,
-  FaUserTimes,
-  FaMinus,
-  FaFilter,
+  FaSearch, FaUserGraduate, FaColumns, FaCheckCircle, FaExclamationCircle,
+  FaUsers, FaIdCard, FaUserCircle, FaPlus, FaGraduationCap, FaMinusCircle,
+  FaPlusCircle, FaUserCheck, FaUserTimes, FaFilter, FaPhone,
+  FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaWhatsapp, FaUniversity, FaLayerGroup, FaVenusMars
 } from "react-icons/fa";
 import { getPdfTableHeaders, getPdfTableRows } from "../mockdata/function";
 import {
@@ -88,7 +51,6 @@ import {
   toggleStudentActiveStatus,
   deleteStudent,
   fetchAutoTimetablesForToday,
-  // fetchClassUpdates,
 } from "../redux/actions";
 import { useSelector, useDispatch } from "react-redux";
 import PdfDownloadButton from "./customcomponents/PdfDownloadButton";
@@ -97,37 +59,27 @@ import TableHeaders from "./students/TableHeaders";
 import { studentColumns } from "../mockdata/Options";
 import ClassesCompletedTable from "./students/ClassesCompletedTable";
 import FeatureAnnouncement from "./FeatureAnnouncement";
-
+const textEnterVariant = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+};
 // 🚀 NEW: Table Skeleton Component
 const TableSkeleton = ({ rows = 10, columnVisibility }) => {
-  // Determine visible columns: Start with always visible columns, then add toggleable ones
-  const baseColumns = ["S.No.", "Name"]; // Columns that are always in the body
-  
+  const baseColumns = ["S.No.", "Name"];
+
   const toggleableColumns = Object.entries(columnVisibility)
     .filter(([key, isVisible]) => isVisible)
     .map(([key]) => key);
 
-  // Map keys to display names to easily get the number of columns
-  const columnMap = {
-    // These need to match the actual display names or keys
-    "S.No.": "S.No.",
-    "Name": "Name",
-    ...columnVisibility, // Use this object keys directly for other columns
-  }
-
-  // Get the final list of column keys that will be rendered
   const finalColumns = [
-    "sNo", 
-    "name", // Represents student name
+    "sNo",
+    "name",
     ...Object.keys(columnVisibility).filter((key) => columnVisibility[key])
-    // The columns rendered in the body (e.g., gender, monthlyFee, etc.)
   ];
-
 
   return (
     <TableContainer component={Paper} elevation={3} sx={{ borderRadius: 2 }}>
       <Table sx={{ minWidth: 1200 }} aria-label="loading skeleton table">
-        {/* Table Head Skeleton */}
         <TableHead>
           <TableRow sx={{ backgroundColor: "#f0f0f0" }}>
             {finalColumns.map((colKey, index) => (
@@ -137,8 +89,6 @@ const TableSkeleton = ({ rows = 10, columnVisibility }) => {
             ))}
           </TableRow>
         </TableHead>
-
-        {/* Table Body Skeleton */}
         <TableBody>
           {Array.from({ length: rows }).map((_, rowIndex) => (
             <TableRow key={rowIndex}>
@@ -146,7 +96,6 @@ const TableSkeleton = ({ rows = 10, columnVisibility }) => {
                 <TableCell key={colIndex}>
                   <Skeleton
                     animation="wave"
-                    // Customize width for better simulation
                     width={colKey === "name" ? "95%" : colKey.includes("classes") ? "60%" : "70%"}
                     height={30}
                   />
@@ -160,7 +109,355 @@ const TableSkeleton = ({ rows = 10, columnVisibility }) => {
   );
 };
 
+const MobileStudentCard = ({
+  student,
+  index,
+  handleClassChange,
+  updatingClasses,
+  updatingStudent,
+  handlePaymentStatusToggle,
+  navigate,
+  handleToggleStatusClick,
+  handleDeleteClick,
+  isRevisionProgramJEEMains2026Student
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const isPaid = student["Payment Status"] === "Paid";
+  const isActive = student.isActive;
+
+  // Theme Colors based on Status
+  const statusColor = isPaid ? "#2e7d32" : "#d32f2f"; // Green or Red
+  const bgColor = isActive ? "#ffffff" : "#fff5f5";
+
+  return (
+    <Grow in={true} timeout={(index + 1) * 200}>
+      <Card
+        elevation={0}
+        sx={{
+          mb: 2,
+          borderRadius: "16px",
+          background: bgColor,
+          border: "1px solid rgba(0,0,0,0.08)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+          overflow: "hidden",
+          position: "relative",
+          transition: "transform 0.2s",
+          "&:active": { transform: "scale(0.98)" }
+        }}
+      >
+        {/* Status Strip (Left Border) */}
+        <Box sx={{
+          position: "absolute", left: 0, top: 0, bottom: 0, width: "6px",
+          background: `linear-gradient(180deg, ${statusColor} 0%, ${statusColor}40 100%)`
+        }} />
+
+        <CardContent sx={{ p: 2, pl: 3 }}> {/* Extra padding left for strip */}
+
+          {/* --- TOP ROW: Name & Actions --- */}
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+            {/* Left: Avatar & Name */}
+            <Box display="flex" gap={1.5} alignItems="center" sx={{ maxWidth: "60%" }}>
+              <Avatar
+                sx={{
+                  bgcolor: isPaid ? "#e8f5e9" : "#ffebee",
+                  color: statusColor,
+                  width: 45, height: 45,
+                  fontWeight: "bold",
+                  fontSize: "1.1rem"
+                }}
+              >
+                {student.Name.charAt(0).toUpperCase()}
+              </Avatar>
+              <Box>
+                <Link
+                  to={`/student/${student.id}/profile`}
+                  state={{ studentData: student }}
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 800,
+                      lineHeight: 1.2,
+                      color: "#2d3748",
+                      fontSize: "1rem", // Slightly adjusted for better mobile fit
+                    }}
+                  >
+                    {student.Name}
+                  </Typography>
+                </Link>
+
+                {/* 👇 Updated Row Layout */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    flexWrap: "wrap", // Ensures text wraps if screen is too narrow
+                    gap: 0.8, // Gap between elements
+                    mt: 0.5, // Margin top to separate from Name
+                  }}
+                >
+                  {/* Subject & Stream */}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "#718096",
+                      fontSize: "0.75rem",
+                      fontWeight: 500,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {student.Subject} {student.Stream ? `• ${student.Stream}` : ""}
+                  </Typography>
+
+                  {/* Vertical Separator (Only show if Gender exists) */}
+                  {student.Gender && (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "#cbd5e0", fontSize: "0.8rem" }}
+                    >
+                      |
+                    </Typography>
+                  )}
+
+                  {/* Gender */}
+                  {student.Gender && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "#718096",
+                        fontSize: "0.75rem",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {student.Gender}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Right: Payment Chip & Actions (MOVED HERE) */}
+            <Box display="flex" flexDirection="column" alignItems="flex-end" gap={0.5}>
+              <Chip
+                label={student["Payment Status"]}
+                size="small"
+                icon={isPaid ? <FaCheckCircle size={10} /> : <FaExclamationCircle size={10} />}
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "0.7rem",
+                  height: "24px",
+                  bgcolor: isPaid ? "#e8f5e9" : "#ffebee",
+                  color: statusColor,
+                  borderColor: isPaid ? "#c8e6c9" : "#ffcdd2",
+                  borderWidth: "1px",
+                  borderStyle: "solid"
+                }}
+                onClick={() => handlePaymentStatusToggle(student.id, student["Payment Status"], student.Name)}
+              />
+
+              {/* Compact Action Buttons */}
+              <Box display="flex" gap={0.5} mt={0.5}>
+                <IconButton
+                  size="small"
+                  onClick={() => navigate("/add-student", { state: { studentData: student, studentDataEdit: true } })}
+                  sx={{ bgcolor: "#f7fafc", border: "1px solid #edf2f7", p: 0.5 }}
+                >
+                  <FaEdit size={12} color="#4a5568" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => handleDeleteClick(student)}
+                  sx={{ bgcolor: "#fff5f5", border: "1px solid #fed7d7", p: 0.5 }}
+                >
+                  <FaTrash size={12} color="#e53e3e" />
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 2, borderColor: "#f0f0f0" }} />
+
+          {/* --- MIDDLE ROW: Key Stats (Fees & Classes) --- */}
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <Box sx={{ bgcolor: "#f8f9fa", p: 1.5, borderRadius: "12px", textAlign: "center" }}>
+                <Typography variant="caption" sx={{ color: "#a0aec0", fontWeight: 600, textTransform: "uppercase", fontSize: "0.65rem" }}>
+                  Monthly Fee
+                </Typography>
+                <Typography variant="h6" sx={{ color: "#2d3748", fontWeight: 800 }}>
+                  ₹{(typeof student["Monthly Fee"] === "number" ? student["Monthly Fee"] : parseFloat(student["Monthly Fee"]) || 0).toLocaleString()}
+                </Typography>
+              </Box>
+            </Grid>
+
+            <Grid item xs={6}>
+              <Box sx={{ bgcolor: "#f8f9fa", p: 1.5, borderRadius: "12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <Typography variant="caption" sx={{ color: "#a0aec0", fontWeight: 600, textTransform: "uppercase", fontSize: "0.65rem", mb: 0.5 }}>
+                  Classes
+                </Typography>
+
+                {!isRevisionProgramJEEMains2026Student ? (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleClassChange(student.id, false)}
+                      disabled={updatingClasses === student.id}
+                      sx={{ p: 0.5, bgcolor: "#fff", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}
+                    >
+                      <FaMinusCircle color="#e53e3e" size={14} />
+                    </IconButton>
+
+                    {updatingClasses === student.id ? (
+                      <CircularProgress size={16} />
+                    ) : (
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: "#2d3748" }}>
+                        {student.classesCompleted || 0}
+                      </Typography>
+                    )}
+
+                    <IconButton
+                      size="small"
+                      onClick={() => handleClassChange(student.id, true)}
+                      disabled={updatingClasses === student.id}
+                      sx={{ p: 0.5, bgcolor: "#fff", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}
+                    >
+                      <FaPlusCircle color="#38a169" size={14} />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>{student.revisionClassesCompleted || 0}</Typography>
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+
+          {/* --- EXPAND TOGGLE --- */}
+          <Button
+            fullWidth
+            onClick={() => setExpanded(!expanded)}
+            endIcon={expanded ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+            sx={{
+              mt: 2,
+              textTransform: "none",
+              color: "#718096",
+              fontSize: "0.85rem",
+              bgcolor: "rgba(0,0,0,0.02)",
+              borderRadius: "8px",
+              py: 0.8
+            }}
+          >
+            {expanded ? "Show Less" : "View Full Details"}
+          </Button>
+
+          {/* --- EXPANDED DETAILS --- */}
+          <Collapse in={expanded} timeout="auto" unmountOnExit>
+            <Box sx={{ mt: 2, pt: 1 }}>
+
+              {/* Section: Academic */}
+              <Typography variant="caption" sx={{ color: "#cbd5e0", fontWeight: "bold", mb: 1, display: "block" }}>ACADEMIC INFO</Typography>
+              <Grid container spacing={1} sx={{ mb: 2 }}>
+                <Grid item xs={6}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <FaGraduationCap color="#718096" size={12} />
+                    <Typography variant="body2" color="text.secondary">Year: {student.Year || "N/A"}</Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <FaUniversity color="#718096" size={12} />
+                    <Typography variant="body2" color="text.secondary">Clg: {student.College || "N/A"}</Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <FaLayerGroup color="#718096" size={12} />
+                    <Typography variant="body2" color="text.secondary">Grp: {student["Group "] || "N/A"}</Typography>
+                  </Box>
+                </Grid>
+                {/* <Grid item xs={6}>
+                            <Box display="flex" alignItems="center" gap={1}>
+                                <FaVenusMars color="#718096" size={12}/>
+                                <Typography variant="body2" color="text.secondary">{student.Gender || "N/A"}</Typography>
+                            </Box>
+                        </Grid> */}
+              </Grid>
+
+              {/* Section: Dates */}
+              <Box sx={{ bgcolor: "#edf2f7", p: 1.5, borderRadius: "8px", mb: 2 }}>
+                <Box display="flex" justifyContent="space-between" mb={0.5}>
+                  <Typography variant="caption" color="text.secondary">Start Date</Typography>
+                  <Typography variant="caption" fontWeight="bold">{formatFirestoreDate(student.startDate)}</Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="caption" color="text.secondary">Next Class</Typography>
+                  <Typography variant="caption" fontWeight="bold" color={student.nextClass ? "primary.main" : "inherit"}>
+                    {student.nextClass ? format(student.nextClass, "MMM dd, hh:mm a") : "-"}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Section: Actions & Contact */}
+              <Typography variant="caption" sx={{ color: "#cbd5e0", fontWeight: "bold", mb: 1, display: "block" }}>QUICK ACTIONS</Typography>
+
+              <Box display="flex" gap={1} mb={2}>
+                {student.ContactNumber && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    startIcon={<FaPhone />}
+                    href={`tel:${student.ContactNumber}`}
+                    sx={{ borderRadius: "8px", borderColor: "#cbd5e0", color: "#4a5568" }}
+                  >
+                    Call
+                  </Button>
+                )}
+                {student.ContactNumber && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    startIcon={<FaWhatsapp />}
+                    href={`https://wa.me/91${student.ContactNumber}`}
+                    target="_blank"
+                    sx={{ borderRadius: "8px", borderColor: "#48bb78", color: "#48bb78" }}
+                  >
+                    WhatsApp
+                  </Button>
+                )}
+              </Box>
+
+              {/* Activation Toggle */}
+              <Box
+                onClick={() => handleToggleStatusClick(student.id, student.isActive, student.Name)}
+                sx={{
+                  display: "flex", alignItems: "center", justifyItems: "center", cursor: "pointer",
+                  p: 1.5, borderRadius: "8px", justifyContent: "center",
+                  bgcolor: student.isActive ? "#f0fff4" : "#fff5f5",
+                  border: `1px dashed ${student.isActive ? "#48bb78" : "#f56565"}`
+                }}
+              >
+                {student.isActive ? <FaUserCheck color="#48bb78" /> : <FaUserTimes color="#f56565" />}
+                <Typography variant="body2" sx={{ ml: 1, fontWeight: "bold", color: student.isActive ? "#2f855a" : "#c53030" }}>
+                  {student.isActive ? "Account is Active" : "Account is Inactive"}
+                </Typography>
+              </Box>
+
+            </Box>
+          </Collapse>
+        </CardContent>
+      </Card>
+    </Grow>
+  );
+};
+
+
 const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
+  // 📱 Detect Mobile Screen
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // True if screen < 600px
+
   const [columnVisibility, setColumnVisibility] = useState({
     gender: false,
     subject: false,
@@ -338,7 +635,7 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
   }, [students]);
 
   useEffect(() => {
-  dispatch(fetchStudentsIfNeeded());
+    dispatch(fetchStudentsIfNeeded());
 
     dispatch(
       fetchUpcomingClasses({ date: new Date().toLocaleDateString("en-GB") })
@@ -512,132 +809,132 @@ const StudentsTable = ({ isRevisionProgramJEEMains2026Student = false }) => {
     setNewStatus(!currentStatus); // If currently active, new status is inactive; if inactive, new status is active
     setConfirmDialogOpen(true);
   };
-const sortedFilteredStudents = useMemo(() => {
-  let studentsToSort = [...filteredStudents].filter((student) => {
-    if (isRevisionProgramJEEMains2026Student) {
-      return student.isRevisionProgramJEEMains2026Student === true;
-    } else {
-      return student;
-    }
-  });
-
-  // Apply sorting based on orderBy and order
-  if (orderBy && sortEnabled) {
-    studentsToSort.sort((a, b) => {
-      let aValue, bValue;
-
-      // Get the values to compare based on the column ID
-      switch (orderBy) {
-        case 'name': // Changed from 'Name' to match column ID
-          aValue = a.Name?.toLowerCase() || '';
-          bValue = b.Name?.toLowerCase() || '';
-          break;
-        case 'classesCompleted':
-          aValue = a.isRevisionProgramJEEMains2026Student 
-            ? a.revisionClassesCompleted || 0 
-            : a.classesCompleted || 0;
-          bValue = b.isRevisionProgramJEEMains2026Student 
-            ? b.revisionClassesCompleted || 0 
-            : b.classesCompleted || 0;
-          break;
-        case 'monthlyFee': // Changed from 'Monthly Fee' to match column ID
-          aValue = typeof a["Monthly Fee"] === "number"
-            ? a["Monthly Fee"]
-            : parseFloat(a["Monthly Fee"]) || 0;
-          bValue = typeof b["Monthly Fee"] === "number"
-            ? b["Monthly Fee"]
-            : parseFloat(b["Monthly Fee"]) || 0;
-          break;
-        case 'paymentStatus': // Changed from 'Payment Status' to match column ID
-          aValue = a["Payment Status"] || '';
-          bValue = b["Payment Status"] || '';
-          break;
-        case 'gender': // Changed from 'Gender' to match column ID
-          aValue = a.Gender || '';
-          bValue = b.Gender || '';
-          break;
-        case 'stream': // Changed from 'Stream' to match column ID
-          aValue = a.Stream || '';
-          bValue = b.Stream || '';
-          break;
-        case 'startDate':
-          aValue = a.startDate ? new Date(a.startDate._seconds * 1000) : new Date(0);
-          bValue = b.startDate ? new Date(b.startDate._seconds * 1000) : new Date(0);
-          break;
-        case 'endDate':
-          aValue = a.endDate ? new Date(a.endDate._seconds * 1000) : new Date(0);
-          bValue = b.endDate ? new Date(b.endDate._seconds * 1000) : new Date(0);
-          break;
-        default:
-          return 0;
-      }
-
-      // Handle different value types for comparison
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        if (order === 'asc') {
-          return aValue.localeCompare(bValue);
-        } else {
-          return bValue.localeCompare(aValue);
-        }
+  const sortedFilteredStudents = useMemo(() => {
+    let studentsToSort = [...filteredStudents].filter((student) => {
+      if (isRevisionProgramJEEMains2026Student) {
+        return student.isRevisionProgramJEEMains2026Student === true;
       } else {
-        // For numbers and dates
-        if (order === 'asc') {
-          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-        } else {
-          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-        }
+        return student;
       }
     });
-  } else {
-    // Default sorting when no specific column is selected
-    return studentsToSort.sort((a, b) => {
-      // 1. Primary: Sort by payment status AND paid date
-      const aIsPaid = a["Payment Status"] === "Paid" && a.paidDate;
-      const bIsPaid = b["Payment Status"] === "Paid" && b.paidDate;
-      
-      // If both are properly paid (status = Paid AND have paidDate), sort by most recent payment date first
-      if (aIsPaid && bIsPaid) {
-        const aPaidDate = new Date(a.paidDate._seconds * 1000);
-        const bPaidDate = new Date(b.paidDate._seconds * 1000);
-        
-        if (aPaidDate.getTime() !== bPaidDate.getTime()) {
-          return bPaidDate.getTime() - aPaidDate.getTime(); // Most recent first
-        }
-      }
-      
-      // If one is properly paid and other is not, paid comes first
-      if (aIsPaid && !bIsPaid) return -1;
-      if (!aIsPaid && bIsPaid) return 1;
-      
-      // Handle edge cases:
-      const aHasPaymentRecord = a.paidDate;
-      const bHasPaymentRecord = b.paidDate;
-      
-      // If both have payment records but are currently unpaid, sort by payment date
-      if (aHasPaymentRecord && bHasPaymentRecord && !aIsPaid && !bIsPaid) {
-        const aPaidDate = new Date(a.paidDate._seconds * 1000);
-        const bPaidDate = new Date(b.paidDate._seconds * 1000);
-        return bPaidDate.getTime() - aPaidDate.getTime();
-      }
-      
-      // If one has payment record and other doesn't, the one with record comes first
-      if (aHasPaymentRecord && !bHasPaymentRecord) return -1;
-      if (!aHasPaymentRecord && bHasPaymentRecord) return 1;
-      
-      // 2. Secondary: For students with same payment status, sort by classes completed
-      const aClasses = a.isRevisionProgramJEEMains2026Student 
-        ? a.revisionClassesCompleted || 0 
-        : a.classesCompleted || 0;
-      const bClasses = b.isRevisionProgramJEEMains2026Student 
-        ? b.revisionClassesCompleted || 0 
-        : b.classesCompleted || 0;
-      
-      return bClasses - aClasses;
-    });
-  }
 
-  return studentsToSort;
-}, [filteredStudents, isRevisionProgramJEEMains2026Student, orderBy, order, sortEnabled]);
+    // Apply sorting based on orderBy and order
+    if (orderBy && sortEnabled) {
+      studentsToSort.sort((a, b) => {
+        let aValue, bValue;
+
+        // Get the values to compare based on the column ID
+        switch (orderBy) {
+          case 'name': // Changed from 'Name' to match column ID
+            aValue = a.Name?.toLowerCase() || '';
+            bValue = b.Name?.toLowerCase() || '';
+            break;
+          case 'classesCompleted':
+            aValue = a.isRevisionProgramJEEMains2026Student
+              ? a.revisionClassesCompleted || 0
+              : a.classesCompleted || 0;
+            bValue = b.isRevisionProgramJEEMains2026Student
+              ? b.revisionClassesCompleted || 0
+              : b.classesCompleted || 0;
+            break;
+          case 'monthlyFee': // Changed from 'Monthly Fee' to match column ID
+            aValue = typeof a["Monthly Fee"] === "number"
+              ? a["Monthly Fee"]
+              : parseFloat(a["Monthly Fee"]) || 0;
+            bValue = typeof b["Monthly Fee"] === "number"
+              ? b["Monthly Fee"]
+              : parseFloat(b["Monthly Fee"]) || 0;
+            break;
+          case 'paymentStatus': // Changed from 'Payment Status' to match column ID
+            aValue = a["Payment Status"] || '';
+            bValue = b["Payment Status"] || '';
+            break;
+          case 'gender': // Changed from 'Gender' to match column ID
+            aValue = a.Gender || '';
+            bValue = b.Gender || '';
+            break;
+          case 'stream': // Changed from 'Stream' to match column ID
+            aValue = a.Stream || '';
+            bValue = b.Stream || '';
+            break;
+          case 'startDate':
+            aValue = a.startDate ? new Date(a.startDate._seconds * 1000) : new Date(0);
+            bValue = b.startDate ? new Date(b.startDate._seconds * 1000) : new Date(0);
+            break;
+          case 'endDate':
+            aValue = a.endDate ? new Date(a.endDate._seconds * 1000) : new Date(0);
+            bValue = b.endDate ? new Date(b.endDate._seconds * 1000) : new Date(0);
+            break;
+          default:
+            return 0;
+        }
+
+        // Handle different value types for comparison
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          if (order === 'asc') {
+            return aValue.localeCompare(bValue);
+          } else {
+            return bValue.localeCompare(aValue);
+          }
+        } else {
+          // For numbers and dates
+          if (order === 'asc') {
+            return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+          } else {
+            return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+          }
+        }
+      });
+    } else {
+      // Default sorting when no specific column is selected
+      return studentsToSort.sort((a, b) => {
+        // 1. Primary: Sort by payment status AND paid date
+        const aIsPaid = a["Payment Status"] === "Paid" && a.paidDate;
+        const bIsPaid = b["Payment Status"] === "Paid" && b.paidDate;
+
+        // If both are properly paid (status = Paid AND have paidDate), sort by most recent payment date first
+        if (aIsPaid && bIsPaid) {
+          const aPaidDate = new Date(a.paidDate._seconds * 1000);
+          const bPaidDate = new Date(b.paidDate._seconds * 1000);
+
+          if (aPaidDate.getTime() !== bPaidDate.getTime()) {
+            return bPaidDate.getTime() - aPaidDate.getTime(); // Most recent first
+          }
+        }
+
+        // If one is properly paid and other is not, paid comes first
+        if (aIsPaid && !bIsPaid) return -1;
+        if (!aIsPaid && bIsPaid) return 1;
+
+        // Handle edge cases:
+        const aHasPaymentRecord = a.paidDate;
+        const bHasPaymentRecord = b.paidDate;
+
+        // If both have payment records but are currently unpaid, sort by payment date
+        if (aHasPaymentRecord && bHasPaymentRecord && !aIsPaid && !bIsPaid) {
+          const aPaidDate = new Date(a.paidDate._seconds * 1000);
+          const bPaidDate = new Date(b.paidDate._seconds * 1000);
+          return bPaidDate.getTime() - aPaidDate.getTime();
+        }
+
+        // If one has payment record and other doesn't, the one with record comes first
+        if (aHasPaymentRecord && !bHasPaymentRecord) return -1;
+        if (!aHasPaymentRecord && bHasPaymentRecord) return 1;
+
+        // 2. Secondary: For students with same payment status, sort by classes completed
+        const aClasses = a.isRevisionProgramJEEMains2026Student
+          ? a.revisionClassesCompleted || 0
+          : a.classesCompleted || 0;
+        const bClasses = b.isRevisionProgramJEEMains2026Student
+          ? b.revisionClassesCompleted || 0
+          : b.classesCompleted || 0;
+
+        return bClasses - aClasses;
+      });
+    }
+
+    return studentsToSort;
+  }, [filteredStudents, isRevisionProgramJEEMains2026Student, orderBy, order, sortEnabled]);
 
   // Handles changes in filter input fields
   const handleFilterChange = (e) => {
@@ -689,118 +986,118 @@ const sortedFilteredStudents = useMemo(() => {
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
-const handleClassChange = async (studentId, increment) => {
-  if (updatingClasses) return;
+  const handleClassChange = async (studentId, increment) => {
+    if (updatingClasses) return;
 
-  const student = students.find((s) => s.id === studentId);
-  if (!student) return;
+    const student = students.find((s) => s.id === studentId);
+    if (!student) return;
 
-  const currentClasses = student.classesCompleted || 0;
-  const delta = increment ? 1 : -1;
+    const currentClasses = student.classesCompleted || 0;
+    const delta = increment ? 1 : -1;
 
-  if (!increment && currentClasses === 0) {
-    setSnackbarMessage("Cannot decrease classes below zero.");
-    setSnackbarSeverity("warning");
-    setSnackbarOpen(true);
-    return;
-  }
-
-  setUpdatingClasses(studentId);
-
-  try {
-    const updatedStudent = await dispatch(
-      updateClassesCompleted(studentId, delta, user.name)
-    );
-
-    // Force refresh of students data
-    dispatch(fetchStudentsIfNeeded());
-
-    // Check if the classes actually changed
-    if (updatedStudent.classesCompleted !== currentClasses) {
-      setSnackbarMessage(
-        `Classes completed updated to ${updatedStudent.classesCompleted} for ${updatedStudent.Name}!`
-      );
-      setSnackbarSeverity("success");
-    } else {
-      // Classes didn't change - this happens when automatic calculation prevents decrease
-      const automaticClasses = calculateAutomaticClasses(student);
-      setSnackbarMessage(
-        `Classes remain at ${currentClasses}. Automatic schedule shows ${automaticClasses} classes should be completed.`
-      );
-      setSnackbarSeverity("info");
+    if (!increment && currentClasses === 0) {
+      setSnackbarMessage("Cannot decrease classes below zero.");
+      setSnackbarSeverity("warning");
+      setSnackbarOpen(true);
+      return;
     }
-    setSnackbarOpen(true);
-    
-  } catch (err) {
-    setSnackbarMessage(`Failed to update classes: ${err.message}`);
-    setSnackbarSeverity("error");
-    setSnackbarOpen(true);
-  } finally {
-    setUpdatingClasses(null);
-  }
-};
 
-// Add this helper function to calculate automatic classes on frontend
-const calculateAutomaticClasses = (student) => {
-  if (!student.paidDate || !student.classDateandTime || student.classDateandTime.length === 0) {
-    return student.classesCompleted || 0;
-  }
+    setUpdatingClasses(studentId);
 
-  const paidDate = student.paidDate._seconds ? 
-    new Date(student.paidDate._seconds * 1000) : 
-    new Date(student.paidDate);
-  
-  const currentDate = new Date();
-  
-  // Parse class schedule
-  const dayMap = {
-    'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 
-    'Thursday': 4, 'Friday': 5, 'Saturday': 6
+    try {
+      const updatedStudent = await dispatch(
+        updateClassesCompleted(studentId, delta, user.name)
+      );
+
+      // Force refresh of students data
+      dispatch(fetchStudentsIfNeeded());
+
+      // Check if the classes actually changed
+      if (updatedStudent.classesCompleted !== currentClasses) {
+        setSnackbarMessage(
+          `Classes completed updated to ${updatedStudent.classesCompleted} for ${updatedStudent.Name}!`
+        );
+        setSnackbarSeverity("success");
+      } else {
+        // Classes didn't change - this happens when automatic calculation prevents decrease
+        const automaticClasses = calculateAutomaticClasses(student);
+        setSnackbarMessage(
+          `Classes remain at ${currentClasses}. Automatic schedule shows ${automaticClasses} classes should be completed.`
+        );
+        setSnackbarSeverity("info");
+      }
+      setSnackbarOpen(true);
+
+    } catch (err) {
+      setSnackbarMessage(`Failed to update classes: ${err.message}`);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUpdatingClasses(null);
+    }
   };
 
-  const classSchedule = student.classDateandTime.map(dayTime => {
-    const [day, time] = dayTime.split('-');
-    const isPM = time.includes('pm');
-    let [hours, minutes] = time.replace('pm', '').replace('am', '').split(':').map(Number);
-    
-    // Convert to 24-hour format
-    if (isPM && hours !== 12) hours += 12;
-    if (!isPM && hours === 12) hours = 0;
-    
-    return {
-      day: dayMap[day],
-      hours: hours,
-      minutes: minutes
+  // Add this helper function to calculate automatic classes on frontend
+  const calculateAutomaticClasses = (student) => {
+    if (!student.paidDate || !student.classDateandTime || student.classDateandTime.length === 0) {
+      return student.classesCompleted || 0;
+    }
+
+    const paidDate = student.paidDate._seconds ?
+      new Date(student.paidDate._seconds * 1000) :
+      new Date(student.paidDate);
+
+    const currentDate = new Date();
+
+    // Parse class schedule
+    const dayMap = {
+      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+      'Thursday': 4, 'Friday': 5, 'Saturday': 6
     };
-  });
 
-  let classCount = 0;
-  let tempDate = new Date(paidDate);
+    const classSchedule = student.classDateandTime.map(dayTime => {
+      const [day, time] = dayTime.split('-');
+      const isPM = time.includes('pm');
+      let [hours, minutes] = time.replace('pm', '').replace('am', '').split(':').map(Number);
 
-  // Count classes from paid date to current date
-  while (tempDate <= currentDate) {
-    const dayOfWeek = tempDate.getDay();
-    
-    // Check if this day has a class that has already occurred
-    classSchedule.forEach(schedule => {
-      if (schedule.day === dayOfWeek) {
-        // Create class datetime for comparison
-        const classDateTime = new Date(tempDate);
-        classDateTime.setHours(schedule.hours, schedule.minutes, 0, 0);
-        
-        // If class time has passed by current time, count it
-        if (classDateTime <= currentDate) {
-          classCount++;
-        }
-      }
+      // Convert to 24-hour format
+      if (isPM && hours !== 12) hours += 12;
+      if (!isPM && hours === 12) hours = 0;
+
+      return {
+        day: dayMap[day],
+        hours: hours,
+        minutes: minutes
+      };
     });
 
-    // Move to next day
-    tempDate.setDate(tempDate.getDate() + 1);
-  }
+    let classCount = 0;
+    let tempDate = new Date(paidDate);
 
-  return classCount;
-};
+    // Count classes from paid date to current date
+    while (tempDate <= currentDate) {
+      const dayOfWeek = tempDate.getDay();
+
+      // Check if this day has a class that has already occurred
+      classSchedule.forEach(schedule => {
+        if (schedule.day === dayOfWeek) {
+          // Create class datetime for comparison
+          const classDateTime = new Date(tempDate);
+          classDateTime.setHours(schedule.hours, schedule.minutes, 0, 0);
+
+          // If class time has passed by current time, count it
+          if (classDateTime <= currentDate) {
+            classCount++;
+          }
+        }
+      });
+
+      // Move to next day
+      tempDate.setDate(tempDate.getDate() + 1);
+    }
+
+    return classCount;
+  };
 
   const getPdfTitle = () => {
     if (sortedFilteredStudents.length === 0) {
@@ -905,13 +1202,13 @@ const calculateAutomaticClasses = (student) => {
       sx={{
         minHeight: "100vh",
         backgroundColor: "#f7f8fc",
-        p: 3,
+        p: isMobile ? 1 : 3, // 👈 Responsive Padding
         display: "flex",
         flexDirection: "column",
         gap: 2,
       }}
     >
-      <FeatureAnnouncement user={user.role} Allowforotherthenfaculty={true}/>
+      <FeatureAnnouncement user={user.role} Allowforotherthenfaculty={true} />
       {!isRevisionProgramJEEMains2026Student && (
         <Box
           sx={{
@@ -940,7 +1237,7 @@ const calculateAutomaticClasses = (student) => {
               <FaUsers
                 style={{
                   marginRight: "15px",
-                  fontSize: "2.5rem",
+                  fontSize: isMobile ? "2rem" : "2.5rem", // 👈 Responsive Icon Size
                   color: "#1976d2",
                 }}
               />
@@ -948,7 +1245,7 @@ const calculateAutomaticClasses = (student) => {
                 <Typography
                   variant="h4"
                   component="h1"
-                  sx={{ color: "#292551", fontWeight: 700, mb: 0.5 }}
+                  sx={{ color: "#292551", fontWeight: 700, mb: 0.5, fontSize: isMobile ? "1.5rem" : "2.125rem" }} // 👈 Responsive Font Size
                 >
                   Students Overview
                 </Typography>
@@ -959,8 +1256,8 @@ const calculateAutomaticClasses = (student) => {
             </Box>
 
             {/* Action Buttons Group */}
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {sortedFilteredStudents.length > 0 && (
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center", width: isMobile ? "100%" : "auto", flexDirection: isMobile ? "column" : "row" }}> {/* 👈 Responsive Flex Direction */}
+              {sortedFilteredStudents.length > 0 && !isMobile && ( // Hide PDF download on mobile to save space, or keep it if needed
                 <PdfDownloadButton
                   title={getPdfTitle()}
                   headers={pdfHeaders}
@@ -980,6 +1277,7 @@ const calculateAutomaticClasses = (student) => {
                   px: 3,
                   py: 1.2,
                   minWidth: "120px",
+                  width: isMobile ? "100%" : "auto", // 👈 Full width on mobile
                   color: "#1976d2",
                   borderColor: "#1976d2",
                   "&:hover": {
@@ -1002,6 +1300,7 @@ const calculateAutomaticClasses = (student) => {
                   px: 3,
                   py: 1.2,
                   minWidth: "180px",
+                  width: isMobile ? "100%" : "auto", // 👈 Full width on mobile
                   boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
                 }}
               >
@@ -1166,8 +1465,8 @@ const calculateAutomaticClasses = (student) => {
                     key === "sNo"
                       ? "S.No."
                       : key === "contactNumber"
-                      ? "Contact No."
-                      : key
+                        ? "Contact No."
+                        : key
                           .replace(/([A-Z])/g, " $1")
                           .replace(/^./, (str) => str.toUpperCase())
                   }
@@ -1224,371 +1523,394 @@ const calculateAutomaticClasses = (student) => {
         </Box>
       )}
 
+      {/* 📱 CONDITIONAL RENDERING: Mobile Cards vs Desktop Table */}
       <Slide direction="up" in={true} mountOnEnter unmountOnExit timeout={700}>
-        {sortedFilteredStudents.length > 0 ? (
-          <TableContainer
-            component={Paper}
-            elevation={3}
-            sx={{
-              borderRadius: 2,
-              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.08)",
-            }}
-          >
-            {" "}
-            <Table sx={{ minWidth: 1200 }} aria-label="student table">
-              <TableHeaders
-                columns={studentColumns}
-                order={order}
-                orderBy={orderBy}
-                handleSortRequest={handleSortRequest}
-                columnVisibility={columnVisibility}
-              />
-              <TableBody>
-                {sortedFilteredStudents.map((student, index) => (
-                  <TableRow
+        <Box>
+          {sortedFilteredStudents.length > 0 ? (
+            isMobile ? (
+              // 📱 Mobile View: Render Cards
+              <Box sx={{ pb: 8 }}> {/* Padding bottom for fab/scroll */}
+                {sortedFilteredStudents.map((student) => (
+                  <MobileStudentCard
                     key={student.id}
-                    sx={{
-                      backgroundColor: isRecentPayment(student)
-                        ? "#e8f5e9"
-                        : student.isActive // New condition for inactive status
-                        ? index % 2 === 0
-                          ? "#FFFFFF"
-                          : "#fbfbfb"
-                        : "#ffebee", // Light red for inactive rows (Material Design error.light)
-                      transition: "background-color 0.2s ease-in-out",
+                    student={student}
+                    columnVisibility={columnVisibility}
+                    handleClassChange={handleClassChange}
+                    updatingClasses={updatingClasses}
+                    updatingStudent={updatingStudent}
+                    handlePaymentStatusToggle={handlePaymentStatusToggle}
+                    navigate={navigate}
+                    handleToggleStatusClick={handleToggleStatusClick}
+                    handleDeleteClick={handleDeleteClick}
+                    isRevisionProgramJEEMains2026Student={isRevisionProgramJEEMains2026Student}
+                  />
+                ))}
+              </Box>
+            ) : (
+              // 🖥️ Desktop View: Render Table
+              <TableContainer
+                component={Paper}
+                elevation={3}
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.08)",
+                }}
+              >
+                {" "}
+                <Table sx={{ minWidth: 1200 }} aria-label="student table">
+                  <TableHeaders
+                    columns={studentColumns}
+                    order={order}
+                    orderBy={orderBy}
+                    handleSortRequest={handleSortRequest}
+                    columnVisibility={columnVisibility}
+                  />
+                  <TableBody>
+                    {sortedFilteredStudents.map((student, index) => (
+                      <TableRow
+                        key={student.id}
+                        sx={{
+                          backgroundColor: isRecentPayment(student)
+                            ? "#e8f5e9"
+                            : student.isActive // New condition for inactive status
+                              ? index % 2 === 0
+                                ? "#FFFFFF"
+                                : "#fbfbfb"
+                              : "#ffebee", // Light red for inactive rows (Material Design error.light)
+                          transition: "background-color 0.2s ease-in-out",
 
-                      animation: isRecentPayment(student)
-                        ? "highlightFade 2s ease-in-out infinite"
-                        : "none",
+                          animation: isRecentPayment(student)
+                            ? "highlightFade 2s ease-in-out infinite"
+                            : "none",
 
-                      "&:hover": {
-                        backgroundColor: student.isActive
-                          ? "#e1f5fe"
-                          : "#ffcdd2", // Slightly darker red on hover for inactive
-                      },
-                      "& > td": {
-                        borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
-                        fontSize: "0.95rem",
-                        color: student.isActive ? "#424242" : "#D32F2F", // Make text red for inactive rows
-                      },
+                          "&:hover": {
+                            backgroundColor: student.isActive
+                              ? "#e1f5fe"
+                              : "#ffcdd2", // Slightly darker red on hover for inactive
+                          },
+                          "& > td": {
+                            borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
+                            fontSize: "0.95rem",
+                            color: student.isActive ? "#424242" : "#D32F2F", // Make text red for inactive rows
+                          },
 
-                      // 👇 THIS is where you define @keyframes
-                      "@keyframes highlightFade": {
-                        "0%": {
-                          boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
-                        },
-                        "50%": {
-                          boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
-                        },
-                        "100%": {
-                          boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
-                        },
-                      },
-                    }}
-                  >
-                    <TableCell
-                      component="th"
-                      scope="row"
-                      align="center"
-                      sx={{ fontSize: "0.9rem", fontWeight: "bold" }}
-                    >
-                      {index + 1}
-                    </TableCell>
-                    <TableCell
-                      component="th"
-                      scope="row"
-                      sx={{ fontSize: "0.9rem" }}
-                    >
-                      <Link
-                        to={`/student/${student.id}/profile`}
-                        state={{ studentData: student }}
-                        className="student-name-link"
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          textDecoration: "underline",
-                          color: "inherit",
-                          fontWeight: 500,
+                          // 👇 THIS is where you define @keyframes
+                          "@keyframes highlightFade": {
+                            "0%": {
+                              boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
+                            },
+                            "50%": {
+                              boxShadow: "0 0 10px rgba(76, 175, 80, 0.5)",
+                            },
+                            "100%": {
+                              boxShadow: "0 0 0px rgba(76, 175, 80, 0.0)",
+                            },
+                          },
                         }}
                       >
-                        <FaUserGraduate
-                          style={{ marginRight: 8, color: "#007bff" }}
-                        />
-                        {student.Name}
-                      </Link>
-                    </TableCell>
-                    {columnVisibility.gender && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.Gender || "N/A"}
-                      </TableCell>
-                    )}
-                    {columnVisibility.year && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.Year || "N/A"}
-                      </TableCell>
-                    )}
-                    {columnVisibility.stream && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.Stream || "N/A"}
-                      </TableCell>
-                    )}
-                    {columnVisibility.college && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.College || "N/A"}
-                      </TableCell>
-                    )}
-                    {columnVisibility.group && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student["Group "] || "N/A"}
-                      </TableCell>
-                    )}
-                    {columnVisibility.source && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.Source || "N/A"}
-                      </TableCell>
-                    )}
-                    {columnVisibility.contactNumber && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.ContactNumber || ""}
-                      </TableCell>
-                    )}
-                    {columnVisibility.motherContact && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.mother_contact || ""}
-                      </TableCell>
-                    )}
-                    {columnVisibility.fatherContact && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.father_contact || ""}
-                      </TableCell>
-                    )}
-                    {columnVisibility.monthlyFee && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        ₹
-                        {(typeof student["Monthly Fee"] === "number"
-                          ? student["Monthly Fee"]
-                          : parseFloat(student["Monthly Fee"]) || 0
-                        ).toLocaleString()}
-                      </TableCell>
-                    )}
-                    {columnVisibility.classesCompleted &&
-                    !student.isRevisionProgramJEEMains2026Student ? (
-                      <TableCell
-                        align="center"
-                        sx={{ fontSize: "0.9rem", whiteSpace: "nowrap" }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            gap: 0.2,
-                            pointerEvents:
-                              updatingClasses === student.id ? "none" : "auto",
-                            opacity: updatingClasses === student.id ? 0.7 : 1,
-                          }}
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          align="center"
+                          sx={{ fontSize: "0.9rem", fontWeight: "bold" }}
                         >
-                          <Box
-                            sx={{
+                          {index + 1}
+                        </TableCell>
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          sx={{ fontSize: "0.9rem" }}
+                        >
+                          <Link
+                            to={`/student/${student.id}/profile`}
+                            state={{ studentData: student }}
+                            className="student-name-link"
+                            style={{
                               display: "flex",
                               alignItems: "center",
-                              gap: 0.2,
+                              textDecoration: "underline",
+                              color: "inherit",
+                              fontWeight: 500,
                             }}
                           >
-                            <Tooltip title="Decrease classes completed">
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  handleClassChange(student.id, false)
-                                } // Changed
-                                color="error"
-                                sx={{
-                                  transition:
-                                    "transform 0.2s ease-in-out, color 0.2s ease-in-out",
-                                  "&:hover": {
-                                    transform: "scale(1.1)",
-                                    color: "error.dark",
-                                  },
-                                  "&:active": {
-                                    transform: "scale(0.9)",
-                                  },
-                                }}
-                              >
-                                <FaMinusCircle fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-
-                            <ClassCounterDisplay
-                              student={student}
-                              updatingClasses={updatingClasses}
+                            <FaUserGraduate
+                              style={{ marginRight: 8, color: "#007bff" }}
                             />
-                            <Tooltip title="Increase classes completed">
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  handleClassChange(student.id, true)
-                                } // Changed
-                                color="success"
-                                sx={{
-                                  transition:
-                                    "transform 0.2s ease-in-out, color 0.2s ease-in-out",
-                                  "&:hover": {
-                                    transform: "scale(1.1)",
-                                    color: "success.dark",
-                                  },
-                                  "&:active": {
-                                    transform: "scale(0.9)",
-                                  },
-                                }}
-                              >
-                                <FaPlusCircle fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                          {lastUpdatedTimestamps[student.id] && (
-                            <Fade in={true} timeout={1000}>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ fontSize: "0.7rem" }}
-                              >
-                                Last Class Updated:{" "}
-                                {format(
-                                  // Corrected: Convert the Firestore timestamp object to a JavaScript Date object
-                                  new Date(
-                                    lastUpdatedTimestamps[student.id]._seconds *
-                                      1000
-                                  ),
-                                  "MMM dd, hh:mm a"
-                                )}
-                              </Typography>
-                            </Fade>
-                          )}
-                        </Box>
-                      </TableCell>
-                    ) : (
-                      <TableCell
-                        align="center"
-                        sx={{
-                          fontSize: "0.9rem",
-                          whiteSpace: "nowrap",
-                          fontWeight: "medium",
-                        }}
-                      >
-                        {student.revisionClassesCompleted}
-                      </TableCell>
-                    )}
-                    {" "}
-                    {columnVisibility.startDate && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {" "}
-                        {formatFirestoreDate(student.startDate)}          
-                        {" "}
-                      </TableCell>
-                    )}
-                    {" "}
-                    {columnVisibility.endDate && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {" "}
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                          }}
-                        >
-                          {" "}
-                          {/* Display the original endDate from the backend */}
-                          {" "}
-                          <Typography variant="body2" fontWeight="bold">
-                            {" "}
-                            {formatFirestoreDate(student.endDate)}          
-                            {" "}
-                          </Typography>
-                          {" "}
-                        </Box>
-                        {" "}
-                      </TableCell>
-                    )}
-                    {columnVisibility.nextClass && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        {student.nextClass
-                          ? format(student.nextClass, "MMM dd, hh:mm a")
-                          : "-"}
-                      </TableCell>
-                    )}
-                    {columnVisibility.paymentStatus && (
-                      <TableCell
-                        sx={{
-                          fontSize: "0.9rem",
-                          pointerEvents:
-                            updatingStudent === student.id ? "none" : "auto",
-                          opacity: updatingStudent === student.id ? 0.7 : 1,
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          p: 1,
-                        }}
-                      >
-                        {updatingStudent === student.id ? (
-                          <CircularProgress size={20} color="primary" />
-                        ) : (
-                          <>
-                            <Chip
-                              label={student["Payment Status"]}
-                              icon={
-                                student["Payment Status"] === "Unpaid" ? (
-                                  <FaExclamationCircle
-                                    style={{ fontSize: 16 }}
-                                  />
-                                ) : (
-                                  <FaCheckCircle style={{ fontSize: 16 }} />
-                                )
-                              }
-                              color={
-                                student["Payment Status"] === "Unpaid"
-                                  ? "error"
-                                  : "success"
-                              }
-                              variant="outlined"
-                              onClick={() =>
-                                handlePaymentStatusToggle(
-                                  student.id,
-                                  student["Payment Status"],
-                                  student.Name
-                                )
-                              }
+                            {student.Name}
+                          </Link>
+                        </TableCell>
+                        {columnVisibility.gender && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {student.Gender || "N/A"}
+                          </TableCell>
+                        )}
+                        {columnVisibility.year && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {student.Year || "N/A"}
+                          </TableCell>
+                        )}
+                        {columnVisibility.stream && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {student.Stream || "N/A"}
+                          </TableCell>
+                        )}
+                        {columnVisibility.college && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {student.College || "N/A"}
+                          </TableCell>
+                        )}
+                        {columnVisibility.group && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {student["Group "] || "N/A"}
+                          </TableCell>
+                        )}
+                        {columnVisibility.source && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {student.Source || "N/A"}
+                          </TableCell>
+                        )}
+                        {columnVisibility.contactNumber && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {student.ContactNumber || ""}
+                          </TableCell>
+                        )}
+                        {columnVisibility.motherContact && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {student.mother_contact || ""}
+                          </TableCell>
+                        )}
+                        {columnVisibility.fatherContact && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {student.father_contact || ""}
+                          </TableCell>
+                        )}
+                        {columnVisibility.monthlyFee && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            ₹
+                            {(typeof student["Monthly Fee"] === "number"
+                              ? student["Monthly Fee"]
+                              : parseFloat(student["Monthly Fee"]) || 0
+                            ).toLocaleString()}
+                          </TableCell>
+                        )}
+                        {columnVisibility.classesCompleted &&
+                          !student.isRevisionProgramJEEMains2026Student ? (
+                          <TableCell
+                            align="center"
+                            sx={{ fontSize: "0.9rem", whiteSpace: "nowrap" }}
+                          >
+                            <Box
                               sx={{
-                                cursor: "pointer",
-                                fontWeight: "bold",
-                                "&:hover": { boxShadow: 1 },
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: 0.2,
+                                pointerEvents:
+                                  updatingClasses === student.id ? "none" : "auto",
+                                opacity: updatingClasses === student.id ? 0.7 : 1,
                               }}
-                            />
-                            {student["Payment Status"] === "Unpaid" &&
-                              !student.isRevisionProgramJEEMains2026Student &&
-                              (student.classesCompleted || 0) >= 12 && (
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: "#ef5350",
-                                    fontWeight: "bold",
-                                    mt: 0.5,
-                                    fontSize: "0.75rem",
-                                    animation:
-                                      "pulse-red 1.5s infinite alternate",
-                                    "@keyframes pulse-red": {
-                                      "0%": { opacity: 0.7 },
-                                      "100%": { opacity: 1 },
-                                    },
-                                  }}
-                                >
-                                  Payment Pending!
-                                </Typography>
-                              )}
+                            >
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.2,
+                                }}
+                              >
+                                <Tooltip title="Decrease classes completed">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      handleClassChange(student.id, false)
+                                    } // Changed
+                                    color="error"
+                                    sx={{
+                                      transition:
+                                        "transform 0.2s ease-in-out, color 0.2s ease-in-out",
+                                      "&:hover": {
+                                        transform: "scale(1.1)",
+                                        color: "error.dark",
+                                      },
+                                      "&:active": {
+                                        transform: "scale(0.9)",
+                                      },
+                                    }}
+                                  >
+                                    <FaMinusCircle fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
 
-                            {/* ✅ New Button to View Classes */}
-                            {/* {student.startDate && (
+                                <ClassCounterDisplay
+                                  student={student}
+                                  updatingClasses={updatingClasses}
+                                />
+                                <Tooltip title="Increase classes completed">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      handleClassChange(student.id, true)
+                                    } // Changed
+                                    color="success"
+                                    sx={{
+                                      transition:
+                                        "transform 0.2s ease-in-out, color 0.2s ease-in-out",
+                                      "&:hover": {
+                                        transform: "scale(1.1)",
+                                        color: "success.dark",
+                                      },
+                                      "&:active": {
+                                        transform: "scale(0.9)",
+                                      },
+                                    }}
+                                  >
+                                    <FaPlusCircle fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                              {lastUpdatedTimestamps[student.id] && (
+                                <Fade in={true} timeout={1000}>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ fontSize: "0.7rem" }}
+                                  >
+                                    Last Class Updated:{" "}
+                                    {format(
+                                      // Corrected: Convert the Firestore timestamp object to a JavaScript Date object
+                                      new Date(
+                                        lastUpdatedTimestamps[student.id]._seconds *
+                                        1000
+                                      ),
+                                      "MMM dd, hh:mm a"
+                                    )}
+                                  </Typography>
+                                </Fade>
+                              )}
+                            </Box>
+                          </TableCell>
+                        ) : (
+                          <TableCell
+                            align="center"
+                            sx={{
+                              fontSize: "0.9rem",
+                              whiteSpace: "nowrap",
+                              fontWeight: "medium",
+                            }}
+                          >
+                            {student.revisionClassesCompleted}
+                          </TableCell>
+                        )}
+                        {" "}
+                        {columnVisibility.startDate && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {" "}
+                            {formatFirestoreDate(student.startDate)}
+                            {" "}
+                          </TableCell>
+                        )}
+                        {" "}
+                        {columnVisibility.endDate && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {" "}
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                              }}
+                            >
+                              {" "}
+                              {/* Display the original endDate from the backend */}
+                              {" "}
+                              <Typography variant="body2" fontWeight="bold">
+                                {" "}
+                                {formatFirestoreDate(student.endDate)}
+                                {" "}
+                              </Typography>
+                              {" "}
+                            </Box>
+                            {" "}
+                          </TableCell>
+                        )}
+                        {columnVisibility.nextClass && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            {student.nextClass
+                              ? format(student.nextClass, "MMM dd, hh:mm a")
+                              : "-"}
+                          </TableCell>
+                        )}
+                        {columnVisibility.paymentStatus && (
+                          <TableCell
+                            sx={{
+                              fontSize: "0.9rem",
+                              pointerEvents:
+                                updatingStudent === student.id ? "none" : "auto",
+                              opacity: updatingStudent === student.id ? 0.7 : 1,
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              p: 1,
+                            }}
+                          >
+                            {updatingStudent === student.id ? (
+                              <CircularProgress size={20} color="primary" />
+                            ) : (
+                              <>
+                                <Chip
+                                  label={student["Payment Status"]}
+                                  icon={
+                                    student["Payment Status"] === "Unpaid" ? (
+                                      <FaExclamationCircle
+                                        style={{ fontSize: 16 }}
+                                      />
+                                    ) : (
+                                      <FaCheckCircle style={{ fontSize: 16 }} />
+                                    )
+                                  }
+                                  color={
+                                    student["Payment Status"] === "Unpaid"
+                                      ? "error"
+                                      : "success"
+                                  }
+                                  variant="outlined"
+                                  onClick={() =>
+                                    handlePaymentStatusToggle(
+                                      student.id,
+                                      student["Payment Status"],
+                                      student.Name
+                                    )
+                                  }
+                                  sx={{
+                                    cursor: "pointer",
+                                    fontWeight: "bold",
+                                    "&:hover": { boxShadow: 1 },
+                                  }}
+                                />
+                                {student["Payment Status"] === "Unpaid" &&
+                                  !student.isRevisionProgramJEEMains2026Student &&
+                                  (student.classesCompleted || 0) >= 12 && (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color: "#ef5350",
+                                        fontWeight: "bold",
+                                        mt: 0.5,
+                                        fontSize: "0.75rem",
+                                        animation:
+                                          "pulse-red 1.5s infinite alternate",
+                                        "@keyframes pulse-red": {
+                                          "0%": { opacity: 0.7 },
+                                          "100%": { opacity: 1 },
+                                        },
+                                      }}
+                                    >
+                                      Payment Pending!
+                                    </Typography>
+                                  )}
+
+                                {/* ✅ New Button to View Classes */}
+                                {/* {student.startDate && (
                               <Button
                                 variant="outlined"
                                 size="small"
@@ -1599,92 +1921,92 @@ const calculateAutomaticClasses = (student) => {
                                 View Classes
                               </Button>
                             )} */}
-                          </>
+                              </>
+                            )}
+                          </TableCell>
                         )}
-                      </TableCell>
-                    )}
-                    {columnVisibility.status && (
-                      <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
-                        <Box
-                          onClick={() =>
-                            handleToggleStatusClick(
-                              student.id,
-                              student.isActive,
-                              student.Name
-                            )
-                          }
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 0.8, // Space between icon and text
-                            cursor: "pointer",
-                            padding: "6px 10px",
-                            borderRadius: "20px",
-                            border: `1px solid ${
-                              student.isActive ? "#4CAF50" : "#F44336"
-                            }`,
-                            backgroundColor: student.isActive
-                              ? "rgba(76, 175, 80, 0.1)"
-                              : "rgba(244, 67, 54, 0.1)", // Light background tint
-                            "&:hover": { boxShadow: 1 },
-                          }}
-                        >
-                          {student.isActive ? (
-                            <FaUserCheck style={{ color: "#4CAF50" }} />
-                          ) : (
-                            <FaUserTimes style={{ color: "#F44336" }} />
-                          )}
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontWeight: "bold",
-                              color: student.isActive ? "#4CAF50" : "#F44336",
-                            }}
-                          >
-                            {student.isActive ? "Active" : "Inactive"}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                    )}
-                    {columnVisibility.actions && (
-                      <TableCell align="center" sx={{ py: 1.5 }}>
-                        <Box
-                          sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.2,
-                          }}
-                        >
-                          <ActionButtons
-                            onEdit={() => {
-                              navigate("/add-student", {
-                                state: {
-                                  studentData: student,
-                                  studentDataEdit: true,
-                                },
-                              });
-                            }}
-                            onDelete={() => handleDeleteClick(student)}
-                            size="small"
-                          />
-                        </Box>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        ) : (
-          <Typography
-            variant="body1"
-            sx={{ textAlign: "center", p: 3, color: "text.secondary" }}
-          >
-            No students match your criteria.
-          </Typography>
-        )}
-        {/* </Paper> */}
+                        {columnVisibility.status && (
+                          <TableCell align="center" sx={{ fontSize: "0.9rem" }}>
+                            <Box
+                              onClick={() =>
+                                handleToggleStatusClick(
+                                  student.id,
+                                  student.isActive,
+                                  student.Name
+                                )
+                              }
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 0.8, // Space between icon and text
+                                cursor: "pointer",
+                                padding: "6px 10px",
+                                borderRadius: "20px",
+                                border: `1px solid ${student.isActive ? "#4CAF50" : "#F44336"
+                                  }`,
+                                backgroundColor: student.isActive
+                                  ? "rgba(76, 175, 80, 0.1)"
+                                  : "rgba(244, 67, 54, 0.1)", // Light background tint
+                                "&:hover": { boxShadow: 1 },
+                              }}
+                            >
+                              {student.isActive ? (
+                                <FaUserCheck style={{ color: "#4CAF50" }} />
+                              ) : (
+                                <FaUserTimes style={{ color: "#F44336" }} />
+                              )}
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: "bold",
+                                  color: student.isActive ? "#4CAF50" : "#F44336",
+                                }}
+                              >
+                                {student.isActive ? "Active" : "Inactive"}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                        )}
+                        {columnVisibility.actions && (
+                          <TableCell align="center" sx={{ py: 1.5 }}>
+                            <Box
+                              sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 0.2,
+                              }}
+                            >
+                              <ActionButtons
+                                onEdit={() => {
+                                  navigate("/add-student", {
+                                    state: {
+                                      studentData: student,
+                                      studentDataEdit: true,
+                                    },
+                                  });
+                                }}
+                                onDelete={() => handleDeleteClick(student)}
+                                size="small"
+                              />
+                            </Box>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )
+          ) : (
+            <Typography
+              variant="body1"
+              sx={{ textAlign: "center", p: 3, color: "text.secondary" }}
+            >
+              No students match your criteria.
+            </Typography>
+          )}
+        </Box>
       </Slide>
 
       {/* Snackbar for Notifications */}

@@ -16,6 +16,7 @@ import QuestionPaperUpload from "../QuestionPaperUpload";
 import ResultUploadDialog from "./ResultUploadDialog";
 import EvaluationDialog from "./EvaluationDialog"; 
 import { fetchQuestionPapers } from "../../redux/actions";
+import { formatFirebaseDate } from "../../mockdata/function";
 
 const StudentPapers = () => {
   const { studentId } = useParams();
@@ -211,7 +212,7 @@ const StudentPapers = () => {
                         </Typography>
                       </Box>
                       <Typography variant="caption" display="block" sx={{ mb: 1.5 }}>
-                        Submitted on: {new Date(paper.resultSubmission.uploadedAt).toLocaleDateString()}
+                        Submitted on: {formatFirebaseDate(paper.resultSubmission.uploadedAt)}
                       </Typography>
                       
                       <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>

@@ -32,6 +32,8 @@ import {
   TableHead,
   Avatar,
   Grid,
+  useTheme,       // <--- Added
+  useMediaQuery,  // <--- Added
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -409,7 +411,7 @@ const EnhancedTable = ({ exams, user, columnVisibility, editingCell, handleStart
                           {exam.studentName?.charAt(0)?.toUpperCase() || 'S'}
                         </Avatar>
                         <Link
-                          to={`/student/${exam.studentId}`}
+                          to={`/student/${exam.studentId}/profile`}
                           state={{ studentData: studentData }}
                           style={{
                             fontWeight: 600,
@@ -768,6 +770,10 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  
+  // --- ADDED: Theme and Media Query ---
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { studentExams, loading, error } = useSelector(
     (state) => state.studentExams
@@ -779,7 +785,20 @@ const StudentExamPage = ({ isRevisionProgramJEEMains2026Student = false }) => {
     error: studentsError,
   } = useSelector((state) => state.students);
 
+  // --- CHANGED: View Mode State Initialization and Effect ---
+  // Default to 'card' if mobile, otherwise 'table' (or keep 'table' for desktop)
   const [viewMode, setViewMode] = useState('table');
+
+  // Effect to automatically switch view mode based on screen size
+  useEffect(() => {
+    if (isMobile) {
+      setViewMode('card');
+    } else {
+      // Optional: You can revert to table on desktop or leave it as is
+      setViewMode('table'); 
+    }
+  }, [isMobile]);
+
   const [editingCell, setEditingCell] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -1299,7 +1318,6 @@ const StatisticsCards = () => {
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
-                    color: 'transparent'
                   }}
                 >
                   Student Exams
@@ -1372,8 +1390,8 @@ const StatisticsCards = () => {
                 </Select>
               </FormControl>
 
-              {/* View Mode Switcher */}
-              <ViewSwitcher />
+              {/* View Mode Switcher - Hide on Mobile */}
+              {!isMobile && <ViewSwitcher />}
 
               <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
 

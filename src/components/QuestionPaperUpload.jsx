@@ -10,27 +10,30 @@ import {
   Button,
   CircularProgress,
   Snackbar,
-  Alert
+  Alert,
+  Chip
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { uploadQuestionPaper } from "../redux/actions";
-import { FaCloudUploadAlt, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage, FaTimes, FaUpload, FaCheck, FaCalendarAlt } from "react-icons/fa";
+import { FaCloudUploadAlt, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage, FaTimes, FaUpload, FaCheck, FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
 import { MuiDateTimePicker } from "./customcomponents/MuiCustomFormFields";
 import { format, parseISO, isValid } from "date-fns";
 
 const QuestionPaperUpload = () => {
   const dispatch = useDispatch();
+  
+  // Redux Selectors
   const { uploadingQuestionPaper, error } = useSelector((state) => state.lectureMaterials);
   const { user } = useSelector((state) => state.auth);
-  
-  // Get students from Redux store
   const {
     students,
     loading: studentsLoading,
     error: studentsError,
   } = useSelector((state) => state.students);
 
-  const [selectedStudent, setSelectedStudent] = useState("");
+  // --- CHANGED: State to store ARRAY of student IDs ---
+  const [selectedStudents, setSelectedStudents] = useState([]); 
+  
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedDateTime, setSelectedDateTime] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
@@ -38,21 +41,19 @@ const QuestionPaperUpload = () => {
   const [uploadAttempted, setUploadAttempted] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Effect to handle successful upload
   useEffect(() => {
     if (uploadAttempted && !uploadingQuestionPaper && !error) {
       setShowSuccess(true);
       setUploadAttempted(false);
       
       // Clear form state
-      setSelectedStudent("");
+      setSelectedStudents([]); // Clear array
       setSelectedFile(null);
       setSelectedDateTime("");
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
       
-      // Auto-hide success message after 3 seconds
       const timer = setTimeout(() => {
         setShowSuccess(false);
       }, 3000);
@@ -61,8 +62,11 @@ const QuestionPaperUpload = () => {
     }
   }, [uploadingQuestionPaper, error, uploadAttempted]);
 
+  // --- CHANGED: Handle Multi-Select Change ---
   const handleStudentChange = (e) => {
-    setSelectedStudent(e.target.value);
+    const { value } = e.target;
+    // On autofill we get a stringified value
+    setSelectedStudents(typeof value === 'string' ? value.split(',') : value);
   };
 
   const handleDateTimeChange = (dateTimeString) => {
@@ -71,16 +75,12 @@ const QuestionPaperUpload = () => {
 
   const handleFileSelect = (file) => {
     if (file) {
-      // Validate file type
       const validTypes = [
-        'application/pdf',
-        'application/msword',
+        'application/pdf', 'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'image/jpeg',
-        'image/png',
-        'image/jpg'
+        'image/jpeg', 'image/png', 'image/jpg'
       ];
       
       if (!validTypes.includes(file.type)) {
@@ -97,46 +97,25 @@ const QuestionPaperUpload = () => {
     }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
+  // ... (Drag & Drop handlers remain the same) ...
+  const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = (e) => { e.preventDefault(); setIsDragOver(false); };
   const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
+    e.preventDefault(); setIsDragOver(false);
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      handleFileSelect(files[0]);
-    }
+    if (files.length > 0) handleFileSelect(files[0]);
   };
-
-  const handleBoxClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileInputChange = (e) => {
-    if (e.target.files.length > 0) {
-      handleFileSelect(e.target.files[0]);
-    }
-  };
-
+  const handleBoxClick = () => { fileInputRef.current?.click(); };
+  const handleFileInputChange = (e) => { if (e.target.files.length > 0) handleFileSelect(e.target.files[0]); };
+  
   const removeFile = () => {
     setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // ... (Helper functions remain the same) ...
   const getFileIcon = (file) => {
     if (!file) return <FaCloudUploadAlt size={48} />;
-    
     const fileType = file.type;
     if (fileType.includes('pdf')) return <FaFilePdf size={48} color="#f40f02" />;
     if (fileType.includes('word') || fileType.includes('document')) return <FaFileWord size={48} color="#2b579a" />;
@@ -168,21 +147,18 @@ const QuestionPaperUpload = () => {
     if (!dateTimeString) return "Not selected";
     try {
       const date = parseISO(dateTimeString);
-      if (isValid(date)) {
-        return format(date, "dd/MM/yyyy hh:mm a");
-      }
-    } catch (error) {
-      console.error("Error formatting date:", error);
-    }
+      if (isValid(date)) return format(date, "dd/MM/yyyy hh:mm a");
+    } catch (error) { console.error("Error formatting date:", error); }
     return dateTimeString;
   };
 
+  // --- CHANGED: Handle Submit with Loop ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate student selection
-    if (!selectedStudent) {
-      alert("Please select a student");
+    // Check array length instead of single value
+    if (selectedStudents.length === 0) {
+      alert("Please select at least one student");
       return;
     }
 
@@ -191,58 +167,52 @@ const QuestionPaperUpload = () => {
       return;
     }
 
-    // Find selected student data
-    const student = students.find(s => s.id === selectedStudent);
-    if (!student) {
-      alert("Selected student not found");
-      return;
-    }
-
-    // Determine subject based on student data or user profile
-    const getSubject = () => {
-      if (student.Subject) return student.Subject;
-      if (user.isPhysics && user.isChemistry) return "Physics & Chemistry";
-      if (user.isPhysics) return "Physics";
-      if (user.isChemistry) return "Chemistry";
-      return "General";
-    };
-
-    // Generate title with current date
     const currentDate = new Date();
-const formattedDate = currentDate.toLocaleDateString('en-GB'); 
-    const title = `${student.Name} - Question Paper - ${formattedDate}`;
-
-    // Use current year
+    const formattedDate = currentDate.toLocaleDateString('en-GB'); 
     const year = currentDate.getFullYear();
-
-    // Use selected date time or default to 2099-12-31 23:59:59 if not provided
     const paperDateTime = selectedDateTime || "2099-12-31T23:59:59";
 
-    const uploadFormData = new FormData();
-    uploadFormData.append("file", selectedFile);
-    uploadFormData.append("studentName", student.Name); // Student name is mandatory
-    uploadFormData.append("title", title);
-    uploadFormData.append("subject", getSubject());
-    uploadFormData.append("year", year);
-    uploadFormData.append("paperDateTime", paperDateTime); // Add the date time field
+    // --- LOOP: Call API for each selected student ---
+    selectedStudents.forEach(studentId => {
+        // Find specific student data for this iteration
+        const student = students.find(s => s.id === studentId);
+        
+        if (student) {
+            // Logic to get subject specific to this student or logged-in user
+            let subject = "General";
+            if (student.Subject) subject = student.Subject;
+            else if (user.isPhysics && user.isChemistry) subject = "Physics & Chemistry";
+            else if (user.isPhysics) subject = "Physics";
+            else if (user.isChemistry) subject = "Chemistry";
 
-    // Reset success state and mark upload as attempted
+            // Title specific to this student
+            const title = `${student.Name} - Question Paper - ${formattedDate}`;
+
+            const uploadFormData = new FormData();
+            uploadFormData.append("file", selectedFile);
+            uploadFormData.append("studentName", student.Name);
+            uploadFormData.append("title", title);
+            uploadFormData.append("subject", subject);
+            uploadFormData.append("year", year);
+            uploadFormData.append("paperDateTime", paperDateTime);
+
+            // Call API
+            dispatch(uploadQuestionPaper(studentId, uploadFormData));
+        }
+    });
+
     setShowSuccess(false);
     setUploadAttempted(true);
-    
-    // Dispatch the upload action
-    dispatch(uploadQuestionPaper(selectedStudent, uploadFormData));
   };
 
   const handleCloseSuccess = () => {
     setShowSuccess(false);
   };
 
-  // Only show if user is tutor
-  const userRole = "tutor";
-
-  if (userRole !== "tutor") {
-    return null;
+  // Permission Check (Updated to include faculty)
+  const allowedRoles = ["tutor", "admin", "faculty"];
+  if (!user || !allowedRoles.includes(user.role)) {
+     return null; // Or return an Alert component
   }
 
   return (
@@ -252,34 +222,44 @@ const formattedDate = currentDate.toLocaleDateString('en-GB');
           Upload Question Paper
         </Typography>
 
-        {/* Student Dropdown */}
+        {/* --- CHANGED: Multi-Select Student Dropdown --- */}
         <FormControl fullWidth sx={{ mb: 3 }} disabled={uploadingQuestionPaper}>
-          <InputLabel>Select Student *</InputLabel>
+          <InputLabel>Select Students *</InputLabel>
           <Select
-            value={selectedStudent}
+            multiple // Enabled multiple
+            value={selectedStudents} // Binds to array
             onChange={handleStudentChange}
-            label="Select Student *"
+            label="Select Students *"
+            renderValue={(selected) => (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {selected.map((value) => {
+                   const student = students.find(s => s.id === value);
+                   return (
+                     <Chip key={value} label={student?.Name} size="small" />
+                   );
+                })}
+              </Box>
+            )}
           >
             {studentsLoading ? (
               <MenuItem disabled>
-                <CircularProgress size={20} sx={{ mr: 1 }} />
-                Loading students...
+                <CircularProgress size={20} sx={{ mr: 1 }} /> Loading students...
               </MenuItem>
             ) : studentsError ? (
               <MenuItem disabled>Error loading students</MenuItem>
             ) : (
-            students
-  .filter(student => student.isActive && !student.deactivated)
-  .sort((a, b) => a.Name.localeCompare(b.Name)) // Sort A to Z by name
-  .map((student) => (
-    <MenuItem key={student.id} value={student.id}>
-      {student.Name} - {student.Subject || "General"} ({student.Stream || "No Stream"})
-    </MenuItem>
-  ))
+              students
+                .filter(student => student.isActive && !student.deactivated)
+                .sort((a, b) => a.Name.localeCompare(b.Name))
+                .map((student) => (
+                  <MenuItem key={student.id} value={student.id}>
+                    {student.Name} - {student.Subject || "General"}
+                  </MenuItem>
+                ))
             )}
           </Select>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-            Student name is mandatory for file organization
+            Select one or more students
           </Typography>
         </FormControl>
 
@@ -307,105 +287,62 @@ const formattedDate = currentDate.toLocaleDateString('en-GB');
             onChange={handleFileInputChange}
             accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
             style={{ display: 'none' }}
-            disabled={uploadingQuestionPaper || !selectedStudent}
+            disabled={uploadingQuestionPaper || selectedStudents.length === 0}
           />
           
           <Paper
             elevation={isDragOver ? 8 : 2}
-            onClick={(!uploadingQuestionPaper && selectedStudent) ? handleBoxClick : undefined}
-            onDragOver={(!uploadingQuestionPaper && selectedStudent) ? handleDragOver : undefined}
-            onDragLeave={(!uploadingQuestionPaper && selectedStudent) ? handleDragLeave : undefined}
-            onDrop={(!uploadingQuestionPaper && selectedStudent) ? handleDrop : undefined}
+            onClick={(!uploadingQuestionPaper && selectedStudents.length > 0) ? handleBoxClick : undefined}
+            onDragOver={(!uploadingQuestionPaper && selectedStudents.length > 0) ? handleDragOver : undefined}
+            onDragLeave={(!uploadingQuestionPaper && selectedStudents.length > 0) ? handleDragLeave : undefined}
+            onDrop={(!uploadingQuestionPaper && selectedStudents.length > 0) ? handleDrop : undefined}
             sx={{
               border: isDragOver ? '2px dashed #1976d2' : '2px dashed #e0e0e0',
               borderRadius: 2,
               p: 4,
               textAlign: 'center',
-              cursor: (!uploadingQuestionPaper && selectedStudent) ? 'pointer' : 'not-allowed',
+              cursor: (!uploadingQuestionPaper && selectedStudents.length > 0) ? 'pointer' : 'not-allowed',
               backgroundColor: uploadingQuestionPaper ? 'rgba(0, 0, 0, 0.04)' : 
-                            !selectedStudent ? 'rgba(0, 0, 0, 0.02)' :
+                            selectedStudents.length === 0 ? 'rgba(0, 0, 0, 0.02)' :
                             (isDragOver ? 'rgba(25, 118, 210, 0.04)' : 'transparent'),
               transition: 'all 0.3s ease',
-              '&:hover': (!uploadingQuestionPaper && selectedStudent) ? {
+              '&:hover': (!uploadingQuestionPaper && selectedStudents.length > 0) ? {
                 backgroundColor: 'rgba(0, 0, 0, 0.02)',
                 borderColor: '#1976d2',
               } : {}
             }}
           >
-            {!selectedStudent ? (
+            {selectedStudents.length === 0 ? (
               <Box>
-                <Box sx={{ color: '#9e9e9e', mb: 2 }}>
-                  <FaCloudUploadAlt size={48} />
-                </Box>
-                <Typography variant="h6" gutterBottom color="text.secondary">
-                  Please select a student first
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Choose a student from the dropdown above to enable file upload
-                </Typography>
+                <Box sx={{ color: '#9e9e9e', mb: 2 }}><FaCloudUploadAlt size={48} /></Box>
+                <Typography variant="h6" gutterBottom color="text.secondary">Please select students first</Typography>
               </Box>
             ) : uploadingQuestionPaper ? (
               <Box>
                 <CircularProgress size={48} sx={{ mb: 2, color: '#1976d2' }} />
-                <Typography variant="h6" gutterBottom color="primary">
-                  Uploading Question Paper...
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Please wait while we upload your file
-                </Typography>
+                <Typography variant="h6" gutterBottom color="primary">Uploading...</Typography>
               </Box>
             ) : !selectedFile ? (
               <Box>
-                <Box sx={{ color: isDragOver ? '#1976d2' : '#9e9e9e', mb: 2 }}>
-                  {getFileIcon(null)}
-                </Box>
+                <Box sx={{ color: isDragOver ? '#1976d2' : '#9e9e9e', mb: 2 }}>{getFileIcon(null)}</Box>
                 <Typography variant="h6" gutterBottom color={isDragOver ? 'primary' : 'text.secondary'}>
                   {isDragOver ? 'Drop your file here' : 'Click to select a file'}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  {getFileTypeText(null)} (Max 10MB)
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  or drag and drop your files here
-                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>{getFileTypeText(null)} (Max 10MB)</Typography>
               </Box>
             ) : (
               <Box sx={{ position: 'relative' }}>
-                <Box sx={{ color: '#1976d2', mb: 2 }}>
-                  {getFileIcon(selectedFile)}
-                </Box>
-                <Typography variant="h6" gutterBottom>
-                  {selectedFile.name}
-                </Typography>
+                <Box sx={{ color: '#1976d2', mb: 2 }}>{getFileIcon(selectedFile)}</Box>
+                <Typography variant="h6" gutterBottom>{selectedFile.name}</Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   {getFileTypeText(selectedFile)} • {formatFileSize(selectedFile.size)}
                 </Typography>
                 
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    startIcon={<FaTimes />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFile();
-                    }}
-                    disabled={uploadingQuestionPaper}
-                  >
+                  <Button variant="outlined" color="error" size="small" startIcon={<FaTimes />} onClick={(e) => { e.stopPropagation(); removeFile(); }} disabled={uploadingQuestionPaper}>
                     Remove
                   </Button>
-                  
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={uploadingQuestionPaper ? <CircularProgress size={16} /> : <FaUpload />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSubmit(e);
-                    }}
-                    disabled={uploadingQuestionPaper}
-                  >
+                  <Button variant="contained" size="small" startIcon={uploadingQuestionPaper ? <CircularProgress size={16} /> : <FaUpload />} onClick={(e) => { e.stopPropagation(); handleSubmit(e); }} disabled={uploadingQuestionPaper}>
                     {uploadingQuestionPaper ? "Uploading..." : "Upload Now"}
                   </Button>
                 </Box>
@@ -413,30 +350,13 @@ const formattedDate = currentDate.toLocaleDateString('en-GB');
             )}
           </Paper>
 
-          {/* Error Display */}
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
+          {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
         </Box>
       </Paper>
 
-      {/* Success Message Snackbar */}
-      <Snackbar
-        open={showSuccess}
-        autoHideDuration={3000}
-        onClose={handleCloseSuccess}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseSuccess}
-          severity="success"
-          variant="filled"
-          icon={<FaCheck />}
-          sx={{ width: '100%' }}
-        >
-          Question paper uploaded successfully!
+      <Snackbar open={showSuccess} autoHideDuration={3000} onClose={handleCloseSuccess} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={handleCloseSuccess} severity="success" variant="filled" icon={<FaCheck />} sx={{ width: '100%' }}>
+          Question papers uploaded successfully!
         </Alert>
       </Snackbar>
     </>

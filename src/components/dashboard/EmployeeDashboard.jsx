@@ -42,7 +42,8 @@ import {
   MenuItem,
   Tooltip,
   Badge, // Badge Component
-  Snackbar
+  Snackbar,
+  Skeleton // Import Skeleton for smoother loading
 } from "@mui/material";
 
 // Import actions
@@ -51,7 +52,7 @@ import {
   fetchEmployeePayments,
   setCurrentEmployee,
   updateProfilePicture,
-  getUserProfileIcon // Import the specific ID fetcher
+  getUserProfileIcon 
 } from "../../redux/actions";
 
 import EmployeePaymentsTab from "./EmployeePaymentsTab";
@@ -76,8 +77,12 @@ const EmployeeDashboard = () => {
     employeePayments,
     paymentsLoading
   } = useSelector((state) => state.employees);
-    const { photoUrl: profilePhoto, isUploading } = useSelector((state) => state.profile);
-    const currentPhoto = profilePhoto
+
+  // Selector for profile state
+  const { photoUrl: profilePhoto, isUploading } = useSelector((state) => state.profile);
+  
+  // Local state to track the *fetching* of the specific user's icon
+  const [isPhotoFetching, setIsPhotoFetching] = useState(true);
 
   const [activeTab, setActiveTab] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState("all");
@@ -85,23 +90,42 @@ const EmployeeDashboard = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // --- Upload State ---
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState(false); // Local upload loading
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (id) {
-      dispatch(getUserProfileIcon(id)); 
-      dispatch(fetchEmployeeById(id));
-      dispatch(fetchEmployeePayments(id));
-    }
+    const loadData = async () => {
+      if (id) {
+        // 1. Start loading state specifically for photo
+        setIsPhotoFetching(true);
+        
+        try {
+          // 2. Dispatch all fetch actions
+          // Using Promise.all to ensure we wait for the icon fetch specifically
+          await Promise.all([
+            dispatch(fetchEmployeeById(id)),
+            dispatch(fetchEmployeePayments(id)),
+            dispatch(getUserProfileIcon(id)) 
+          ]);
+        } catch (error) {
+          console.error("Error loading dashboard data", error);
+        } finally {
+          // 3. Stop loading once data is fetched
+          setIsPhotoFetching(false);
+        }
+      }
+    };
+
+    loadData();
+
     return () => {
       dispatch(setCurrentEmployee(null));
     };
   }, [id, dispatch]);
 
   // --- File Upload Handler ---
- const handleFileSelect = async (e) => {
+  const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -113,10 +137,10 @@ const EmployeeDashboard = () => {
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
-    // CRITICAL: Send the Employee ID from URL params
     formData.append("userId", id); 
     
-   await dispatch(updateProfilePicture(formData)); 
+    // Note: Assuming updateProfilePicture returns a promise
+    await dispatch(updateProfilePicture(formData)); 
     setUploading(false);
   };
 
@@ -136,7 +160,6 @@ const EmployeeDashboard = () => {
       p.month === currentMonth && p.year === currentYear
     );
     
-    // Sort for consecutive calc
     const sortedPayments = [...employeePayments].sort((a, b) => {
       const dateA = new Date(a.year, a.month - 1);
       const dateB = new Date(b.year, b.month - 1);
@@ -266,8 +289,7 @@ const EmployeeDashboard = () => {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', bgcolor: '#f5f7fa' }}><CircularProgress size={60} /></Box>;
   }
 
-if (employeeError || !currentEmployee) {
-    // Extract the string if employeeError is an object containing 'message'
+  if (employeeError || !currentEmployee) {
     const errorMsg = typeof employeeError === 'object' && employeeError !== null 
       ? employeeError.message 
       : employeeError;
@@ -283,6 +305,7 @@ if (employeeError || !currentEmployee) {
       </Box>
     );
   }
+  const shouldShowAvatarLoading = isPhotoFetching || uploading || isUploading;
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc', pb: 4 }}>
       {/* Top Navigation Bar */}
@@ -329,28 +352,39 @@ if (employeeError || !currentEmployee) {
                               transition: 'all 0.2s',
                               width: 42, height: 42
                             }}
-                            disabled={uploading}
+                            disabled={uploading || isPhotoFetching} // Disable while loading
                           >
-                            {uploading ? <CircularProgress size={20} /> : <FaCamera color="#1565C0" size={18} />}
+                            <FaCamera color="#1565C0" size={18} />
                           </IconButton>
                         </Tooltip>
                       }
                     >
-                      <Avatar
-                        src={currentPhoto}
-                        alt={currentEmployee?.name}
-                        sx={{
-                          width: 120,
-                          height: 120,
-                          fontSize: '3rem',
-                          bgcolor: '#fff',
-                          color: '#334155',
-                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                          border: '4px solid #f8fafc'
-                        }}
-                      >
-                        {currentEmployee.name?.charAt(0).toUpperCase()}
-                      </Avatar>
+                      {shouldShowAvatarLoading ? (
+                        <Skeleton 
+                          variant="circular" 
+                          width={120} 
+                          height={120} 
+                          animation="wave"
+                          sx={{ border: '4px solid #f8fafc' }}
+                        />
+                      ) : (
+                        <Avatar
+                          key={id} // CRITICAL: Forces re-render when ID changes
+                          src={profilePhoto} 
+                          alt={currentEmployee?.name}
+                          sx={{
+                            width: 120,
+                            height: 120,
+                            fontSize: '3rem',
+                            bgcolor: '#fff',
+                            color: '#334155',
+                            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                            border: '4px solid #f8fafc'
+                          }}
+                        >
+                          {currentEmployee.name?.charAt(0).toUpperCase()}
+                        </Avatar>
+                      )}
                     </Badge>
                   </Box>
                   {/* ------------------------------- */}

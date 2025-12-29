@@ -1,407 +1,242 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logoutUser } from "../redux/actions";
+import { logoutUser, getUserProfileIcon } from "../redux/actions";
 import "./Navbar.css";
-import { FaDownload,FaSignOutAlt } from 'react-icons/fa';
+import { FaDownload, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
 import NotificationBell from "../components/NotificationBell";
-import { parse, isValid, isAfter } from "date-fns";
-import { persistor } from "../redux/store";
+import { Capacitor } from '@capacitor/core';
+import { Avatar, Skeleton, Box, Typography } from "@mui/material";
 
 const PROTECTED_BASE_PATHS = [
-  "/important-files",
-  "/profile",
-  "/dashboard",
-  "/students",
-  "/admissions",
-  "/student/",
-  "/week-timetable",
-  "/timetable",
-  "/employees",
-  "/employee/",
-  "/add-student",
-  "/add-employee",
-  "/add-timetable",
-  "/demo-classes",
-  "/add-demo-class",
-  "/add-expenditure",
-  "/expenditure",
-  "/reports",
-  "/student-exams",
-  "/add-student-exam",
-  "/week-syllabus",
-  "/analytics",
-  '/revision-students',
-  "/demo-bookings",
-  "/academy-finance-dashboard",
-  "/add-academy-earnings",
-  "/upload-study-materials",
-  "/upload-question-papers",
+  "/important-files", "/profile", "/dashboard", "/students", "/admissions",
+  "/student/", "/week-timetable", "/timetable", "/employees", "/employee/",
+  "/add-student", "/add-employee", "/add-timetable", "/demo-classes",
+  "/add-demo-class", "/add-expenditure", "/expenditure", "/reports",
+  "/student-exams", "/add-student-exam", "/week-syllabus", "/analytics",
+  '/revision-students', "/demo-bookings", "/academy-finance-dashboard",
+  "/add-academy-earnings", "/upload-study-materials", "/upload-question-papers",
   "/Ideas"
 ];
 
-const Navbar = () => {
+const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
+  const isApp = Capacitor.isNativePlatform();
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasLocalStorageData, setHasLocalStorageData] = useState(false);
+
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
+
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const user = useSelector((state) => state.auth.user);
 
-  // Check if there's any relevant data in localStorage
+  const { photoUrl, isLoading: isProfileLoading } = useSelector((state) => state.profile);
+
   useEffect(() => {
     const checkLocalStorageData = () => {
-      // Check for various keys that might contain user data
-      const potentialKeys = [
-        'user',
-        'token',
-        'authToken',
-        'userData',
-        'persist:root',
-        'reduxState',
-        'electron-academy-data'
-      ];
-      
+      const potentialKeys = ['user', 'token', 'authToken', 'userData', 'persist:root', 'reduxState', 'electron-academy-data'];
       for (let key of potentialKeys) {
         const data = localStorage.getItem(key);
         if (data && data !== 'null' && data !== 'undefined' && data !== '{}' && data !== '[]') {
-          try {
-            const parsedData = JSON.parse(data);
-            if (parsedData && Object.keys(parsedData).length > 0) {
-              setHasLocalStorageData(true);
-              return;
-            }
-          } catch {
-            // If it's not JSON but has content, consider it as data
-            if (data.length > 10) {
-              setHasLocalStorageData(true);
-              return;
-            }
-          }
+          setHasLocalStorageData(true);
+          return;
         }
       }
       setHasLocalStorageData(false);
     };
-
     checkLocalStorageData();
-    
-    // Also check when storage changes
-    const handleStorageChange = () => {
-      checkLocalStorageData();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', checkLocalStorageData);
+    return () => window.removeEventListener('storage', checkLocalStorageData);
   }, []);
 
-  // Get data from Redux store for notifications
-  const {
-    timetables,
-    loading: classesLoading,
-    error: classesError,
-  } = useSelector((state) => state.classes);
-  const {
-    students,
-    loading: studentsLoading,
-    error: studentsError,
-  } = useSelector((state) => state.students);
-  const {
-    employees,
-    loading: employeesLoading,
-    error: employeesError,
-  } = useSelector((state) => state.employees);
-  const {
-    timetables: autoTimetables,
-    loading: autoTimetablesLoading,
-    error: autoTimetablesError,
-  } = useSelector((state) => state.autoTimetables);
-  const { demoClasses, loading: demoClassesLoading, error: demoClassesError } = useSelector(
-    (state) => state.demoClasses
-  );
-  const { payments } = useSelector((state) => state.expenditures);
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      dispatch(getUserProfileIcon(user.id));
+    }
+  }, [dispatch, isAuthenticated, user?.id]);
+
+  const { timetables } = useSelector((state) => state.classes);
+  const { students } = useSelector((state) => state.students);
+  const { employees } = useSelector((state) => state.employees);
+  const { timetables: autoTimetables } = useSelector((state) => state.autoTimetables);
+  const { demoClasses } = useSelector((state) => state.demoClasses);
 
   const handleLinkClick = () => {
     setMenuOpen(false);
   };
 
   useEffect(() => {
-    const AUTH_RELATED_PUBLIC_PAGES = [
-      "/login",
-      "/signup",
-      "/forgot-password",
-      "/",
-    ];
+    const AUTH_RELATED_PUBLIC_PAGES = ["/login", "/signup", "/forgot-password","/biometric-login", "/"];
+    const isCurrentPathProtected = PROTECTED_BASE_PATHS.some((basePath) => location.pathname.startsWith(basePath));
+    const isAuthRelatedPublicPage = AUTH_RELATED_PUBLIC_PAGES.includes(location.pathname);
 
-    const isCurrentPathProtected = PROTECTED_BASE_PATHS.some((basePath) =>
-      location.pathname.startsWith(basePath)
-    );
-    const isAuthRelatedPublicPage = AUTH_RELATED_PUBLIC_PAGES.includes(
-      location.pathname
-    );
-
-    if (
-      isAuthenticated &&
-      !isCurrentPathProtected &&
-      !isAuthRelatedPublicPage
-    ) {
+    if (isAuthenticated && !isCurrentPathProtected && !isAuthRelatedPublicPage) {
       dispatch(logoutUser());
     }
   }, [location.pathname, isAuthenticated, dispatch]);
 
- const handleLogoutClick = async () => {
-dispatch(logoutUser());
-    setMenuOpen(false);
-    navigate("/login");
-};
+  const handleLogoutClick = async () => {
+    dispatch(logoutUser());
+    setMenuOpen(false);
+    navigate("/login");
+  };
 
-  // Filter data based on user permissions (similar to Dashboard)
-  const filteredStudents = useSelector((state) => {
-    const students = state.students.students || [];
-    const user = state.auth.user;
-    if (!user) return [];
-    
-    let result = [];
-    if (students.length > 0) {
-      if (user.AllowAll) {
-        result = students;
-      } else if (user.isPhysics) {
-        result = students.filter(
-          (student) => student.Subject === "Physics"
-        );
-      } else if (user.isChemistry) {
-        result = students.filter(
-          (student) => student.Subject === "Chemistry"
-        );
-      }
-      result = result.filter(
-        (student) => student.isActive === true
-      );
-    }
-    return result;
-  });
+  const filteredStudents = useSelector((state) => state.students.students || []);
+  const filteredTimetables = [];
+  const filteredDemoClasses = [];
 
-  const allTimetables = [...(timetables || []), ...(autoTimetables || [])];
-
-  const filteredTimetables = useSelector((state) => {
-    const allTimetables = [...(state.classes.timetables || []), ...(state.autoTimetables.timetables || [])];
-    const user = state.auth.user;
-    if (!user) return [];
-    
-    let result = [];
-    if (allTimetables.length > 0) {
-      let permissionFilteredTimetables = [];
-
-      if (user.AllowAll) {
-        permissionFilteredTimetables = allTimetables;
-      } else if (user.isPhysics) {
-        permissionFilteredTimetables = allTimetables.filter(
-          (schedule) => schedule.Subject === "Physics"
-        );
-      } else if (user.isChemistry) {
-        permissionFilteredTimetables = allTimetables.filter(
-          (schedule) => schedule.Subject === "Chemistry"
-        );
-      } else {
-        permissionFilteredTimetables = [];
-      }
-
-      const now = new Date();
-      result = permissionFilteredTimetables.filter((schedule) => {
-        try {
-          const classStartTimeStr = schedule.Time?.split(" to ")[0];
-          if (!classStartTimeStr) return false;
-          
-          const classDateTime = parse(
-            `${schedule.Day} ${classStartTimeStr}`,
-            "dd/MM/yyyy hh:mm a",
-            new Date()
-          );
-          return isValid(classDateTime) && isAfter(classDateTime, now);
-        } catch (e) {
-          return false;
-        }
-      });
-
-      result.sort((a, b) => {
-        try {
-          const dateA = parse(
-            `${a.Day} ${a.Time.split(" to ")[0]}`,
-            "dd/MM/yyyy hh:mm a",
-            new Date()
-          );
-          const dateB = parse(
-            `${b.Day} ${b.Time.split(" to ")[0]}`,
-            "dd/MM/yyyy hh:mm a",
-            new Date()
-          );
-
-          if (isValid(dateA) && isValid(dateB)) {
-            return dateA.getTime() - dateB.getTime();
-          }
-        } catch (e) {
-          // Handle parsing errors
-        }
-        return 0;
-      });
-    }
-    return result;
-  });
-
-  const userHasSubjectPreference = user?.isPhysics || user?.isChemistry;
-
-  const filteredDemoClasses = useSelector((state) => {
-    const demoClasses = state.demoClasses.demoClasses || [];
-    const user = state.auth.user;
-    if (!user) return demoClasses;
-    
-    return userHasSubjectPreference
-      ? demoClasses.filter((demo) => {
-          const demoSubject = demo.Subject?.toLowerCase();
-          return (
-            (user.isPhysics && demoSubject === "physics") ||
-            (user.isChemistry && demoSubject === "chemistry") ||
-            (user.isMaths && demoSubject === "maths")
-          );
-        })
-      : demoClasses;
-  });
-
-  // Determine if we should show Dashboard link
   const shouldShowDashboard = isAuthenticated || hasLocalStorageData;
+
+  // --- Helper Component for Profile (Used twice: Desktop & Mobile) ---
+  const UserProfileDisplay = ({ isMobile }) => (
+    <NavLink
+      to="/profile"
+      onClick={handleLinkClick}
+      style={{
+        textDecoration: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px', // Slightly increased gap for better visual separation
+        marginLeft: isMobile ? '10px' : '0'
+      }}
+    >
+      {/* 1. Removed minWidth to fix spacing gap */}
+      {/* 2. Changed textAlign to 'right' so text always hugs the avatar */}
+      <Box sx={{ display: 'block', textAlign: 'right' }}>
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 700,
+            color: 'white', // Auto-switch color for mobile (usually white bg) vs desktop
+            lineHeight: 1.2,
+            fontSize: '0.70rem'
+          }}
+        >
+          {user?.name || "User"}
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: isMobile ? '#666' : '#ccc', // Auto-switch subtitle color
+            fontSize: '0.65rem',
+            display: 'block'
+          }}
+        >
+          {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Online'}
+        </Typography>
+      </Box>
+
+      {isProfileLoading ? (
+        <Skeleton
+          variant="circular"
+          width={38}
+          height={38}
+          animation="wave"
+          sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}
+        />
+      ) : (
+        <Avatar
+          src={photoUrl}
+          alt={user?.name}
+          sx={{
+            width: 38,
+            height: 38,
+            bgcolor: '#1a237e',
+            color: '#fff',
+            border: '2px solid #fff',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            fontWeight: 'bold'
+          }}
+        >
+          {user?.name?.charAt(0).toUpperCase()}
+        </Avatar>
+      )}
+    </NavLink>
+  );
 
   return (
     <div className="navbar-wrapper">
       <header className="navbar">
-        <NavLink
-          to="/"
-          onClick={handleLinkClick}
-          style={{ textDecoration: "none" }}
-        >
-          <div className="navbar-left">
-            <img src="/spaceship.png" alt="Logo" className="logo" />
-          </div>
-        </NavLink>
 
-        <div className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
-          {menuOpen ? (
-            <span className="close-btn">&times;</span>
-          ) : (
-            <span>&#9776;</span>
-          )}
-        </div>
-        
-        <nav className={`navbar-right ${menuOpen ? "active" : ""}`}>
-     {!isAuthenticated && (
-           <>
-           <NavLink
-            to="/"
-            onClick={handleLinkClick}
-            exact
-            activeClassName="active-link"
-          >
-            Home
-          </NavLink>
-          
-          <NavLink
-            to="/about"
-            onClick={handleLinkClick}
-            activeClassName="active-link"
-          >
-            About Us
-          </NavLink>
-          <NavLink
-            to="/teachers"
-            onClick={handleLinkClick}
-            activeClassName="active-link"
-          >
-            Faculty
-          </NavLink>
-          <NavLink
-            to="/careers"
-            onClick={handleLinkClick}
-            activeClassName="active-link"
-          >
-            Careers
-          </NavLink>
-          <NavLink
-            to="/contact"
-            onClick={handleLinkClick}
-            activeClassName="active-link"
-          >
-            Contact Us
-          </NavLink>
-         </>
+        {isAuthenticated && shouldShowDashboard && (
+          <div className="mobile-nav-toggle" onClick={toggleSidebar}>
+            {isSidebarOpen ? <FaTimes /> : <FaBars />}
+          </div>
         )}
 
-          {/* Download Brochure - Only show when NOT authenticated */}
+        <div className="navbar-left" style={{ display: 'flex', alignItems: 'center' }}>
+          <NavLink to="/" onClick={handleLinkClick} style={{ textDecoration: "none" }}>
+            <img src="/spaceship.png" alt="Logo" className="logo" />
+          </NavLink>
+
+          {/* --- MOBILE ONLY: Profile Display (Next to Logo) --- */}
+          {isAuthenticated && shouldShowDashboard && (
+            <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+              <UserProfileDisplay isMobile={true} />
+            </Box>
+          )}
+        </div>
+
+        {!shouldShowDashboard && (
+          <div className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? <span className="close-btn">&times;</span> : <span>&#9776;</span>}
+          </div>
+        )}
+
+        <nav className={`navbar-right ${menuOpen ? "active" : ""}`}>
           {!isAuthenticated && (
             <>
-              <NavLink
-                to="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleLinkClick();
-                  window.open('/ElectronAcademy_Brochure.pdf', '_blank');
-                }}
-                activeClassName="active-link"
-                className="program-highlight-link-desktop"
-              >
-                <FaDownload style={{ marginRight: '8px' }} />
-                Download Brochure
+              <NavLink to="/" onClick={handleLinkClick} exact activeClassName="active-link">Home</NavLink>
+              <NavLink to="/about" onClick={handleLinkClick} activeClassName="active-link">About Us</NavLink>
+              <NavLink to="/teachers" onClick={handleLinkClick} activeClassName="active-link">Faculty</NavLink>
+              <NavLink to="/careers" onClick={handleLinkClick} activeClassName="active-link">Careers</NavLink>
+              <NavLink to="/contact" onClick={handleLinkClick} activeClassName="active-link">Contact Us</NavLink>
+
+              <NavLink to="#" onClick={(e) => { e.preventDefault(); handleLinkClick(); window.open('/ElectronAcademy_Brochure.pdf', '_blank'); }} activeClassName="active-link" className="program-highlight-link-desktop">
+                <FaDownload style={{ marginRight: '8px' }} /> Download Brochure
               </NavLink>
             </>
           )}
 
-          {/* Conditional rendering for auth buttons based on isAuthenticated state */}
           {shouldShowDashboard ? (
-            // If authenticated OR has localStorage data, show Notification Bell, Dashboard and Logout
-            <div className="auth-buttons">
-              {/* Notification Bell - Only show when authenticated */}
+            <div className="auth-buttons" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               {isAuthenticated && (
-                <div>
-                  <NotificationBell
-                    filteredTimetables={filteredTimetables}
-                    filteredDemoClasses={filteredDemoClasses}
-                    filteredStudents={filteredStudents}
-                    combinedActivity={[]} 
-                    classesError={classesError}
-                    studentsError={studentsError}
-                    employeesError={employeesError}
-                  />
-                </div>
+                <>
+                  {/* --- DESKTOP ONLY: Profile Display (Hidden on Mobile to avoid duplication) --- */}
+                  <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+                    <UserProfileDisplay isMobile={false} />
+                  </Box>
+
+                  <div className="notification-bell-navbar">
+                    <NotificationBell
+                      filteredTimetables={filteredTimetables}
+                      filteredDemoClasses={filteredDemoClasses}
+                      filteredStudents={filteredStudents}
+                      combinedActivity={[]}
+                      classesError={null}
+                      studentsError={null}
+                      employeesError={null}
+                    />
+                  </div>
+                </>
               )}
-              
-              <NavLink
-                to="/dashboard"
-                className="auth-btn"
-                onClick={handleLinkClick} 
-                activeClassName="active-btn"
-              >
+
+              <NavLink to="/dashboard" className="auth-btn" onClick={handleLinkClick} activeClassName="active-btn">
                 Dashboard
               </NavLink>
-<button onClick={handleLogoutClick} className="auth-btn logout-btn">
-  <FaSignOutAlt />
-  <span>Logout</span>
-</button>
+              <button onClick={handleLogoutClick} className="auth-btn logout-btn">
+                <FaSignOutAlt /> <span>Logout</span>
+              </button>
             </div>
           ) : (
-            // If not authenticated and no localStorage data, show Login and Book Demo
             <div className="auth-buttons">
-              <NavLink
-                to="/book-demo"
-                className="book-btn"
-                onClick={handleLinkClick}
-                activeClassName="active-btn"
-              >
+              <NavLink to="/book-demo" className="book-btn" onClick={handleLinkClick} activeClassName="active-btn">
                 Book Demo
               </NavLink>
-              <NavLink
-                to="/login"
-                className="auth-btn auth-secondary-btn"
-                onClick={handleLinkClick}
-                activeClassName="active-btn"
-              >
+              <NavLink to="/login" className="auth-btn auth-secondary-btn" onClick={handleLinkClick} activeClassName="active-btn">
                 Login
               </NavLink>
             </div>
@@ -409,24 +244,6 @@ dispatch(logoutUser());
         </nav>
       </header>
 
-      {/* This container will only be visible on mobile screens - Only show when NOT authenticated */}
-      {!isAuthenticated && (
-        <div className="program-highlight-container-mobile">
-          <NavLink
-            to="#"
-            onClick={(e) => {
-              e.preventDefault();
-              handleLinkClick();
-              window.open('/ElectronAcademy_Brochure.pdf', '_blank');
-            }}
-            activeClassName="active-link"
-            className="program-highlight-link"
-          >
-            <FaDownload style={{ marginRight: '8px' }} />
-            Download Brochure
-          </NavLink>
-        </div>
-      )}
     </div>
   );
 };

@@ -33,7 +33,7 @@ const StudentResults = () => {
   const currentSubject = currentStudent?.Subject || "Physics";
 
   // Sort by exam date
-  const sortedTests = [...typedTests].sort(
+  const sortedTests = [...studentExams].sort(
     (a, b) => new Date(a.examDate) - new Date(b.examDate)
   );
 

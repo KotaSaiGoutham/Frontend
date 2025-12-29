@@ -341,6 +341,9 @@ linear-gradient(135deg, #292551, #851e72);
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
+  .signup-page-container {
+    padding: 5px;    /* Keeps a small safe area */
+      }
   .signup-card {
     padding: 30px 25px;
     margin: 20px;
